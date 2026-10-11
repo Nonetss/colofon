@@ -7,9 +7,9 @@ import type { Ref, RefObject } from "react"
 import { Text } from "@/components/shared/brand/typography"
 import type { DataTableFilter } from "@/components/shared/data-display/data-table-column-filter"
 import { DataTableView } from "@/components/shared/data-display/data-table-view"
+import { FilteredEmpty } from "@/components/shared/data-display/filtered-empty"
 import { InfiniteScrollSentinel } from "@/components/shared/data-display/infinite-scroll-sentinel"
 import { StateCard } from "@/components/shared/feedback/state-card"
-import { Button } from "@/components/ui/button"
 import { CommentsButton, useCommentCounts } from "@/features/comments"
 import { CronRunOutput } from "@/features/crons/detail/components/cron-run-output"
 import {
@@ -120,14 +120,10 @@ export function CronRunTimeline({
           groupOf={groupOf}
           filters={filters}
           emptyMessage={
-            <div className="grid justify-items-center gap-2">
-              <Text tone="muted">
-                Ninguna ejecución coincide con los filtros.
-              </Text>
-              <Button variant="outline" size="sm" onClick={onClearFilters}>
-                Limpiar filtros
-              </Button>
-            </div>
+            <FilteredEmpty
+              message="Ninguna ejecución coincide con los filtros."
+              onClear={onClearFilters}
+            />
           }
           renderDetail={(run) => <CronRunOutput run={run} />}
           hasDetail={cronRunHasOutput}

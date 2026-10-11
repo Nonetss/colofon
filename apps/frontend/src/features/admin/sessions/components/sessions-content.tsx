@@ -7,11 +7,11 @@ import { useMemo, useState } from "react"
 import { Text, textVariants } from "@/components/shared/brand/typography"
 import type { DataTableFilter } from "@/components/shared/data-display/data-table-column-filter"
 import { DataTableView } from "@/components/shared/data-display/data-table-view"
+import { FilteredEmpty } from "@/components/shared/data-display/filtered-empty"
 import { InfiniteScrollSentinel } from "@/components/shared/data-display/infinite-scroll-sentinel"
 import { MetadataDefinitionList } from "@/components/shared/data-display/metadata-cell"
 import { HeroCount } from "@/components/shared/layout/page-hero"
 import { ResourceOverview } from "@/components/shared/resource/resource-overview"
-import { Button } from "@/components/ui/button"
 import {
   isActiveSession,
   SESSION_ACTIONS_COLUMN,
@@ -251,14 +251,10 @@ export function SessionsContent() {
             scrollRef={setScrollContainer}
             filters={filters}
             emptyMessage={
-              <div className="grid justify-items-center gap-2">
-                <Text tone="muted">
-                  Ninguna sesión coincide con los filtros.
-                </Text>
-                <Button variant="outline" size="sm" onClick={clearFilters}>
-                  Limpiar filtros
-                </Button>
-              </div>
+              <FilteredEmpty
+                message="Ninguna sesión coincide con los filtros."
+                onClear={clearFilters}
+              />
             }
             renderDetail={(session) => <SessionDetail session={session} />}
             renderControl={(_session, columnId, expandToggle) => {

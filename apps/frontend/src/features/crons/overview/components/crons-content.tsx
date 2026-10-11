@@ -4,8 +4,8 @@ const Clock = getIcon("navigation", "crons")
 const Plus = getIcon("actions", "add")
 
 import { useMemo } from "react"
-import { Text } from "@/components/shared/brand/typography"
 import type { DataTableFilter } from "@/components/shared/data-display/data-table-column-filter"
+import { FilteredEmpty } from "@/components/shared/data-display/filtered-empty"
 import { HeroCount } from "@/components/shared/layout/page-hero"
 import { ResourceOverview } from "@/components/shared/resource/resource-overview"
 import { Button } from "@/components/ui/button"
@@ -138,14 +138,11 @@ export function CronsContent() {
   }
 
   const noMatches = (
-    <div className="grid justify-items-center gap-2">
-      <Text tone="muted">Ningún cron coincide con los filtros.</Text>
-      {activeFilterCount > 0 ? (
-        <Button variant="outline" size="sm" onClick={clearFilters}>
-          Limpiar filtros
-        </Button>
-      ) : null}
-    </div>
+    <FilteredEmpty
+      message="Ningún cron coincide con los filtros."
+      onClear={clearFilters}
+      clearable={activeFilterCount > 0}
+    />
   )
 
   const rowContext: CronsRowContext = {

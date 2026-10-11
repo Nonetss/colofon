@@ -5,9 +5,9 @@ const UsersIcon = getIcon("admin", "users")
 const UserX = getIcon("identity", "userX")
 
 import { useCallback, useState } from "react"
-import { Text } from "@/components/shared/brand/typography"
 import type { DataTableFilter } from "@/components/shared/data-display/data-table-column-filter"
 import { DataTableView } from "@/components/shared/data-display/data-table-view"
+import { FilteredEmpty } from "@/components/shared/data-display/filtered-empty"
 import { InfiniteScrollSentinel } from "@/components/shared/data-display/infinite-scroll-sentinel"
 import { RowActions } from "@/components/shared/data-display/row-action-items"
 import { HeroCount } from "@/components/shared/layout/page-hero"
@@ -234,14 +234,10 @@ export function UsersContent() {
               scrollRef={setScrollContainer}
               filters={filters}
               emptyMessage={
-                <div className="grid justify-items-center gap-2">
-                  <Text tone="muted">
-                    Ningún usuario coincide con los filtros.
-                  </Text>
-                  <Button variant="outline" size="sm" onClick={clearFilters}>
-                    Limpiar filtros
-                  </Button>
-                </div>
+                <FilteredEmpty
+                  message="Ningún usuario coincide con los filtros."
+                  onClear={clearFilters}
+                />
               }
               renderControl={(user) => (
                 <RowActions
