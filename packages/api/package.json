@@ -16,7 +16,7 @@
   "scripts": {
     "build": "true",
     "check-types": "tsc --noEmit -p .",
-    "test": "bun test"
+    "test": "bun test --only-failures"
   },
   "dependencies": {
     "@nonete/auth": "workspace:*",

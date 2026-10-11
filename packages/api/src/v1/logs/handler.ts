@@ -54,15 +54,32 @@ function buildLogQL(input: LogsQueryInput): string {
   return query
 }
 
+/** Loki's `start` is inclusive and `end` exclusive, so a page continues
+ * from just after the cursor (asc) or up to it (desc). */
 function resolveTimeRange(input: LogsQueryInput): {
   start: string
   end: string
 } {
   const now = Date.now()
-  return {
-    start: input.from ?? new Date(now - 7 * 24 * 60 * 60 * 1000).toISOString(),
-    end: input.before ?? input.to ?? new Date(now).toISOString(),
+  const start =
+    input.from ?? new Date(now - 7 * 24 * 60 * 60 * 1000).toISOString()
+  const end = input.to ?? new Date(now).toISOString()
+  if (!input.cursor) return { start, end }
+  if (input.order === "asc") {
+    return { start: (BigInt(input.cursor) + 1n).toString(), end }
   }
+  return { start, end: input.cursor }
+}
+
+const lokiDirection = {
+  asc: "forward",
+  desc: "backward",
+} satisfies Record<LogsQueryInput["order"], string>
+
+function compareTimestamps(a: bigint, b: bigint): number {
+  if (a < b) return -1
+  if (a > b) return 1
+  return 0
 }
 
 async function fetchLokiRange(
@@ -75,7 +92,7 @@ async function fetchLokiRange(
   url.searchParams.set("start", start)
   url.searchParams.set("end", end)
   url.searchParams.set("limit", String(input.limit + 1))
-  url.searchParams.set("direction", "backward")
+  url.searchParams.set("direction", lokiDirection[input.order])
 
   let response: Response
   try {
@@ -137,20 +154,23 @@ export const logsHandler = {
 
     const body = await fetchLokiRange(input)
 
+    // Loki orders each stream, not the merged result.
+    const direction = input.order === "asc" ? 1 : -1
     const rows = body.data.result
       .flatMap(({ values }) =>
         values.map(([ts, line]) => ({ ts: BigInt(ts), line }))
       )
-      .sort((a, b) => (a.ts > b.ts ? -1 : a.ts < b.ts ? 1 : 0))
+      .sort((a, b) => direction * compareTimestamps(a.ts, b.ts))
 
-    const { page, hasMore } = paginate(rows, input.limit)
+    const { page, hasMore, lastRow } = paginate(rows, input.limit)
 
     const entries = page
       .map(({ ts, line }) => parseLogEntry(ts, line))
       .filter((entry): entry is LogEntry => entry !== undefined)
 
-    const nextCursor = hasMore ? (entries.at(-1)?.timestamp ?? null) : null
-
-    return { entries, nextCursor }
+    // The last row read, parsable or not, so a skipped line is never
+    // fetched again.
+    if (!hasMore || !lastRow) return { entries, nextCursor: null }
+    return { entries, nextCursor: lastRow.ts.toString() }
   },
 }
