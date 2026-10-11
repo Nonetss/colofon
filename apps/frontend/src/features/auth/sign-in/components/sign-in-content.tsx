@@ -61,7 +61,7 @@ export function SignInContent() {
             >
               STACK · Acceso
             </Text>
-            <CardTitle className="font-semibold text-lg tracking-tight">
+            <CardTitle className={textVariants({ role: "display" })}>
               Iniciar sesión
             </CardTitle>
             <CardDescription className={textVariants({ role: "meta" })}>

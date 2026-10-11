@@ -112,7 +112,9 @@ export function AppSidebar({ nameApp, currentPath, user }: AppSidebarProps) {
                   className="shrink-0"
                 />
                 <div className="grid min-w-0 flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">{displayName}</span>
+                  <Text variant="title" className="truncate">
+                    {displayName}
+                  </Text>
                   {email ? (
                     <Text variant="compact" tone="muted" className="truncate">
                       {email}

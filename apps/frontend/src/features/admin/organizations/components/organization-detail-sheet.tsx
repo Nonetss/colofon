@@ -70,7 +70,7 @@ export function OrganizationDetailSheet({
       >
         <SheetContent className="w-full gap-0 overflow-y-auto sm:max-w-lg">
           <SheetHeader>
-            <SheetTitle className="tracking-tight">
+            <SheetTitle className={textVariants({ role: "display" })}>
               {org?.name ?? "Organización"}
             </SheetTitle>
             <SheetDescription className={textVariants({ role: "compact" })}>

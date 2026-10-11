@@ -266,15 +266,16 @@ export function FacetOptionsList({
                   }
                   aria-label={`Incluir ${option.label}`}
                 />
-                <label
+                <Text
+                  as="label"
                   htmlFor={`${filter.key}-${option.value}`}
                   className={cn(
-                    "min-w-0 flex-1 cursor-pointer truncate text-sm",
+                    "min-w-0 flex-1 cursor-pointer truncate",
                     excluded && "text-destructive line-through"
                   )}
                 >
                   {option.label}
-                </label>
+                </Text>
                 {option.count !== undefined ? (
                   <Text variant="data" tone="muted" className="shrink-0">
                     {option.count}
@@ -316,9 +317,9 @@ export function FacetOptionsList({
             )
           })}
           {visible.length === 0 ? (
-            <li className="px-1.5 py-2 text-muted-foreground text-sm">
+            <Text as="li" tone="muted" className="px-1.5 py-2">
               Sin opciones
-            </li>
+            </Text>
           ) : null}
         </ul>
       </TooltipProvider>

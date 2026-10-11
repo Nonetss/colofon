@@ -107,14 +107,15 @@ export function CommentItem({ comment, entity, depth = 0 }: CommentItemProps) {
               }}
             />
           ) : (
-            <p
+            <Text
+              as="p"
               className={cn(
-                "mt-1 whitespace-pre-wrap wrap-break-word text-sm leading-relaxed",
+                "mt-1 whitespace-pre-wrap wrap-break-word leading-relaxed",
                 isDeleted && "italic text-muted-foreground"
               )}
             >
               {isDeleted ? "Comentario eliminado" : comment.content}
-            </p>
+            </Text>
           )}
 
           {!editing ? (

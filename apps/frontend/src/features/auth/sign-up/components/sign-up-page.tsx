@@ -56,7 +56,7 @@ export function SignUpPage() {
             >
               NONETE · Registro
             </Text>
-            <CardTitle className="font-semibold text-lg tracking-tight">
+            <CardTitle className={textVariants({ role: "display" })}>
               Crear cuenta
             </CardTitle>
             <CardDescription className={textVariants({ role: "meta" })}>

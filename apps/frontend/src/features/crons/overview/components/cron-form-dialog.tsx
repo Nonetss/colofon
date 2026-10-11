@@ -291,12 +291,9 @@ export function CronFormDialog({
                     checked={enabled}
                     onCheckedChange={(checked) => setEnabled(checked === true)}
                   />
-                  <label
-                    htmlFor="cron-enabled"
-                    className="text-sm text-muted-foreground"
-                  >
+                  <Text as="label" htmlFor="cron-enabled" tone="muted">
                     Habilitado al crear
-                  </label>
+                  </Text>
                 </div>
               ) : null}
             </div>
