@@ -29,6 +29,7 @@ import {
   cronJobDefinition,
 } from "@/features/crons/overview/definitions/cron-job.definition"
 import { useCronHandlers } from "@/features/crons/overview/hooks/use-cron-handlers"
+import { useCronJobEvents } from "@/features/crons/overview/hooks/use-cron-job-events"
 import { useCronUsersByIds } from "@/features/crons/overview/hooks/use-cron-users-by-ids"
 import {
   availableTags,
@@ -50,6 +51,7 @@ type StatusFilter = "all" | "enabled" | "disabled"
 export function CronsContent() {
   const { data: jobs = [], isPending, isError, refetch } = useCronJobs()
   const { data: handlers = [] } = useCronHandlers()
+  useCronJobEvents()
   const removeCron = useCronRemove()
   const session = authClient.useSession()
   const isAdmin = !!isAdminUser(session.data?.user)

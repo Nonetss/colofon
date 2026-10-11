@@ -1,43 +1,7 @@
-import { ORPCError } from "@orpc/client"
 import { useQueryClient } from "@tanstack/react-query"
 import { useEffect } from "react"
+import { keepConnected } from "@/lib/event-stream"
 import { client, orpc } from "@/lib/orpc"
-
-const RECONNECT_BASE_DELAY_MS = 1_000
-const RECONNECT_MAX_DELAY_MS = 30_000
-
-/** Errors a retry can't fix: the job is gone or the session is. */
-const PERMANENT_ERROR_CODES = new Set([
-  "NOT_FOUND",
-  "UNAUTHORIZED",
-  "FORBIDDEN",
-])
-
-function reconnectDelay(failures: number): number {
-  return Math.min(
-    RECONNECT_BASE_DELAY_MS * 2 ** failures,
-    RECONNECT_MAX_DELAY_MS
-  )
-}
-
-function isPermanentError(error: unknown): boolean {
-  return error instanceof ORPCError && PERMANENT_ERROR_CODES.has(error.code)
-}
-
-/** Resolves after `ms`, or right away once `signal` aborts. */
-function wait(ms: number, signal: AbortSignal): Promise<void> {
-  return new Promise((resolve) => {
-    const timer = setTimeout(resolve, ms)
-    signal.addEventListener(
-      "abort",
-      () => {
-        clearTimeout(timer)
-        resolve()
-      },
-      { once: true }
-    )
-  })
-}
 
 /**
  * Keeps the job (lastRunAt/nextRunAt), the run pulse and the run history live
@@ -67,25 +31,20 @@ export function useCronRunEvents(jobId: string) {
       })
     }
 
-    const listen = async () => {
-      let failures = 0
-      while (!signal.aborted) {
-        try {
-          const events = await client.v1.cron.watchRuns(
-            { jobId },
-            { signal, context: { read: true } }
-          )
-          for await (const event of events) {
-            if (event.type === "subscribed") failures = 0
-            refresh()
-          }
-        } catch (error) {
-          if (signal.aborted || isPermanentError(error)) return
+    // A job or session that is gone ends the loop: nothing left to watch.
+    const listen = () =>
+      keepConnected(signal, async (connected) => {
+        const events = await client.v1.cron.watchRuns(
+          { jobId },
+          { signal, context: { read: true } }
+        )
+        for await (const event of events) {
+          if (event.type === "subscribed") connected()
+          refresh()
         }
-        await wait(reconnectDelay(failures), signal)
-        failures += 1
-      }
-    }
+        // The backend ended the stream (shutdown): reopen it.
+        return "reconnect"
+      }).catch(() => {})
 
     void listen()
     return () => controller.abort()
