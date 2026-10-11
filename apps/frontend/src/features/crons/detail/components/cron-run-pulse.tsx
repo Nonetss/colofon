@@ -1,6 +1,11 @@
+import { barY, defineChart } from "@tanstack/charts"
+import { scaleBand } from "@tanstack/charts/scales/band"
+import { scaleLinear } from "@tanstack/charts/scales/linear"
+import { tooltip } from "@tanstack/charts/tooltip"
+import { useMemo } from "react"
 import { Text } from "@/components/shared/brand/typography"
 import { MetadataCell } from "@/components/shared/data-display/metadata-cell"
-import { Hint } from "@/components/shared/feedback/hint"
+import { Chart } from "@/components/ui/chart"
 import {
   buildRunPulse,
   type PulseBar,
@@ -8,17 +13,22 @@ import {
 } from "@/features/crons/detail/model/run-pulse"
 import type { CronRunStatus } from "@/features/crons/shared"
 import { cronRunStatusLabels } from "@/features/crons/shared"
+import { useIsMobile } from "@/hooks/use-mobile"
 import { formatDateTime, formatDurationMs } from "@/lib/format"
 import { cn } from "@/lib/utils"
 
 /** Bars drawn below `md`, so each mark stays legible at phone width. */
 const MOBILE_BAR_COUNT = 24
 
-const barTone: Record<CronRunStatus, string> = {
-  success: "bg-foreground/30",
-  failed: "bg-destructive",
-  skipped: "bg-muted-foreground/45",
-  running: "bg-primary",
+/** Height of the bar strip in pixels. */
+const PULSE_HEIGHT = 56
+
+/** Status paints, shared by the chart's bars and the legend swatches. */
+const statusFill: Record<CronRunStatus, string> = {
+  success: "color-mix(in oklab, var(--foreground) 30%, transparent)",
+  failed: "var(--destructive)",
+  skipped: "color-mix(in oklab, var(--muted-foreground) 45%, transparent)",
+  running: "var(--primary)",
 }
 
 const legend: { status: CronRunStatus; swatch: string }[] = [
@@ -36,45 +46,56 @@ function plural(count: number, one: string, many: string) {
   return `${count} ${count === 1 ? one : many}`
 }
 
-function PulseBarMark({
-  bar,
-  hideOnMobile,
-}: {
-  bar: PulseBar
-  hideOnMobile: boolean
-}) {
-  const duration =
-    bar.durationMs === null ? null : formatDurationMs(bar.durationMs)
-  return (
-    <Hint
-      label={[
-        cronRunStatusLabels[bar.status],
-        formatDateTime(bar.startedAt, { includeSeconds: true }),
-        duration,
-      ]
-        .filter(Boolean)
-        .join(" · ")}
-    >
-      <span
-        className={cn(
-          "block min-w-0 flex-1 rounded-[1px]",
-          barTone[bar.status],
-          hideOnMobile && "max-md:hidden"
-        )}
-        style={{ height: `${bar.heightPct}%` }}
-      />
-    </Hint>
-  )
+/** "Correcta · 10/10/2026 12:00:03 · 1.2 s"; no duration while running. */
+function pulseBarLabel(bar: PulseBar) {
+  const parts = [
+    cronRunStatusLabels[bar.status],
+    formatDateTime(bar.startedAt, { includeSeconds: true }),
+  ]
+  if (bar.durationMs !== null) parts.push(formatDurationMs(bar.durationMs))
+  return parts.join(" · ")
+}
+
+/** The bars the strip draws: all of them, or the newest few on a phone. */
+function visiblePulseBars(bars: PulseBar[], isMobile: boolean) {
+  if (!isMobile) return bars
+  return bars.slice(-MOBILE_BAR_COUNT)
+}
+
+/** One bar per run, oldest to newest: height = `heightPct`, paint = status. */
+function pulseChart(bars: PulseBar[]) {
+  return defineChart({
+    marks: [
+      barY(bars, {
+        x: "id",
+        y: "heightPct",
+        fill: (bar) => statusFill[bar.status],
+        inset: 1.5,
+        radius: 1,
+      }),
+    ],
+    scales: {
+      x: { scale: scaleBand, axis: false },
+      y: { scale: scaleLinear().domain([0, 100]), axis: false },
+    },
+    focus: "nearest-x",
+    tooltip: { use: tooltip, format: (point) => pulseBarLabel(point.datum) },
+  })
 }
 
 /** The cron detail page's "Pulso" section: one bar per recent run (height =
  *  duration, tone = status) plus success rate, streak and p50/p95. */
 export function CronRunPulse({ runs }: { runs: PulseRun[] }) {
-  const { bars, stats } = buildRunPulse(runs)
+  const isMobile = useIsMobile()
+  const { bars, stats } = useMemo(() => buildRunPulse(runs), [runs])
+  const visibleBars = useMemo(
+    () => visiblePulseBars(bars, isMobile),
+    [bars, isMobile]
+  )
+  const definition = useMemo(() => pulseChart(visibleBars), [visibleBars])
   const { counts } = stats
-  const oldest = bars[0]
-  const oldestOnMobile = bars[Math.max(0, bars.length - MOBILE_BAR_COUNT)]
-  const newest = bars.at(-1)
+  const oldest = visibleBars[0]
+  const newest = visibleBars.at(-1)
   const summary = [
     plural(stats.total, "ejecución", "ejecuciones"),
     plural(counts.success, "correcta", "correctas"),
@@ -107,7 +128,8 @@ export function CronRunPulse({ runs }: { runs: PulseRun[] }) {
             >
               <span
                 aria-hidden
-                className={cn("rounded-[1px]", swatch, barTone[status])}
+                className={cn("rounded-[1px]", swatch)}
+                style={{ background: statusFill[status] }}
               />
               {cronRunStatusLabels[status]}
             </Text>
@@ -117,25 +139,14 @@ export function CronRunPulse({ runs }: { runs: PulseRun[] }) {
 
       <div className="flex flex-col rounded-xl border bg-card/40 md:flex-row">
         <div className="flex min-w-0 flex-1 flex-col gap-2 p-4 sm:p-5">
-          <div
-            role="img"
-            aria-label={summary}
-            className="flex h-14 items-end gap-[3px]"
-          >
-            {bars.map((bar, index) => (
-              <PulseBarMark
-                key={bar.id}
-                bar={bar}
-                hideOnMobile={index < bars.length - MOBILE_BAR_COUNT}
-              />
-            ))}
-          </div>
+          <Chart
+            definition={definition}
+            ariaLabel={summary}
+            height={PULSE_HEIGHT}
+          />
           <div className="flex justify-between">
-            <Text variant="data" tone="muted" className="max-md:hidden">
+            <Text variant="data" tone="muted">
               {formatDateTime(oldest?.startedAt ?? null)}
-            </Text>
-            <Text variant="data" tone="muted" className="md:hidden">
-              {formatDateTime(oldestOnMobile?.startedAt ?? null)}
             </Text>
             <Text variant="data" tone="muted">
               {formatDateTime(newest?.startedAt ?? null)}
