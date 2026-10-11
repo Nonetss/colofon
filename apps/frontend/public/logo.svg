@@ -1,0 +1,17 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  width="64"
+  height="64"
+  viewBox="0 0 64 64"
+>
+  <title>STACK</title>
+  <style>
+    .stack-ink { fill: var(--logo-ink, #1f1e1c); }
+    @media (prefers-color-scheme: dark) {
+      .stack-ink { fill: var(--logo-ink, #f1efe8); }
+    }
+  </style>
+  <rect class="stack-ink" x="6" y="42" width="36" height="12" rx="3" />
+  <rect class="stack-ink" x="14" y="26" width="36" height="12" rx="3" />
+  <rect x="22" y="10" width="36" height="12" rx="3" fill="#d97757" />
+</svg>
