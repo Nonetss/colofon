@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query"
+import { adminUserKeys } from "@/lib/admin-user-keys"
 import { authClient } from "@/lib/auth-client"
 
 /** Batch lookup for list rows. Prefer `getUser` over `listUsers`+`in`: the
@@ -7,7 +8,7 @@ export function useCronUsersByIds(userIds: string[]) {
   const uniqueIds = [...new Set(userIds)].sort()
 
   const query = useQuery({
-    queryKey: ["admin", "users", "byIds", uniqueIds],
+    queryKey: adminUserKeys.byIds(uniqueIds),
     queryFn: async () => {
       const users = await Promise.all(
         uniqueIds.map(async (id) => {

@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query"
+import { adminUserKeys } from "@/lib/admin-user-keys"
 import { authClient, unwrapAuth } from "@/lib/auth-client"
 
 async function countUsers(filter?: {
@@ -24,7 +25,7 @@ async function countUsers(filter?: {
 
 export function useAdminStats() {
   return useQuery({
-    queryKey: ["admin", "stats"],
+    queryKey: adminUserKeys.stats(),
     queryFn: async () => {
       const [total, admins, banned] = await Promise.all([
         countUsers(),

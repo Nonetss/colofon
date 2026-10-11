@@ -1,8 +1,14 @@
-import { useHydratedQuery } from "@/hooks/use-hydrated-query"
+import { skipToken, useQuery } from "@tanstack/react-query"
 import { orpc } from "@/lib/orpc"
 
 /** How many of the latest runs the pulse strip summarises. */
 export const CRON_RUN_PULSE_WINDOW = 48
+
+/** The pulse's input, or `skipToken` (no request) until there is a job id. */
+function pulseInput(jobId: string | null) {
+  if (jobId === null) return skipToken
+  return { jobId, limit: CRON_RUN_PULSE_WINDOW }
+}
 
 /**
  * Latest runs of a job, unfiltered, for the pulse strip. Kept apart from the
@@ -10,12 +16,4 @@ export const CRON_RUN_PULSE_WINDOW = 48
  * It doesn't poll: `useCronRunEvents` refetches it when a run changes.
  */
 export const useCronRunPulse = (jobId: string | null) =>
-  useHydratedQuery({
-    ...orpc.v1.cron.listRuns.queryOptions({
-      input: {
-        jobId: jobId ?? "00000000-0000-0000-0000-000000000000",
-        limit: CRON_RUN_PULSE_WINDOW,
-      },
-    }),
-    enabled: jobId !== null,
-  })
+  useQuery(orpc.v1.cron.listRuns.queryOptions({ input: pulseInput(jobId) }))

@@ -1,10 +1,10 @@
+import { useQuery } from "@tanstack/react-query"
 import { useMemo } from "react"
 import {
   type EntityIconRef,
   type EntityIconValue,
   entityIconKey,
 } from "@/features/entity-icons/picker/model/types"
-import { useHydratedQuery } from "@/hooks/use-hydrated-query"
 import { orpc } from "@/lib/orpc"
 
 /** Prefix shared by every batched icon query, for cache updates. */
@@ -41,7 +41,7 @@ export function useEntityIcons(entities: EntityIconRef[]) {
     entityType,
     entityId,
   }))
-  const query = useHydratedQuery({
+  const query = useQuery({
     queryKey: orpc.v1.entityIcon.getMany.queryKey({
       input: { entities: refs },
     }),

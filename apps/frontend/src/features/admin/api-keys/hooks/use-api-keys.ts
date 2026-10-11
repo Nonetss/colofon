@@ -1,13 +1,13 @@
+import { useQuery } from "@tanstack/react-query"
 import type {
   ApiKey,
   ApiKeyListItem,
 } from "@/features/admin/api-keys/model/types"
-import { useHydratedQuery } from "@/hooks/use-hydrated-query"
 import { useResourceMutation } from "@/hooks/use-resource-mutation"
 import { orpc } from "@/lib/orpc"
 
 export const useApiKeysList = () => {
-  return useHydratedQuery(orpc.v1.apiKey.list.queryOptions())
+  return useQuery(orpc.v1.apiKey.list.queryOptions())
 }
 
 const listKey = orpc.v1.apiKey.list.queryKey()

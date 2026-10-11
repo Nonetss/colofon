@@ -1,7 +1,7 @@
-import { useHydratedQuery } from "@/hooks/use-hydrated-query"
+import { useQuery } from "@tanstack/react-query"
 import { orpc } from "@/lib/orpc"
 
 /** Whether optional sign-in methods (e.g. SSO) are configured on the server. */
 export function useAuthConfig() {
-  return useHydratedQuery(orpc.v1.authConfig.get.queryOptions())
+  return useQuery(orpc.v1.authConfig.get.queryOptions())
 }

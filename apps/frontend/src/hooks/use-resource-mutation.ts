@@ -44,7 +44,8 @@ export interface UseResourceMutationOptions<TInput, TOutput, TList> {
  *  - snapshot the list and apply an optimistic update
  *  - rollback + error toast on failure
  *  - success toast on success
- *  - invalidate the list (and any extra keys) on settle
+ *  - invalidate the list (and any extra keys) on settle, and stay pending
+ *    until they have refetched
  *
  * Designed to be wrapped by per-resource hooks (`useDeviceCreate`, etc.) that
  * pass the right oRPC mutation fn and list key. Returns the underlying
@@ -82,11 +83,12 @@ export function useResourceMutation<TInput, TOutput, TList = unknown>(
     onSuccess: () => {
       notifySuccess(messages.success)
     },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: listKey })
-      for (const key of extraInvalidate ?? []) {
-        queryClient.invalidateQueries({ queryKey: key })
-      }
-    },
+    // Returned, so the mutation stays pending until the lists have refetched.
+    onSettled: () =>
+      Promise.all(
+        [listKey, ...(extraInvalidate ?? [])].map((queryKey) =>
+          queryClient.invalidateQueries({ queryKey })
+        )
+      ),
   })
 }

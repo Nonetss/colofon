@@ -1,10 +1,10 @@
+import { skipToken, useQuery } from "@tanstack/react-query"
 import type {
   OrganizationCustomRole,
   OrganizationDetail,
   OrganizationInvitation,
   OrganizationMember,
 } from "@/features/admin/organizations/model/types"
-import { useHydratedQuery } from "@/hooks/use-hydrated-query"
 import { useResourceMutation } from "@/hooks/use-resource-mutation"
 import { orpc } from "@/lib/orpc"
 
@@ -13,13 +13,18 @@ const orgListKey = orpc.v1.organization.list.queryKey()
 const detailKey = (organizationId: string) =>
   orpc.v1.organization.get.queryKey({ input: { id: organizationId } })
 
+/** The detail's input, or `skipToken` (no request) until one is open. */
+function detailInput(organizationId: string | null) {
+  if (!organizationId) return skipToken
+  return { id: organizationId }
+}
+
 export const useOrganizationDetail = (organizationId: string | null) =>
-  useHydratedQuery({
-    ...orpc.v1.organization.get.queryOptions({
-      input: { id: organizationId ?? "" },
-    }),
-    enabled: !!organizationId,
-  })
+  useQuery(
+    orpc.v1.organization.get.queryOptions({
+      input: detailInput(organizationId),
+    })
+  )
 
 type AddMemberInput = {
   organizationId: string

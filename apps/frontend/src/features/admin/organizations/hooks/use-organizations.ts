@@ -1,10 +1,10 @@
+import { useQuery } from "@tanstack/react-query"
 import type { Organization } from "@/features/admin/organizations/model/types"
-import { useHydratedQuery } from "@/hooks/use-hydrated-query"
 import { useResourceMutation } from "@/hooks/use-resource-mutation"
 import { orpc } from "@/lib/orpc"
 
 export const useOrganizationsList = () =>
-  useHydratedQuery(orpc.v1.organization.list.queryOptions())
+  useQuery(orpc.v1.organization.list.queryOptions())
 
 const listKey = orpc.v1.organization.list.queryKey()
 

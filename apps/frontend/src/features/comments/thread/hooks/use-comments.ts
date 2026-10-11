@@ -1,6 +1,5 @@
-import { keepPreviousData } from "@tanstack/react-query"
+import { keepPreviousData, skipToken, useQuery } from "@tanstack/react-query"
 import type { CommentEntityRef } from "@/features/comments/thread/model/types"
-import { useHydratedQuery } from "@/hooks/use-hydrated-query"
 import { orpc } from "@/lib/orpc"
 
 export function commentsListKey(entity: CommentEntityRef) {
@@ -45,16 +44,16 @@ async function fetchCommentCounts(entities: CommentEntityRef[]) {
   return results.flat()
 }
 
+/** The thread's input, or `skipToken` (no request) until there is an entity. */
+function commentsInput(entity: CommentEntityRef | null) {
+  if (entity === null) return skipToken
+  return { entityType: entity.entityType, entityId: entity.entityId }
+}
+
 export function useComments(entity: CommentEntityRef | null) {
-  return useHydratedQuery({
-    ...orpc.v1.comment.list.queryOptions({
-      input: {
-        entityType: entity?.entityType ?? "",
-        entityId: entity?.entityId ?? "",
-      },
-    }),
-    enabled: entity !== null,
-  })
+  return useQuery(
+    orpc.v1.comment.list.queryOptions({ input: commentsInput(entity) })
+  )
 }
 
 /**
@@ -63,7 +62,7 @@ export function useComments(entity: CommentEntityRef | null) {
  * the previous counts stay on screen meanwhile instead of dropping to zero.
  */
 export function useCommentCounts(entities: CommentEntityRef[]) {
-  return useHydratedQuery({
+  return useQuery({
     queryKey: orpc.v1.comment.counts.queryKey({ input: { entities } }),
     queryFn: () => fetchCommentCounts(entities),
     enabled: entities.length > 0,

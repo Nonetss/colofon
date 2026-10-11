@@ -49,7 +49,8 @@ export const client: AppRouterContextClient<RpcClientContext> =
 
 /**
  * TanStack Query utils generated from the oRPC router. Use in components via
- * `useHydratedQuery(orpc.someProcedure.queryOptions())` /
+ * `useQuery(orpc.someProcedure.queryOptions())` /
+ * `useInfiniteQuery(orpc.someProcedure.infiniteOptions())` /
  * `useMutation(orpc.someProcedure.mutationOptions())`. A direct read inside a
  * custom `queryFn` passes `{ context: { read: true } }` to `.call()`.
  */

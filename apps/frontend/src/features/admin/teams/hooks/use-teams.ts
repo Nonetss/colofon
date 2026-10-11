@@ -1,5 +1,5 @@
+import { skipToken, useQuery } from "@tanstack/react-query"
 import type { Team, TeamMember } from "@/features/admin/teams/model/types"
-import { useHydratedQuery } from "@/hooks/use-hydrated-query"
 import { useResourceMutation } from "@/hooks/use-resource-mutation"
 import { orpc } from "@/lib/orpc"
 
@@ -9,7 +9,7 @@ const teamsListKey = orpc.v1.organization.listTeams.queryKey({
 const orgListKey = orpc.v1.organization.list.queryKey()
 
 export const useTeamsList = () =>
-  useHydratedQuery(
+  useQuery(
     orpc.v1.organization.listTeams.queryOptions({
       input: { organizationId: undefined },
     })
@@ -63,13 +63,18 @@ export const useTeamDelete = () =>
 const teamMembersKey = (teamId: string) =>
   orpc.v1.organization.listTeamMembers.queryKey({ input: { teamId } })
 
+/** The members' input, or `skipToken` (no request) until a team is open. */
+function teamMembersInput(teamId: string | null) {
+  if (!teamId) return skipToken
+  return { teamId }
+}
+
 export const useTeamMembersList = (teamId: string | null) =>
-  useHydratedQuery({
-    ...orpc.v1.organization.listTeamMembers.queryOptions({
-      input: { teamId: teamId ?? "" },
-    }),
-    enabled: !!teamId,
-  })
+  useQuery(
+    orpc.v1.organization.listTeamMembers.queryOptions({
+      input: teamMembersInput(teamId),
+    })
+  )
 
 type AddTeamMemberInput = { teamId: string; userId: string }
 type RemoveTeamMemberOutput = { success: boolean }

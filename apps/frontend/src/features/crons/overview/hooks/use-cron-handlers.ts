@@ -1,5 +1,5 @@
-import { useHydratedQuery } from "@/hooks/use-hydrated-query"
+import { useQuery } from "@tanstack/react-query"
 import { orpc } from "@/lib/orpc"
 
 export const useCronHandlers = () =>
-  useHydratedQuery(orpc.v1.cron.handlers.queryOptions())
+  useQuery(orpc.v1.cron.handlers.queryOptions())
