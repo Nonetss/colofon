@@ -29,7 +29,7 @@ Sizes (min-width of the container): `@3xs` 16rem · `@2xs` 18rem · `@xs` 20rem 
 
 - **An element cannot query itself.** Put `@container` on the parent whose width is the space the layout owns, and the responsive classes on the child.
 - Components that are a grid at their root wrap it: `<div className="@container min-w-0"><div className="grid …">`. Keep `className` targeting the grid when callers already style it (`MetadataList`) or the wrapper when callers only position the block (`SurfaceCardGrid`).
-- Row layouts query the list: `EntityList` puts `@container` on the `ul`, rows use `@2xl:` variants.
+- Row layouts query the list: `DataTableView` makes its box a named container (`@container/table`) and switches between the table and its compact rows at `@4xl/table:`; `EntityList` puts `@container` on the `ul`, rows use `@2xl:` variants.
 - Shared components own their container, so callers never add another one around them.
 
 ## Overrides through `className`
@@ -48,4 +48,4 @@ Keep full literal strings in lookups (`{ 2: "grid-cols-1 @lg:grid-cols-2" }`). T
 
 ## Components that already own a container
 
-`SurfaceCardGrid`, `MetadataList` / `MetadataDefinitionList`, `CollapsibleFilters` (field grid), `EntityList` (rows and metadata), admin session rows, `ThemeModeSelector`, `CronScheduleBuilder`, `ui/card` (`@container/card-header`).
+`SurfaceCardGrid`, `MetadataList` / `MetadataDefinitionList`, `CollapsibleFilters` (field grid), `DataTableView` (table vs compact layout, compact field grid), `EntityList` (rows and metadata), `ThemeModeSelector`, `CronScheduleBuilder`, `ui/card` (`@container/card-header`).

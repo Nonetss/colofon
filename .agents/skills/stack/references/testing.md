@@ -99,7 +99,11 @@ If an awaited chain has nothing queued, the test fails with the operation's name
 
 ## Unit suites — `bun run test`
 
-`turbo test` runs every workspace `test` script and exits non-zero on any failure. Three workspaces have one, each run with `bun test`: `packages/api`, `packages/cron` and `apps/frontend`. Every suite follows the same rules:
+`turbo test --log-order=grouped --ui=stream` runs every workspace `test` script and exits non-zero on any failure. Three workspaces have one, each run with `bun test --only-failures`: `packages/api`, `packages/cron` and `apps/frontend`.
+
+The run is kept quiet so a green run is a few lines per suite: Turbo prints each suite's output as one block instead of interleaving them, and `bun test` hides passing tests (failures still print with their diff, then the pass/fail counts). Running `bun test` directly inside a workspace lists every test.
+
+Every suite follows the same rules:
 
 - **Hermetic.** No database connection, network call or running service (backend, gateway, Postgres, Loki). A suite passes with nothing running and no `.env`. Code that queries the database runs against the fake database (below), `fetch` is replaced with `spyOn(globalThis, "fetch")`, and anything that depends on the clock or timezone runs under `TZ=UTC` (the `bun test` default) with `setSystemTime` or `jest.useFakeTimers()` from `bun:test`.
 - **Tests live in `tests/` at the workspace root**, outside the runtime source (`src/`). Each workspace's `bunfig.toml` limits discovery to `tests/`. Tests are type-checked and linted with the rest of the workspace.
@@ -158,4 +162,4 @@ No unit suite in `apps/backend` or in the other `packages/*`, and no integration
 - a preload if the workspace imports `@nonete/env/server` or needs a DOM;
 - a `"#tests/*"` import entry in a package;
 - `tests/`;
-- a `"test": "bun test"` script.
+- a `"test": "bun test --only-failures"` script.

@@ -18,10 +18,10 @@ Product text goes through the `Text` component (`apps/frontend/src/components/sh
 
 | Role | Use for |
 |---|---|
-| `display` | The page title (`PageHero`) |
+| `display` | The page title (`PageHero`) and overlay titles (`DialogTitle`, `SheetTitle`, the auth `CardTitle`) through `textVariants` |
 | `headline` | Tile and card titles (`SurfaceCard`) |
 | `title` | Name of a list row, picker result or selected entity, at body size |
-| `body` | Default prose |
+| `body` | Default prose (the default role): empty-state messages, checkbox labels, comment text, descriptions inside cards |
 | `meta` | Secondary copy: descriptions, hints, counts, inline errors (`tone="destructive"`) |
 | `meta-sm` | Sentence-case 11px metadata inside dense rows (suggestion details, port annotations) |
 | `label` | Micro-caps section and field labels (`dt`, section `h2`, badges such as "Error") |
@@ -30,7 +30,7 @@ Product text goes through the `Text` component (`apps/frontend/src/components/sh
 | `data` | Monospace values: cron expressions, ids, IPs, timestamps, JSON, handler keys |
 | `compact` | Any other `text-xs` copy: menu item descriptions, dense list secondary lines, dialog/sheet descriptions, footers |
 
-Tones: `default`, `muted`, `primary`, `destructive`. `as` picks the element (`span` by default; `p`, `div`, `label`, `code`, `dt`, `dd`, `h1`–`h4`, `ol`, `li`). Plain `text-sm` copy (row titles, prose inside cards) can stay as utilities; `MetadataCell` values use `body`.
+Tones: `default`, `muted`, `primary`, `destructive`. `as` picks the element (`span` by default; `p`, `div`, `label`, `code`, `dt`, `dd`, `h1`–`h4`, `ol`, `li`). Plain `text-sm` copy in a text element is `body` too (`<Text as="p" tone="muted">`), never `text-sm text-muted-foreground`; only a container that sets the size for mixed children (a button, a row with controls) keeps `text-sm`. `MetadataCell` values use `body`, and a tone-only span inside one is `<Text tone="muted">`.
 
 ## Rules
 

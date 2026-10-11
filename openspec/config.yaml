@@ -36,9 +36,13 @@ context: |
   (business logic, exported as <feature>Handler, methods take a single
   { context, input? } options object), and router.ts (oRPC wiring only:
   .meta(openapi(), cronMeta()?) -> .input() -> .output() ->
-  .handler() calling the matching handler method). A new feature is a new
-  folder plus one new key in that version's src/<version>/router.ts
-  appRouter (e.g. apiKey: apiKeyRouter).
+  .handler() calling the matching handler method). A feature that streams
+  events also has events.ts: its one in-memory publisher and every event it
+  carries, with the stream's event union in output.ts, the async-generator
+  method in handler.ts and a GET route without cron meta in router.ts
+  (stack skill, references/api/layering.md "Event streams"). A new feature
+  is a new folder plus one new key in that version's
+  src/<version>/router.ts appRouter (e.g. apiKey: apiKeyRouter).
   The package-root router.ts nests each version's router under its own key
   (v1: v1Router) on the top-level appRouter — this is what makes the
   version segment appear automatically in client calls

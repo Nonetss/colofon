@@ -14,8 +14,9 @@ The package root holds infrastructure shared by every API version:
 | `permissionProcedure(resource, action)` | organization-scoped permission via Better Auth `hasPermission` in the session's active organization; global admins bypass it. Resources/actions come from `appStatements` in `packages/auth/src/permissions.ts` |
 | `cronProcedure` | reachable only from the in-process scheduler |
 
-- `shared/` holds cross-feature helpers: `pagination.ts` (`paginate`, `paginateWithTotal`, keyset cursor codec, `paginationLimit`/`paginationCursor`), `search.ts` (inputs and `likePattern` for `search` procedures, see `references/api/free-text-search.md`), `dates.ts` (`toIso`, `toIsoOrNull`), `not-found.ts` (`assertFound`), `procedure-docs.ts` (a procedure's OpenAPI summary/description/tags and input JSON Schema, used by cron discovery). `lib/permissions.ts` wraps the organization permission check.
+- `shared/` holds cross-feature helpers: `pagination.ts` (`paginate`, `paginateWithTotal`, keyset cursor codec, `paginationLimit`/`paginationCursor`, the `sortedCursor` codec and `sortedPaginationCursor`), `sorted-keyset.ts` (`cursorFor` plus `sortedKeyset` re-exported from `@nonete/db/sorted-keyset`: caller-ordered keyset pages, `references/api/sorted-lists.md`), `search.ts` (inputs and `likePattern` for `search` procedures, see `references/api/free-text-search.md`), `dates.ts` (`toIso`, `toIsoOrNull`), `not-found.ts` (`assertFound`), `procedure-docs.ts` (a procedure's OpenAPI summary/description/tags and input JSON Schema, used by cron discovery). `lib/permissions.ts` wraps the organization permission check.
 - `router.ts` assembles the top-level `appRouter` by nesting each version's router under its own key (`v1: v1Router`) — the only place a new version gets wired in.
+- `lifecycle.ts` exports `closeStreams()`, which the backend's shutdown calls before the HTTP drain. It calls each version's own `src/<version>/lifecycle.ts`, which ends that version's streams that outlive their requests (today the `v1.cron.watchRuns`/`watchJobs` watchers). A feature that adds such a stream registers its closer in its version's `lifecycle.ts`, never in `apps/backend`. A new version adds one call here.
 
 Procedure metadata (`cron`): see `references/cron.md`.
 
@@ -35,11 +36,28 @@ Everything version-specific lives under `src/<version>/` (currently only `src/v1
 - `<feature>/output.ts` — zod response schemas, exported as `<feature>Output` keyed by method.
 - `<feature>/handler.ts` — business logic, exported as `<feature>Handler` keyed by method. Each method takes a single options object, `async ({ context, input }: { context: Context; input?: z.infer<typeof <feature>Input.<method>> }) => ...` (omit what it doesn't use) — no other param shapes. Calls into `@nonete/auth` / `@nonete/db` etc. live here, never in the router.
 - `<feature>/router.ts` — oRPC wiring only, exported as `<feature>Router`: builder → `.meta(openapi({ summary, description, tags, method, successStatus? }), cronMeta(...)?)` → `.input(...)` (if any, called once: v2 stacks repeated `.input`/`.output` calls) → `.output(...)` → `.handler(({ context, input }) => featureHandler.method({ context, input }))`. Choosing `method` and `successStatus`: `references/api/http-semantics.md`.
+- `<feature>/events.ts` — only in a feature that streams events: its publisher and every event it carries. See "Event streams" below.
 - `src/<version>/router.ts` nests each feature's router under its own key (`apiKey: apiKeyRouter`, `health: healthRouter`).
 
 Some features also carry feature-specific modules beside those four (`cron/discovery.ts`, `cron/events.ts`, `cron/runtime.ts`, `entity-icon/targets.ts`).
 
 OpenAPI `summary`/`description`/`.describe()` texts are English.
+
+## Event streams
+
+A feature whose procedures push events over SSE keeps the same file split and adds `events.ts`. Example: `src/v1/cron/events.ts`.
+
+- `<feature>/events.ts` — the feature's single in-memory `MemoryPublisher` (`@orpc/publisher/memory`) and the type of every event it carries, in one `<Feature>Events` map. Fixed names for global events (`"run-changed"`, `"list-changed"`). Template-literal channel families for scoped ones (``[channel: `job:${string}`]: JobMessage``), so each family keeps its own payload type and a subscriber can only reach its own channel. The module also holds:
+  - **Publish functions** (`publishCronRunChange`, `publishCronJobsChange`), called by whatever produces the change: a handler, the scheduler wiring in `apps/backend`, a registry. Never by a router.
+  - **Subscribe helpers.** Pass `maxBufferedEvents: Number.POSITIVE_INFINITY` when every event matters (lifecycle edges): the publisher's default of 100 drops the oldest events for a slow reader.
+  - **A shutdown `AbortController`** combined with the caller's signal, and a `close<Feature>Events()` that aborts it, registered in `src/<version>/lifecycle.ts` (see the root files above).
+  - **State on `globalThis`**, so `bun --hot` doesn't leave publishers and subscribers on different instances.
+  - Everything is in memory, which assumes a single backend instance.
+- `<feature>/output.ts` — each stream's event union as a `z.discriminatedUnion("type", …)` whose members carry `.describe()`, exported next to the method's `eventIterator(<union>)` output. When events are not replayed, the first event is `subscribed` (optionally with a snapshot), so the client refetches on it.
+- `<feature>/handler.ts` — the stream as an `async function*` method. It subscribes before yielding its first event: the publisher registers listeners synchronously, so a snapshot taken right after, with no `await` in between, can't miss a change. It ends quietly when the caller leaves or the backend shuts down: the subscription throws the abort reason, which is caught and returned on, not rethrown.
+- `<feature>/router.ts` — a read is declared `GET`, with no `cronMeta`. The `description` says what each event means and whether anything is replayed.
+- Tests live in `packages/api/tests/v1/<feature>/` like any handler's. A test that calls the shutdown closer goes last in its file, because the abort holds for the whole process.
+- The frontend follows a stream with `keepConnected` (`apps/frontend/src/lib/event-stream.ts`), refetching on `subscribed` and reconnecting with backoff.
 
 ## Tests
 
