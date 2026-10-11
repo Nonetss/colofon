@@ -173,7 +173,11 @@ export function isMutedJob(job: CronJob): boolean {
 
 function HandlerKey({ job, available }: { job: CronJob; available: boolean }) {
   if (isDeclaredInCode(job) || available) {
-    return <span className="font-mono">{job.handlerKey}</span>
+    return (
+      <Text as="span" variant="data" className="text-sm">
+        {job.handlerKey}
+      </Text>
+    )
   }
   return (
     <span className="text-destructive">{cronLabels.handlerUnavailable}</span>

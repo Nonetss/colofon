@@ -59,7 +59,7 @@ export function CommentsButton({
       />
       {compact ? (
         count > 0 ? (
-          <span className="absolute -top-0.5 -right-0.5 flex size-4 items-center justify-center rounded-full bg-primary text-[10px] font-semibold text-primary-foreground">
+          <span className="absolute -top-0.5 -right-0.5 flex size-4 items-center justify-center rounded-full bg-primary text-meta-sm font-semibold leading-none tabular-nums text-primary-foreground">
             {count > 9 ? "9+" : count}
           </span>
         ) : null

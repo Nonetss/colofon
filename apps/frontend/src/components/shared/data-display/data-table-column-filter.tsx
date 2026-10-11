@@ -326,9 +326,9 @@ export function DataTableColumnFilter({
                       {option.detail ? (
                         <Text
                           as="span"
-                          variant="compact"
+                          variant="data"
                           tone="muted"
-                          className="block truncate font-mono"
+                          className="block truncate"
                         >
                           {option.detail}
                         </Text>
