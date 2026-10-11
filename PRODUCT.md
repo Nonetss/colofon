@@ -35,7 +35,7 @@ Capacidades confirmadas (todas con spec en `openspec/specs/`):
 
 Restricciones técnicas: Bun 1.4.2 (`bunfig.toml` con `linker = "isolated"`), versiones fijadas en el `workspaces.catalog` raíz, Biome 2.5.15, `apps/backend` construido con `tsdown`, scripts de Drizzle solo en `packages/db`, migraciones aplicadas por el backend al arrancar, un único `.env` en la raíz, `BETTER_AUTH_SECRET` de al menos 32 caracteres.
 
-Logo propio: la pieza S del Tetris en terracota (`apps/frontend/src/assets/logo.svg`, del que salen `logo.png`/`logo.webp`, el `apple-touch-icon` y los iconos de `public/pwa/`); ya no es el del `stack` original. Producto sin decidir (no inventar): dominio y nombre público; mientras tanto se usa "Stack".
+Logo propio: tres capas apiladas y desplazadas en escalera, las dos de abajo en tinta (`foreground`) y la de arriba en terracota (`apps/frontend/src/assets/logo.svg`, del que salen `logo.png`/`logo.webp`, el `apple-touch-icon` y los iconos de `public/pwa/`, estos sobre fondo `#262624`); la UI lo dibuja en línea con `AppLogo` para que la tinta siga el tema. Ya no es el del `stack` original. Producto sin decidir (no inventar): dominio y nombre público; mientras tanto se usa "Stack".
 
 ## Brand Commitments
 
