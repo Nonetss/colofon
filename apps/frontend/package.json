@@ -9,7 +9,7 @@
     "check-types": "astro check",
     "preview": "astro preview",
     "astro": "astro",
-    "test": "bun test"
+    "test": "bun test --only-failures"
   },
   "dependencies": {
     "@astrojs/node": "11.1.7",

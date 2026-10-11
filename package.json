@@ -62,7 +62,7 @@
     "docker:down": "docker compose down",
     "docker:logs": "docker compose logs -f",
     "check": "biome check --write .",
-    "test": "turbo test",
+    "test": "turbo test --log-order=grouped --ui=stream",
     "tailwind:check": "cd apps/frontend && tailwint",
     "tailwind:fix": "cd apps/frontend && tailwint --fix"
   },
