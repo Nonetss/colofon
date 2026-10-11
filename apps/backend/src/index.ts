@@ -1,4 +1,4 @@
-import { closeCronRunEvents } from "@nonete/api/v1/cron/events"
+import { closeStreams } from "@nonete/api/lifecycle"
 import { auth } from "@nonete/auth"
 import { closeDb } from "@nonete/db"
 import { seed } from "@nonete/db/seed"
@@ -122,10 +122,10 @@ if (!globalThis.__backendBootstrapped) {
       }
     }
 
-    // Run-event subscriptions never end on their own, so an open cron detail
+    // Cron run and job watchers never end on their own, so an open crons
     // page would hold the HTTP drain until its timeout. Ending them first lets
     // their responses finish; the clients reconnect to the next instance.
-    await step("cron events", closeCronRunEvents)
+    await step("api streams", closeStreams)
     // HTTP next so no new request starts database work; the pool last,
     // because requests and cron can still query it until then.
     await step("http", stopHttpServer)

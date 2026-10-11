@@ -143,4 +143,18 @@ export const cronRouter = {
     .input(cronInput.watchRuns)
     .output(cronOutput.watchRuns)
     .handler(({ input, signal }) => cronHandler.watchRuns({ input, signal })),
+
+  // Not cron-eligible either: it only exists to keep an open job list current.
+  watchJobs: protectedProcedure
+    .meta(
+      openapi({
+        summary: "Watch the cron job list",
+        description:
+          "Opens an event stream over every cron job. Sends `subscribed` once listening, then `changed` each time any job's run starts, finishes or is skipped, or a job is created, updated, enabled, disabled or removed. Events are not replayed: refetch the list on `subscribed`.",
+        tags: ["System - Cron", "System"],
+        method: "GET",
+      })
+    )
+    .output(cronOutput.watchJobs)
+    .handler(({ signal }) => cronHandler.watchJobs({ signal })),
 }

@@ -15,7 +15,11 @@ import {
   paginate,
 } from "#shared/pagination"
 import { cronTagsForKey, listCronHandlers } from "#v1/cron/discovery"
-import { cronRunEventsSignal, subscribeCronRunChanges } from "#v1/cron/events"
+import {
+  cronEventsSignal,
+  subscribeCronListChanges,
+  subscribeCronRunChanges,
+} from "#v1/cron/events"
 import type { cronInput } from "#v1/cron/input"
 import type { cronOutput } from "#v1/cron/output"
 import { getCronService } from "#v1/cron/runtime"
@@ -175,7 +179,7 @@ export const cronHandler = {
   }): AsyncGenerator<z.infer<typeof cronOutput.runEvent>> {
     await withCronErrors(() => getCronService().get(input.jobId))
 
-    const stop = cronRunEventsSignal(signal)
+    const stop = cronEventsSignal(signal)
     if (stop.aborted) return
     const changes = subscribeCronRunChanges(stop)
 
@@ -189,6 +193,32 @@ export const cronHandler = {
     } catch (error) {
       // The subscription throws the abort reason: a client that left or a
       // shutdown ends the stream normally, not as a failure.
+      if (stop.aborted) return
+      throw error
+    }
+  },
+
+  /**
+   * Streams a `changed` event for every change that may alter the job list
+   * until the caller leaves or the backend shuts down. Like `watchRuns`, it
+   * subscribes before sending `subscribed`, and the client refetches on it.
+   */
+  async *watchJobs({
+    signal,
+  }: {
+    signal?: AbortSignal
+  }): AsyncGenerator<z.infer<typeof cronOutput.jobsEvent>> {
+    const stop = cronEventsSignal(signal)
+    if (stop.aborted) return
+    const changes = subscribeCronListChanges(stop)
+
+    yield { type: "subscribed" }
+
+    try {
+      for await (const _ of changes) {
+        yield { type: "changed" }
+      }
+    } catch (error) {
       if (stop.aborted) return
       throw error
     }

@@ -4,7 +4,10 @@ import {
   listDeclaredCronSchedules,
   resolveCronProcedure,
 } from "@nonete/api/v1/cron/discovery"
-import { publishCronRunChange } from "@nonete/api/v1/cron/events"
+import {
+  publishCronJobsChange,
+  publishCronRunChange,
+} from "@nonete/api/v1/cron/events"
 import { bindCronService } from "@nonete/api/v1/cron/runtime"
 import { createUserSession } from "@nonete/auth/session"
 import {
@@ -79,7 +82,12 @@ export const cronScheduler = createScheduler({
 
 export const cronService = createCronService({
   db,
-  onChange: () => cronScheduler.refresh(),
+  // Every job write passes through here: reschedule, and tell open `/crons`
+  // lists (`v1.cron.watchJobs`) to refetch.
+  onChange: async () => {
+    await cronScheduler.refresh()
+    await publishCronJobsChange()
+  },
   isValidHandlerKey: isCronHandlerKey,
   triggerRun: (id) => cronScheduler.runNow(id),
 })

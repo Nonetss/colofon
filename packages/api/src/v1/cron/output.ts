@@ -54,6 +54,20 @@ const runEvent = z.discriminatedUnion("type", [
     .describe("A run of the job started, finished or was skipped"),
 ])
 
+/** One event of `watchJobs`. */
+const jobsEvent = z.discriminatedUnion("type", [
+  z
+    .object({ type: z.literal("subscribed") })
+    .describe(
+      "Sent once the stream is listening. Refetch the list: anything that changed before this point is not replayed"
+    ),
+  z
+    .object({ type: z.literal("changed") })
+    .describe(
+      "A job's run started, finished or was skipped, or a job was created, updated, enabled, disabled or removed"
+    ),
+])
+
 export const cronOutput = {
   job: cronJob,
   list: z.array(cronJob),
@@ -74,4 +88,6 @@ export const cronOutput = {
   removed: z.object({ id: z.uuid() }),
   runEvent,
   watchRuns: eventIterator(runEvent),
+  jobsEvent,
+  watchJobs: eventIterator(jobsEvent),
 }
