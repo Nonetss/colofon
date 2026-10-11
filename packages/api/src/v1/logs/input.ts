@@ -16,9 +16,20 @@ export const logsInput = {
     from: z.string().optional(),
     /** ISO timestamp upper bound, exclusive. Defaults to now. */
     to: z.string().optional(),
-    /** ISO timestamp cursor for "load older" pagination: entries strictly
-     * before this timestamp. Takes precedence over `to` when both are set. */
-    before: z.string().optional(),
+    order: z
+      .enum(["asc", "desc"])
+      .default("desc")
+      .describe("Direction by time: desc (newest first, the default) or asc"),
+    /** The previous page's `nextCursor`: a Loki nanosecond timestamp. The
+     * next page holds the entries strictly past it in `order`, so it takes
+     * precedence over `to` (desc) or `from` (asc). */
+    cursor: z
+      .string()
+      .regex(/^\d{1,30}$/, "Invalid pagination cursor")
+      .nullish()
+      .describe(
+        "Opaque pagination cursor from a previous response's nextCursor, valid only with the same order; omit for the first page"
+      ),
     limit: paginationLimit(50, 200),
   }),
 }

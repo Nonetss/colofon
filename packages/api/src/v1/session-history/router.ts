@@ -11,7 +11,7 @@ export const sessionHistoryRouter = {
       openapi({
         summary: "List session history",
         description:
-          "Returns a paginated, administrator-only audit history of stored sessions. Session tokens are never returned.",
+          "Returns a paginated, administrator-only audit history of stored sessions, newest first unless `sort`/`order` choose another ordering. Session tokens are never returned.",
         tags: ["Admin - Session History", "Admin"],
         method: "GET",
       })

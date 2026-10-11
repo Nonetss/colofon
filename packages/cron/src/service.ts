@@ -1,7 +1,18 @@
 import type { db as DbInstance } from "@nonete/db"
-import { withKeysetPagination } from "@nonete/db/keyset-pagination"
 import { cronJob, cronRun } from "@nonete/db/schema/cron"
-import { eq, type SQL } from "drizzle-orm"
+import {
+  type SortedCursorPosition,
+  type SortOrder,
+  sortedKeyset,
+} from "@nonete/db/sorted-keyset"
+import {
+  and,
+  eq,
+  getTableColumns,
+  inArray,
+  type SQLWrapper,
+  sql,
+} from "drizzle-orm"
 import { z } from "zod"
 
 import { assertValidCronExpression, nextRunAt } from "#cron-expression"
@@ -13,6 +24,24 @@ import {
 } from "#errors"
 
 export type Db = typeof DbInstance
+
+function jobFilter(jobId: string | undefined) {
+  if (!jobId) return undefined
+  return eq(cronRun.jobId, jobId)
+}
+
+function statusFilter(statuses: readonly CronRunStatus[] | undefined) {
+  if (!statuses || statuses.length === 0) return undefined
+  return inArray(cronRun.status, [...statuses])
+}
+
+/** What each run ordering sorts by. Status ranks what needs attention
+ *  first; duration is NULL while the run is still going. */
+const runSortExpression: Record<CronRunSortKey, SQLWrapper> = {
+  startedAt: cronRun.startedAt,
+  status: sql`case ${cronRun.status} when 'running' then 0 when 'failed' then 1 when 'skipped' then 2 else 3 end`,
+  duration: sql`${cronRun.finishedAt} - ${cronRun.startedAt}`,
+}
 
 const payloadSchema = z.record(z.string(), z.unknown()).nullable().optional()
 
@@ -41,12 +70,32 @@ export const updateCronJobInput = z.object({
 export type CreateCronJobInput = z.infer<typeof createCronJobInput>
 export type UpdateCronJobInput = z.infer<typeof updateCronJobInput>
 
+export type CronRunStatus = "running" | "success" | "failed" | "skipped"
+
+/** The orderings of a job's run history. */
+export const CRON_RUN_SORT_KEYS = ["startedAt", "status", "duration"] as const
+
+export type CronRunSortKey = (typeof CRON_RUN_SORT_KEYS)[number]
+
 export type ListRunsInput = {
   jobId?: string
-  status?: "running" | "success" | "failed" | "skipped"
+  /** Runs with any of these statuses; omitted or empty means every status. */
+  statuses?: readonly CronRunStatus[]
   limit?: number
-  /** Keyset cursor: only rows strictly before this (startedAt, id) pair. */
-  cursor?: { startedAt: Date; id: string }
+  /** Start time (the default), status (running, failed, skipped, success)
+   *  or duration (still-running runs last). */
+  sort?: CronRunSortKey
+  /** `desc` (the default) or `asc`. */
+  order?: SortOrder
+  /** Only rows strictly past this position in the requested order. */
+  cursor?: SortedCursorPosition
+}
+
+/** A listed run plus what its next-page cursor needs: the sort key as text
+ *  and the start time as text (a `Date` loses the microseconds). */
+export type ListedCronRun = typeof cronRun.$inferSelect & {
+  sortValue: string | null
+  cursorStartedAt: string
 }
 
 export type CronService = {
@@ -62,7 +111,7 @@ export type CronService = {
     enabled: boolean
   ) => Promise<typeof cronJob.$inferSelect>
   remove: (id: string) => Promise<void>
-  listRuns: (input?: ListRunsInput) => Promise<(typeof cronRun.$inferSelect)[]>
+  listRuns: (input?: ListRunsInput) => Promise<ListedCronRun[]>
   getRun: (id: string) => Promise<typeof cronRun.$inferSelect>
   runNow: (id: string) => Promise<typeof cronRun.$inferSelect>
 }
@@ -233,25 +282,28 @@ export function createCronService({
     },
 
     async listRuns(input = {}) {
-      const limit = input.limit ?? 50
-      const filters: SQL[] = []
-
-      if (input.jobId) {
-        filters.push(eq(cronRun.jobId, input.jobId))
-      }
-      if (input.status) {
-        filters.push(eq(cronRun.status, input.status))
-      }
-
-      return withKeysetPagination(db.select().from(cronRun).$dynamic(), {
-        orderColumns: [cronRun.startedAt, cronRun.id],
-        cursor: input.cursor && {
-          timestamp: input.cursor.startedAt,
-          id: input.cursor.id,
-        },
-        filters,
-        limit,
+      const keyset = sortedKeyset({
+        primary: runSortExpression[input.sort ?? "startedAt"],
+        order: input.order ?? "desc",
+        tiebreak: [cronRun.startedAt, cronRun.id],
+        tiebreakOrder: "desc",
       })
+      return db
+        .select({
+          ...getTableColumns(cronRun),
+          sortValue: keyset.sortValue,
+          cursorStartedAt: sql<string>`${cronRun.startedAt}::text`,
+        })
+        .from(cronRun)
+        .where(
+          and(
+            jobFilter(input.jobId),
+            statusFilter(input.statuses),
+            keyset.after(input.cursor)
+          )
+        )
+        .orderBy(...keyset.orderBy)
+        .limit(input.limit ?? 50)
     },
 
     async getRun(id) {

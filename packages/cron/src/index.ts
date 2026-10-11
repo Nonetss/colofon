@@ -21,12 +21,16 @@ export {
   recoverOrphanedRuns,
 } from "#scheduler"
 export {
+  CRON_RUN_SORT_KEYS,
   type CreateCronJobInput,
   type CreateCronServiceOptions,
+  type CronRunSortKey,
+  type CronRunStatus,
   type CronService,
   createCronJobInput,
   createCronService,
   type Db,
+  type ListedCronRun,
   type ListRunsInput,
   type UpdateCronJobInput,
   updateCronJobInput,

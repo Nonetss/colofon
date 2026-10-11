@@ -1,6 +1,10 @@
+import { CRON_RUN_SORT_KEYS } from "@nonete/cron"
 import { z } from "zod"
 
-import { paginationCursor, paginationLimit } from "#shared/pagination"
+import { paginationLimit, sortedPaginationCursor } from "#shared/pagination"
+
+/** The orderings of a job's run history (`listRuns`' `sort`). */
+export { CRON_RUN_SORT_KEYS }
 
 const payloadSchema = z.record(z.string(), z.unknown()).nullable().optional()
 
@@ -85,12 +89,24 @@ export const cronInput = {
 
   listRuns: z.object({
     jobId: z.uuid().describe("Cron job UUID"),
-    status: z
-      .enum(["running", "success", "failed", "skipped"])
+    statuses: z
+      .array(z.enum(["running", "success", "failed", "skipped"]))
       .optional()
-      .describe("Filter by run status"),
+      .describe(
+        "Keep only runs with one of these statuses; omitted or empty lists every status"
+      ),
+    sort: z
+      .enum(CRON_RUN_SORT_KEYS)
+      .default("startedAt")
+      .describe(
+        "Ordering: start time (the default), status (running, failed, skipped, success) or duration (runs still going last); ties go newest first"
+      ),
+    order: z
+      .enum(["asc", "desc"])
+      .default("desc")
+      .describe("Direction of the ordering: desc (the default) or asc"),
     limit: paginationLimit(50, 200),
-    cursor: paginationCursor(),
+    cursor: sortedPaginationCursor(),
   }),
 
   watchRuns: z.object({

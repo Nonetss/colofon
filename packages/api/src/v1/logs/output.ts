@@ -18,8 +18,8 @@ const logEntry = z.object({
 export const logsOutput = {
   query: z.object({
     entries: z.array(logEntry),
-    /** Opaque cursor (an entry timestamp) for the next page's `before`
-     * input; `null` when there are no older entries. */
+    /** Opaque cursor (the last entry's Loki nanosecond timestamp) for the
+     * next page's `cursor` input; `null` when no entries follow. */
     nextCursor: z.string().nullable(),
   }),
 }

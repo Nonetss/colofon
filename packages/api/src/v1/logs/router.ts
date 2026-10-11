@@ -11,7 +11,7 @@ export const logsRouter = {
       openapi({
         summary: "Query activity log",
         description:
-          "Returns a filterable, administrator-only page of page-view and API-call log entries indexed in Loki.",
+          "Returns a filterable, administrator-only page of page-view and API-call log entries indexed in Loki, newest first unless `order` is `asc`. Pass the previous response's nextCursor as `cursor` to fetch the next page.",
         tags: ["Admin - Logs", "Admin"],
         method: "GET",
       })

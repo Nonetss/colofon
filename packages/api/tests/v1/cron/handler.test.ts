@@ -6,11 +6,12 @@ import {
 } from "@nonete/cron"
 import { cronJobRow, cronRunRow } from "@nonete/db/testing"
 
-import { encodeKeysetCursor } from "#shared/pagination"
+import { sortedCursor } from "#shared/pagination"
 import { adminContext } from "#tests/fixtures/context"
 import { cronService, resetCronService } from "#tests/fixtures/cron-service"
 import { expectErrorCode } from "#tests/fixtures/errors"
 import { cronHandler } from "#v1/cron/handler"
+import { cronInput } from "#v1/cron/input"
 
 const JOB_ID = "00000000-0000-4000-8000-000000000001"
 
@@ -88,59 +89,126 @@ describe("cron.create", () => {
 })
 
 describe("cron.listRuns", () => {
+  function listedRun(id: string, startedAt: string, sortValue: string | null) {
+    return {
+      ...cronRunRow({ id, startedAt: new Date(startedAt) }),
+      sortValue,
+      cursorStartedAt: startedAt.replace("T", " ").replace(".000Z", ""),
+    }
+  }
+
   const runs = [
-    cronRunRow({
-      id: "run-3",
-      startedAt: new Date("2026-01-03T00:00:00.000Z"),
-    }),
-    cronRunRow({
-      id: "run-2",
-      startedAt: new Date("2026-01-02T00:00:00.000Z"),
-    }),
-    cronRunRow({
-      id: "run-1",
-      startedAt: new Date("2026-01-01T00:00:00.000Z"),
-    }),
+    listedRun("run-3", "2026-01-03T00:00:00.000Z", "2026-01-03 00:00:00"),
+    listedRun("run-2", "2026-01-02T00:00:00.000Z", "2026-01-02 00:00:00"),
+    listedRun("run-1", "2026-01-01T00:00:00.000Z", "2026-01-01 00:00:00"),
   ]
 
-  test("over-fetches by one and returns a cursor to the last row", async () => {
+  const base = {
+    jobId: JOB_ID,
+    limit: 2,
+    sort: "startedAt",
+    order: "desc",
+  } as const
+
+  test("over-fetches by one and returns a sorted cursor to the last row", async () => {
     cronService.listRuns.mockResolvedValue(runs)
 
-    const page = await cronHandler.listRuns({
-      input: { jobId: JOB_ID, limit: 2 },
-    })
+    const page = await cronHandler.listRuns({ input: base })
 
     expect(cronService.listRuns).toHaveBeenCalledWith({
       jobId: JOB_ID,
-      status: undefined,
+      statuses: undefined,
+      sort: "startedAt",
+      order: "desc",
       limit: 3,
       cursor: undefined,
     })
     expect(page.runs.map((run) => run.id)).toEqual(["run-3", "run-2"])
     expect(page.nextCursor).toBe(
-      encodeKeysetCursor(new Date("2026-01-02T00:00:00.000Z"), "run-2")
+      sortedCursor.encode({
+        k: "startedAt",
+        o: "desc",
+        p: "2026-01-02 00:00:00",
+        t: ["2026-01-02 00:00:00", "run-2"],
+      })
     )
   })
 
-  test("passes the decoded cursor and ends without one on the last page", async () => {
+  test("passes the sort, the statuses and the cursor through", async () => {
     cronService.listRuns.mockResolvedValue(runs.slice(2))
-    const cursor = encodeKeysetCursor(
-      new Date("2026-01-02T00:00:00.000Z"),
-      "run-2"
-    )
+    const cursor = {
+      k: "duration",
+      o: "asc" as const,
+      p: null,
+      t: ["2026-01-02 00:00:00", "run-2"],
+    }
 
     const page = await cronHandler.listRuns({
-      input: { jobId: JOB_ID, limit: 2, cursor },
+      input: {
+        ...base,
+        sort: "duration",
+        order: "asc",
+        statuses: ["failed", "skipped"],
+        cursor,
+      },
     })
 
-    expect(cronService.listRuns).toHaveBeenCalledWith(
-      expect.objectContaining({
-        cursor: {
-          startedAt: new Date("2026-01-02T00:00:00.000Z"),
-          id: "run-2",
-        },
+    expect(cronService.listRuns).toHaveBeenCalledWith({
+      jobId: JOB_ID,
+      statuses: ["failed", "skipped"],
+      sort: "duration",
+      order: "asc",
+      limit: 3,
+      cursor,
+    })
+    expect(page.nextCursor).toBeNull()
+  })
+
+  test("sorts by status with its rank as the cursor key", async () => {
+    cronService.listRuns.mockResolvedValue([
+      listedRun("run-3", "2026-01-03T00:00:00.000Z", "1"),
+      listedRun("run-2", "2026-01-02T00:00:00.000Z", "1"),
+      listedRun("run-1", "2026-01-01T00:00:00.000Z", "3"),
+    ])
+
+    const page = await cronHandler.listRuns({
+      input: { ...base, sort: "status", order: "asc" },
+    })
+
+    expect(page.nextCursor).toBe(
+      sortedCursor.encode({
+        k: "status",
+        o: "asc",
+        p: "1",
+        t: ["2026-01-02 00:00:00", "run-2"],
       })
     )
-    expect(page.nextCursor).toBeNull()
+  })
+
+  test("a cursor issued for another sort or order is BAD_REQUEST before any read", async () => {
+    const cursor = { k: "startedAt", o: "desc" as const, p: "x", t: ["x", "y"] }
+
+    await expectErrorCode(
+      cronHandler.listRuns({ input: { ...base, sort: "status", cursor } }),
+      "BAD_REQUEST"
+    )
+    await expectErrorCode(
+      cronHandler.listRuns({ input: { ...base, order: "asc", cursor } }),
+      "BAD_REQUEST"
+    )
+    expect(cronService.listRuns).not.toHaveBeenCalled()
+  })
+
+  test("defaults to every status, newest first by start time", () => {
+    const parsed = cronInput.listRuns.parse({ jobId: JOB_ID })
+    expect(parsed.sort).toBe("startedAt")
+    expect(parsed.order).toBe("desc")
+    expect(parsed.statuses).toBeUndefined()
+  })
+
+  test("rejects an unknown sort key", () => {
+    expect(
+      cronInput.listRuns.safeParse({ jobId: JOB_ID, sort: "handler" }).success
+    ).toBe(false)
   })
 })

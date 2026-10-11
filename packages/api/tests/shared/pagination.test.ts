@@ -8,6 +8,8 @@ import {
   paginateWithTotal,
   paginationCursor,
   paginationLimit,
+  sortedCursor,
+  sortedPaginationCursor,
 } from "#shared/pagination"
 
 function expectBadRequest(run: () => unknown) {
@@ -137,5 +139,55 @@ describe("paginationCursor", () => {
     expect(cursor.parse("abc")).toBe("abc")
     expect(cursor.parse(null)).toBeNull()
     expect(cursor.parse(undefined)).toBeUndefined()
+  })
+})
+
+describe("sortedCursor", () => {
+  test("round-trips its ordering and position", () => {
+    for (const value of [
+      { k: "user", o: "asc" as const, p: "Ana|B", t: ["s|1", 12] },
+      { k: "ipAddress", o: "desc" as const, p: null, t: ["s2"] },
+    ]) {
+      expect(sortedCursor.decode(sortedCursor.encode(value))).toEqual(value)
+    }
+  })
+
+  test("rejects malformed cursors", () => {
+    const rejected = [
+      () => sortedCursor.decode("not base64 json"),
+      () =>
+        sortedCursor.decode(
+          Buffer.from(
+            JSON.stringify({ k: "x", o: "up", p: null, t: ["a"] })
+          ).toString("base64url")
+        ),
+      () =>
+        sortedCursor.decode(
+          Buffer.from(
+            JSON.stringify({ k: "x", o: "asc", p: null, t: [] })
+          ).toString("base64url")
+        ),
+      () =>
+        sortedCursor.decode(
+          encodeKeysetCursor(new Date("2026-01-01T00:00:00.000Z"), "s1")
+        ),
+    ]
+    for (const decode of rejected) {
+      expect(decode).toThrow("Invalid pagination cursor")
+    }
+  })
+})
+
+describe("sortedPaginationCursor", () => {
+  test("decodes a sorted cursor and accepts null or nothing", () => {
+    const value = { k: "createdAt", o: "desc" as const, p: "x", t: ["s1"] }
+    const cursor = sortedPaginationCursor()
+    expect(cursor.parse(sortedCursor.encode(value))).toEqual(value)
+    expect(cursor.parse(null)).toBeNull()
+    expect(cursor.parse(undefined)).toBeUndefined()
+  })
+
+  test("fails validation on a malformed cursor", () => {
+    expect(sortedPaginationCursor().safeParse("garbage").success).toBe(false)
   })
 })

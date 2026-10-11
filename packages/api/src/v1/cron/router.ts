@@ -107,7 +107,7 @@ export const cronRouter = {
       openapi({
         summary: "List cron run history",
         description:
-          "Returns a page of execution history for a cron job (status, timestamps, optional error), newest first. Pass the previous response's nextCursor to fetch the next page.",
+          "Returns a page of execution history for a cron job (status, timestamps, optional error), optionally only some statuses, ordered by start time (newest first by default), status or duration. Pass the previous response's nextCursor, with the same sort and order, to fetch the next page.",
         tags: ["System - Cron", "System"],
         method: "GET",
       })

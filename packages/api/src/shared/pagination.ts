@@ -62,3 +62,55 @@ export function paginationCursor() {
       "Opaque pagination cursor from a previous response's nextCursor; omit for the first page"
     )
 }
+
+const INVALID_CURSOR = "Invalid pagination cursor"
+
+const sortedCursorPayload = z.object({
+  k: z.string().min(1),
+  o: z.enum(["asc", "desc"]),
+  p: z.string().nullable(),
+  t: z.array(z.union([z.string(), z.number()])).min(1),
+})
+
+/** Keyset over a chosen ordering (`#shared/sorted-keyset`): the sort key,
+ *  direction, the primary value as text and the tiebreak values, as
+ *  base64url JSON. The handler checks `k`/`o` against the request with
+ *  `cursorFor`. */
+export const sortedCursor = z.codec(z.string(), sortedCursorPayload, {
+  decode: (cursor, ctx) => {
+    let raw: unknown
+    try {
+      raw = JSON.parse(Buffer.from(cursor, "base64url").toString("utf8"))
+    } catch {
+      ctx.issues.push({
+        code: "custom",
+        input: cursor,
+        message: INVALID_CURSOR,
+      })
+      return z.NEVER
+    }
+    const parsed = sortedCursorPayload.safeParse(raw)
+    if (!parsed.success) {
+      ctx.issues.push({
+        code: "custom",
+        input: cursor,
+        message: INVALID_CURSOR,
+      })
+      return z.NEVER
+    }
+    return parsed.data
+  },
+  encode: (value) =>
+    Buffer.from(JSON.stringify(value), "utf8").toString("base64url"),
+})
+
+/** `paginationCursor` for a list the caller orders: decoded during input
+ *  validation, so a malformed cursor is `BAD_REQUEST` before the handler
+ *  runs. */
+export function sortedPaginationCursor() {
+  return sortedCursor
+    .nullish()
+    .describe(
+      "Opaque pagination cursor from a previous response's nextCursor, valid only with the same sort and order; omit for the first page"
+    )
+}

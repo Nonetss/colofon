@@ -2,6 +2,7 @@ import {
   CronNotFoundError,
   CronReadOnlyError,
   CronValidationError,
+  type ListedCronRun,
 } from "@nonete/cron"
 import type { cronJob, cronRun } from "@nonete/db/schema/cron"
 import type { z } from "zod"
@@ -9,11 +10,8 @@ import type { z } from "zod"
 import type { Context } from "#context"
 import { errors } from "#errors"
 import { toIso, toIsoOrNull } from "#shared/dates"
-import {
-  decodeKeysetCursor,
-  encodeKeysetCursor,
-  paginate,
-} from "#shared/pagination"
+import { paginate, sortedCursor } from "#shared/pagination"
+import { cursorFor } from "#shared/sorted-keyset"
 import { cronTagsForKey, listCronHandlers } from "#v1/cron/discovery"
 import {
   cronEventsSignal,
@@ -55,6 +53,20 @@ function toRun(row: typeof cronRun.$inferSelect) {
     errorMessage: row.errorMessage,
     result: row.result ?? null,
   }
+}
+
+function nextRunsCursor(
+  input: z.infer<typeof cronInput.listRuns>,
+  hasMore: boolean,
+  lastRow: ListedCronRun | undefined
+): string | null {
+  if (!hasMore || !lastRow) return null
+  return sortedCursor.encode({
+    k: input.sort,
+    o: input.order,
+    p: lastRow.sortValue,
+    t: [lastRow.cursorStartedAt, lastRow.id],
+  })
 }
 
 async function withCronErrors<T>(fn: () => Promise<T>): Promise<T> {
@@ -143,20 +155,20 @@ export const cronHandler = {
   },
 
   async listRuns({ input }: { input: z.infer<typeof cronInput.listRuns> }) {
-    const cursor = decodeKeysetCursor(input.cursor)
+    // Tiebreak: start time, then id (both newest first).
+    const cursor = cursorFor(input.cursor, input.sort, input.order, 2)
     const rows = await getCronService().listRuns({
       jobId: input.jobId,
-      status: input.status,
+      statuses: input.statuses,
+      sort: input.sort,
+      order: input.order,
       limit: input.limit + 1,
-      cursor: cursor && { startedAt: cursor.timestamp, id: cursor.id },
+      cursor,
     })
     const { page, hasMore, lastRow } = paginate(rows, input.limit)
     return {
       runs: page.map(toRun),
-      nextCursor:
-        hasMore && lastRow
-          ? encodeKeysetCursor(lastRow.startedAt, lastRow.id)
-          : null,
+      nextCursor: nextRunsCursor(input, hasMore, lastRow),
     }
   },
 

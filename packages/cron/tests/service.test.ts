@@ -5,6 +5,8 @@ import {
   cronRunRow,
   stepArgs,
 } from "@nonete/db/testing"
+import type { SQL } from "drizzle-orm"
+import { PgDialect } from "drizzle-orm/pg-core"
 
 import {
   CronNotFoundError,
@@ -80,7 +82,99 @@ describe("cron service create", () => {
   })
 })
 
+const dialect = new PgDialect()
+
+/** The SQL of the `listRuns` query's `where` and `orderBy` steps. */
+function listRunsQuery() {
+  const [call] = fake.calls("select")
+  if (!call) throw new Error("listRuns made no query")
+  const render = (fragment: unknown) => {
+    if (!isSql(fragment)) throw new Error("not an SQL fragment")
+    return dialect.sqlToQuery(fragment).sql
+  }
+  return {
+    where: render(stepArgs(call, "where")[0]),
+    orderBy: stepArgs(call, "orderBy").map(render),
+  }
+}
+
+function isSql(value: unknown): value is SQL {
+  return typeof value === "object" && value !== null && "queryChunks" in value
+}
+
+const RUN_CURSOR = {
+  p: "2026-01-02 00:00:00",
+  t: ["2026-01-02 00:00:00", "r2"],
+}
+
 describe("cron service reads", () => {
+  test("listRuns pages newest first by default, ties newest first", async () => {
+    fake.queue("select", [])
+
+    await service.listRuns({ jobId: "job-1" })
+
+    const query = listRunsQuery()
+    expect(query.orderBy).toEqual([
+      '"cron_run"."started_at" desc nulls last',
+      '"cron_run"."started_at" desc',
+      '"cron_run"."id" desc',
+    ])
+    expect(query.where).toBe('"cron_run"."job_id" = $1')
+  })
+
+  test("listRuns continues after the cursor in the requested order", async () => {
+    fake.queue("select", [])
+
+    await service.listRuns({ jobId: "job-1", order: "asc", cursor: RUN_CURSOR })
+
+    const query = listRunsQuery()
+    expect(query.orderBy[0]).toBe('"cron_run"."started_at" asc nulls last')
+    expect(query.where).toContain('"cron_run"."started_at" > $')
+    expect(query.where).toContain(
+      '("cron_run"."started_at", "cron_run"."id") < ($'
+    )
+  })
+
+  test("listRuns sorts by status rank and by duration", async () => {
+    fake.queue("select", [])
+    fake.queue("select", [])
+
+    await service.listRuns({ sort: "status", order: "asc" })
+    await service.listRuns({ sort: "duration", order: "desc" })
+
+    const [byStatus, byDuration] = fake.calls("select")
+    if (!byStatus || !byDuration) throw new Error("missing queries")
+    const first = (call: typeof byStatus) => {
+      const [term] = stepArgs(call, "orderBy")
+      if (!isSql(term)) throw new Error("not an SQL fragment")
+      return dialect.sqlToQuery(term).sql
+    }
+    expect(first(byStatus)).toBe(
+      "case \"cron_run\".\"status\" when 'running' then 0 when 'failed' then 1 when 'skipped' then 2 else 3 end asc nulls last"
+    )
+    expect(first(byDuration)).toBe(
+      '"cron_run"."finished_at" - "cron_run"."started_at" desc nulls last'
+    )
+  })
+
+  test("listRuns keeps only the requested statuses", async () => {
+    fake.queue("select", [])
+
+    await service.listRuns({ jobId: "job-1", statuses: ["failed", "skipped"] })
+
+    expect(listRunsQuery().where).toBe(
+      '(("cron_run"."job_id" = $1) and ("cron_run"."status" in ($2, $3)))'
+    )
+  })
+
+  test("listRuns ignores an empty status list", async () => {
+    fake.queue("select", [])
+
+    await service.listRuns({ jobId: "job-1", statuses: [] })
+
+    expect(listRunsQuery().where).toBe('"cron_run"."job_id" = $1')
+  })
+
   test("get fails with CronNotFoundError for a missing job", async () => {
     fake.queue("query.cronJob.findFirst", undefined)
     await expect(service.get("missing")).rejects.toThrow(CronNotFoundError)

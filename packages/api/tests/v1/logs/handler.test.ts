@@ -18,13 +18,14 @@ mock.module("@nonete/env/server", () => ({ env: testEnv }))
 
 const { logsHandler } = await import("#v1/logs/handler")
 const { expectErrorCode } = await import("#tests/fixtures/errors")
+const { logsInput } = await import("#v1/logs/input")
 
 type QueryInput = Parameters<typeof logsHandler.query>[0]["input"]
 
 const fetchSpy = spyOn(globalThis, "fetch")
 
 function input(overrides: Partial<QueryInput> = {}): QueryInput {
-  return { limit: 50, ...overrides }
+  return { limit: 50, order: "desc", ...overrides }
 }
 
 function lokiResponse(values: [string, string][]) {
@@ -146,6 +147,79 @@ describe("logs.query", () => {
     })
 
     expect(entries).toHaveLength(1)
-    expect(nextCursor).toBe("2026-01-01T12:00:00.000Z")
+    expect(nextCursor).toBe(ns("2026-01-01T12:00:00.000Z"))
+  })
+
+  test("defaults to newest first", () => {
+    expect(logsInput.query.parse({}).order).toBe("desc")
+  })
+
+  test("rejects a cursor that is not a nanosecond timestamp", () => {
+    expect(
+      logsInput.query.safeParse({ cursor: "2026-01-01T12:00:00.000Z" }).success
+    ).toBe(false)
+  })
+
+  test("newest first reads backward up to the cursor", async () => {
+    fetchSpy.mockResolvedValue(lokiResponse([]))
+    const cursor = ns("2026-01-01T12:00:00.000Z")
+
+    await logsHandler.query({
+      input: input({ cursor, to: "2026-01-02T00:00:00.000Z" }),
+    })
+
+    const params = requestedUrl().searchParams
+    expect(params.get("direction")).toBe("backward")
+    expect(params.get("end")).toBe(cursor)
+  })
+
+  test("oldest first reads forward from just after the cursor", async () => {
+    fetchSpy.mockResolvedValue(lokiResponse([]))
+
+    await logsHandler.query({
+      input: input({
+        order: "asc",
+        cursor: "1767268800000000000",
+        to: "2026-01-02T00:00:00.000Z",
+      }),
+    })
+
+    const params = requestedUrl().searchParams
+    expect(params.get("direction")).toBe("forward")
+    expect(params.get("start")).toBe("1767268800000000001")
+    expect(params.get("end")).toBe("2026-01-02T00:00:00.000Z")
+  })
+
+  test("the first page honors from and to in both orders", async () => {
+    const range = {
+      from: "2026-01-01T00:00:00.000Z",
+      to: "2026-01-02T00:00:00.000Z",
+    }
+
+    for (const order of ["asc", "desc"] as const) {
+      fetchSpy.mockReset()
+      fetchSpy.mockResolvedValue(lokiResponse([]))
+      await logsHandler.query({ input: input({ ...range, order }) })
+      const params = requestedUrl().searchParams
+      expect(params.get("start")).toBe(range.from)
+      expect(params.get("end")).toBe(range.to)
+    }
+  })
+
+  test("oldest first lists entries ascending with a cursor to the last one", async () => {
+    fetchSpy.mockResolvedValue(
+      lokiResponse([
+        [ns("2026-01-01T12:00:00.000Z"), JSON.stringify({ msg: "c" })],
+        [ns("2026-01-01T10:00:00.000Z"), JSON.stringify({ msg: "a" })],
+        [ns("2026-01-01T11:00:00.000Z"), JSON.stringify({ msg: "b" })],
+      ])
+    )
+
+    const { entries, nextCursor } = await logsHandler.query({
+      input: input({ order: "asc", limit: 2 }),
+    })
+
+    expect(entries.map((entry) => entry.message)).toEqual(["a", "b"])
+    expect(nextCursor).toBe(ns("2026-01-01T11:00:00.000Z"))
   })
 })
