@@ -10,9 +10,12 @@ export function SearchInput({
   value,
   onValueChange,
   placeholder,
+  label,
   className,
 }: {
   id?: string
+  /** Accessible name when no visible `<label>` points at the input. */
+  label?: string
   value: string
   onValueChange: (value: string) => void
   placeholder?: string
@@ -26,6 +29,7 @@ export function SearchInput({
         value={value}
         onChange={(e) => onValueChange(e.target.value)}
         placeholder={placeholder}
+        aria-label={label}
         className="h-9 pl-8 text-sm"
       />
     </div>

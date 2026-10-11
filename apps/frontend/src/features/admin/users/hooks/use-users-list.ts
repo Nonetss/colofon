@@ -1,56 +1,58 @@
-import { useQuery } from "@tanstack/react-query"
-import { useEffect, useState } from "react"
-import { authClient, unwrapAuth } from "@/lib/auth-client"
+import { useInfiniteQuery } from "@tanstack/react-query"
+import type {
+  UserRole,
+  UserSortKey,
+  UserStatus,
+} from "@/features/admin/users/definitions/user-columns.definition"
+import type { SortOrdering } from "@/hooks/use-sort-query-param"
+import { orpc } from "@/lib/orpc"
 
-const PAGE_SIZE = 10
-const SEARCH_DEBOUNCE_MS = 300
+const PAGE_SIZE = 25
 
-export function useUsersList() {
-  const [searchInput, setSearchInput] = useState("")
-  const [search, setSearch] = useState("")
-  const [page, setPage] = useState(0)
+export interface UsersListFilters {
+  ids: readonly string[]
+  roles: readonly UserRole[]
+  statuses: readonly UserStatus[]
+}
 
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      setSearch(searchInput)
-      setPage(0)
-    }, SEARCH_DEBOUNCE_MS)
-    return () => clearTimeout(timeout)
-  }, [searchInput])
+function listInput<T>(values: readonly T[]): T[] | undefined {
+  if (values.length === 0) return undefined
+  return [...values]
+}
 
-  const query = useQuery({
-    queryKey: ["admin", "users", search, page],
-    queryFn: () =>
-      unwrapAuth(
-        authClient.admin.listUsers({
-          query: {
-            limit: PAGE_SIZE,
-            offset: page * PAGE_SIZE,
-            sortBy: "createdAt",
-            sortDirection: "desc",
-            ...(search
-              ? {
-                  searchField: search.includes("@") ? "email" : "name",
-                  searchOperator: "contains",
-                  searchValue: search,
-                }
-              : {}),
-          },
-        })
-      ),
-    placeholderData: (previous) => previous,
+/**
+ * The administrator user list in the table's order and filters, sorted,
+ * filtered and paged by the server for infinite scrolling; both are part of
+ * the query, so a change starts again from the first page.
+ */
+export function useUsersList(
+  ordering: SortOrdering<UserSortKey>,
+  filters: UsersListFilters
+) {
+  const query = useInfiniteQuery({
+    ...orpc.v1.adminUser.list.infiniteOptions({
+      input: (cursor: string | null) => ({
+        sort: ordering.sort,
+        order: ordering.order,
+        ids: listInput(filters.ids),
+        roles: listInput(filters.roles),
+        statuses: listInput(filters.statuses),
+        limit: PAGE_SIZE,
+        cursor,
+      }),
+      initialPageParam: null,
+      getNextPageParam: (lastPage) => lastPage.nextCursor,
+    }),
   })
 
   return {
-    users: query.data?.users ?? [],
-    total: query.data?.total ?? 0,
+    users: query.data?.pages.flatMap((page) => page.users) ?? [],
+    total: query.data?.pages.at(-1)?.total ?? 0,
     isPending: query.isPending,
     isError: query.isError,
     refetch: query.refetch,
-    searchInput,
-    setSearchInput,
-    page,
-    setPage,
-    pageSize: PAGE_SIZE,
+    hasNextPage: query.hasNextPage,
+    isFetchingNextPage: query.isFetchingNextPage,
+    fetchNextPage: query.fetchNextPage,
   }
 }

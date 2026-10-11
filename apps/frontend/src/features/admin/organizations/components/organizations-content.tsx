@@ -4,9 +4,11 @@ const Building2 = getIcon("entities", "organization")
 const Plus = getIcon("actions", "add")
 
 import { useCallback, useDeferredValue, useMemo, useState } from "react"
+import { DataTableIdentityCell } from "@/components/shared/data-display/data-table-cell-content"
+import { DataTableView } from "@/components/shared/data-display/data-table-view"
+import { RowActions } from "@/components/shared/data-display/row-action-items"
 import type { SuggestInputItem } from "@/components/shared/form/suggest-input"
 import { HeroCount } from "@/components/shared/layout/page-hero"
-import { EntityList } from "@/components/shared/resource/entity-list"
 import { FilterChips } from "@/components/shared/resource/filter-chips"
 import {
   chipsFor,
@@ -18,16 +20,29 @@ import { Button } from "@/components/ui/button"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 import { OrganizationDetailSheet } from "@/features/admin/organizations/components/organization-detail-sheet"
 import { OrganizationFormDialog } from "@/features/admin/organizations/components/organization-form-dialog"
-import { organizationListDefinition } from "@/features/admin/organizations/definitions/organization-list.definition"
+import {
+  ORGANIZATION_DEFAULT_SORT,
+  ORGANIZATION_NAME_COLUMN,
+  ORGANIZATION_SORT_KEYS,
+  type OrganizationsRowContext,
+  organizationActions,
+  organizationColumnLayout,
+  organizationColumns,
+  organizationSortValues,
+} from "@/features/admin/organizations/definitions/organization-columns.definition"
 import {
   useOrganizationDelete,
   useOrganizationsList,
 } from "@/features/admin/organizations/hooks/use-organizations"
 import type { Organization } from "@/features/admin/organizations/model/types"
+import { useColumnPreferences } from "@/hooks/use-column-preferences"
+import { columnPreferenceProps, useDataTable } from "@/hooks/use-data-table"
 import { useEditDialog } from "@/hooks/use-edit-dialog"
+import { useSortQueryParam } from "@/hooks/use-sort-query-param"
 import { useTargetConfirmDialog } from "@/hooks/use-target-confirm-dialog"
 import { useTargetDialog } from "@/hooks/use-target-dialog"
 import { foldText, textSuggestions } from "@/lib/fold-text"
+import { sortRows } from "@/lib/sort-rows"
 
 export function OrganizationsContent() {
   const {
@@ -66,6 +81,32 @@ export function OrganizationsContent() {
   )
   const activeFilterCount = normalizedSearch ? 1 : 0
   const clearFilters = () => setSearch("")
+
+  const rowContext: OrganizationsRowContext = {
+    onOpenDetail: detailDialog.open,
+    onEdit: editDialog.openEdit,
+    onDelete: deleteDialog.open,
+  }
+  const preferences = useColumnPreferences(
+    "admin-organizations",
+    organizationColumnLayout
+  )
+  const [sorting, setSorting] = useSortQueryParam(
+    ORGANIZATION_SORT_KEYS,
+    ORGANIZATION_DEFAULT_SORT
+  )
+  const rows = useMemo(
+    () => sortRows(filteredOrganizations, sorting, organizationSortValues),
+    [filteredOrganizations, sorting]
+  )
+  const table = useDataTable({
+    data: rows,
+    columns: organizationColumns,
+    getRowId: (org) => org.id,
+    sorting,
+    onSortingChange: setSorting,
+    ...columnPreferenceProps(preferences),
+  })
 
   const searchSuggestions = useMemo<SuggestInputItem[]>(
     () =>
@@ -162,16 +203,33 @@ export function OrganizationsContent() {
           onClear: clearFilters,
         }}
       >
-        {(data) => (
-          <div className="min-h-0 flex-1 overflow-y-auto">
-            <EntityList
-              items={data}
-              context={{
-                onOpenDetail: detailDialog.open,
-                onEdit: editDialog.openEdit,
-                onDelete: deleteDialog.open,
+        {() => (
+          <div className="flex min-h-0 flex-1 flex-col">
+            <DataTableView
+              table={table}
+              label="Organizaciones"
+              idPrefix="admin-organizations"
+              onResetColumns={preferences.reset}
+              renderControl={(org, columnId) => {
+                if (columnId === ORGANIZATION_NAME_COLUMN) {
+                  return (
+                    <DataTableIdentityCell
+                      primary={org.name}
+                      secondary={`/${org.slug}`}
+                      onOpen={() => detailDialog.open(org.id)}
+                      label={org.name}
+                    />
+                  )
+                }
+                return (
+                  <RowActions
+                    actions={organizationActions}
+                    item={org}
+                    context={rowContext}
+                    accessibleLabel={org.name}
+                  />
+                )
               }}
-              definition={organizationListDefinition}
             />
           </div>
         )}

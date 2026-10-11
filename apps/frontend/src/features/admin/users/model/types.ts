@@ -1,7 +1,6 @@
-import type { User } from "better-auth"
+import type { client } from "@/lib/orpc"
 
-export interface UserRow extends User {
-  role?: string
-  banned: boolean | null
-  banReason?: string | null
-}
+/** A user as the administrator list returns it (`v1.adminUser.list`). */
+export type UserRow = Awaited<
+  ReturnType<typeof client.v1.adminUser.list>
+>["users"][number]

@@ -4,8 +4,11 @@ const OctagonX = getIcon("status", "error")
 const ScrollText = getIcon("admin", "logs")
 const RotateCw = getIcon("actions", "refresh")
 
-import { useCallback, useState } from "react"
+import { useCallback, useMemo, useState } from "react"
+import { textVariants } from "@/components/shared/brand/typography"
+import { DataTableView } from "@/components/shared/data-display/data-table-view"
 import { InfiniteScrollSentinel } from "@/components/shared/data-display/infinite-scroll-sentinel"
+import { JsonView } from "@/components/shared/data-display/json-view"
 import { FilterChips } from "@/components/shared/resource/filter-chips"
 import {
   chipsFor,
@@ -15,18 +18,33 @@ import {
 } from "@/components/shared/resource/resource-filters"
 import { ResourceOverview } from "@/components/shared/resource/resource-overview"
 import { Button } from "@/components/ui/button"
-import { LogRow } from "@/features/admin/logs/components/log-row"
 import { UserEmailPicker } from "@/features/admin/logs/components/user-email-picker"
+import {
+  type ActivityLogRow,
+  LOG_DEFAULT_SORT,
+  LOG_SORT_KEYS,
+  LogUser,
+  logColumnLayout,
+  logColumns,
+  logDateTime,
+} from "@/features/admin/logs/definitions/log-columns.definition"
 import { useActivityLog } from "@/features/admin/logs/hooks/use-activity-log"
 import type {
   ActivityTypeFilter,
   HttpMethodFilter,
 } from "@/features/admin/logs/model/types"
 import { useAdminUser } from "@/hooks/use-admin-user"
+import { useColumnPreferences } from "@/hooks/use-column-preferences"
+import { columnPreferenceProps, useDataTable } from "@/hooks/use-data-table"
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll"
+import { useSortQueryParam } from "@/hooks/use-sort-query-param"
 import { cn } from "@/lib/utils"
 
 export function LogsContent() {
+  const [sorting, setSorting, ordering] = useSortQueryParam(
+    LOG_SORT_KEYS,
+    LOG_DEFAULT_SORT
+  )
   const {
     entries,
     filters,
@@ -40,7 +58,24 @@ export function LogsContent() {
     isError,
     refetch,
     isRefetching,
-  } = useActivityLog()
+  } = useActivityLog(ordering)
+  const rows = useMemo<ActivityLogRow[]>(
+    () =>
+      entries.map((entry, index) => ({
+        ...entry,
+        rowKey: `${entry.timestamp}-${index}`,
+      })),
+    [entries]
+  )
+  const preferences = useColumnPreferences("admin-logs", logColumnLayout)
+  const table = useDataTable({
+    data: rows,
+    columns: logColumns,
+    getRowId: (entry) => entry.rowKey,
+    sorting,
+    onSortingChange: setSorting,
+    ...columnPreferenceProps(preferences),
+  })
 
   const [scrollContainer, setScrollContainer] = useState<HTMLDivElement | null>(
     null
@@ -211,25 +246,52 @@ export function LogsContent() {
         onClear: clearFilters,
       }}
     >
-      {(data) => (
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border bg-card/40">
-          <div
-            ref={setScrollContainer}
-            className="min-h-0 flex-1 divide-y overflow-y-auto"
-          >
-            {data.map((entry, index) => (
-              <LogRow
-                key={`${entry.timestamp}-${index}`}
-                entry={entry}
-                index={index}
+      {() => (
+        <div className="flex min-h-0 flex-1 flex-col">
+          <DataTableView
+            table={table}
+            label="Actividad"
+            idPrefix="admin-logs"
+            onResetColumns={preferences.reset}
+            scrollRef={setScrollContainer}
+            renderDetail={(entry) => (
+              <div className="grid gap-3">
+                <dl
+                  className={cn(
+                    textVariants({ role: "compact" }),
+                    "grid grid-cols-2 gap-x-5 gap-y-2"
+                  )}
+                >
+                  <div>
+                    <dt className="text-muted-foreground">Usuario</dt>
+                    <dd className="mt-0.5 truncate">
+                      <LogUser userId={entry.userId} />
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-muted-foreground">Fecha</dt>
+                    <dd className="mt-0.5 font-mono tabular-nums">
+                      {logDateTime(entry)}
+                    </dd>
+                  </div>
+                </dl>
+                <JsonView
+                  value={entry.raw}
+                  className="overflow-x-auto rounded-md border-0 bg-muted/40"
+                />
+              </div>
+            )}
+            detailLabel={(entry) =>
+              `Ver la entrada completa de ${logDateTime(entry)}`
+            }
+            footer={
+              <InfiniteScrollSentinel
+                sentinelRef={sentinelRef}
+                hasNextPage={hasNextPage}
+                isFetchingNextPage={isFetchingNextPage}
               />
-            ))}
-            <InfiniteScrollSentinel
-              sentinelRef={sentinelRef}
-              hasNextPage={hasNextPage}
-              isFetchingNextPage={isFetchingNextPage}
-            />
-          </div>
+            }
+          />
         </div>
       )}
     </ResourceOverview>

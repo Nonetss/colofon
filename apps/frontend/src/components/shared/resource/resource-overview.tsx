@@ -41,7 +41,7 @@ export interface ResourceOverviewProps<TData> {
     clearLabel?: string
   }
   fallback?: ReactNode
-  /** The typed result renderer — an `EntityList` call or a feature-specific renderer. */
+  /** The typed result renderer — usually a `DataTableView`, or a feature-specific renderer. */
   children: (data: TData) => ReactNode
   /** Overrides the default `6xl` page width. */
   maxWidth?: ComponentProps<typeof PageShell>["maxWidth"]

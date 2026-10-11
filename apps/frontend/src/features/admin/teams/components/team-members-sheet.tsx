@@ -6,11 +6,10 @@ const UserPlus = getIcon("identity", "addUser")
 
 import { useState } from "react"
 import { Text, textVariants } from "@/components/shared/brand/typography"
-import { SoftCardList } from "@/components/shared/data-display/soft-card-list"
+import { DataTableView } from "@/components/shared/data-display/data-table-view"
 import { Hint } from "@/components/shared/feedback/hint"
 import { StateCard } from "@/components/shared/feedback/state-card"
 import { SectionHeading } from "@/components/shared/layout/section-heading"
-import { UserAvatar } from "@/components/shared/user/avatar"
 import { Button } from "@/components/ui/button"
 import {
   Select,
@@ -28,11 +27,17 @@ import {
 } from "@/components/ui/sheet"
 import { useOrganizationDetail } from "@/features/admin/organizations/public"
 import {
+  teamMemberColumnLayout,
+  teamMemberColumns,
+  teamMemberSortValues,
+} from "@/features/admin/teams/definitions/team-member-columns.definition"
+import {
   useTeamMemberAdd,
   useTeamMemberRemove,
   useTeamMembersList,
 } from "@/features/admin/teams/hooks/use-teams"
 import type { Team } from "@/features/admin/teams/model/types"
+import { useLocalDataTable } from "@/hooks/use-data-table"
 
 interface TeamMembersSheetProps {
   team: Team | null
@@ -50,6 +55,14 @@ export function TeamMembersSheet({
   const removeTeamMember = useTeamMemberRemove(teamId ?? "")
 
   const [pickedUserId, setPickedUserId] = useState("")
+  const { table, preferences } = useLocalDataTable({
+    tableId: "admin-team-members",
+    rows: members,
+    columns: teamMemberColumns,
+    layout: teamMemberColumnLayout,
+    getRowId: (member) => member.userId,
+    sortValues: teamMemberSortValues,
+  })
 
   const memberUserIds = new Set(members.map((m) => m.userId))
   const candidates = (org?.members ?? []).filter(
@@ -66,7 +79,7 @@ export function TeamMembersSheet({
     <Sheet open={!!team} onOpenChange={(open) => !open && onOpenChange(false)}>
       <SheetContent className="w-full gap-0 overflow-y-auto sm:max-w-md">
         <SheetHeader>
-          <SheetTitle className="tracking-tight">
+          <SheetTitle className={textVariants({ role: "display" })}>
             {team?.name ?? "Equipo"}
           </SheetTitle>
           <SheetDescription className={textVariants({ role: "compact" })}>
@@ -91,9 +104,9 @@ export function TeamMembersSheet({
               </SelectTrigger>
               <SelectContent>
                 {candidates.length === 0 ? (
-                  <div className="px-2 py-1.5 text-muted-foreground text-sm">
+                  <Text as="div" tone="muted" className="px-2 py-1.5">
                     No hay miembros disponibles
-                  </div>
+                  </Text>
                 ) : (
                   candidates.map((m) => (
                     <SelectItem key={m.userId} value={m.userId}>
@@ -123,58 +136,38 @@ export function TeamMembersSheet({
           {isPending ? (
             <StateCard spinner title="Cargando miembros..." />
           ) : members.length === 0 ? (
-            <p className="text-muted-foreground text-sm">
+            <Text as="p" tone="muted">
               Este equipo no tiene miembros todavía.
-            </p>
+            </Text>
           ) : (
             <div className="space-y-3">
               <SectionHeading title="Miembros" count={members.length} />
-              <SoftCardList as="ul">
-                {members.map((member) => (
-                  <li
-                    key={member.userId}
-                    className="flex items-center gap-3 px-3 py-2.5"
-                  >
-                    <UserAvatar
-                      displayName={member.user.name}
-                      email={member.user.email}
-                      imageUrl={member.user.image}
-                      size="sm"
-                      className="shrink-0"
-                    />
-                    <div className="min-w-0 flex-1">
-                      <Text as="p" variant="title" className="truncate">
-                        {member.user.name}
-                      </Text>
-                      <Text
-                        as="p"
-                        variant="compact"
-                        tone="muted"
-                        className="truncate"
-                      >
-                        {member.user.email}
-                      </Text>
-                    </div>
-                    <Hint label="Eliminar del equipo">
-                      <Button
-                        variant="ghost"
-                        size="icon-sm"
-                        aria-label="Eliminar del equipo"
-                        disabled={removeTeamMember.isPending}
-                        onClick={() =>
-                          teamId &&
-                          removeTeamMember.mutate({
-                            teamId,
-                            userId: member.userId,
-                          })
-                        }
-                      >
-                        <Trash2 className="size-4" />
-                      </Button>
-                    </Hint>
-                  </li>
-                ))}
-              </SoftCardList>
+              <DataTableView
+                table={table}
+                label="Miembros"
+                idPrefix="admin-team-members"
+                layout="table"
+                onResetColumns={preferences.reset}
+                renderControl={(member) => (
+                  <Hint label="Eliminar del equipo">
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      aria-label={`Eliminar a ${member.user.name} del equipo`}
+                      disabled={removeTeamMember.isPending}
+                      onClick={() =>
+                        teamId &&
+                        removeTeamMember.mutate({
+                          teamId,
+                          userId: member.userId,
+                        })
+                      }
+                    >
+                      <Trash2 className="size-4" />
+                    </Button>
+                  </Hint>
+                )}
+              />
             </div>
           )}
         </div>

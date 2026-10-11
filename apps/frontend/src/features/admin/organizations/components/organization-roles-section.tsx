@@ -4,12 +4,17 @@ const ShieldPlus = getIcon("security", "grant")
 const Trash2 = getIcon("actions", "delete")
 
 import { Text } from "@/components/shared/brand/typography"
-import { SoftCardList } from "@/components/shared/data-display/soft-card-list"
+import { DataTableView } from "@/components/shared/data-display/data-table-view"
 import { Hint } from "@/components/shared/feedback/hint"
 import { SectionHeading } from "@/components/shared/layout/section-heading"
 import { Button } from "@/components/ui/button"
-import { describePermissions } from "@/features/admin/organizations/definitions/role-options"
+import {
+  roleColumnLayout,
+  roleColumns,
+  roleSortValues,
+} from "@/features/admin/organizations/definitions/organization-detail-columns.definition"
 import type { OrganizationCustomRole } from "@/features/admin/organizations/model/types"
+import { useLocalDataTable } from "@/hooks/use-data-table"
 
 /** The organization detail sheet's "Roles personalizados" section: header +
  *  create action, empty state, or the custom-role list with removal. */
@@ -22,6 +27,15 @@ export function OrganizationRolesSection({
   onCreateClick: () => void
   onRemoveClick: (roleId: string) => void
 }) {
+  const { table, preferences } = useLocalDataTable({
+    tableId: "admin-organization-roles",
+    rows: roles,
+    columns: roleColumns,
+    layout: roleColumnLayout,
+    getRowId: (role) => role.id,
+    sortValues: roleSortValues,
+  })
+
   return (
     <section className="space-y-3">
       <SectionHeading
@@ -36,40 +50,30 @@ export function OrganizationRolesSection({
       />
 
       {roles.length === 0 ? (
-        <p className="text-muted-foreground text-sm">
+        <Text as="p" tone="muted">
           Esta organización no tiene roles personalizados. Usa Propietario,
           Administrador o Miembro, o crea uno nuevo.
-        </p>
+        </Text>
       ) : (
-        <SoftCardList as="ul">
-          {roles.map((role) => (
-            <li key={role.id} className="flex items-center gap-3 px-3 py-2.5">
-              <div className="min-w-0 flex-1">
-                <Text as="p" variant="title" className="truncate">
-                  {role.role}
-                </Text>
-                <Text
-                  as="p"
-                  variant="compact"
-                  tone="muted"
-                  className="truncate"
-                >
-                  {describePermissions(role.permission)}
-                </Text>
-              </div>
-              <Hint label="Eliminar rol">
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  aria-label="Eliminar rol"
-                  onClick={() => onRemoveClick(role.id)}
-                >
-                  <Trash2 className="size-4" />
-                </Button>
-              </Hint>
-            </li>
-          ))}
-        </SoftCardList>
+        <DataTableView
+          table={table}
+          label="Roles personalizados"
+          idPrefix="admin-organization-roles"
+          layout="table"
+          onResetColumns={preferences.reset}
+          renderControl={(role) => (
+            <Hint label="Eliminar rol">
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                aria-label={`Eliminar el rol ${role.role}`}
+                onClick={() => onRemoveClick(role.id)}
+              >
+                <Trash2 className="size-4" />
+              </Button>
+            </Hint>
+          )}
+        />
       )}
     </section>
   )

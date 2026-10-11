@@ -3,9 +3,12 @@ import { getIcon } from "@/lib/icon-registry"
 const UsersRound = getIcon("admin", "teams")
 
 import { useCallback, useDeferredValue, useMemo, useState } from "react"
+import { Text } from "@/components/shared/brand/typography"
+import { DataTableIdentityCell } from "@/components/shared/data-display/data-table-cell-content"
+import { DataTableView } from "@/components/shared/data-display/data-table-view"
+import { RowActions } from "@/components/shared/data-display/row-action-items"
 import type { SuggestInputItem } from "@/components/shared/form/suggest-input"
 import { HeroCount } from "@/components/shared/layout/page-hero"
-import { EntityList } from "@/components/shared/resource/entity-list"
 import { FilterChips } from "@/components/shared/resource/filter-chips"
 import {
   chipsFor,
@@ -18,16 +21,30 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 import { useOrganizationsList } from "@/features/admin/organizations/public"
 import { TeamFormDialog } from "@/features/admin/teams/components/team-form-dialog"
 import { TeamMembersSheet } from "@/features/admin/teams/components/team-members-sheet"
-import { teamListDefinition } from "@/features/admin/teams/definitions/team-list.definition"
+import {
+  TEAM_DEFAULT_SORT,
+  TEAM_NAME_COLUMN,
+  TEAM_ORGANIZATION_COLUMN,
+  TEAM_SORT_KEYS,
+  type TeamsRowContext,
+  teamActions,
+  teamColumnLayout,
+  teamColumns,
+  teamSortValues,
+} from "@/features/admin/teams/definitions/team-columns.definition"
 import {
   useTeamDelete,
   useTeamsList,
 } from "@/features/admin/teams/hooks/use-teams"
 import type { Team } from "@/features/admin/teams/model/types"
+import { useColumnPreferences } from "@/hooks/use-column-preferences"
+import { columnPreferenceProps, useDataTable } from "@/hooks/use-data-table"
 import { useEditDialog } from "@/hooks/use-edit-dialog"
+import { useSortQueryParam } from "@/hooks/use-sort-query-param"
 import { useTargetConfirmDialog } from "@/hooks/use-target-confirm-dialog"
 import { useTargetDialog } from "@/hooks/use-target-dialog"
 import { foldText, textSuggestions } from "@/lib/fold-text"
+import { sortRows } from "@/lib/sort-rows"
 
 const ALL_ORGS = "all"
 
@@ -79,6 +96,29 @@ export function TeamsContent() {
     setSearch("")
     setOrgFilter(ALL_ORGS)
   }
+
+  const rowContext: TeamsRowContext = {
+    onOpenMembers: membersDialog.open,
+    onEdit: editDialog.openEdit,
+    onDelete: deleteDialog.open,
+  }
+  const preferences = useColumnPreferences("admin-teams", teamColumnLayout)
+  const [sorting, setSorting] = useSortQueryParam(
+    TEAM_SORT_KEYS,
+    TEAM_DEFAULT_SORT
+  )
+  const rows = useMemo(
+    () => sortRows(filteredTeams, sorting, teamSortValues(orgNameById)),
+    [filteredTeams, sorting, orgNameById]
+  )
+  const table = useDataTable({
+    data: rows,
+    columns: teamColumns,
+    getRowId: (team) => team.id,
+    sorting,
+    onSortingChange: setSorting,
+    ...columnPreferenceProps(preferences),
+  })
 
   const searchSuggestions = useMemo<SuggestInputItem[]>(
     () =>
@@ -189,17 +229,39 @@ export function TeamsContent() {
           onClear: clearFilters,
         }}
       >
-        {(data) => (
-          <div className="min-h-0 flex-1 overflow-y-auto">
-            <EntityList
-              items={data}
-              context={{
-                orgNameById,
-                onOpenMembers: membersDialog.open,
-                onEdit: editDialog.openEdit,
-                onDelete: deleteDialog.open,
+        {() => (
+          <div className="flex min-h-0 flex-1 flex-col">
+            <DataTableView
+              table={table}
+              label="Equipos"
+              idPrefix="admin-teams"
+              onResetColumns={preferences.reset}
+              renderControl={(team, columnId) => {
+                if (columnId === TEAM_NAME_COLUMN) {
+                  return (
+                    <DataTableIdentityCell
+                      primary={team.name}
+                      onOpen={() => membersDialog.open(team)}
+                      label={team.name}
+                    />
+                  )
+                }
+                if (columnId === TEAM_ORGANIZATION_COLUMN) {
+                  return (
+                    <Text tone="muted" className="block truncate">
+                      {orgNameById.get(team.organizationId) ?? "—"}
+                    </Text>
+                  )
+                }
+                return (
+                  <RowActions
+                    actions={teamActions}
+                    item={team}
+                    context={rowContext}
+                    accessibleLabel={team.name}
+                  />
+                )
               }}
-              definition={teamListDefinition}
             />
           </div>
         )}

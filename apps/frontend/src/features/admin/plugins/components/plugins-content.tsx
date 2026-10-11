@@ -2,20 +2,42 @@ import { getIcon } from "@/lib/icon-registry"
 
 const Blocks = getIcon("admin", "plugins")
 
-import type { CSSProperties } from "react"
-import { Text } from "@/components/shared/brand/typography"
-import { SoftCardList } from "@/components/shared/data-display/soft-card-list"
-import { StatusTag } from "@/components/shared/data-display/status-dot"
+import { useMemo } from "react"
+import { DataTableView } from "@/components/shared/data-display/data-table-view"
 import { HeroCount } from "@/components/shared/layout/page-hero"
 import { ResourceOverview } from "@/components/shared/resource/resource-overview"
 import {
-  defaultPluginIcon,
-  pluginMeta,
-} from "@/features/admin/plugins/definitions/plugin-meta.definition"
+  PLUGIN_DEFAULT_SORT,
+  PLUGIN_SORT_KEYS,
+  pluginColumnLayout,
+  pluginColumns,
+  pluginSortValues,
+} from "@/features/admin/plugins/definitions/plugin-columns.definition"
 import { usePluginsList } from "@/features/admin/plugins/hooks/use-plugins"
+import { useColumnPreferences } from "@/hooks/use-column-preferences"
+import { columnPreferenceProps, useDataTable } from "@/hooks/use-data-table"
+import { useSortQueryParam } from "@/hooks/use-sort-query-param"
+import { sortRows } from "@/lib/sort-rows"
 
 export function PluginsContent() {
   const { data: plugins = [], isPending, isError, refetch } = usePluginsList()
+  const preferences = useColumnPreferences("admin-plugins", pluginColumnLayout)
+  const [sorting, setSorting] = useSortQueryParam(
+    PLUGIN_SORT_KEYS,
+    PLUGIN_DEFAULT_SORT
+  )
+  const rows = useMemo(
+    () => sortRows(plugins, sorting, pluginSortValues),
+    [plugins, sorting]
+  )
+  const table = useDataTable({
+    data: rows,
+    columns: pluginColumns,
+    getRowId: (plugin) => plugin.id,
+    sorting,
+    onSortingChange: setSorting,
+    ...columnPreferenceProps(preferences),
+  })
 
   return (
     <ResourceOverview
@@ -34,43 +56,13 @@ export function PluginsContent() {
           "Comprueba tu conexión y tus permisos de administración; después, vuelve a intentarlo.",
       }}
     >
-      {(data) => (
-        <SoftCardList as="ul">
-          {data.map((plugin, index) => {
-            const meta = pluginMeta[plugin.id]
-            return (
-              <li
-                key={plugin.id}
-                className="dash-enter flex items-start gap-3 px-4 py-4 sm:px-5"
-                style={{ "--dash-delay": `${index * 40}ms` } as CSSProperties}
-              >
-                <span className="mt-0.5 text-primary">
-                  {meta?.icon ?? defaultPluginIcon}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-baseline gap-2">
-                    <Text as="p" variant="title">
-                      {meta?.label ?? plugin.id}
-                    </Text>
-                    <StatusTag dotTone="primary">Activo</StatusTag>
-                  </div>
-                  <Text
-                    as="p"
-                    variant="compact"
-                    tone="muted"
-                    className="mt-1 leading-relaxed"
-                  >
-                    {meta?.description ??
-                      `Plugin "${plugin.id}" registrado en Better Auth.`}
-                  </Text>
-                  <Text as="p" variant="data" tone="muted" className="mt-1.5">
-                    {plugin.id}
-                  </Text>
-                </div>
-              </li>
-            )
-          })}
-        </SoftCardList>
+      {() => (
+        <DataTableView
+          table={table}
+          label="Plugins"
+          idPrefix="admin-plugins"
+          onResetColumns={preferences.reset}
+        />
       )}
     </ResourceOverview>
   )

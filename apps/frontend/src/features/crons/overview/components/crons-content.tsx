@@ -3,50 +3,38 @@ import { getIcon } from "@/lib/icon-registry"
 const Clock = getIcon("navigation", "crons")
 const Plus = getIcon("actions", "add")
 
-import { useCallback, useDeferredValue, useMemo } from "react"
+import { useMemo } from "react"
 import { Text } from "@/components/shared/brand/typography"
-import type { SuggestInputItem } from "@/components/shared/form/suggest-input"
+import type { DataTableFilter } from "@/components/shared/data-display/data-table-column-filter"
 import { HeroCount } from "@/components/shared/layout/page-hero"
-import { EntityList } from "@/components/shared/resource/entity-list"
-import { FilterChips } from "@/components/shared/resource/filter-chips"
-import {
-  chipsFor,
-  type ResourceFilterDescriptor,
-  ResourceFilters,
-} from "@/components/shared/resource/resource-filters"
 import { ResourceOverview } from "@/components/shared/resource/resource-overview"
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion"
 import { Button } from "@/components/ui/button"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 import { CronFormDialog } from "@/features/crons/overview/components/cron-form-dialog"
+import { CronJobsTable } from "@/features/crons/overview/components/cron-jobs-table"
 import {
+  CRON_NAME_COLUMN,
   type CronsRowContext,
-  cronJobDefinition,
-} from "@/features/crons/overview/definitions/cron-job.definition"
+} from "@/features/crons/overview/definitions/cron-job-columns.definition"
 import { useCronHandlers } from "@/features/crons/overview/hooks/use-cron-handlers"
 import { useCronJobEvents } from "@/features/crons/overview/hooks/use-cron-job-events"
 import { useCronUsersByIds } from "@/features/crons/overview/hooks/use-cron-users-by-ids"
 import {
-  availableTags,
-  groupJobsByTag,
-  jobTag,
-} from "@/features/crons/overview/model/group-by-tag"
+  type CronFilters,
+  cronFilterOptions,
+  filterJobs,
+} from "@/features/crons/overview/model/cron-filters"
 import type { CronJob } from "@/features/crons/shared"
 import { cronLabels, useCronJobs, useCronRemove } from "@/features/crons/shared"
 import { useEditDialog } from "@/hooks/use-edit-dialog"
-import { useQueryParam } from "@/hooks/use-query-param"
+import {
+  NO_VALUES,
+  useQueryParam,
+  valueListCodec,
+} from "@/hooks/use-query-param"
 import { useTargetConfirmDialog } from "@/hooks/use-target-confirm-dialog"
 import { isAdminUser } from "@/lib/auth"
 import { authClient } from "@/lib/auth-client"
-import { foldText, textSuggestions } from "@/lib/fold-text"
-
-const ALL_TAGS = "all"
-type StatusFilter = "all" | "enabled" | "disabled"
 
 export function CronsContent() {
   const { data: jobs = [], isPending, isError, refetch } = useCronJobs()
@@ -70,15 +58,23 @@ export function CronsContent() {
     onConfirm: (job) => removeCron.mutateAsync({ id: job.id }),
   })
 
-  const [search, setSearch] = useQueryParam("q", "")
-  const [tagFilter, setTagFilter] = useQueryParam("tag", ALL_TAGS)
-  const [statusFilter, setStatusFilter] = useQueryParam<StatusFilter>(
+  const [nameFilter, setNameFilter] = useQueryParam(
+    "name",
+    NO_VALUES,
+    valueListCodec
+  )
+  const [tagFilter, setTagFilter] = useQueryParam(
+    "tag",
+    NO_VALUES,
+    valueListCodec
+  )
+  const [statusFilter, setStatusFilter] = useQueryParam(
     "status",
-    "all"
+    NO_VALUES,
+    valueListCodec
   )
 
   const activeCount = jobs.filter((job) => job.enabled).length
-  const tags = availableTags(jobs)
 
   const runsAsUserIds = useMemo(
     () => jobs.flatMap((job) => (job.userId ? [job.userId] : [])),
@@ -86,102 +82,70 @@ export function CronsContent() {
   )
   const usersById = useCronUsersByIds(runsAsUserIds)
 
-  const normalizedSearch = search.trim().toLowerCase()
-  // Keystrokes commit immediately; re-filtering and re-rendering every row
-  // happens in a lower-priority pass, so a long job list can't make the input
-  // stutter as it grows.
-  const searchTerm = useDeferredValue(normalizedSearch)
+  const filters: CronFilters = {
+    name: nameFilter,
+    tag: tagFilter,
+    status: statusFilter,
+  }
   const filteredJobs = useMemo(
     () =>
-      jobs.filter((job) => {
-        if (tagFilter !== ALL_TAGS && jobTag(job) !== tagFilter) {
-          return false
-        }
-        if (statusFilter === "enabled" && !job.enabled) return false
-        if (statusFilter === "disabled" && job.enabled) return false
-        if (
-          searchTerm &&
-          !job.name.toLowerCase().includes(searchTerm) &&
-          !job.handlerKey.toLowerCase().includes(searchTerm)
-        ) {
-          return false
-        }
-        return true
+      filterJobs(jobs, {
+        name: nameFilter,
+        tag: tagFilter,
+        status: statusFilter,
       }),
-    [jobs, tagFilter, statusFilter, searchTerm]
+    [jobs, nameFilter, tagFilter, statusFilter]
   )
+  const filterOptions = cronFilterOptions(jobs, filters)
+
+  // An empty list is "every value": store the shared constant so the param
+  // drops out of the URL.
+  const valuesSetter =
+    (set: (values: readonly string[]) => void) => (next: string[]) => {
+      if (next.length === 0) {
+        set(NO_VALUES)
+        return
+      }
+      set(next)
+    }
 
   const activeFilterCount =
-    (normalizedSearch ? 1 : 0) +
-    (tagFilter !== ALL_TAGS ? 1 : 0) +
-    (statusFilter !== "all" ? 1 : 0)
+    Number(nameFilter.length > 0) +
+    Number(tagFilter.length > 0) +
+    Number(statusFilter.length > 0)
   const clearFilters = () => {
-    setSearch("")
-    setTagFilter(ALL_TAGS)
-    setStatusFilter("all")
+    setNameFilter(NO_VALUES)
+    setTagFilter(NO_VALUES)
+    setStatusFilter(NO_VALUES)
   }
 
-  const searchSuggestions = useMemo<SuggestInputItem[]>(
-    () =>
-      textSuggestions(jobs, search, {
-        match: (job, q) =>
-          foldText(job.name).includes(q) ||
-          foldText(job.handlerKey).includes(q),
-        toItem: (job) => ({
-          key: job.id,
-          value: job.name,
-          label: job.name,
-          detail: job.handlerKey,
-        }),
-      }),
-    [jobs, search]
-  )
+  const tableFilters: Partial<Record<string, DataTableFilter>> = {
+    [CRON_NAME_COLUMN]: {
+      options: filterOptions.name,
+      selected: nameFilter,
+      onChange: valuesSetter(setNameFilter),
+    },
+    tag: {
+      options: filterOptions.tag,
+      selected: tagFilter,
+      onChange: valuesSetter(setTagFilter),
+    },
+    status: {
+      options: filterOptions.status,
+      selected: statusFilter,
+      onChange: valuesSetter(setStatusFilter),
+    },
+  }
 
-  const filterDescriptors: ResourceFilterDescriptor[] = [
-    {
-      kind: "suggestion",
-      key: "cron-filter-search",
-      label: "Buscar",
-      value: search,
-      onChange: setSearch,
-      suggestions: searchSuggestions,
-      placeholder: "Nombre o handler...",
-    },
-    {
-      kind: "select",
-      key: "cron-filter-tag",
-      label: "Tag",
-      value: tagFilter,
-      onChange: setTagFilter,
-      placeholder: "Todos los tags",
-      options: [
-        { value: ALL_TAGS, label: "Todos los tags" },
-        ...tags.map((tag) => ({ value: tag, label: tag })),
-      ],
-      defaultValue: ALL_TAGS,
-      isActive: (value) => value !== ALL_TAGS,
-    },
-    {
-      kind: "select",
-      key: "cron-filter-status",
-      label: "Estado",
-      value: statusFilter,
-      onChange: (value) => setStatusFilter(value as StatusFilter),
-      placeholder: "Todos los estados",
-      options: [
-        { value: "all", label: "Todos los estados" },
-        { value: "enabled", label: "Activos" },
-        { value: "disabled", label: "Pausados" },
-      ],
-      defaultValue: "all",
-      isActive: (value) => value !== "all",
-    },
-  ]
-  // Every filter here applies live, so the sheet's draft total is simply the
-  // current filtered count.
-  const fetchDraftTotal = useCallback(
-    () => filteredJobs.length,
-    [filteredJobs.length]
+  const noMatches = (
+    <div className="grid justify-items-center gap-2">
+      <Text tone="muted">Ningún cron coincide con los filtros.</Text>
+      {activeFilterCount > 0 ? (
+        <Button variant="outline" size="sm" onClick={clearFilters}>
+          Limpiar filtros
+        </Button>
+      ) : null}
+    </div>
   )
 
   const rowContext: CronsRowContext = {
@@ -214,27 +178,7 @@ export function CronsContent() {
             </Button>
           ) : null
         }
-        filters={
-          !isError && !isPending && jobs.length > 0 ? (
-            <div className="space-y-3">
-              <ResourceFilters
-                filters={filterDescriptors}
-                onClear={clearFilters}
-                fetchDraftTotal={fetchDraftTotal}
-                count={
-                  filteredJobs.length === jobs.length
-                    ? `${jobs.length} crons`
-                    : `${filteredJobs.length} de ${jobs.length} crons`
-                }
-              />
-              <FilterChips
-                chips={chipsFor(filterDescriptors)}
-                onClear={clearFilters}
-              />
-            </div>
-          ) : undefined
-        }
-        query={{ data: filteredJobs, isPending, isError, refetch }}
+        query={{ data: jobs, isPending, isError, refetch }}
         loading="Cargando crons..."
         error={{
           icon: <Clock className="size-6" />,
@@ -252,55 +196,17 @@ export function CronsContent() {
             <Button onClick={editDialog.openCreate}>{cronLabels.create}</Button>
           ) : undefined,
         }}
-        hasActiveFilters={activeFilterCount > 0}
-        filteredEmpty={{
-          icon: <Clock className="size-6" />,
-          title: "Sin resultados",
-          description: "Ningún cron coincide con los filtros seleccionados.",
-          onClear: clearFilters,
-        }}
       >
-        {(data) => {
-          const groupedJobs = groupJobsByTag(data)
-          return (
-            <div className="min-h-0 flex-1 overflow-y-auto">
-              <Accordion
-                multiple
-                defaultValue={groupedJobs.map(([tag]) => tag)}
-                className="space-y-4"
-              >
-                {groupedJobs.map(([tag, tagJobs]) => (
-                  <AccordionItem
-                    key={tag}
-                    value={tag}
-                    className="overflow-hidden rounded-xl border bg-card/40 last:border-b"
-                  >
-                    <AccordionTrigger className="px-4 py-3 hover:no-underline sm:px-5">
-                      <Text variant="title" className="flex items-center gap-2">
-                        {tag}
-                        <Text
-                          variant="compact"
-                          tone="muted"
-                          className="tabular-nums"
-                        >
-                          ({tagJobs.length})
-                        </Text>
-                      </Text>
-                    </AccordionTrigger>
-                    <AccordionContent className="p-0 pb-0">
-                      <EntityList
-                        items={tagJobs}
-                        context={rowContext}
-                        definition={cronJobDefinition}
-                        className="rounded-none border-0 border-t bg-transparent"
-                      />
-                    </AccordionContent>
-                  </AccordionItem>
-                ))}
-              </Accordion>
-            </div>
-          )
-        }}
+        {() => (
+          <div className="flex min-h-0 flex-1 flex-col">
+            <CronJobsTable
+              jobs={filteredJobs}
+              context={rowContext}
+              filters={tableFilters}
+              emptyMessage={noMatches}
+            />
+          </div>
+        )}
       </ResourceOverview>
 
       <CronFormDialog job={editDialog.editing} {...editDialog.dialogProps} />

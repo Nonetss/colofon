@@ -3,178 +3,145 @@ import { getIcon } from "@/lib/icon-registry"
 const History = getIcon("admin", "sessions")
 const UserX = getIcon("identity", "userX")
 
-import type { CSSProperties } from "react"
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import { Text, textVariants } from "@/components/shared/brand/typography"
+import type { DataTableFilter } from "@/components/shared/data-display/data-table-column-filter"
+import { DataTableView } from "@/components/shared/data-display/data-table-view"
 import { InfiniteScrollSentinel } from "@/components/shared/data-display/infinite-scroll-sentinel"
-import {
-  MetadataCell,
-  MetadataDefinitionList,
-} from "@/components/shared/data-display/metadata-cell"
-import { StatusDot } from "@/components/shared/data-display/status-dot"
+import { MetadataDefinitionList } from "@/components/shared/data-display/metadata-cell"
 import { HeroCount } from "@/components/shared/layout/page-hero"
 import { ResourceOverview } from "@/components/shared/resource/resource-overview"
+import { Button } from "@/components/ui/button"
+import {
+  isActiveSession,
+  SESSION_ACTIONS_COLUMN,
+  SESSION_DEFAULT_SORT,
+  SESSION_SORT_KEYS,
+  SESSION_STATUS_OPTIONS,
+  sessionColumnLayout,
+  sessionColumns,
+  sessionStatusesOf,
+} from "@/features/admin/sessions/definitions/session-columns.definition"
 import { useSessionHistory } from "@/features/admin/sessions/hooks/use-session-history"
 import type { SessionRecord } from "@/features/admin/sessions/model/types"
+import { useUserFilterOptions } from "@/features/admin/shared"
+import { useAdminUserSearch } from "@/hooks/use-admin-user-search"
+import { useColumnPreferences } from "@/hooks/use-column-preferences"
+import { columnPreferenceProps, useDataTable } from "@/hooks/use-data-table"
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll"
+import {
+  NO_VALUES,
+  useQueryParam,
+  valueListCodec,
+} from "@/hooks/use-query-param"
+import { useSortQueryParam } from "@/hooks/use-sort-query-param"
 import { formatDateTime } from "@/lib/format"
 import { cn } from "@/lib/utils"
 
-const ENTER_CAP = 12
-
-function SessionRow({
-  session,
-  index,
-}: {
-  session: SessionRecord
-  index: number
-}) {
-  const isActive = new Date(session.expiresAt).getTime() > Date.now()
-
+/** A session row's expanded detail: every technical field, as the row's
+ *  "Ver información técnica" disclosure showed them. */
+function SessionDetail({ session }: { session: SessionRecord }) {
+  const isActive = isActiveSession(session)
+  const expiryTone = isActive ? "text-muted-foreground" : "text-foreground"
   return (
-    <article
-      className="@container group dash-enter px-4 py-2.5 transition-colors hover:bg-muted/40 sm:px-5"
-      style={
-        {
-          "--dash-delay": `${Math.min(index, ENTER_CAP) * 40}ms`,
-        } as CSSProperties
-      }
-    >
-      <div className="grid gap-3 @3xl:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)_auto] @3xl:items-start @3xl:gap-4">
-        <div className="flex min-w-0 items-start gap-3">
-          <StatusDot
-            tone={isActive ? "primary" : "muted"}
-            className="mt-1.5 shrink-0"
-          />
-          <div className="min-w-0">
-            <Text as="p" variant="title" className="truncate">
-              {session.user.name}
-            </Text>
-            <Text
-              as="p"
-              variant="compact"
-              tone="muted"
-              className="mt-0.5 truncate"
-            >
-              {session.user.email}
-            </Text>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-x-4 gap-y-2">
-          <MetadataCell label="Dirección IP">
-            <Text variant="data">{session.ipAddress ?? "No registrada"}</Text>
-          </MetadataCell>
-          <MetadataCell label="Estado">
-            <Text variant="status" tone="muted">
-              {isActive ? "Vigente" : "Caducada"}
-            </Text>
-          </MetadataCell>
-        </div>
-
-        <MetadataCell label="Iniciada">
-          <Text variant="data" tone="muted" className="whitespace-nowrap">
-            {formatDateTime(session.createdAt, { includeYear: true })}
-          </Text>
-        </MetadataCell>
-      </div>
-
-      <details className="mt-2.5 border-t pt-2.5">
-        <summary
-          className={cn(
-            textVariants({ role: "compact", tone: "muted" }),
-            "w-fit cursor-pointer underline-offset-4 hover:text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-          )}
-        >
-          Ver información técnica
-        </summary>
-        <MetadataDefinitionList
-          columns={3}
-          bordered={false}
-          className="mt-3 gap-x-5 gap-y-3 py-0"
-          context={{ session, isActive }}
-          fields={[
-            {
-              key: "userAgent",
-              label: "User-agent",
-              className: "@xl:col-span-3",
-              value: ({ session }) => (
-                <Text
-                  variant="data"
-                  tone="muted"
-                  className="break-all leading-relaxed"
-                >
-                  {session.userAgent ?? "No registrado"}
-                </Text>
-              ),
-            },
-            {
-              key: "sessionId",
-              label: "ID de sesión",
-              value: ({ session }) => (
-                <Text variant="data" tone="muted" className="break-all">
-                  {session.id}
-                </Text>
-              ),
-            },
-            {
-              key: "userId",
-              label: "ID de usuario",
-              value: ({ session }) => (
-                <Text variant="data" tone="muted" className="break-all">
-                  {session.userId}
-                </Text>
-              ),
-            },
-            {
-              key: "updatedAt",
-              label: "Actualizada",
-              value: ({ session }) => (
-                <Text variant="data" tone="muted">
-                  {formatDateTime(session.updatedAt, { includeYear: true })}
-                </Text>
-              ),
-            },
-            {
-              key: "expiresAt",
-              label: "Caduca",
-              value: ({ session, isActive }) => (
-                <span
-                  className={cn(
-                    textVariants({ role: "data" }),
-                    isActive ? "text-muted-foreground" : "text-foreground"
-                  )}
-                >
-                  {formatDateTime(session.expiresAt, { includeYear: true })}
-                </span>
-              ),
-            },
-            {
-              key: "activeOrg",
-              label: "Organización activa",
-              value: ({ session }) => (
-                <Text variant="data" tone="muted" className="break-all">
-                  {session.activeOrganizationId ?? "Ninguna"}
-                </Text>
-              ),
-            },
-            {
-              key: "activeTeam",
-              label: "Equipo activo",
-              value: ({ session }) => (
-                <Text variant="data" tone="muted" className="break-all">
-                  {session.activeTeamId ?? "Ninguno"}
-                </Text>
-              ),
-            },
-          ]}
-        />
-      </details>
-    </article>
+    <div className="@container">
+      <MetadataDefinitionList
+        columns={3}
+        bordered={false}
+        className="gap-x-5 gap-y-3 py-0"
+        context={{ session }}
+        fields={[
+          {
+            key: "userAgent",
+            label: "User-agent",
+            className: "@xl:col-span-3",
+            value: ({ session }) => (
+              <Text
+                variant="data"
+                tone="muted"
+                className="break-all leading-relaxed"
+              >
+                {session.userAgent ?? "No registrado"}
+              </Text>
+            ),
+          },
+          {
+            key: "sessionId",
+            label: "ID de sesión",
+            value: ({ session }) => (
+              <Text variant="data" tone="muted" className="break-all">
+                {session.id}
+              </Text>
+            ),
+          },
+          {
+            key: "userId",
+            label: "ID de usuario",
+            value: ({ session }) => (
+              <Text variant="data" tone="muted" className="break-all">
+                {session.userId}
+              </Text>
+            ),
+          },
+          {
+            key: "updatedAt",
+            label: "Actualizada",
+            value: ({ session }) => (
+              <Text variant="data" tone="muted">
+                {formatDateTime(session.updatedAt, { includeYear: true })}
+              </Text>
+            ),
+          },
+          {
+            key: "expiresAt",
+            label: "Caduca",
+            value: ({ session }) => (
+              <span className={cn(textVariants({ role: "data" }), expiryTone)}>
+                {formatDateTime(session.expiresAt, { includeYear: true })}
+              </span>
+            ),
+          },
+          {
+            key: "activeOrg",
+            label: "Organización activa",
+            value: ({ session }) => (
+              <Text variant="data" tone="muted" className="break-all">
+                {session.activeOrganizationId ?? "Ninguna"}
+              </Text>
+            ),
+          },
+          {
+            key: "activeTeam",
+            label: "Equipo activo",
+            value: ({ session }) => (
+              <Text variant="data" tone="muted" className="break-all">
+                {session.activeTeamId ?? "Ninguno"}
+              </Text>
+            ),
+          },
+        ]}
+      />
+    </div>
   )
 }
 
 export function SessionsContent() {
+  const [sorting, setSorting, ordering] = useSortQueryParam(
+    SESSION_SORT_KEYS,
+    SESSION_DEFAULT_SORT
+  )
+  const [statusParam, setStatusParam] = useQueryParam(
+    "status",
+    NO_VALUES,
+    valueListCodec
+  )
+  const [userParam, setUserParam] = useQueryParam(
+    "user",
+    NO_VALUES,
+    valueListCodec
+  )
+  // Unknown `?status=` values are dropped instead of emptying the list.
+  const statuses = sessionStatusesOf(statusParam)
   const {
     sessions,
     total,
@@ -184,7 +151,65 @@ export function SessionsContent() {
     hasNextPage,
     isFetchingNextPage,
     fetchNextPage,
-  } = useSessionHistory()
+  } = useSessionHistory(ordering, { statuses, userIds: userParam })
+  const preferences = useColumnPreferences(
+    "admin-sessions",
+    sessionColumnLayout
+  )
+  const table = useDataTable({
+    data: sessions,
+    columns: sessionColumns,
+    getRowId: (session) => session.id,
+    sorting,
+    onSortingChange: setSorting,
+    ...columnPreferenceProps(preferences),
+  })
+
+  const [userQuery, setUserQuery] = useState("")
+  const userSearch = useAdminUserSearch(userQuery)
+  const sessionUsers = useMemo(
+    () => sessions.map((session) => session.user),
+    [sessions]
+  )
+  const userOptions = useUserFilterOptions({
+    selected: userParam,
+    seen: sessionUsers,
+    results: userSearch.results,
+  })
+
+  const filtered = statuses.length > 0 || userParam.length > 0
+  const clearFilters = () => {
+    setStatusParam(NO_VALUES)
+    setUserParam(NO_VALUES)
+  }
+  // An empty list is "every value": store the shared constant so the param
+  // drops out of the URL.
+  const valuesSetter =
+    (set: (values: readonly string[]) => void) => (next: string[]) => {
+      if (next.length === 0) {
+        set(NO_VALUES)
+        return
+      }
+      set(next)
+    }
+  const filters: Partial<Record<string, DataTableFilter>> = {
+    status: {
+      options: SESSION_STATUS_OPTIONS,
+      selected: statuses,
+      onChange: valuesSetter(setStatusParam),
+    },
+    user: {
+      options: userOptions,
+      selected: userParam,
+      onChange: valuesSetter(setUserParam),
+      search: {
+        query: userQuery,
+        onQueryChange: setUserQuery,
+        isLoading: userSearch.isFetching,
+        hint: "Escribe al menos 2 letras del nombre o el email",
+      },
+    },
+  }
 
   const [scrollContainer, setScrollContainer] = useState<HTMLDivElement | null>(
     null
@@ -209,28 +234,52 @@ export function SessionsContent() {
         description:
           "Comprueba tu conexión y que tu sesión tenga permisos de administración.",
       }}
-      isEmpty={(data) => data.length === 0}
+      isEmpty={(data) => data.length === 0 && !filtered}
       empty={{
         icon: <History className="size-6" />,
         title: "No hay sesiones registradas",
         description: "El historial aparecerá aquí cuando se inicie una sesión.",
       }}
     >
-      {(data) => (
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border bg-card/40">
-          <div
-            ref={setScrollContainer}
-            className="min-h-0 flex-1 divide-y overflow-y-auto"
-          >
-            {data.map((session, index) => (
-              <SessionRow key={session.id} session={session} index={index} />
-            ))}
-            <InfiniteScrollSentinel
-              sentinelRef={sentinelRef}
-              hasNextPage={hasNextPage}
-              isFetchingNextPage={isFetchingNextPage}
-            />
-          </div>
+      {() => (
+        <div className="flex min-h-0 flex-1 flex-col">
+          <DataTableView
+            table={table}
+            label="Sesiones"
+            idPrefix="admin-sessions"
+            onResetColumns={preferences.reset}
+            scrollRef={setScrollContainer}
+            filters={filters}
+            emptyMessage={
+              <div className="grid justify-items-center gap-2">
+                <Text tone="muted">
+                  Ninguna sesión coincide con los filtros.
+                </Text>
+                <Button variant="outline" size="sm" onClick={clearFilters}>
+                  Limpiar filtros
+                </Button>
+              </div>
+            }
+            renderDetail={(session) => <SessionDetail session={session} />}
+            renderControl={(_session, columnId, expandToggle) => {
+              if (columnId !== SESSION_ACTIONS_COLUMN) return null
+              return (
+                <span className="inline-flex size-8 items-center justify-center">
+                  {expandToggle}
+                </span>
+              )
+            }}
+            detailLabel={(session) =>
+              `Ver información técnica de la sesión de ${session.user.name}`
+            }
+            footer={
+              <InfiniteScrollSentinel
+                sentinelRef={sentinelRef}
+                hasNextPage={hasNextPage}
+                isFetchingNextPage={isFetchingNextPage}
+              />
+            }
+          />
         </div>
       )}
     </ResourceOverview>

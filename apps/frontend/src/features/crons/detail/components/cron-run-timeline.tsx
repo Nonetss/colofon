@@ -2,80 +2,62 @@ import { getIcon } from "@/lib/icon-registry"
 
 const Clock = getIcon("navigation", "crons")
 
-import type { RefObject } from "react"
+import type { OnChangeFn, SortingState } from "@tanstack/react-table"
+import type { Ref, RefObject } from "react"
 import { Text } from "@/components/shared/brand/typography"
+import type { DataTableFilter } from "@/components/shared/data-display/data-table-column-filter"
+import { DataTableView } from "@/components/shared/data-display/data-table-view"
 import { InfiniteScrollSentinel } from "@/components/shared/data-display/infinite-scroll-sentinel"
 import { StateCard } from "@/components/shared/feedback/state-card"
+import { Button } from "@/components/ui/button"
+import { CommentsButton, useCommentCounts } from "@/features/comments"
+import { CronRunOutput } from "@/features/crons/detail/components/cron-run-output"
 import {
-  SegmentedPicker,
-  type SegmentedPickerOption,
-} from "@/components/shared/form/segmented-picker"
-import { SectionHeading } from "@/components/shared/layout/section-heading"
-import { useCommentCounts } from "@/features/comments"
-import {
+  CRON_RUN_ACTIONS_COLUMN,
+  CRON_RUN_STATUS_OPTIONS,
   type CronRun,
-  CronRunRow,
-} from "@/features/crons/detail/components/cron-run-row"
-import { formatDayHeader, formatDayLabel } from "@/lib/format"
+  cronRunColumnLayout,
+  cronRunColumns,
+  cronRunDay,
+  cronRunDetailLabel,
+  cronRunHasOutput,
+  cronRunStartedAt,
+} from "@/features/crons/detail/definitions/cron-run-columns.definition"
+import { cronRunStatusLabels } from "@/features/crons/shared"
+import { useColumnPreferences } from "@/hooks/use-column-preferences"
+import { columnPreferenceProps, useDataTable } from "@/hooks/use-data-table"
 
-export type CronRunFilter = "all" | "failed" | "skipped"
-
-const filterOptions: readonly SegmentedPickerOption<CronRunFilter>[] = [
-  { value: "all", label: "Todas" },
-  { value: "failed", label: "Fallidas" },
-  { value: "skipped", label: "Omitidas" },
-]
-
-const emptyTitle: Record<CronRunFilter, string> = {
-  all: "Sin ejecuciones todavía",
-  failed: "Sin ejecuciones fallidas",
-  skipped: "Sin ejecuciones omitidas",
-}
-
-interface RunDay {
-  key: string
-  label: string
-  runs: CronRun[]
-}
-
-/** Groups runs (newest first) under one entry per local calendar day. */
-function groupByDay(runs: CronRun[]): RunDay[] {
-  const days: RunDay[] = []
-  for (const run of runs) {
-    const key = new Date(run.startedAt).toDateString()
-    const last = days.at(-1)
-    if (last?.key === key) {
-      last.runs.push(run)
-    } else {
-      days.push({
-        key,
-        label: formatDayHeader(formatDayLabel(run.startedAt)),
-        runs: [run],
-      })
-    }
-  }
-  return days
-}
-
-/** The cron detail page's "Historial" section: heading + status filter, then
- *  the runs grouped by day with their infinite-scroll sentinel, or a loading
- *  or empty state. */
+/** The cron detail page's "Historial" section: the runs as a table sorted
+ *  and filtered by the server (status filter in the "Estado" header), under
+ *  one heading row per day while they are ordered by start time, with their
+ *  infinite-scroll sentinel, or a loading or empty state. */
 export function CronRunTimeline({
   runs,
-  filter,
-  onFilterChange,
+  statusFilter,
+  onStatusFilterChange,
+  onClearFilters,
   isPending,
   hasNextPage,
   isFetchingNextPage,
   sentinelRef,
+  scrollRef,
+  sorting,
+  onSortingChange,
 }: {
   runs: CronRun[]
-  filter: CronRunFilter
-  onFilterChange: (filter: CronRunFilter) => void
+  /** The statuses kept, empty for every run. */
+  statusFilter: readonly string[]
+  onStatusFilterChange: (next: string[]) => void
+  onClearFilters: () => void
   isPending: boolean
   hasNextPage: boolean
   isFetchingNextPage: boolean
   sentinelRef: RefObject<HTMLDivElement | null>
+  /** Receives the table's scroll box, the sentinel's root. */
+  scrollRef: Ref<HTMLDivElement>
+  /** Owned by the page URL and applied by the server. */
+  sorting: SortingState
+  onSortingChange: OnChangeFn<SortingState>
 }) {
   // One batched count for every loaded run instead of one request per row.
   const { data: commentCounts } = useCommentCounts(
@@ -84,67 +66,101 @@ export function CronRunTimeline({
   const commentCountByRunId = new Map(
     commentCounts?.map((row) => [row.entityId, row.count])
   )
+  const preferences = useColumnPreferences("cron-runs", cronRunColumnLayout)
+  const table = useDataTable({
+    data: runs,
+    columns: cronRunColumns,
+    getRowId: (run) => run.id,
+    sorting,
+    onSortingChange,
+    ...columnPreferenceProps(preferences),
+  })
+
+  const filtered = statusFilter.length > 0
+  const byStartTime = sorting[0]?.id === "startedAt"
+  const groupOf = byStartTime ? cronRunDay : undefined
+  const filters: Partial<Record<string, DataTableFilter>> = {
+    status: {
+      options: CRON_RUN_STATUS_OPTIONS,
+      selected: statusFilter,
+      onChange: onStatusFilterChange,
+    },
+  }
 
   return (
     <section className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-baseline gap-3">
-          <Text as="h2" variant="title">
-            Historial
+      <div className="flex items-baseline gap-3">
+        <Text as="h2" variant="title">
+          Historial
+        </Text>
+        {runs.length > 0 ? (
+          <Text as="p" variant="compact" tone="muted" className="tabular-nums">
+            {runs.length}
+            {hasNextPage ? "+" : ""}{" "}
+            {runs.length === 1 ? "ejecución" : "ejecuciones"}
           </Text>
-          {runs.length > 0 ? (
-            <Text
-              as="p"
-              variant="compact"
-              tone="muted"
-              className="tabular-nums"
-            >
-              {runs.length}
-              {hasNextPage ? "+" : ""}{" "}
-              {runs.length === 1 ? "ejecución" : "ejecuciones"}
-            </Text>
-          ) : null}
-        </div>
-        <div className="w-full sm:w-64">
-          <SegmentedPicker
-            label="Filtrar ejecuciones por estado"
-            options={filterOptions}
-            value={filter}
-            onChange={onFilterChange}
-            columns={3}
-          />
-        </div>
+        ) : null}
       </div>
 
       {isPending ? (
         <StateCard spinner title="Cargando ejecuciones..." />
-      ) : runs.length === 0 ? (
+      ) : runs.length === 0 && !filtered ? (
         <StateCard
           icon={<Clock className="size-6" />}
-          title={emptyTitle[filter]}
+          title="Sin ejecuciones todavía"
         />
       ) : (
-        <div className="flex flex-col gap-6">
-          {groupByDay(runs).map((day) => (
-            <div key={day.key} className="flex flex-col gap-2">
-              <SectionHeading as="h3" title={day.label} />
-              <ul className="divide-y rounded-xl border bg-card/40">
-                {day.runs.map((run) => (
-                  <CronRunRow
-                    key={run.id}
-                    run={run}
-                    commentCount={commentCountByRunId.get(run.id) ?? 0}
-                  />
-                ))}
-              </ul>
+        <DataTableView
+          table={table}
+          label="Historial de ejecuciones"
+          idPrefix="cron-runs"
+          onResetColumns={preferences.reset}
+          scrollRef={scrollRef}
+          scrollClassName="max-h-[70dvh]"
+          groupOf={groupOf}
+          filters={filters}
+          emptyMessage={
+            <div className="grid justify-items-center gap-2">
+              <Text tone="muted">
+                Ninguna ejecución coincide con los filtros.
+              </Text>
+              <Button variant="outline" size="sm" onClick={onClearFilters}>
+                Limpiar filtros
+              </Button>
             </div>
-          ))}
-          <InfiniteScrollSentinel
-            sentinelRef={sentinelRef}
-            hasNextPage={hasNextPage}
-            isFetchingNextPage={isFetchingNextPage}
-          />
-        </div>
+          }
+          renderDetail={(run) => <CronRunOutput run={run} />}
+          hasDetail={cronRunHasOutput}
+          detailLabel={cronRunDetailLabel}
+          renderControl={(run, columnId, expandToggle) => {
+            if (columnId !== CRON_RUN_ACTIONS_COLUMN) return null
+            const startedAt = cronRunStartedAt(run)
+            return (
+              <div className="flex items-center justify-end gap-1">
+                <CommentsButton
+                  compact
+                  entity={{ entityType: "cron-run", entityId: run.id }}
+                  count={commentCountByRunId.get(run.id) ?? 0}
+                  title={`Comentarios · ${cronRunStatusLabels[run.status]}`}
+                  description={`Ejecución iniciada el ${startedAt}`}
+                  label={`Comentarios de la ejecución del ${startedAt}`}
+                />
+                {/* A fixed slot, so the comments buttons line up whether
+                    or not the run has an error or a result to show. */}
+                <span className="flex size-8 shrink-0 items-center justify-center">
+                  {expandToggle}
+                </span>
+              </div>
+            )
+          }}
+          footer={
+            <InfiniteScrollSentinel
+              sentinelRef={sentinelRef}
+              hasNextPage={hasNextPage}
+              isFetchingNextPage={isFetchingNextPage}
+            />
+          }
+        />
       )}
     </section>
   )

@@ -4,34 +4,94 @@ const Plus = getIcon("actions", "add")
 const UsersIcon = getIcon("admin", "users")
 const UserX = getIcon("identity", "userX")
 
-import { useCallback, useMemo, useState } from "react"
-import type { SuggestInputItem } from "@/components/shared/form/suggest-input"
+import { useCallback, useState } from "react"
+import { Text } from "@/components/shared/brand/typography"
+import type { DataTableFilter } from "@/components/shared/data-display/data-table-column-filter"
+import { DataTableView } from "@/components/shared/data-display/data-table-view"
+import { InfiniteScrollSentinel } from "@/components/shared/data-display/infinite-scroll-sentinel"
+import { RowActions } from "@/components/shared/data-display/row-action-items"
 import { HeroCount } from "@/components/shared/layout/page-hero"
-import { EntityList } from "@/components/shared/resource/entity-list"
-import { FilterChips } from "@/components/shared/resource/filter-chips"
-import {
-  chipsFor,
-  type ResourceFilterDescriptor,
-  ResourceFilters,
-} from "@/components/shared/resource/resource-filters"
 import { ResourceOverview } from "@/components/shared/resource/resource-overview"
 import { Button } from "@/components/ui/button"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
+import { useUserFilterOptions } from "@/features/admin/shared"
 import { BanUserDialog } from "@/features/admin/users/components/ban-user-dialog"
 import { ChangePasswordDialog } from "@/features/admin/users/components/change-password-dialog"
 import { CreateUserDialog } from "@/features/admin/users/components/create-user-dialog"
-import { userListDefinition } from "@/features/admin/users/definitions/user-list.definition"
+import {
+  USER_DEFAULT_SORT,
+  USER_ROLE_OPTIONS,
+  USER_SORT_KEYS,
+  USER_STATUS_OPTIONS,
+  type UsersRowContext,
+  userActions,
+  userColumnLayout,
+  userColumns,
+  userRolesOf,
+  userStatusesOf,
+} from "@/features/admin/users/definitions/user-columns.definition"
 import { useUserMutations } from "@/features/admin/users/hooks/use-user-mutations"
 import { useUsersList } from "@/features/admin/users/hooks/use-users-list"
 import type { UserRow } from "@/features/admin/users/model/types"
+import { useAdminUserSearch } from "@/hooks/use-admin-user-search"
+import { useColumnPreferences } from "@/hooks/use-column-preferences"
+import { columnPreferenceProps, useDataTable } from "@/hooks/use-data-table"
+import { useInfiniteScroll } from "@/hooks/use-infinite-scroll"
+import {
+  NO_VALUES,
+  useQueryParam,
+  valueListCodec,
+} from "@/hooks/use-query-param"
+import { useSortQueryParam } from "@/hooks/use-sort-query-param"
 import { useTargetConfirmDialog } from "@/hooks/use-target-confirm-dialog"
 import { useTargetDialog } from "@/hooks/use-target-dialog"
 import { authClient } from "@/lib/auth-client"
 import { userDisplayName } from "@/lib/user-display"
 
+function nextRole(user: UserRow): "user" | "admin" {
+  if (user.role === "admin") return "user"
+  return "admin"
+}
+
+function labelOf(user: UserRow | null): string | undefined {
+  if (!user) return undefined
+  return userDisplayName(user)
+}
+
+/** An empty list is "every value": store the shared constant so the param
+ *  drops out of the URL. */
+function valuesSetter(set: (values: readonly string[]) => void) {
+  return (next: string[]) => {
+    if (next.length === 0) {
+      set(NO_VALUES)
+      return
+    }
+    set(next)
+  }
+}
+
 export function UsersContent() {
   const { data: session } = authClient.useSession()
   const currentUserId = session?.user.id
+
+  const [sorting, setSorting, ordering] = useSortQueryParam(
+    USER_SORT_KEYS,
+    USER_DEFAULT_SORT
+  )
+  const [idParam, setIdParam] = useQueryParam("user", NO_VALUES, valueListCodec)
+  const [roleParam, setRoleParam] = useQueryParam(
+    "role",
+    NO_VALUES,
+    valueListCodec
+  )
+  const [statusParam, setStatusParam] = useQueryParam(
+    "status",
+    NO_VALUES,
+    valueListCodec
+  )
+  // Unknown values in the URL are dropped instead of emptying the list.
+  const roles = userRolesOf(roleParam)
+  const statuses = userStatusesOf(statusParam)
 
   const {
     users,
@@ -39,12 +99,10 @@ export function UsersContent() {
     isPending,
     isError,
     refetch,
-    searchInput,
-    setSearchInput,
-    page,
-    setPage,
-    pageSize,
-  } = useUsersList()
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+  } = useUsersList(ordering, { ids: idParam, roles, statuses })
   const { unbanUser, removeUser, setRole } = useUserMutations()
 
   const [createOpen, setCreateOpen] = useState(false)
@@ -59,28 +117,9 @@ export function UsersContent() {
     onConfirm: (user) => removeUser.mutateAsync({ userId: user.id }),
   })
 
-  const rows = users as UserRow[]
-  const from = total === 0 ? 0 : page * pageSize + 1
-  const to = Math.min((page + 1) * pageSize, total)
-  const hasNextPage = to < total
-  const hasSearch = searchInput.trim() !== ""
-
-  const searchSuggestions = useMemo<SuggestInputItem[]>(() => {
-    if (!hasSearch) return []
-    return rows.slice(0, 8).map((user) => ({
-      key: user.id,
-      value: user.email,
-      label: userDisplayName(user),
-      detail: user.email,
-    }))
-  }, [rows, hasSearch])
-
   const handleToggleAdmin = useCallback(
     (user: UserRow) => {
-      setRole.mutate({
-        userId: user.id,
-        role: user.role === "admin" ? "user" : "admin",
-      })
+      setRole.mutate({ userId: user.id, role: nextRole(user) })
     },
     [setRole.mutate]
   )
@@ -91,20 +130,71 @@ export function UsersContent() {
     [unbanUser.mutate]
   )
 
-  const filterDescriptors: ResourceFilterDescriptor[] = [
-    {
-      kind: "suggestion",
-      key: "user-filter-search",
-      label: "Buscar",
-      value: searchInput,
-      onChange: setSearchInput,
-      suggestions: searchSuggestions,
-      placeholder: "Nombre o email...",
-      isActive: () => hasSearch,
+  const rowContext: UsersRowContext = {
+    currentUserId,
+    onChangePassword: passwordDialog.open,
+    onToggleAdmin: handleToggleAdmin,
+    onUnban: handleUnban,
+    onBan: banDialog.open,
+    onDelete: deleteDialog.open,
+  }
+
+  const preferences = useColumnPreferences("admin-users", userColumnLayout)
+  const table = useDataTable({
+    data: users,
+    columns: userColumns,
+    getRowId: (user) => user.id,
+    sorting,
+    onSortingChange: setSorting,
+    ...columnPreferenceProps(preferences),
+  })
+
+  const [userQuery, setUserQuery] = useState("")
+  const userSearch = useAdminUserSearch(userQuery)
+  const userOptions = useUserFilterOptions({
+    selected: idParam,
+    seen: users,
+    results: userSearch.results,
+  })
+
+  const filtered = idParam.length > 0 || roles.length > 0 || statuses.length > 0
+  const clearFilters = () => {
+    setIdParam(NO_VALUES)
+    setRoleParam(NO_VALUES)
+    setStatusParam(NO_VALUES)
+  }
+  const filters: Partial<Record<string, DataTableFilter>> = {
+    name: {
+      options: userOptions,
+      selected: idParam,
+      onChange: valuesSetter(setIdParam),
+      search: {
+        query: userQuery,
+        onQueryChange: setUserQuery,
+        isLoading: userSearch.isFetching,
+        hint: "Escribe al menos 2 letras del nombre o el email",
+      },
     },
-  ]
-  // Search applies live, so the sheet's draft total is the current total.
-  const fetchDraftTotal = useCallback(() => total, [total])
+    role: {
+      options: USER_ROLE_OPTIONS,
+      selected: roles,
+      onChange: valuesSetter(setRoleParam),
+    },
+    banned: {
+      options: USER_STATUS_OPTIONS,
+      selected: statuses,
+      onChange: valuesSetter(setStatusParam),
+    },
+  }
+
+  const [scrollContainer, setScrollContainer] = useState<HTMLDivElement | null>(
+    null
+  )
+  const sentinelRef = useInfiniteScroll(
+    scrollContainer,
+    fetchNextPage,
+    hasNextPage && !isFetchingNextPage
+  )
 
   return (
     <>
@@ -119,28 +209,7 @@ export function UsersContent() {
             Nuevo usuario
           </Button>
         }
-        filters={
-          !isError && (total > 0 || hasSearch) ? (
-            <div className="space-y-3">
-              <ResourceFilters
-                columns={1}
-                filters={filterDescriptors}
-                onClear={() => setSearchInput("")}
-                fetchDraftTotal={fetchDraftTotal}
-                count={
-                  total > 0
-                    ? `${total} usuario${total === 1 ? "" : "s"}`
-                    : undefined
-                }
-              />
-              <FilterChips
-                chips={chipsFor(filterDescriptors)}
-                onClear={() => setSearchInput("")}
-              />
-            </div>
-          ) : undefined
-        }
-        query={{ data: rows, isPending, isError, refetch }}
+        query={{ data: users, isPending, isError, refetch }}
         loading="Cargando usuarios..."
         error={{
           icon: <UserX className="size-6" />,
@@ -148,61 +217,48 @@ export function UsersContent() {
           description:
             "Comprueba tu conexión y que tu sesión tenga permisos de administración.",
         }}
-        isEmpty={(data) => data.length === 0}
+        isEmpty={(data) => data.length === 0 && !filtered}
         empty={{
           icon: <UsersIcon className="size-6" />,
           title: "No hay usuarios",
           description: "Todavía no se ha creado ningún usuario.",
         }}
-        hasActiveFilters={hasSearch}
-        filteredEmpty={{
-          icon: <UsersIcon className="size-6" />,
-          title: "Sin resultados",
-          description: "Ningún usuario coincide con la búsqueda.",
-          onClear: () => setSearchInput(""),
-        }}
       >
-        {(data) => (
-          <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border bg-card/40">
-            <div className="min-h-0 flex-1 overflow-y-auto">
-              <EntityList
-                items={data}
-                context={{
-                  currentUserId,
-                  onChangePassword: passwordDialog.open,
-                  onToggleAdmin: handleToggleAdmin,
-                  onUnban: handleUnban,
-                  onBan: banDialog.open,
-                  onDelete: deleteDialog.open,
-                }}
-                definition={userListDefinition}
-                className="rounded-none border-0 bg-transparent"
-              />
-            </div>
-
-            <div className="flex shrink-0 items-center justify-between border-t px-4 py-3 text-muted-foreground text-sm">
-              <span>
-                {from}–{to} de {total}
-              </span>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={page === 0}
-                  onClick={() => setPage((p) => Math.max(0, p - 1))}
-                >
-                  Anterior
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={!hasNextPage}
-                  onClick={() => setPage((p) => p + 1)}
-                >
-                  Siguiente
-                </Button>
-              </div>
-            </div>
+        {() => (
+          <div className="flex min-h-0 flex-1 flex-col">
+            <DataTableView
+              table={table}
+              label="Usuarios"
+              idPrefix="admin-users"
+              onResetColumns={preferences.reset}
+              scrollRef={setScrollContainer}
+              filters={filters}
+              emptyMessage={
+                <div className="grid justify-items-center gap-2">
+                  <Text tone="muted">
+                    Ningún usuario coincide con los filtros.
+                  </Text>
+                  <Button variant="outline" size="sm" onClick={clearFilters}>
+                    Limpiar filtros
+                  </Button>
+                </div>
+              }
+              renderControl={(user) => (
+                <RowActions
+                  actions={userActions}
+                  item={user}
+                  context={rowContext}
+                  accessibleLabel={userDisplayName(user)}
+                />
+              )}
+              footer={
+                <InfiniteScrollSentinel
+                  sentinelRef={sentinelRef}
+                  hasNextPage={hasNextPage}
+                  isFetchingNextPage={isFetchingNextPage}
+                />
+              }
+            />
           </div>
         )}
       </ResourceOverview>
@@ -211,19 +267,13 @@ export function UsersContent() {
 
       <ChangePasswordDialog
         userId={passwordDialog.target?.id ?? null}
-        userLabel={
-          passwordDialog.target
-            ? userDisplayName(passwordDialog.target)
-            : undefined
-        }
+        userLabel={labelOf(passwordDialog.target)}
         onOpenChange={passwordDialog.dialogProps.onOpenChange}
       />
 
       <BanUserDialog
         userId={banDialog.target?.id ?? null}
-        userLabel={
-          banDialog.target ? userDisplayName(banDialog.target) : undefined
-        }
+        userLabel={labelOf(banDialog.target)}
         onOpenChange={banDialog.dialogProps.onOpenChange}
       />
 

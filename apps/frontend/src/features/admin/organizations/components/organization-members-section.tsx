@@ -4,16 +4,22 @@ const Trash2 = getIcon("actions", "delete")
 const UserPlus = getIcon("identity", "addUser")
 
 import { Text } from "@/components/shared/brand/typography"
-import { SoftCardList } from "@/components/shared/data-display/soft-card-list"
+import { DataTableView } from "@/components/shared/data-display/data-table-view"
 import { Hint } from "@/components/shared/feedback/hint"
 import { SectionHeading } from "@/components/shared/layout/section-heading"
-import { UserAvatar } from "@/components/shared/user/avatar"
 import { Button } from "@/components/ui/button"
 import { RoleSelect } from "@/features/admin/organizations/components/role-select"
+import {
+  MEMBER_ROLE_COLUMN,
+  memberColumnLayout,
+  memberColumns,
+  memberSortValues,
+} from "@/features/admin/organizations/definitions/organization-detail-columns.definition"
 import type {
   OrganizationCustomRole,
   OrganizationMember,
 } from "@/features/admin/organizations/model/types"
+import { useLocalDataTable } from "@/hooks/use-data-table"
 
 /** The organization detail sheet's "Miembros" section: header + add action,
  *  empty state, or the member list with inline role editing and removal. */
@@ -30,6 +36,15 @@ export function OrganizationMembersSection({
   onAddClick: () => void
   onRemoveClick: (memberId: string) => void
 }) {
+  const { table, preferences } = useLocalDataTable({
+    tableId: "admin-organization-members",
+    rows: members,
+    columns: memberColumns,
+    layout: memberColumnLayout,
+    getRowId: (member) => member.id,
+    sortValues: memberSortValues,
+  })
+
   return (
     <section className="space-y-3">
       <SectionHeading
@@ -44,53 +59,42 @@ export function OrganizationMembersSection({
       />
 
       {members.length === 0 ? (
-        <p className="text-muted-foreground text-sm">
+        <Text as="p" tone="muted">
           Todavía no hay miembros.
-        </p>
+        </Text>
       ) : (
-        <SoftCardList as="ul">
-          {members.map((member) => (
-            <li key={member.id} className="flex items-center gap-3 px-3 py-2.5">
-              <UserAvatar
-                displayName={member.user.name}
-                email={member.user.email}
-                imageUrl={member.user.image}
-                size="sm"
-                className="shrink-0"
-              />
-              <div className="min-w-0 flex-1">
-                <Text as="p" variant="title" className="truncate">
-                  {member.user.name}
-                </Text>
-                <Text
-                  as="p"
-                  variant="compact"
-                  tone="muted"
-                  className="truncate"
-                >
-                  {member.user.email}
-                </Text>
-              </div>
-              <RoleSelect
-                size="sm"
-                className="w-32 shrink-0"
-                value={member.role}
-                onValueChange={(role) => onRoleChange(member.id, role)}
-                customRoles={customRoles}
-              />
+        <DataTableView
+          table={table}
+          label="Miembros"
+          idPrefix="admin-organization-members"
+          layout="table"
+          onResetColumns={preferences.reset}
+          renderControl={(member, columnId) => {
+            if (columnId === MEMBER_ROLE_COLUMN) {
+              return (
+                <RoleSelect
+                  size="sm"
+                  className="w-full"
+                  value={member.role}
+                  onValueChange={(role) => onRoleChange(member.id, role)}
+                  customRoles={customRoles}
+                />
+              )
+            }
+            return (
               <Hint label="Eliminar miembro">
                 <Button
                   variant="ghost"
                   size="icon-sm"
-                  aria-label="Eliminar miembro"
+                  aria-label={`Eliminar a ${member.user.name}`}
                   onClick={() => onRemoveClick(member.id)}
                 >
                   <Trash2 className="size-4" />
                 </Button>
               </Hint>
-            </li>
-          ))}
-        </SoftCardList>
+            )
+          }}
+        />
       )}
     </section>
   )

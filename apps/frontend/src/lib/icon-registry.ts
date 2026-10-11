@@ -74,6 +74,8 @@ const actionIcons = {
   run: Lucide.Play,
   pause: Lucide.Pause,
   pickIcon: Lucide.SmilePlus,
+  reorder: Lucide.GripVertical,
+  reset: Lucide.RotateCcw,
 } as const
 
 const controlIcons = {
@@ -111,6 +113,11 @@ const viewIcons = {
   sidebar: Lucide.PanelLeft,
   overflowMenu: Lucide.MoreHorizontal,
   scrollDown: Lucide.ArrowDown,
+  columns: Lucide.Columns3,
+  filterByValue: Lucide.ListFilter,
+  sortable: Lucide.ArrowUpDown,
+  sortAscending: Lucide.ArrowUp,
+  sortDescending: Lucide.ArrowDown,
 } as const
 
 const communicationIcons = {

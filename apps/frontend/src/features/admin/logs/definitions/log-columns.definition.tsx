@@ -1,0 +1,154 @@
+import { createColumnHelper } from "@tanstack/react-table"
+import { Text, textVariants } from "@/components/shared/brand/typography"
+import { DATA_TABLE_EXPAND_COLUMN } from "@/components/shared/data-display/data-table-view"
+import { StatusDot } from "@/components/shared/data-display/status-dot"
+import type { ActivityLogEntry } from "@/features/admin/logs/model/types"
+import { useAdminUser } from "@/hooks/use-admin-user"
+import { columnLayoutOf, type DataTableFeatures } from "@/hooks/use-data-table"
+import type { SortOrdering } from "@/hooks/use-sort-query-param"
+import { formatDateTime } from "@/lib/format"
+import { cn } from "@/lib/utils"
+
+/** A log entry with the key its table row uses: entries carry no id, so
+ *  the key is the timestamp plus the entry's position. */
+export type ActivityLogRow = ActivityLogEntry & { rowKey: string }
+
+/** `logs.query` orders by time only. */
+export const LOG_SORT_KEYS = ["timestamp"] as const
+
+export type LogSortKey = (typeof LOG_SORT_KEYS)[number]
+
+export const LOG_DEFAULT_SORT: SortOrdering<LogSortKey> = {
+  sort: "timestamp",
+  order: "desc",
+}
+
+const typeLabel: Record<string, string> = {
+  page_view: "Frontend",
+  api_call: "Backend",
+}
+
+function typeLabelOf(entry: ActivityLogEntry): string {
+  if (!Object.hasOwn(typeLabel, entry.type)) return entry.type
+  return typeLabel[entry.type]
+}
+
+export function isErrorEntry(entry: ActivityLogEntry): boolean {
+  return entry.level === "error" || entry.level === "fatal"
+}
+
+export function logDateTime(entry: ActivityLogEntry): string {
+  return formatDateTime(entry.timestamp, { includeSeconds: true })
+}
+
+function userLabel(
+  user: { email?: string | null; name?: string | null } | null | undefined,
+  userId: string
+): string {
+  if (user?.email) return user.email
+  if (user?.name) return user.name
+  return userId
+}
+
+/** The user an entry is attributed to, by email once it loads. */
+export function LogUser({ userId }: { userId: string | null }) {
+  const { data: user } = useAdminUser(userId)
+  if (!userId) {
+    return <span className="text-muted-foreground italic">Anónimo</span>
+  }
+  return <span className="truncate">{userLabel(user, userId)}</span>
+}
+
+function LogRequest({ entry }: { entry: ActivityLogEntry }) {
+  const dotTone = isErrorEntry(entry) ? "destructive" : "foreground"
+  return (
+    <span className="flex min-w-0 items-center gap-3">
+      <StatusDot tone={dotTone} className="shrink-0" />
+      <Text variant="data" className="min-w-0 truncate">
+        {entry.method ? (
+          <span className="text-muted-foreground">{entry.method} </span>
+        ) : null}
+        {entry.path ?? entry.message}
+      </Text>
+    </span>
+  )
+}
+
+function LogStatusCode({ entry }: { entry: ActivityLogEntry }) {
+  const tone = isErrorEntry(entry)
+    ? "text-destructive"
+    : "text-muted-foreground"
+  return (
+    <span className={cn(textVariants({ role: "data" }), tone)}>
+      {entry.statusCode ?? "—"}
+    </span>
+  )
+}
+
+const helper = createColumnHelper<DataTableFeatures, ActivityLogRow>()
+
+export const logColumns = helper.columns([
+  helper.accessor((entry) => entry.path ?? entry.message, {
+    id: "request",
+    header: "Petición",
+    size: 360,
+    minSize: 200,
+    meta: { label: "Petición", reorderable: false, compact: "primary" },
+    cell: (info) => <LogRequest entry={info.row.original} />,
+  }),
+  helper.accessor((entry) => entry.userId, {
+    id: "user",
+    header: "Usuario",
+    size: 200,
+    meta: { label: "Usuario", reorderable: true },
+    cell: (info) => (
+      <Text variant="compact" tone="muted" className="block truncate">
+        <LogUser userId={info.row.original.userId} />
+      </Text>
+    ),
+  }),
+  helper.accessor(typeLabelOf, {
+    id: "type",
+    header: "Tipo",
+    size: 110,
+    meta: { label: "Tipo", reorderable: true },
+    cell: (info) => (
+      <Text variant="status" tone="muted">
+        {info.getValue()}
+      </Text>
+    ),
+  }),
+  helper.accessor((entry) => entry.statusCode, {
+    id: "statusCode",
+    header: "Estado",
+    size: 90,
+    meta: {
+      label: "Estado",
+      reorderable: true,
+      cellClassName: "text-right",
+      headerClassName: "text-right",
+    },
+    cell: (info) => <LogStatusCode entry={info.row.original} />,
+  }),
+  helper.accessor((entry) => entry.timestamp, {
+    id: "timestamp",
+    header: "Fecha",
+    size: 190,
+    enableSorting: true,
+    meta: { label: "Fecha", reorderable: true },
+    cell: (info) => (
+      <Text variant="data" tone="muted" className="whitespace-nowrap">
+        {logDateTime(info.row.original)}
+      </Text>
+    ),
+  }),
+  helper.display({
+    id: DATA_TABLE_EXPAND_COLUMN,
+    header: () => <span className="sr-only">Detalle</span>,
+    size: 48,
+    enableResizing: false,
+    meta: { label: "Detalle", reorderable: false },
+  }),
+])
+
+export const logColumnLayout = columnLayoutOf(logColumns)

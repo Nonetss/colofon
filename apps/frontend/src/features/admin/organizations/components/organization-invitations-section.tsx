@@ -4,22 +4,17 @@ const Mail = getIcon("identity", "email")
 const Trash2 = getIcon("actions", "delete")
 
 import { Text } from "@/components/shared/brand/typography"
-import { SoftCardList } from "@/components/shared/data-display/soft-card-list"
+import { DataTableView } from "@/components/shared/data-display/data-table-view"
 import { Hint } from "@/components/shared/feedback/hint"
 import { SectionHeading } from "@/components/shared/layout/section-heading"
 import { Button } from "@/components/ui/button"
-import { roleLabel } from "@/features/admin/organizations/definitions/role-options"
-import type {
-  OrganizationInvitation,
-  OrganizationRole,
-} from "@/features/admin/organizations/model/types"
-
-const statusLabel: Record<string, string> = {
-  pending: "Pendiente",
-  accepted: "Aceptada",
-  rejected: "Rechazada",
-  canceled: "Cancelada",
-}
+import {
+  invitationColumnLayout,
+  invitationColumns,
+  invitationSortValues,
+} from "@/features/admin/organizations/definitions/organization-detail-columns.definition"
+import type { OrganizationInvitation } from "@/features/admin/organizations/model/types"
+import { useLocalDataTable } from "@/hooks/use-data-table"
 
 /** The organization detail sheet's "Invitaciones pendientes" section:
  *  header + invite action, empty state, or the pending-invitation list. */
@@ -34,6 +29,15 @@ export function OrganizationInvitationsSection({
   onInviteClick: () => void
   onCancelClick: (invitationId: string) => void
 }) {
+  const { table, preferences } = useLocalDataTable({
+    tableId: "admin-organization-invitations",
+    rows: invitations,
+    columns: invitationColumns,
+    layout: invitationColumnLayout,
+    getRowId: (invitation) => invitation.id,
+    sortValues: invitationSortValues,
+  })
+
   return (
     <section className="space-y-3">
       <SectionHeading
@@ -48,41 +52,30 @@ export function OrganizationInvitationsSection({
       />
 
       {invitations.length === 0 ? (
-        <p className="text-muted-foreground text-sm">
+        <Text as="p" tone="muted">
           No hay invitaciones pendientes.
-        </p>
+        </Text>
       ) : (
-        <SoftCardList as="ul">
-          {invitations.map((invitation) => (
-            <li
-              key={invitation.id}
-              className="flex items-center gap-3 px-3 py-2.5"
-            >
-              <div className="min-w-0 flex-1">
-                <Text as="p" variant="title" className="truncate">
-                  {invitation.email}
-                </Text>
-                <Text as="p" variant="compact" tone="muted">
-                  {roleLabel[
-                    (invitation.role ?? "member") as OrganizationRole
-                  ] ?? invitation.role}{" "}
-                  · {statusLabel[invitation.status]}
-                </Text>
-              </div>
-              <Hint label="Cancelar invitación">
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  aria-label="Cancelar invitación"
-                  disabled={isCanceling}
-                  onClick={() => onCancelClick(invitation.id)}
-                >
-                  <Trash2 className="size-4" />
-                </Button>
-              </Hint>
-            </li>
-          ))}
-        </SoftCardList>
+        <DataTableView
+          table={table}
+          label="Invitaciones pendientes"
+          idPrefix="admin-organization-invitations"
+          layout="table"
+          onResetColumns={preferences.reset}
+          renderControl={(invitation) => (
+            <Hint label="Cancelar invitación">
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                aria-label={`Cancelar la invitación a ${invitation.email}`}
+                disabled={isCanceling}
+                onClick={() => onCancelClick(invitation.id)}
+              >
+                <Trash2 className="size-4" />
+              </Button>
+            </Hint>
+          )}
+        />
       )}
     </section>
   )

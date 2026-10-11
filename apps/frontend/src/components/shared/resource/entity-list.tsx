@@ -1,8 +1,10 @@
 import type { CSSProperties, ReactNode } from "react"
-import { Fragment } from "react"
 import { Text } from "@/components/shared/brand/typography"
 import { MetadataCell } from "@/components/shared/data-display/metadata-cell"
-import { RowActionsMenu } from "@/components/shared/data-display/row-actions-menu"
+import {
+  type RowActionDescriptor,
+  RowActions,
+} from "@/components/shared/data-display/row-action-items"
 import { SoftCardList } from "@/components/shared/data-display/soft-card-list"
 import {
   StatusDot,
@@ -10,11 +12,6 @@ import {
   StatusTag,
 } from "@/components/shared/data-display/status-dot"
 import { AppLink } from "@/components/ui/app-link"
-import {
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu"
-import { type IconRef, resolveIconRef } from "@/lib/icon-registry"
 import { cn } from "@/lib/utils"
 
 export interface EntityListStatus {
@@ -32,17 +29,11 @@ export interface EntityListMetadataDescriptor<TItem, TContext> {
   hidden?: (item: TItem, context: TContext) => boolean
 }
 
-export interface EntityListActionDescriptor<TItem, TContext> {
-  key: string
-  /** Static label, or a function for state-dependent copy (e.g. "Banear" vs "Quitar baneo"). */
-  label: string | ((item: TItem, context: TContext) => string)
-  /** Static icon, or a function for a state-dependent icon (e.g. Shield vs ShieldOff). */
-  icon?: IconRef | ((item: TItem, context: TContext) => IconRef | undefined)
-  destructive?: boolean
-  disabled?: (item: TItem, context: TContext) => boolean
-  hidden?: (item: TItem, context: TContext) => boolean
-  onSelect: (item: TItem, context: TContext) => void
-}
+/** Kept as the entity-list name for the shared row-action descriptor. */
+export type EntityListActionDescriptor<TItem, TContext> = RowActionDescriptor<
+  TItem,
+  TContext
+>
 
 export interface EntityListDefinition<TItem, TContext = void> {
   getKey: (item: TItem) => string
@@ -102,9 +93,6 @@ function EntityListRow<TItem, TContext>({
   const secondary = definition.getSecondary?.(item, context)
   const visibleMetadata = (definition.metadata ?? []).filter(
     (field) => !field.hidden?.(item, context)
-  )
-  const visibleActions = (definition.actions ?? []).filter(
-    (action) => !action.hidden?.(item, context)
   )
   const metadataColumns = Math.min(
     4,
@@ -199,51 +187,13 @@ function EntityListRow<TItem, TContext>({
             ) : null}
           </div>
         ) : null}
-        {visibleActions.length > 0 ? (
-          <RowActionsMenu
-            label={
-              accessibleLabel ? `Acciones para ${accessibleLabel}` : undefined
-            }
-            disabled={disabled}
-          >
-            {visibleActions.map((action, actionIndex) => {
-              const resolvedIconRef =
-                typeof action.icon === "function"
-                  ? action.icon(item, context)
-                  : action.icon
-              const Icon = resolvedIconRef
-                ? resolveIconRef(resolvedIconRef)
-                : null
-              const label =
-                typeof action.label === "function"
-                  ? action.label(item, context)
-                  : action.label
-              const needsSeparator =
-                action.destructive &&
-                actionIndex > 0 &&
-                !visibleActions[actionIndex - 1]?.destructive
-
-              return (
-                <Fragment key={action.key}>
-                  {needsSeparator ? <DropdownMenuSeparator /> : null}
-                  <DropdownMenuItem
-                    variant={action.destructive ? "destructive" : undefined}
-                    disabled={action.disabled?.(item, context)}
-                    aria-label={
-                      accessibleLabel
-                        ? `${label} ${accessibleLabel}`
-                        : undefined
-                    }
-                    onClick={() => action.onSelect(item, context)}
-                  >
-                    {Icon ? <Icon className="size-4" /> : null}
-                    {label}
-                  </DropdownMenuItem>
-                </Fragment>
-              )
-            })}
-          </RowActionsMenu>
-        ) : null}
+        <RowActions
+          actions={definition.actions ?? []}
+          item={item}
+          context={context}
+          accessibleLabel={accessibleLabel}
+          disabled={disabled}
+        />
       </div>
     </li>
   )

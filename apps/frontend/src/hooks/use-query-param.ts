@@ -10,6 +10,22 @@ const stringCodec: QueryParamCodec<string> = {
   serialize: (value) => value,
 }
 
+/** The empty list: pass this exact constant as a list param's default and
+ *  when clearing it, so `useQueryParam` drops the param from the URL. */
+export const NO_VALUES: readonly string[] = []
+
+/** A list of values in one param (`?tag=informes,limpieza`), each value
+ *  URI-encoded so commas inside a value survive. */
+export const valueListCodec: QueryParamCodec<readonly string[]> = {
+  parse: (raw) =>
+    raw
+      .split(",")
+      .filter((value) => value !== "")
+      .map((value) => decodeURIComponent(value)),
+  serialize: (values) =>
+    values.map((value) => encodeURIComponent(value)).join(","),
+}
+
 function readParam(key: string): string | null {
   return new URL(window.location.href).searchParams.get(key)
 }

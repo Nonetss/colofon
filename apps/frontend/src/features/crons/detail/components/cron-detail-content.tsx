@@ -5,6 +5,7 @@ const Loader2 = getIcon("status", "loading")
 const Play = getIcon("actions", "run")
 const Lock = getIcon("security", "locked")
 
+import { useState } from "react"
 import { StatusTag } from "@/components/shared/data-display/status-dot"
 import { Hint } from "@/components/shared/feedback/hint"
 import { StateCard } from "@/components/shared/feedback/state-card"
@@ -12,10 +13,12 @@ import { PageHero } from "@/components/shared/layout/page-hero"
 import { Button } from "@/components/ui/button"
 import { CronDetailMetadata } from "@/features/crons/detail/components/cron-detail-metadata"
 import { CronRunPulse } from "@/features/crons/detail/components/cron-run-pulse"
+import { CronRunTimeline } from "@/features/crons/detail/components/cron-run-timeline"
 import {
-  type CronRunFilter,
-  CronRunTimeline,
-} from "@/features/crons/detail/components/cron-run-timeline"
+  CRON_RUN_DEFAULT_SORT,
+  CRON_RUN_SORT_KEYS,
+  runStatusesOf,
+} from "@/features/crons/detail/definitions/cron-run-columns.definition"
 import { useCronRunEvents } from "@/features/crons/detail/hooks/use-cron-run-events"
 import { useCronRunPulse } from "@/features/crons/detail/hooks/use-cron-run-pulse"
 import {
@@ -26,22 +29,34 @@ import {
 } from "@/features/crons/shared"
 import { useAdminUser } from "@/hooks/use-admin-user"
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll"
-import { type QueryParamCodec, useQueryParam } from "@/hooks/use-query-param"
+import {
+  NO_VALUES,
+  useQueryParam,
+  valueListCodec,
+} from "@/hooks/use-query-param"
+import { useSortQueryParam } from "@/hooks/use-sort-query-param"
 import { isAdminUser } from "@/lib/auth"
 import { authClient } from "@/lib/auth-client"
 
-// Unknown `?status=` values fall back to every run instead of an empty list.
-const runFilterCodec: QueryParamCodec<CronRunFilter> = {
-  parse: (raw) => (raw === "failed" || raw === "skipped" ? raw : "all"),
-  serialize: (value) => value,
-}
-
 export function CronDetailContent({ jobId }: { jobId: string }) {
   const { data: job, isPending, isError, refetch } = useCronJob(jobId)
-  const [runFilter, setRunFilter] = useQueryParam<CronRunFilter>(
+  const [statusParam, setStatusParam] = useQueryParam(
     "status",
-    "all",
-    runFilterCodec
+    NO_VALUES,
+    valueListCodec
+  )
+  // Unknown `?status=` values are dropped instead of emptying the list.
+  const statuses = runStatusesOf(statusParam)
+  const setStatuses = (next: string[]) => {
+    if (next.length === 0) {
+      setStatusParam(NO_VALUES)
+      return
+    }
+    setStatusParam(next)
+  }
+  const [runSorting, setRunSorting, runOrdering] = useSortQueryParam(
+    CRON_RUN_SORT_KEYS,
+    CRON_RUN_DEFAULT_SORT
   )
   const {
     data: runsPages,
@@ -49,7 +64,11 @@ export function CronDetailContent({ jobId }: { jobId: string }) {
     hasNextPage,
     isFetchingNextPage,
     fetchNextPage,
-  } = useCronRuns(jobId, runFilter === "all" ? undefined : runFilter)
+  } = useCronRuns(jobId, {
+    statuses,
+    sort: runOrdering.sort,
+    order: runOrdering.order,
+  })
   const { data: pulse } = useCronRunPulse(jobId)
   useCronRunEvents(jobId)
   const { data: runsAsUser } = useAdminUser(job?.userId ?? null)
@@ -57,8 +76,11 @@ export function CronDetailContent({ jobId }: { jobId: string }) {
   const session = authClient.useSession()
   const isAdmin = isAdminUser(session.data?.user)
   const runNow = useCronRunNow(jobId)
+  // The history table scrolls in its own bounded box (its header stays on
+  // top), so that box is the sentinel's root.
+  const [runsBox, setRunsBox] = useState<HTMLDivElement | null>(null)
   const sentinelRef = useInfiniteScroll(
-    null,
+    runsBox,
     fetchNextPage,
     !!hasNextPage && !isFetchingNextPage
   )
@@ -142,12 +164,16 @@ export function CronDetailContent({ jobId }: { jobId: string }) {
 
       <CronRunTimeline
         runs={runs}
-        filter={runFilter}
-        onFilterChange={setRunFilter}
+        statusFilter={statuses}
+        onStatusFilterChange={setStatuses}
+        onClearFilters={() => setStatusParam(NO_VALUES)}
         isPending={runsPending}
         hasNextPage={!!hasNextPage}
         isFetchingNextPage={isFetchingNextPage}
         sentinelRef={sentinelRef}
+        scrollRef={setRunsBox}
+        sorting={runSorting}
+        onSortingChange={setRunSorting}
       />
     </div>
   )

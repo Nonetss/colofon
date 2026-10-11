@@ -1,6 +1,11 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test"
 import { act, cleanup, renderHook } from "@testing-library/react"
-import { type QueryParamCodec, useQueryParam } from "@/hooks/use-query-param"
+import {
+  NO_VALUES,
+  type QueryParamCodec,
+  useQueryParam,
+  valueListCodec,
+} from "@/hooks/use-query-param"
 
 const pageCodec: QueryParamCodec<number> = {
   parse: (raw) => Number(raw),
@@ -52,5 +57,29 @@ describe("useQueryParam", () => {
       window.dispatchEvent(new window.Event("popstate"))
     })
     expect(result.current[0]).toBe("nightly")
+  })
+})
+
+describe("valueListCodec", () => {
+  test("round-trips values, commas inside a value included", () => {
+    const values = ["informes", "a,b", "día"]
+    expect(valueListCodec.parse(valueListCodec.serialize(values))).toEqual(
+      values
+    )
+  })
+
+  test("reads an empty param as no values", () => {
+    expect(valueListCodec.parse("")).toEqual([])
+  })
+
+  test("drops the param when set back to the shared empty list", () => {
+    const { result } = renderHook(() =>
+      useQueryParam("tag", NO_VALUES, valueListCodec)
+    )
+    act(() => result.current[1](["informes", "limpieza"]))
+    expect(searchParam("tag")).toBe("informes,limpieza")
+
+    act(() => result.current[1](NO_VALUES))
+    expect(searchParam("tag")).toBeNull()
   })
 })

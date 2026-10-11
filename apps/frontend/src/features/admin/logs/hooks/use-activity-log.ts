@@ -1,10 +1,12 @@
+import { useInfiniteQuery } from "@tanstack/react-query"
 import { endOfDay, startOfDay } from "date-fns"
 import { useMemo, useState } from "react"
+import type { LogSortKey } from "@/features/admin/logs/definitions/log-columns.definition"
 import type {
   ActivityLogEntry,
   ActivityLogFilters,
 } from "@/features/admin/logs/model/types"
-import { useHydratedInfiniteQuery } from "@/hooks/use-hydrated-infinite-query"
+import type { SortOrdering } from "@/hooks/use-sort-query-param"
 import { orpc } from "@/lib/orpc"
 
 const PAGE_SIZE = 50
@@ -18,7 +20,10 @@ const emptyFilters: ActivityLogFilters = {
   to: undefined,
 }
 
-export function useActivityLog() {
+/** The activity log, filtered and paged by the server in the table's time
+ *  order; the order is part of the query, so a new one starts again from
+ *  the first page. */
+export function useActivityLog(ordering: SortOrdering<LogSortKey>) {
   const [filters, setFilters] = useState<ActivityLogFilters>(emptyFilters)
 
   const queryInput = useMemo(
@@ -33,11 +38,12 @@ export function useActivityLog() {
     [filters]
   )
 
-  const query = useHydratedInfiniteQuery({
+  const query = useInfiniteQuery({
     ...orpc.v1.logs.query.infiniteOptions({
       input: (cursor: string | null) => ({
         ...queryInput,
-        before: cursor ?? undefined,
+        order: ordering.order,
+        cursor,
         limit: PAGE_SIZE,
       }),
       initialPageParam: null,
