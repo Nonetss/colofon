@@ -1,5 +1,5 @@
 import type { RouterClient } from "@orpc/server"
-
+import { adminUserRouter } from "#v1/admin-user/router"
 import { apiKeyRouter } from "#v1/api-key/router"
 import { authConfigRouter } from "#v1/auth-config/router"
 import { commentRouter } from "#v1/comment/router"
@@ -23,6 +23,7 @@ export const appRouter = {
   plugins: pluginsRouter,
   cron: cronRouter,
   sessionHistory: sessionHistoryRouter,
+  adminUser: adminUserRouter,
   logs: logsRouter,
 }
 export type AppRouter = typeof appRouter
