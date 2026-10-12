@@ -2,6 +2,16 @@
 
 Four compose files, one per way of running the stack: three at the root (dev, production-like, registry) and `apps/gateway/compose.yml`. The root ones run the three app images (frontend, backend, gateway) plus stock `grafana/loki`, and `compose.yml`/`compose.prod.yml` add `postgres:17`. The dev stack has no database: development uses a PostgreSQL outside the project, on another server.
 
+## Renaming on a new project
+
+This repo is a template: the compose files still carry its own names. When a project starts from it, rename in `compose.yml`, `compose.dev.yml`, `compose.prod.yml` and `apps/gateway/compose.yml`:
+
+- the compose project `name:` (`stack`, `stack-dev`), keeping `apps/gateway/compose.yml` on the same name as `compose.dev.yml` so both share the gateway's CA volume;
+- the services' `container_name`s (`stack-*`, `stack-dev-*`), so two projects on one host don't collide;
+- in `compose.yml` and `compose.prod.yml`, also the `POSTGRES_DB`; in `compose.prod.yml`, the `stack` network and the `stack-*` image names.
+
+Renaming a service key also renames its hostname on the compose network: update the addresses that use it (`BACKEND_URL`, `LOKI_URL`, the gateway's `routes.caddy` upstreams).
+
 ## `compose.dev.yml` (hot-reloading dev stack)
 
 Project `stack-dev`, started by `bun run dev` (`up --build --watch`), removed by `bun run dev:down`. Runs frontend (`astro dev`, `:4320`) and backend (`bun --hot`, `:3000`) from `apps/*/Dockerfile.dev`, `gateway` from its production Dockerfile running `Caddyfile.dev` (the dev URL `https://localhost:4321`, local CA, HTTP/2, its CA in the `gateway_data` volume; plain `http://localhost:4321` is redirected to https on the same port by the `http_redirect` listener wrapper), and `loki`. **Like production, only the gateway publishes a port** (`4321:4321`). Frontend (`astro dev --host 0.0.0.0`), backend and Loki stay on the stack's default network with `expose` only, and the gateway reaches them as `backend:3000` and `frontend:4320`. The apps read the root `.env`, and compose overrides only the container addresses: `BACKEND_URL=http://backend:3000` (frontend) and `LOKI_URL=http://loki:3100` (both). Never add `ports` or `network_mode: host` to another dev service; a new entry point goes through the gateway.
@@ -9,7 +19,7 @@ Project `stack-dev`, started by `bun run dev` (`up --build --watch`), removed by
 - **No database service.** The backend connects to the external dev PostgreSQL in `.env`'s `DATABASE_URL` (another server, outside the project), so native dev and the Docker dev stack share it and removing the dev containers never touches the data. Don't add a `db` service back without the user asking.
 - `loki` (`grafana/loki:3.7.7`, container `stack-dev-loki`, same flags and 720 h retention as `compose.yml`, volume `loki_data`; shared definition `x-loki`) is on the private network only. Nothing waits for it. Native dev uses `loki-native` instead (same definition, profile `native`, container `stack-dev-loki-native`, published on `127.0.0.1:3100`, the `LOKI_URL` in `.env.example`), started and stopped by `bun run loki:start` / `loki:stop`. `bun run dev` never starts it.
 - No bind mounts: `develop.watch` `sync`s app source (`apps/<app>/src`, the frontend's `public/`) and the `packages/*/src` each service imports (frontend: `api`, `auth`, `env`, `logger`; backend: `api`, `auth`, `cron`, `db`, `env`, `logger`), `sync+restart`s `apps/frontend/astro.config.mjs` and the gateway's `Caddyfile.dev` and `routes.caddy`, and `rebuild`s on `bun.lock`, the root `package.json` and the app's own `package.json`. **A new TS package or source folder a service imports needs its own `sync` entry.**
-- The frontend mounts the named volume `frontend_vite_cache` on `/app/apps/frontend/node_modules/.vite` (Vite's optimized-dependency cache), so recreating the container doesn't re-optimize dependencies and force a reload on the first page load. Vite invalidates it itself when the lockfile or config hash changes; `bun run dev:down -v` resets it by hand. `astro.config.mjs` also pre-optimizes the `<ClientRouter />` transition modules and warms up the island barrels, pages and middleware at dev startup (`vite.server.warmup`) — dev-only, `astro build` ignores both.
+- The frontend mounts the named volume `frontend_vite_cache` on `/app/apps/frontend/node_modules/.vite` (Vite's optimized-dependency cache), so recreating the container doesn't re-optimize dependencies and force a reload on the first page load. Vite invalidates it itself when the lockfile or config hash changes; `bun run dev:down -v` resets it by hand. `astro.config.mjs` also pre-optimizes `@base-ui/react/**` (`optimizeDeps.include`) and warms up the island barrels, pages and middleware at dev startup (`vite.server.warmup`) — dev-only, `astro build` ignores both.
 
 ## `compose.yml` (production-like, builds from source)
 
