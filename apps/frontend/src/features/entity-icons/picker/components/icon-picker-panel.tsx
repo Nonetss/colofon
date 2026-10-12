@@ -118,6 +118,19 @@ export function IconPickerPanel({
         .join(" · ")
     : null
 
+  const removeButton = (
+    <Button
+      type="button"
+      variant="ghost"
+      size="xs"
+      disabled={!value}
+      onClick={() => onChange(null)}
+      className={cn("shrink-0", !value && "invisible")}
+    >
+      Quitar icono
+    </Button>
+  )
+
   return (
     <div className={cn("flex min-w-0 flex-col", styles.panel, className)}>
       <div className="relative">
@@ -184,37 +197,26 @@ export function IconPickerPanel({
         )}
       </div>
 
-      <div className="flex min-h-9 flex-col gap-0.5 border-t pt-2">
-        <Text as="span" variant="data" className="truncate">
-          {previewIcon ?? "Ningún icono seleccionado"}
-        </Text>
-        {previewCategories ? (
-          <Text as="span" variant="meta-sm" tone="muted" className="truncate">
-            {previewCategories}
+      <div className="flex min-h-9 items-center gap-2 border-t pt-2">
+        <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+          <Text as="span" variant="data" className="truncate">
+            {previewIcon ?? "Ningún icono seleccionado"}
           </Text>
-        ) : null}
+          {previewCategories ? (
+            <Text as="span" variant="meta-sm" tone="muted" className="truncate">
+              {previewCategories}
+            </Text>
+          ) : null}
+        </div>
+        {allowColor ? null : removeButton}
       </div>
 
-      <div
-        className={cn(
-          "flex items-center gap-2",
-          allowColor ? "justify-between" : "justify-end"
-        )}
-      >
-        {allowColor ? (
+      {allowColor ? (
+        <div className="flex items-center justify-between gap-2">
           <IconColorSwatches value={color} onChange={selectColor} />
-        ) : null}
-        <Button
-          type="button"
-          variant="ghost"
-          size="xs"
-          disabled={!value}
-          onClick={() => onChange(null)}
-          className={cn(!value && "invisible")}
-        >
-          Quitar icono
-        </Button>
-      </div>
+          {removeButton}
+        </div>
+      ) : null}
     </div>
   )
 }
