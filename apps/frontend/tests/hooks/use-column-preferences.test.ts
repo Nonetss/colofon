@@ -15,6 +15,7 @@ const columns: ColumnPreferenceDefault[] = [
     size: 160,
     minSize: 120,
     maxSize: 240,
+    resizable: true,
     hideable: false,
     visible: true,
     reorderable: false,
@@ -24,6 +25,7 @@ const columns: ColumnPreferenceDefault[] = [
     size: 160,
     minSize: 120,
     maxSize: 280,
+    resizable: true,
     hideable: true,
     visible: true,
     reorderable: true,
@@ -33,6 +35,7 @@ const columns: ColumnPreferenceDefault[] = [
     size: 120,
     minSize: 80,
     maxSize: 200,
+    resizable: true,
     hideable: true,
     visible: true,
     reorderable: true,
@@ -42,6 +45,7 @@ const columns: ColumnPreferenceDefault[] = [
     size: 160,
     minSize: 100,
     maxSize: 320,
+    resizable: true,
     hideable: true,
     visible: true,
     reorderable: true,
@@ -50,7 +54,8 @@ const columns: ColumnPreferenceDefault[] = [
     id: "expand",
     size: 40,
     minSize: 40,
-    maxSize: 40,
+    maxSize: 600,
+    resizable: false,
     hideable: false,
     visible: true,
     reorderable: false,
@@ -145,6 +150,15 @@ describe("parseColumnPreferences", () => {
     expect(result.sizing.mac).toBe(120)
     expect(result.sizing.owner).toBe(320)
   })
+
+  test("a non-resizable column keeps its declared width", () => {
+    const result = parseColumnPreferences(
+      saved({ sizing: { expand: 56, owner: 200 } }),
+      columns
+    )
+    expect(result.sizing.expand).toBe(40)
+    expect(result.sizing.owner).toBe(200)
+  })
 })
 
 /** `columns` with "seen" declared hidden by default. */
@@ -234,6 +248,15 @@ describe("useColumnPreferences", () => {
     )
     expect(stored.visibility.owner).toBe(false)
     expect(stored.sizing.mac).toBe(220)
+  })
+
+  test("setSizing keeps a non-resizable column at its declared width", () => {
+    const { result } = renderHook(() => useColumnPreferences("arp", columns))
+    act(() => {
+      result.current.setSizing({ expand: 56, mac: 220 })
+    })
+    expect(result.current.sizing.expand).toBe(40)
+    expect(result.current.sizing.mac).toBe(220)
   })
 
   test("setters keep fixed columns visible and in place", () => {

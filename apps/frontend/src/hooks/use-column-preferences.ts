@@ -7,6 +7,8 @@ export type ColumnPreferenceDefault = {
   size: number
   minSize: number
   maxSize: number
+  /** `false` keeps the column at its declared `size` whatever was saved. */
+  resizable: boolean
   /** `false` keeps the column shown whatever was saved. */
   hideable: boolean
   /** Shown when nothing was saved and after a reset; ignored (always shown)
@@ -45,6 +47,14 @@ export function defaultColumnPreferences(
 
 function clamp(value: number, column: ColumnPreferenceDefault): number {
   return Math.min(column.maxSize, Math.max(column.minSize, value))
+}
+
+/** The width to keep for `size`: a resizable column's within its limits, a
+ *  fixed column's always its declared one. */
+function widthOf(size: unknown, column: ColumnPreferenceDefault): number {
+  if (!column.resizable) return column.size
+  if (typeof size !== "number" || !Number.isFinite(size)) return column.size
+  return clamp(size, column)
 }
 
 /**
@@ -97,7 +107,8 @@ function isRecord(value: unknown): value is Record<string, unknown> {
  * Reads a table's saved layout against its current columns. Anything it
  * can't trust falls back to the column's default: unknown ids are dropped,
  * new columns appear at their default position, widths are clamped to the
- * current limits, and malformed or other-version data yields the defaults.
+ * current limits (a non-resizable column keeps its declared width), and
+ * malformed or other-version data yields the defaults.
  */
 export function parseColumnPreferences(
   raw: string | null,
@@ -125,10 +136,7 @@ export function parseColumnPreferences(
       if (typeof visible === "boolean") visibility[column.id] = visible
     }
     if (isRecord(savedSizing)) {
-      const size = savedSizing[column.id]
-      if (typeof size === "number" && Number.isFinite(size)) {
-        sizing[column.id] = clamp(size, column)
-      }
+      sizing[column.id] = widthOf(savedSizing[column.id], column)
     }
   }
 
@@ -254,9 +262,7 @@ export function useColumnPreferences(
         const next = resolve(updater, previous.sizing)
         const sizing: Record<string, number> = {}
         for (const column of columns) {
-          const size = next[column.id]
-          sizing[column.id] =
-            typeof size === "number" ? clamp(size, column) : column.size
+          sizing[column.id] = widthOf(next[column.id], column)
         }
         return { ...previous, sizing }
       })

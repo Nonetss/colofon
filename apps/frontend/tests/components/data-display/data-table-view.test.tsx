@@ -211,6 +211,15 @@ describe("DataTableView", () => {
     expect(screen.queryByRole("list", { name: "Trabajos" })).toBeNull()
   })
 
+  test("the first resizable column takes the room left over", () => {
+    render(<PlainTable layout="table" />)
+
+    const widths = Array.from(tableEl().querySelectorAll("col")).map(
+      (col) => col.style.width
+    )
+    expect(widths).toEqual(["", "150px", "150px"])
+  })
+
   test("a forced-hidden column is rendered nowhere", () => {
     render(<PlainTable forced={["actions"]} />)
 

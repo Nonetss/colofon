@@ -99,6 +99,7 @@ export function columnLayoutOf<TData extends RowData>(
       size: numberOr(column.size, DEFAULT_SIZE),
       minSize: numberOr(column.minSize, DEFAULT_MIN_SIZE),
       maxSize: numberOr(column.maxSize, DEFAULT_MAX_SIZE),
+      resizable: column.enableResizing !== false,
       hideable: column.enableHiding === true,
       visible: column.meta.defaultHidden !== true,
       reorderable: column.meta.reorderable,

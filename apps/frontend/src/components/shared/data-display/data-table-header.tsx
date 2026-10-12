@@ -82,16 +82,28 @@ function SortIcon({ sorted }: { sorted: false | "asc" | "desc" }) {
  * One `<col>` per visible column carrying its width, so the widths hold in a
  * `table-fixed` table whatever rows are mounted (virtualized bodies mount and
  * unmount rows while scrolling).
+ *
+ * The table is at least as wide as its box, so a box wider than the columns
+ * leaves room over. The first resizable column gets no width and takes all of
+ * it; otherwise the browser would spread it over every column and widen the
+ * fixed ones (row actions) around their buttons. Without room over, that
+ * column still ends up at its own size, since the table is exactly as wide as
+ * the columns.
  */
 export function DataTableColGroup<TData extends RowData>({
   table,
 }: {
   table: DataTable<TData>
 }) {
+  const columns = table.getVisibleLeafColumns()
+  const filler = columns.find((column) => column.getCanResize())
   return (
     <colgroup>
-      {table.getVisibleLeafColumns().map((column) => (
-        <col key={column.id} style={{ width: column.getSize() }} />
+      {columns.map((column) => (
+        <col
+          key={column.id}
+          style={column === filler ? undefined : { width: column.getSize() }}
+        />
       ))}
     </colgroup>
   )
