@@ -1,4 +1,5 @@
 ---
+import { textVariants } from "@/components/shared/brand/typography"
 import Layout from "@/layouts/Layout.astro"
 import { getIcon } from "@/lib/icon-registry"
 
@@ -39,7 +40,10 @@ const {
     <div class:list={["mx-auto w-full", MAX_WIDTH[maxWidth]]}>
       <a
         href={backHref}
-        class="-ml-1 flex w-fit items-center gap-1 text-muted-foreground text-status uppercase tracking-(--tracking-eyebrow) transition-colors hover:text-foreground"
+        class:list={[
+          "-ml-1 flex w-fit items-center gap-1 transition-colors hover:text-foreground",
+          textVariants({ role: "status", tone: "muted" }),
+        ]}
       >
         <ArrowLeft className="size-3" />
         {backLabel}

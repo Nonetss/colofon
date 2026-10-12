@@ -27,6 +27,8 @@ export function StateCard({
   tone?: "muted" | "destructive" | "celebrate"
   className?: string
 }) {
+  const titleVariant = tone === "celebrate" ? "display" : "headline"
+
   return (
     <div
       className={cn(
@@ -52,11 +54,8 @@ export function StateCard({
       <div className="relative">
         <Text
           as="p"
-          variant="headline"
-          className={cn(
-            tone === "celebrate" && "text-lg",
-            tone === "destructive" && "text-destructive"
-          )}
+          variant={titleVariant}
+          className={cn(tone === "destructive" && "text-destructive")}
         >
           {title}
         </Text>
