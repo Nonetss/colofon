@@ -103,7 +103,7 @@ export function NumberStepper({
           setDraft(null)
         }}
         onKeyDown={handleKeyDown}
-        className="w-full min-w-0 flex-1 rounded-sm border-0 bg-transparent text-center font-mono text-sm tabular-nums outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+        className="w-full min-w-0 flex-1 rounded-sm border-0 bg-transparent text-center font-mono text-base tabular-nums outline-none md:text-sm focus-visible:ring-2 focus-visible:ring-ring/50"
       />
       <button
         type="button"
