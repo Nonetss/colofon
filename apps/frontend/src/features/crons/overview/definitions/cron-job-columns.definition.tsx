@@ -305,8 +305,8 @@ export const cronJobColumns = helper.columns([
   helper.display({
     id: CRON_ACTIONS_COLUMN,
     header: "Acciones",
-    size: 180,
-    minSize: 150,
+    size: 100,
+    minSize: 90,
     meta: {
       label: "Acciones",
       reorderable: false,
