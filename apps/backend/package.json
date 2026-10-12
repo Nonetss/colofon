@@ -31,7 +31,7 @@
     "@nonete/config": "workspace:*",
     "@types/bun": "catalog:",
     "pino-pretty": "catalog:",
-    "tsdown": "^0.23.0",
+    "tsdown": "^0.23.1",
     "typescript": "catalog:"
   }
 }
