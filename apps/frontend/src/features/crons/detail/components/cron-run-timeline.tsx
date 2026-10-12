@@ -128,6 +128,7 @@ export function CronRunTimeline({
           renderDetail={(run) => <CronRunOutput run={run} />}
           hasDetail={cronRunHasOutput}
           detailLabel={cronRunDetailLabel}
+          detailClassName="py-1.5"
           renderControl={(run, columnId, expandToggle) => {
             if (columnId !== CRON_RUN_ACTIONS_COLUMN) return null
             const startedAt = cronRunStartedAt(run)

@@ -23,32 +23,32 @@ export function CronRunOutput({ run }: { run: CronRun }) {
 
   if (run.errorMessage) {
     return (
-      <div>
-        <div className="flex justify-end">
-          <CopyButton text={run.errorMessage} label="Copiar error" />
-        </div>
+      <div className="relative">
         <pre
           id={panelId}
           className={cn(
             textVariants({ role: "data", tone: "destructive" }),
-            "mt-2 max-h-64 overflow-auto whitespace-pre-wrap break-all rounded-lg border border-destructive/20 bg-destructive/5 p-3 leading-relaxed"
+            "max-h-64 overflow-auto whitespace-pre-wrap break-all rounded-lg border border-destructive/20 bg-destructive/5 p-3 pr-11 leading-relaxed"
           )}
         >
           {run.errorMessage}
         </pre>
+        <div className="absolute top-1.5 right-1.5">
+          <CopyButton text={run.errorMessage} label="Copiar error" />
+        </div>
       </div>
     )
   }
 
   return (
-    <div>
-      <div className="flex justify-end">
+    <div className="relative">
+      <JsonView id={panelId} value={run.result} className="max-h-64 pr-11" />
+      <div className="absolute top-1.5 right-1.5">
         <CopyButton
           text={stringifyForCopy(run.result)}
           label="Copiar resultado"
         />
       </div>
-      <JsonView id={panelId} value={run.result} className="mt-2 max-h-64" />
     </div>
   )
 }
