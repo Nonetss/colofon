@@ -77,19 +77,18 @@ export const memberColumns = member.columns([
     enableSorting: true,
     meta: { label: "Miembro", reorderable: false },
     cell: (info) => (
-      <span className="flex min-w-0 items-center gap-3">
-        <UserAvatar
-          displayName={info.row.original.user.name}
-          email={info.row.original.user.email}
-          imageUrl={info.row.original.user.image}
-          size="sm"
-          className="shrink-0"
-        />
-        <DataTableIdentityCell
-          primary={info.row.original.user.name}
-          secondary={info.row.original.user.email}
-        />
-      </span>
+      <DataTableIdentityCell
+        primary={info.row.original.user.name}
+        secondary={info.row.original.user.email}
+        leading={
+          <UserAvatar
+            displayName={info.row.original.user.name}
+            email={info.row.original.user.email}
+            imageUrl={info.row.original.user.image}
+            size="sm"
+          />
+        }
+      />
     ),
   }),
   member.accessor((row) => row.role, {
@@ -177,12 +176,14 @@ export const teamColumns = team.columns([
     enableSorting: true,
     meta: { label: "Equipo", reorderable: false },
     cell: (info) => (
-      <span className="flex min-w-0 items-center gap-3">
-        <span className="flex size-8 shrink-0 items-center justify-center rounded-lg border bg-muted text-muted-foreground">
-          <UsersRound className="size-4" />
-        </span>
-        <DataTableIdentityCell primary={info.getValue()} />
-      </span>
+      <DataTableIdentityCell
+        primary={info.getValue()}
+        leading={
+          <span className="flex size-8 items-center justify-center rounded-lg border bg-muted text-muted-foreground">
+            <UsersRound className="size-4" />
+          </span>
+        }
+      />
     ),
   }),
   team.accessor((row) => row.memberCount, {

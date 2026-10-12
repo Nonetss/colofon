@@ -20,7 +20,8 @@ export interface DataTableStatus {
  * optional secondary one, both truncated. With `href` it is the row's
  * route link (`AppLink`), with `onOpen` a button (a detail sheet); without
  * either, or while `disabled`, plain text. `label` names the open control
- * when the primary value isn't plain text.
+ * when the primary value isn't plain text. `leading` sets an avatar, icon
+ * or tile before the text, outside the open control.
  */
 export function DataTableIdentityCell({
   primary,
@@ -29,9 +30,11 @@ export function DataTableIdentityCell({
   onOpen,
   label,
   disabled,
+  leading,
 }: {
   primary: ReactNode
   secondary?: ReactNode
+  leading?: ReactNode
   href?: string
   onOpen?: () => void
   label?: string
@@ -55,6 +58,29 @@ export function DataTableIdentityCell({
     </span>
   )
 
+  const identity = identityControl({ content, href, onOpen, label, disabled })
+  if (!leading) return identity
+  return (
+    <span className="flex min-w-0 items-center gap-3">
+      <span className="flex shrink-0 items-center">{leading}</span>
+      {identity}
+    </span>
+  )
+}
+
+function identityControl({
+  content,
+  href,
+  onOpen,
+  label,
+  disabled,
+}: {
+  content: ReactNode
+  href?: string
+  onOpen?: () => void
+  label?: string
+  disabled?: boolean
+}) {
   if (disabled) return content
   if (href) {
     return (

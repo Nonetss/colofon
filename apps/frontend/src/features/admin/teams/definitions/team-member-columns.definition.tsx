@@ -18,19 +18,18 @@ export const teamMemberColumns = helper.columns([
     enableSorting: true,
     meta: { label: "Miembro", reorderable: false },
     cell: (info) => (
-      <span className="flex min-w-0 items-center gap-3">
-        <UserAvatar
-          displayName={info.row.original.user.name}
-          email={info.row.original.user.email}
-          imageUrl={info.row.original.user.image}
-          size="sm"
-          className="shrink-0"
-        />
-        <DataTableIdentityCell
-          primary={info.row.original.user.name}
-          secondary={info.row.original.user.email}
-        />
-      </span>
+      <DataTableIdentityCell
+        primary={info.row.original.user.name}
+        secondary={info.row.original.user.email}
+        leading={
+          <UserAvatar
+            displayName={info.row.original.user.name}
+            email={info.row.original.user.email}
+            imageUrl={info.row.original.user.image}
+            size="sm"
+          />
+        }
+      />
     ),
   }),
   helper.display({

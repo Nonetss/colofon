@@ -1,6 +1,9 @@
 import { createColumnHelper } from "@tanstack/react-table"
 import { Text } from "@/components/shared/brand/typography"
-import { DataTableStatusCell } from "@/components/shared/data-display/data-table-cell-content"
+import {
+  DataTableIdentityCell,
+  DataTableStatusCell,
+} from "@/components/shared/data-display/data-table-cell-content"
 import {
   defaultPluginIcon,
   pluginMeta,
@@ -38,12 +41,10 @@ function PluginName({ plugin }: { plugin: Plugin }) {
   const meta = metaOf(plugin)
   const icon = meta ? meta.icon : defaultPluginIcon
   return (
-    <span className="flex min-w-0 items-center gap-3">
-      <span className="shrink-0 text-primary">{icon}</span>
-      <Text as="span" variant="title" className="truncate">
-        {pluginLabel(plugin)}
-      </Text>
-    </span>
+    <DataTableIdentityCell
+      primary={pluginLabel(plugin)}
+      leading={<span className="text-primary">{icon}</span>}
+    />
   )
 }
 
