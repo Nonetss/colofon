@@ -18,6 +18,7 @@ import type {
 } from "@/features/admin/organizations/model/types"
 import { columnLayoutOf, type DataTableFeatures } from "@/hooks/use-data-table"
 import type { SortValue } from "@/lib/sort-rows"
+import { cn } from "@/lib/utils"
 
 /**
  * The tables of the organization detail sheet: members, pending
@@ -31,11 +32,32 @@ export type OrganizationTeam = OrganizationDetail["teams"][number]
 export const MEMBER_ROLE_COLUMN = "role"
 export const DETAIL_ACTIONS_COLUMN = "actions"
 
+// The sheet is often narrower than its tables, so the actions column is
+// pinned to the right edge of the scroll box and stays reachable at any
+// width. Its cells must be opaque to cover the cells scrolling under them:
+// the body matches the box's `bg-card/40` over the sheet, and the row hover
+// adds `bg-muted/50` on top of that.
+const stickyCellSurface =
+  "bg-[color-mix(in_oklab,var(--card)_40%,var(--background))]"
+const stickyCellHover =
+  "group-hover:bg-[color-mix(in_oklab,var(--muted)_50%,color-mix(in_oklab,var(--card)_40%,var(--background)))]"
+const stickyCellEdge = "shadow-[inset_1px_0_0_0_var(--border)]"
+
 const actionsColumnMeta = {
   label: "Acciones",
   reorderable: false,
-  cellClassName: "text-right",
+  cellClassName: cn(
+    "sticky right-0 z-1 text-right",
+    stickyCellSurface,
+    stickyCellHover,
+    stickyCellEdge
+  ),
+  headerClassName:
+    "right-0 z-20 shadow-[inset_1px_0_0_0_var(--border),inset_0_-1px_0_0_var(--border)]",
 }
+
+// The icon-sm button (32px) plus the cell's p-2 on both sides.
+const ACTIONS_COLUMN_SIZE = 48
 
 function hiddenHeader(label: string) {
   return () => <span className="sr-only">{label}</span>
@@ -101,7 +123,7 @@ export const memberColumns = member.columns([
   member.display({
     id: DETAIL_ACTIONS_COLUMN,
     header: hiddenHeader("Acciones"),
-    size: 56,
+    size: ACTIONS_COLUMN_SIZE,
     enableResizing: false,
     meta: actionsColumnMeta,
   }),
@@ -149,7 +171,7 @@ export const invitationColumns = invitation.columns([
   invitation.display({
     id: DETAIL_ACTIONS_COLUMN,
     header: hiddenHeader("Acciones"),
-    size: 56,
+    size: ACTIONS_COLUMN_SIZE,
     enableResizing: false,
     meta: actionsColumnMeta,
   }),
@@ -234,7 +256,7 @@ export const roleColumns = role.columns([
   role.display({
     id: DETAIL_ACTIONS_COLUMN,
     header: hiddenHeader("Acciones"),
-    size: 56,
+    size: ACTIONS_COLUMN_SIZE,
     enableResizing: false,
     meta: actionsColumnMeta,
   }),
