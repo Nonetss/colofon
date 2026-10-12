@@ -114,7 +114,7 @@ const viewIcons = {
   overflowMenu: Lucide.MoreHorizontal,
   scrollDown: Lucide.ArrowDown,
   columns: Lucide.Columns3,
-  filterByValue: Lucide.ListFilter,
+  filterByValue: Lucide.Filter,
   sortable: Lucide.ArrowUpDown,
   sortAscending: Lucide.ArrowUp,
   sortDescending: Lucide.ArrowDown,
