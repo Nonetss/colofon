@@ -94,6 +94,9 @@ export interface DataTableViewProps<TData extends RowData> {
   hasDetail?: (row: TData) => boolean
   /** Names the expand toggle of a row. */
   detailLabel?: (row: TData) => string
+  /** Classes of the detail cell, merged over its default padding
+   *  (`px-3 pt-0 pb-4`) for a detail that needs less room under it. */
+  detailClassName?: string
   /** Puts the rows under heading rows: a heading is inserted whenever the
    *  group changes, so the groups follow the rows' order. */
   groupOf?: (row: TData) => DataTableGroup
@@ -211,6 +214,7 @@ export function DataTableView<TData extends RowData>({
   renderDetail,
   hasDetail,
   detailLabel,
+  detailClassName,
   groupOf,
   footer,
   filters,
@@ -421,7 +425,10 @@ export function DataTableView<TData extends RowData>({
                     <TableRow className="hover:bg-transparent">
                       <TableCell
                         colSpan={visibleCount}
-                        className="whitespace-normal px-3 pt-0 pb-4"
+                        className={cn(
+                          "whitespace-normal px-3 pt-0 pb-4",
+                          detailClassName
+                        )}
                       >
                         {detail}
                       </TableCell>
