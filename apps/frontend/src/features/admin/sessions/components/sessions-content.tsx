@@ -242,41 +242,39 @@ export function SessionsContent() {
       }}
     >
       {() => (
-        <div className="flex min-h-0 flex-1 flex-col">
-          <DataTableView
-            table={table}
-            label="Sesiones"
-            idPrefix="admin-sessions"
-            onResetColumns={preferences.reset}
-            scrollRef={setScrollContainer}
-            filters={filters}
-            emptyMessage={
-              <FilteredEmpty
-                message="Ninguna sesión coincide con los filtros."
-                onClear={clearFilters}
-              />
-            }
-            renderDetail={(session) => <SessionDetail session={session} />}
-            renderControl={(_session, columnId, expandToggle) => {
-              if (columnId !== SESSION_ACTIONS_COLUMN) return null
-              return (
-                <span className="inline-flex size-8 items-center justify-center">
-                  {expandToggle}
-                </span>
-              )
-            }}
-            detailLabel={(session) =>
-              `Ver información técnica de la sesión de ${session.user.name}`
-            }
-            footer={
-              <InfiniteScrollSentinel
-                sentinelRef={sentinelRef}
-                hasNextPage={hasNextPage}
-                isFetchingNextPage={isFetchingNextPage}
-              />
-            }
-          />
-        </div>
+        <DataTableView
+          table={table}
+          label="Sesiones"
+          idPrefix="admin-sessions"
+          onResetColumns={preferences.reset}
+          scrollRef={setScrollContainer}
+          filters={filters}
+          emptyMessage={
+            <FilteredEmpty
+              message="Ninguna sesión coincide con los filtros."
+              onClear={clearFilters}
+            />
+          }
+          renderDetail={(session) => <SessionDetail session={session} />}
+          renderControl={(_session, columnId, expandToggle) => {
+            if (columnId !== SESSION_ACTIONS_COLUMN) return null
+            return (
+              <span className="inline-flex size-8 items-center justify-center">
+                {expandToggle}
+              </span>
+            )
+          }}
+          detailLabel={(session) =>
+            `Ver información técnica de la sesión de ${session.user.name}`
+          }
+          footer={
+            <InfiniteScrollSentinel
+              sentinelRef={sentinelRef}
+              hasNextPage={hasNextPage}
+              isFetchingNextPage={isFetchingNextPage}
+            />
+          }
+        />
       )}
     </ResourceOverview>
   )

@@ -195,14 +195,12 @@ export function CronsContent() {
         }}
       >
         {() => (
-          <div className="flex min-h-0 flex-1 flex-col">
-            <CronJobsTable
-              jobs={filteredJobs}
-              context={rowContext}
-              filters={tableFilters}
-              emptyMessage={noMatches}
-            />
-          </div>
+          <CronJobsTable
+            jobs={filteredJobs}
+            context={rowContext}
+            filters={tableFilters}
+            emptyMessage={noMatches}
+          />
         )}
       </ResourceOverview>
 

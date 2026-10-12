@@ -204,34 +204,32 @@ export function OrganizationsContent() {
         }}
       >
         {() => (
-          <div className="flex min-h-0 flex-1 flex-col">
-            <DataTableView
-              table={table}
-              label="Organizaciones"
-              idPrefix="admin-organizations"
-              onResetColumns={preferences.reset}
-              renderControl={(org, columnId) => {
-                if (columnId === ORGANIZATION_NAME_COLUMN) {
-                  return (
-                    <DataTableIdentityCell
-                      primary={org.name}
-                      secondary={`/${org.slug}`}
-                      onOpen={() => detailDialog.open(org.id)}
-                      label={org.name}
-                    />
-                  )
-                }
+          <DataTableView
+            table={table}
+            label="Organizaciones"
+            idPrefix="admin-organizations"
+            onResetColumns={preferences.reset}
+            renderControl={(org, columnId) => {
+              if (columnId === ORGANIZATION_NAME_COLUMN) {
                 return (
-                  <RowActions
-                    actions={organizationActions}
-                    item={org}
-                    context={rowContext}
-                    accessibleLabel={org.name}
+                  <DataTableIdentityCell
+                    primary={org.name}
+                    secondary={`/${org.slug}`}
+                    onOpen={() => detailDialog.open(org.id)}
+                    label={org.name}
                   />
                 )
-              }}
-            />
-          </div>
+              }
+              return (
+                <RowActions
+                  actions={organizationActions}
+                  item={org}
+                  context={rowContext}
+                  accessibleLabel={org.name}
+                />
+              )
+            }}
+          />
         )}
       </ResourceOverview>
 

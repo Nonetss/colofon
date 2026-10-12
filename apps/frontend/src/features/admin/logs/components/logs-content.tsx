@@ -247,52 +247,50 @@ export function LogsContent() {
       }}
     >
       {() => (
-        <div className="flex min-h-0 flex-1 flex-col">
-          <DataTableView
-            table={table}
-            label="Actividad"
-            idPrefix="admin-logs"
-            onResetColumns={preferences.reset}
-            scrollRef={setScrollContainer}
-            renderDetail={(entry) => (
-              <div className="grid gap-3">
-                <dl
-                  className={cn(
-                    textVariants({ role: "compact" }),
-                    "grid grid-cols-2 gap-x-5 gap-y-2"
-                  )}
-                >
-                  <div>
-                    <dt className="text-muted-foreground">Usuario</dt>
-                    <dd className="mt-0.5 truncate">
-                      <LogUser userId={entry.userId} />
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className="text-muted-foreground">Fecha</dt>
-                    <dd className="mt-0.5 font-mono tabular-nums">
-                      {logDateTime(entry)}
-                    </dd>
-                  </div>
-                </dl>
-                <JsonView
-                  value={entry.raw}
-                  className="overflow-x-auto rounded-md border-0 bg-muted/40"
-                />
-              </div>
-            )}
-            detailLabel={(entry) =>
-              `Ver la entrada completa de ${logDateTime(entry)}`
-            }
-            footer={
-              <InfiniteScrollSentinel
-                sentinelRef={sentinelRef}
-                hasNextPage={hasNextPage}
-                isFetchingNextPage={isFetchingNextPage}
+        <DataTableView
+          table={table}
+          label="Actividad"
+          idPrefix="admin-logs"
+          onResetColumns={preferences.reset}
+          scrollRef={setScrollContainer}
+          renderDetail={(entry) => (
+            <div className="grid gap-3">
+              <dl
+                className={cn(
+                  textVariants({ role: "compact" }),
+                  "grid grid-cols-2 gap-x-5 gap-y-2"
+                )}
+              >
+                <div>
+                  <dt className="text-muted-foreground">Usuario</dt>
+                  <dd className="mt-0.5 truncate">
+                    <LogUser userId={entry.userId} />
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-muted-foreground">Fecha</dt>
+                  <dd className="mt-0.5 font-mono tabular-nums">
+                    {logDateTime(entry)}
+                  </dd>
+                </div>
+              </dl>
+              <JsonView
+                value={entry.raw}
+                className="overflow-x-auto rounded-md border-0 bg-muted/40"
               />
-            }
-          />
-        </div>
+            </div>
+          )}
+          detailLabel={(entry) =>
+            `Ver la entrada completa de ${logDateTime(entry)}`
+          }
+          footer={
+            <InfiniteScrollSentinel
+              sentinelRef={sentinelRef}
+              hasNextPage={hasNextPage}
+              isFetchingNextPage={isFetchingNextPage}
+            />
+          }
+        />
       )}
     </ResourceOverview>
   )

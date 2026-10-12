@@ -148,24 +148,22 @@ export function ApiKeysContent() {
         }}
       >
         {() => (
-          <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-            <DataTableView
-              table={table}
-              label="API keys"
-              idPrefix="admin-api-keys"
-              onResetColumns={preferences.reset}
-              rowState={(key) => ({ disabled: deletingId === key.id })}
-              renderControl={(key) => (
-                <RowActions
-                  actions={apiKeyActions}
-                  item={key}
-                  context={rowContext}
-                  accessibleLabel={apiKeyName(key)}
-                  disabled={deletingId === key.id}
-                />
-              )}
-            />
-          </div>
+          <DataTableView
+            table={table}
+            label="API keys"
+            idPrefix="admin-api-keys"
+            onResetColumns={preferences.reset}
+            rowState={(key) => ({ disabled: deletingId === key.id })}
+            renderControl={(key) => (
+              <RowActions
+                actions={apiKeyActions}
+                item={key}
+                context={rowContext}
+                accessibleLabel={apiKeyName(key)}
+                disabled={deletingId === key.id}
+              />
+            )}
+          />
         )}
       </ResourceOverview>
 

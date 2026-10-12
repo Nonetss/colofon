@@ -225,37 +225,35 @@ export function UsersContent() {
         }}
       >
         {() => (
-          <div className="flex min-h-0 flex-1 flex-col">
-            <DataTableView
-              table={table}
-              label="Usuarios"
-              idPrefix="admin-users"
-              onResetColumns={preferences.reset}
-              scrollRef={setScrollContainer}
-              filters={filters}
-              emptyMessage={
-                <FilteredEmpty
-                  message="Ningún usuario coincide con los filtros."
-                  onClear={clearFilters}
-                />
-              }
-              renderControl={(user) => (
-                <RowActions
-                  actions={userActions}
-                  item={user}
-                  context={rowContext}
-                  accessibleLabel={userDisplayName(user)}
-                />
-              )}
-              footer={
-                <InfiniteScrollSentinel
-                  sentinelRef={sentinelRef}
-                  hasNextPage={hasNextPage}
-                  isFetchingNextPage={isFetchingNextPage}
-                />
-              }
-            />
-          </div>
+          <DataTableView
+            table={table}
+            label="Usuarios"
+            idPrefix="admin-users"
+            onResetColumns={preferences.reset}
+            scrollRef={setScrollContainer}
+            filters={filters}
+            emptyMessage={
+              <FilteredEmpty
+                message="Ningún usuario coincide con los filtros."
+                onClear={clearFilters}
+              />
+            }
+            renderControl={(user) => (
+              <RowActions
+                actions={userActions}
+                item={user}
+                context={rowContext}
+                accessibleLabel={userDisplayName(user)}
+              />
+            )}
+            footer={
+              <InfiniteScrollSentinel
+                sentinelRef={sentinelRef}
+                hasNextPage={hasNextPage}
+                isFetchingNextPage={isFetchingNextPage}
+              />
+            }
+          />
         )}
       </ResourceOverview>
 

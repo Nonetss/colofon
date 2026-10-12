@@ -230,40 +230,38 @@ export function TeamsContent() {
         }}
       >
         {() => (
-          <div className="flex min-h-0 flex-1 flex-col">
-            <DataTableView
-              table={table}
-              label="Equipos"
-              idPrefix="admin-teams"
-              onResetColumns={preferences.reset}
-              renderControl={(team, columnId) => {
-                if (columnId === TEAM_NAME_COLUMN) {
-                  return (
-                    <DataTableIdentityCell
-                      primary={team.name}
-                      onOpen={() => membersDialog.open(team)}
-                      label={team.name}
-                    />
-                  )
-                }
-                if (columnId === TEAM_ORGANIZATION_COLUMN) {
-                  return (
-                    <Text tone="muted" className="block truncate">
-                      {orgNameById.get(team.organizationId) ?? "—"}
-                    </Text>
-                  )
-                }
+          <DataTableView
+            table={table}
+            label="Equipos"
+            idPrefix="admin-teams"
+            onResetColumns={preferences.reset}
+            renderControl={(team, columnId) => {
+              if (columnId === TEAM_NAME_COLUMN) {
                 return (
-                  <RowActions
-                    actions={teamActions}
-                    item={team}
-                    context={rowContext}
-                    accessibleLabel={team.name}
+                  <DataTableIdentityCell
+                    primary={team.name}
+                    onOpen={() => membersDialog.open(team)}
+                    label={team.name}
                   />
                 )
-              }}
-            />
-          </div>
+              }
+              if (columnId === TEAM_ORGANIZATION_COLUMN) {
+                return (
+                  <Text tone="muted" className="block truncate">
+                    {orgNameById.get(team.organizationId) ?? "—"}
+                  </Text>
+                )
+              }
+              return (
+                <RowActions
+                  actions={teamActions}
+                  item={team}
+                  context={rowContext}
+                  accessibleLabel={team.name}
+                />
+              )
+            }}
+          />
         )}
       </ResourceOverview>
 
