@@ -1,19 +1,28 @@
+import { getIcon } from "@/lib/icon-registry"
+
+const Check = getIcon("controls", "check")
+
 import type { SyntheticEvent } from "react"
-import { Text, textVariants } from "@/components/shared/brand/typography"
-import { EntityPicker } from "@/components/shared/form/entity-picker"
+import { Text } from "@/components/shared/brand/typography"
 import { FormField } from "@/components/shared/form/field-label"
 import { FormDialog } from "@/components/shared/form/form-dialog"
-import { Input } from "@/components/ui/input"
 import {
-  type OrganizationSearchResult,
-  useOrganizationSearch,
-} from "@/features/admin/organizations/public"
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command"
+import { Input } from "@/components/ui/input"
+import { useOrganizationsList } from "@/features/admin/organizations/public"
 import {
   useTeamCreate,
   useTeamUpdate,
 } from "@/features/admin/teams/hooks/use-teams"
 import type { Team } from "@/features/admin/teams/model/types"
 import { useDialogForm } from "@/hooks/use-dialog-form"
+import { foldText } from "@/lib/fold-text"
 import { cn } from "@/lib/utils"
 
 interface TeamFormDialogProps {
@@ -33,17 +42,14 @@ export function TeamFormDialog({
 
   const form = useDialogForm(
     open,
-    {
-      name: "",
-      orgSearchInput: "",
-      selectedOrg: null as OrganizationSearchResult | null,
-    },
+    { name: "", organizationId: "" },
     { name: team?.name ?? "" }
   )
 
-  const { isSearchable, isFetching, results } = useOrganizationSearch(
-    form.values.orgSearchInput
-  )
+  const organizations = useOrganizationsList()
+  const emptyLabel = organizations.data?.length
+    ? "Ninguna organización coincide"
+    : "Todavía no hay organizaciones"
 
   const isPending = createTeam.isPending || updateTeam.isPending
 
@@ -54,12 +60,12 @@ export function TeamFormDialog({
 
   const handleSubmit = async (e: SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault()
-    const { name, selectedOrg } = form.trimmed()
+    const { name, organizationId } = form.trimmed()
     if (isEditing && team) {
       await updateTeam.mutateAsync({ id: team.id, name })
     } else {
-      if (!selectedOrg) return
-      await createTeam.mutateAsync({ organizationId: selectedOrg.id, name })
+      if (!organizationId) return
+      await createTeam.mutateAsync({ organizationId, name })
     }
     handleOpenChange(false)
   }
@@ -76,50 +82,66 @@ export function TeamFormDialog({
       }
       onSubmit={handleSubmit}
       isPending={isPending}
-      submitDisabled={!isEditing && !form.values.selectedOrg}
+      submitDisabled={!isEditing && !form.values.organizationId}
       submitLabel={isEditing ? "Guardar" : "Crear equipo"}
     >
       {!isEditing ? (
         <FormField label="Organización" htmlFor="team-org-search">
-          <EntityPicker
-            id="team-org-search"
-            searchInput={form.values.orgSearchInput}
-            onSearchInputChange={(value) => form.set("orgSearchInput", value)}
-            isSearchable={isSearchable}
-            isFetching={isFetching}
-            results={results}
-            getKey={(org) => org.id}
-            renderResult={(org) => (
-              <>
-                <span
-                  className={cn(textVariants({ role: "title" }), "truncate")}
-                >
-                  {org.name}
-                </span>
-                <Text variant="data" tone="muted" className="truncate">
-                  /{org.slug}
+          <Command
+            filter={(itemValue, search) =>
+              Number(foldText(itemValue).includes(foldText(search)))
+            }
+            className="rounded-md border bg-transparent"
+          >
+            <CommandInput
+              id="team-org-search"
+              placeholder="Filtrar por nombre o slug..."
+              className="text-base md:text-sm"
+            />
+            <CommandList className="max-h-56">
+              {organizations.isPending ? (
+                <Text as="p" tone="muted" className="py-6 text-center">
+                  Cargando organizaciones...
                 </Text>
-              </>
-            )}
-            selected={form.values.selectedOrg}
-            onSelect={(org) => {
-              form.set("selectedOrg", org)
-              form.set("orgSearchInput", "")
-            }}
-            onClear={() => form.set("selectedOrg", null)}
-            renderSelected={(org) => (
-              <>
-                <Text as="p" variant="title" className="truncate">
-                  {org.name}
-                </Text>
-                <Text as="p" variant="data" tone="muted" className="truncate">
-                  /{org.slug}
-                </Text>
-              </>
-            )}
-            clearLabel="Cambiar organización"
-            placeholder="Nombre o slug de la organización..."
-          />
+              ) : (
+                <>
+                  <CommandEmpty>{emptyLabel}</CommandEmpty>
+                  <CommandGroup>
+                    {organizations.data?.map((org) => {
+                      const isSelected = form.values.organizationId === org.id
+                      return (
+                        <CommandItem
+                          key={org.id}
+                          value={`${org.name} ${org.slug} ${org.id}`}
+                          onSelect={() => form.set("organizationId", org.id)}
+                        >
+                          <div className="min-w-0 flex-1">
+                            <Text as="p" variant="title" className="truncate">
+                              {org.name}
+                            </Text>
+                            <Text
+                              as="p"
+                              variant="data"
+                              tone="muted"
+                              className="truncate"
+                            >
+                              /{org.slug}
+                            </Text>
+                          </div>
+                          <Check
+                            className={cn(
+                              "text-primary",
+                              !isSelected && "invisible"
+                            )}
+                          />
+                        </CommandItem>
+                      )
+                    })}
+                  </CommandGroup>
+                </>
+              )}
+            </CommandList>
+          </Command>
         </FormField>
       ) : null}
 
