@@ -1,20 +1,26 @@
-import type { SyntheticEvent } from "react"
-import { Text, textVariants } from "@/components/shared/brand/typography"
-import { EntityPicker } from "@/components/shared/form/entity-picker"
+import { getIcon } from "@/lib/icon-registry"
+
+const Check = getIcon("controls", "check")
+
+import { type SyntheticEvent, useState } from "react"
+import { Text } from "@/components/shared/brand/typography"
 import { FormField } from "@/components/shared/form/field-label"
 import { FormDialog } from "@/components/shared/form/form-dialog"
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command"
 import { RoleSelect } from "@/features/admin/organizations/components/role-select"
+import { useMemberCandidates } from "@/features/admin/organizations/hooks/use-member-candidates"
 import { useMemberAdd } from "@/features/admin/organizations/hooks/use-organization-detail"
 import type { OrganizationCustomRole } from "@/features/admin/organizations/model/types"
-import { useAdminUserSearch } from "@/hooks/use-admin-user-search"
 import { useDialogForm } from "@/hooks/use-dialog-form"
+import { useInfiniteScroll } from "@/hooks/use-infinite-scroll"
 import { cn } from "@/lib/utils"
-
-interface SelectedUser {
-  id: string
-  name: string
-  email: string
-}
 
 interface AddMemberDialogProps {
   organizationId: string
@@ -34,22 +40,29 @@ export function AddMemberDialog({
   const { mutateAsync, isPending } = useMemberAdd(organizationId)
   const form = useDialogForm(open, {
     searchInput: "",
-    selectedUser: null as SelectedUser | null,
+    userId: "",
     role: "member",
   })
 
-  const { isSearchable, isFetching, results } = useAdminUserSearch(
-    form.values.searchInput
+  const candidates = useMemberCandidates(
+    form.values.searchInput,
+    existingUserIds
   )
-  const availableResults = results.filter(
-    (user) => !existingUserIds.includes(user.id)
+  const [listRoot, setListRoot] = useState<HTMLDivElement | null>(null)
+  const sentinelRef = useInfiniteScroll(
+    listRoot,
+    candidates.fetchNextPage,
+    candidates.hasNextPage && !candidates.isFetchingNextPage
   )
+  const emptyLabel = form.values.searchInput.trim()
+    ? "Ningún usuario coincide"
+    : "No quedan usuarios por añadir"
 
   const handleSubmit = async (e: SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault()
-    const { selectedUser, role } = form.values
-    if (!selectedUser) return
-    await mutateAsync({ organizationId, userId: selectedUser.id, role })
+    const { userId, role } = form.values
+    if (!userId) return
+    await mutateAsync({ organizationId, userId, role })
     onOpenChange(false)
   }
 
@@ -61,44 +74,66 @@ export function AddMemberDialog({
       description="Busca un usuario existente y asígnale un rol en la organización."
       onSubmit={handleSubmit}
       isPending={isPending}
-      submitDisabled={!form.values.selectedUser}
+      submitDisabled={!form.values.userId}
       submitLabel="Añadir"
     >
-      <FormField label="Buscar usuario" htmlFor="member-search">
-        <EntityPicker
-          id="member-search"
-          searchInput={form.values.searchInput}
-          onSearchInputChange={(value) => form.set("searchInput", value)}
-          isSearchable={isSearchable}
-          isFetching={isFetching}
-          results={availableResults}
-          getKey={(user) => user.id}
-          renderResult={(user) => (
-            <>
-              <span className={cn(textVariants({ role: "title" }), "truncate")}>
-                {user.name}
-              </span>
-              <Text variant="compact" tone="muted" className="truncate">
-                {user.email}
+      <FormField label="Usuario" htmlFor="member-search">
+        <Command
+          shouldFilter={false}
+          className="rounded-md border bg-transparent"
+        >
+          <CommandInput
+            id="member-search"
+            placeholder="Filtrar por nombre o email..."
+            className="text-base md:text-sm"
+            value={form.values.searchInput}
+            onValueChange={(value) => form.set("searchInput", value)}
+          />
+          <CommandList ref={setListRoot} className="max-h-56">
+            {candidates.isPending ? (
+              <Text as="p" tone="muted" className="py-6 text-center">
+                Cargando usuarios...
               </Text>
-            </>
-          )}
-          selected={form.values.selectedUser}
-          onSelect={(user) => form.set("selectedUser", user)}
-          onClear={() => form.set("selectedUser", null)}
-          renderSelected={(user) => (
-            <>
-              <Text as="p" variant="title" className="truncate">
-                {user.name}
-              </Text>
-              <Text as="p" variant="compact" tone="muted" className="truncate">
-                {user.email}
-              </Text>
-            </>
-          )}
-          clearLabel="Cambiar usuario"
-          placeholder="Nombre o email..."
-        />
+            ) : (
+              <>
+                <CommandEmpty>{emptyLabel}</CommandEmpty>
+                <CommandGroup>
+                  {candidates.users.map((user) => {
+                    const isSelected = form.values.userId === user.id
+                    return (
+                      <CommandItem
+                        key={user.id}
+                        value={user.id}
+                        onSelect={() => form.set("userId", user.id)}
+                      >
+                        <div className="min-w-0 flex-1">
+                          <Text as="p" variant="title" className="truncate">
+                            {user.name}
+                          </Text>
+                          <Text
+                            as="p"
+                            variant="compact"
+                            tone="muted"
+                            className="truncate"
+                          >
+                            {user.email}
+                          </Text>
+                        </div>
+                        <Check
+                          className={cn(
+                            "text-primary",
+                            !isSelected && "invisible"
+                          )}
+                        />
+                      </CommandItem>
+                    )
+                  })}
+                </CommandGroup>
+                <div ref={sentinelRef} aria-hidden className="h-px" />
+              </>
+            )}
+          </CommandList>
+        </Command>
       </FormField>
 
       <FormField label="Rol" htmlFor="member-role">
