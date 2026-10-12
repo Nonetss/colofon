@@ -43,6 +43,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { useIsMobile } from "@/hooks/use-mobile"
+import { formatDate } from "@/lib/format"
 import { cn } from "@/lib/utils"
 
 export interface ResourceFilterOption {
@@ -497,7 +498,7 @@ export function chipsFor(
         if (filter.value !== undefined && isFilterActive(filter)) {
           chips.push({
             key: filter.key,
-            label: `${filter.label}: ${filter.value.toLocaleDateString()}`,
+            label: `${filter.label}: ${formatDate(filter.value)}`,
             onRemove: () => filter.onChange(undefined),
           })
         }
