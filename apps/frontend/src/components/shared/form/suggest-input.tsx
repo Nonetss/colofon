@@ -147,6 +147,7 @@ export function SuggestInput({
             id={`${listId}-${index}`}
             type="button"
             role="option"
+            tabIndex={-1}
             aria-selected={index === highlightedIndex}
             className={cn(
               textVariants({ role: "compact" }),
