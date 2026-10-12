@@ -5,7 +5,7 @@ aplicaciones y siete librerías compartidas, y todo se coordina con Turborepo.
 
 ## Las piezas
 
-![El navegador solo habla con el gateway, que envía la API al backend y el resto al frontend](diagrams/arquitectura.svg)
+![El navegador solo habla con el gateway, que envía la API al backend y el resto al frontend](../img/arquitectura.svg)
 
 ### Aplicaciones (`apps/`)
 
@@ -123,4 +123,4 @@ Todos los workspaces usan el mismo logger (`packages/logger`, sobre pino):
   canceló la petición.
 - Si `LOKI_URL` está definido, los logs también se envían a Loki y alimentan
   el registro de actividad de `/admin/logs` (ver
-  [Funcionalidades transversales](08-transversales.md)).
+  [Funcionalidades transversales](transversales.md)).

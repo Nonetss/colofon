@@ -11,7 +11,7 @@ Hay cuatro ficheros compose, uno por forma de ejecutar el proyecto:
 
 ## `compose.dev.yml`: desarrollo
 
-Está explicado en [Desarrollo local](02-desarrollo.md#con-docker-bun-run-dev).
+Está explicado en [Desarrollo local](desarrollo.md#con-docker-bun-run-dev).
 Lo importante: como en producción, solo el gateway publica un puerto
 (`https://localhost:4321`, HTTPS + HTTP/2). Las apps y Loki quedan en la red
 interna y leen el `.env` sin cambios, salvo `BACKEND_URL` y `LOKI_URL`, que el

@@ -12,28 +12,28 @@ contexto y menos jerga. Si alguna vez no coinciden, mandan las specs de
 
 ## Índice
 
-1. [Arquitectura](01-arquitectura.md): las piezas del sistema y el camino de una petición.
-2. [Desarrollo local](02-desarrollo.md): arrancar el proyecto, comandos del día a día, base de datos y validación.
-3. [Configuración](03-configuracion.md): el único `.env`, quién lo lee y qué significa cada variable.
-4. [Backend y API](04-backend-api.md): cómo está organizado `packages/api`, cómo se añade un procedimiento, métodos HTTP y errores.
-5. [Autenticación y permisos](05-autenticacion.md): Better Auth, sesiones, roles, organizaciones, API keys y CSRF.
-6. [Frontend](06-frontend.md): estructura de features, componentes, navegación, layouts y sistema visual.
-7. [Crons](07-crons.md): el planificador de tareas y cómo convertir un procedimiento en un job.
-8. [Funcionalidades transversales](08-transversales.md): comentarios, iconos de entidad y registro de actividad.
-9. [Docker y despliegue](09-docker-despliegue.md): los cuatro compose, las imágenes, el CI y el instalador.
-10. [Convenciones](10-convenciones.md): estilo de código, idiomas, commits, migraciones y el flujo de OpenSpec.
+1. [Arquitectura](arquitectura.md): las piezas del sistema y el camino de una petición.
+2. [Desarrollo local](desarrollo.md): arrancar el proyecto, comandos del día a día, base de datos y validación.
+3. [Configuración](configuracion.md): el único `.env`, quién lo lee y qué significa cada variable.
+4. [Backend y API](backend-api.md): cómo está organizado `packages/api`, cómo se añade un procedimiento, métodos HTTP y errores.
+5. [Autenticación y permisos](autenticacion.md): Better Auth, sesiones, roles, organizaciones, API keys y CSRF.
+6. [Frontend](frontend.md): estructura de features, componentes, navegación, layouts y sistema visual.
+7. [Crons](crons.md): el planificador de tareas y cómo convertir un procedimiento en un job.
+8. [Funcionalidades transversales](transversales.md): comentarios, iconos de entidad y registro de actividad.
+9. [Docker y despliegue](docker-despliegue.md): los cuatro compose, las imágenes, el CI y el instalador.
+10. [Convenciones](convenciones.md): estilo de código, idiomas, commits, migraciones y el flujo de OpenSpec.
 
 ## Diagramas
 
-Los diagramas están en `diagrams/` como SVG, con las fuentes del proyecto
+Los diagramas se ven como SVG en `docs/img/`, con las fuentes del proyecto
 incrustadas para que se vean igual en cualquier visor. Usan el mismo sistema
 visual que el frontend: los colores son los tokens de
 `apps/frontend/src/styles/global.css` (fondo, texto, `card`, bordes y el
 naranja `primary` como único acento), las etiquetas siguen el rol `label` de
 `Text` y cambian a modo oscuro con el sistema.
 
-Cada SVG tiene al lado su `.html`, que es el original: se edita el HTML y se
-vuelve a generar el SVG. Los colores van como `var(--token)` en atributos
+Cada SVG tiene su original con el mismo nombre en `docs/diagrams/*.html`: se
+edita el HTML y se vuelve a exportar el SVG a `docs/img/`. Los colores van como `var(--token)` en atributos
 `style`, nunca en hexadecimal, y el SVG exportado tiene que conservar el bloque
 de tokens (claro y oscuro) y las fuentes incrustadas. La exportación estándar
 de la skill `diagram-design` no lo hace, así que hay que revisar el resultado.

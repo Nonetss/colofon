@@ -21,7 +21,7 @@ documentación: la válida es la de <https://orpc.dev>; la de v1 no aplica.
 
 ## Cómo está organizado `packages/api`
 
-![Estructura de packages/api/src](diagrams/api-estructura.svg)
+![Estructura de packages/api/src](../img/api-estructura.svg)
 
 En la base compartida, `index.ts` define los builders de procedimientos y los
 metadatos (`cronMeta`…), `context.ts` lo que recibe cada procedimiento
@@ -100,7 +100,7 @@ Las reglas que hay detrás:
 
 En `/rpc`, el frontend envía las lecturas como `QUERY` y el resto como `POST`
 automáticamente; el servidor rechaza `GET` en `/rpc` (protección CSRF, ver
-[Autenticación](05-autenticacion.md)).
+[Autenticación](autenticacion.md)).
 
 ## Errores
 

@@ -58,8 +58,8 @@ el encadenamiento opcional para leer (`user?.role === "admin"`).
 
 Antes de escribir un componente, hook, helper o procedimiento nuevo, se busca
 uno que ya exista y se reutiliza o se extiende (ver dónde mirar en
-[Frontend](06-frontend.md#antes-de-crear-algo-busca) y en
-[Backend y API](04-backend-api.md#añadir-un-procedimiento-paso-a-paso)). Lo
+[Frontend](frontend.md#antes-de-crear-algo-busca) y en
+[Backend y API](backend-api.md#añadir-un-procedimiento-paso-a-paso)). Lo
 nuevo nace dentro de su feature y se promueve a compartido cuando de verdad se
 reutiliza.
 

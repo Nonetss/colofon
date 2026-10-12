@@ -45,6 +45,7 @@ Bun workspaces are `apps/*` and `packages/*` (root `package.json`). `bunfig.toml
 ## Docs and design
 
 - `README.md` (English) is the human overview; `AGENTS.md` holds the hard rules for agents (`CLAUDE.md` only imports it); `PRODUCT.md` (Spanish) is the product context.
+- Spanish guides for humans in `docs/human/`, one file per topic with `README.md` as the reading-order index. Their diagrams and the root README's are `docs/diagrams/*.html` sources exported to `docs/img/*.svg` under the same name.
 - `DESIGN.md`, `PRODUCT.md` and `.impeccable/` feed the Impeccable design skill.
 - OpenSpec lives in `openspec/`: one spec per capability in `openspec/specs/<capability>/spec.md` (list them with `openspec list --specs`); finished changes are in `openspec/changes/archive/`.
 

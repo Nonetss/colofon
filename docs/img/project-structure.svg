@@ -9,7 +9,7 @@
   <title id="project-structure-title">stack project structure</title>
   <desc id="project-structure-desc">
     Folder tree of the stack monorepo: apps/ with the frontend, backend and
-    gateway, packages/ with the seven shared @nonete libraries, plus doc/,
+    gateway, packages/ with the seven shared @nonete libraries, plus docs/,
     openspec/ and scripts/.
   </desc>
   <defs>
@@ -694,7 +694,7 @@
     letter-spacing="-0.025em"
     style="fill: var(--foreground)"
   >
-    doc/
+    docs/
   </text>
   <text
     x="364"
@@ -704,7 +704,7 @@
     text-anchor="middle"
     style="fill: var(--muted-foreground)"
   >
-    human docs (Spanish) + diagrams
+    human/, diagrams/, img/
   </text>
   <rect
     x="264"

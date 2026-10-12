@@ -15,7 +15,7 @@ todo el estado de la isla vive en un solo sitio.
 
 ## Estructura de carpetas
 
-![Estructura de apps/frontend/src](diagrams/frontend-estructura.svg)
+![Estructura de apps/frontend/src](../img/frontend-estructura.svg)
 
 - `pages/` tiene las rutas de Astro (un fichero por URL), `layouts/` los
   marcos de página y `middleware.ts` la sesión, las redirecciones y el
@@ -30,7 +30,7 @@ El código de la interfaz se agrupa por **dominio** en
 `src/features/<dominio>/` (`crons`, `admin`, `config`, `profile`…). Dentro de
 cada dominio, cada carpeta es un **caso de uso** (slice), no una capa técnica:
 
-![El dominio crons: slices shared, overview y detail](diagrams/slices-crons.svg)
+![El dominio crons: slices shared, overview y detail](../img/slices-crons.svg)
 
 Reglas:
 
@@ -114,7 +114,7 @@ específica (en `/config/appearance` se marca Apariencia, no Configuración).
 
 Para entidades con muchos registros, una fuente puede preguntar al servidor
 mediante el procedimiento `search` de la entidad, 150 ms después de dejar de
-escribir (ver [Backend y API](04-backend-api.md#búsquedas-de-texto-libre)).
+escribir (ver [Backend y API](backend-api.md#búsquedas-de-texto-libre)).
 
 ## Layouts (`src/layouts/`)
 

@@ -180,4 +180,4 @@ paquete, la idea es copiar el montaje de `packages/api`.
 | --- | --- |
 | `bun run build` | Compila todas las apps. |
 | `bun run icons:catalog` | Regenera el catálogo de iconos Lucide del selector de iconos (necesita red; hay que commitear el resultado). Se ejecuta tras actualizar `lucide-react`. |
-| `bun run docker:up` / `docker:down` / `docker:logs` / `docker:build` | El stack tipo producción construido desde el código (ver [Docker y despliegue](09-docker-despliegue.md)). |
+| `bun run docker:up` / `docker:down` / `docker:logs` / `docker:build` | El stack tipo producción construido desde el código (ver [Docker y despliegue](docker-despliegue.md)). |
