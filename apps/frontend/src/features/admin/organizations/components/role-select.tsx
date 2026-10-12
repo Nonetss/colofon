@@ -49,22 +49,28 @@ export function RoleSelect({
         if (nextValue !== null) onValueChange(nextValue)
       }}
     >
-      <SelectTrigger
-        id={id}
-        size={size}
-        className={className}
-        title={selected?.description}
-      >
-        <SelectValue />
+      <SelectTrigger id={id} size={size} className={className}>
+        <SelectValue>{selected?.label}</SelectValue>
       </SelectTrigger>
-      <SelectContent>
+      <SelectContent className="w-auto max-w-[min(20rem,var(--available-width))] min-w-(--anchor-width)">
         {options.map((option) => (
           <SelectItem
             key={option.value}
             value={option.value}
-            title={option.description}
+            label={option.label}
           >
-            {option.label}
+            <span className="flex min-w-0 flex-col">
+              <span className="truncate">{option.label}</span>
+              {option.description ? (
+                <Text
+                  variant="meta-sm"
+                  tone="muted"
+                  className="whitespace-normal text-pretty"
+                >
+                  {option.description}
+                </Text>
+              ) : null}
+            </span>
           </SelectItem>
         ))}
       </SelectContent>
