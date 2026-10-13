@@ -201,7 +201,7 @@ The `packages/api` unit suite SHALL cover the rules each feature handler enforce
 
 ### Requirement: Frontend helpers are covered
 
-The `apps/frontend` unit suite SHALL cover the pure helpers in `src/lib` that do not need a running app: date and duration formatting (`format.ts`, with a fixed clock for relative labels), text folding and suggestions (`fold-text.ts`), deterministic ids (`deterministic-id.ts`), user display names (`user-display.ts`), surface and navigation lookups (`app-surfaces.ts`, `site-nav.ts`: path matching, admin-only filtering, current-item detection), recent surfaces (`recent-surfaces.ts`, bounded by `RECENT_SURFACES_LIMIT` and deduplicated), icon references (`icon-registry.ts`) and theme resolution (`theme.ts`).
+The `apps/frontend` unit suite SHALL cover the pure helpers in `src/lib` that do not need a running app: date and duration formatting (`format.ts`, with a fixed clock for relative labels), text folding and suggestions (`fold-text.ts`), deterministic ids (`deterministic-id.ts`), user display names (`user-display.ts`), surface and navigation lookups (`app-surfaces.ts`, `site-nav.ts`: path matching, admin-only filtering, current-item detection), recent surfaces (`recent-surfaces.ts`, bounded by `RECENT_SURFACES_LIMIT` and deduplicated), icon references (`icon-registry.ts`), theme resolution (`theme.ts`) and the query retry policy (`query-client.ts`: which failures are retried and how many times).
 
 #### Scenario: Accent-insensitive folding
 
@@ -218,9 +218,14 @@ The `apps/frontend` unit suite SHALL cover the pure helpers in `src/lib` that do
 - **WHEN** the navigable surfaces are requested for a non-admin
 - **THEN** no admin-only surface SHALL be included
 
+#### Scenario: Client errors are not retried
+
+- **WHEN** the retry policy is asked about a first failure whose error carries a status from 400 to 499 other than 408 and 429 (an oRPC error or an auth client error)
+- **THEN** it SHALL answer not to retry, while a 408, a 429, a 5xx status or an error without a status SHALL be retried until the attempt limit
+
 ### Requirement: Frontend hooks are covered
 
-The `apps/frontend` unit suite SHALL render hooks from `src/hooks` that depend only on React and the browser (debounced value, dialog form and target dialogs, `useOnOpen`, query-param state, copy to clipboard, hydration flag) in a DOM provided by `happy-dom`, using `@testing-library/react`, and SHALL assert their state transitions. Timers SHALL be controlled by the test, not waited for in real time.
+The `apps/frontend` unit suite SHALL render hooks from `src/hooks` that depend only on React and the browser (debounced value, dialog form and target dialogs, `useOnOpen`, query-param state, copy to clipboard) in a DOM provided by `happy-dom`, using `@testing-library/react`, and SHALL assert their state transitions. Timers SHALL be controlled by the test, not waited for in real time.
 
 #### Scenario: Debounced value trails its input
 

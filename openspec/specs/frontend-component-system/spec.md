@@ -412,8 +412,9 @@ filter action bar and bottom sheet, the scroll-to-top button), the size of
 dialogs, sheets and popovers, and page-level padding.
 
 At least `SurfaceCardGrid`, `MetadataList`, `MetadataDefinitionList`, the
-`CollapsibleFilters` field grid, the `EntityList` row and metadata layout,
-admin session rows, the theme mode selector and the cron schedule builder SHALL
+`CollapsibleFilters` field grid, the `EntityList` row and metadata layout, the
+data table's switch between its table and compact layouts and the compact
+rows' field grid, the theme mode selector and the cron schedule builder SHALL
 follow this rule.
 
 #### Scenario: Sidebar open narrows a card grid
@@ -442,3 +443,10 @@ follow this rule.
   `className`
 - **THEN** the override SHALL use a container variant (for example
   `@xl:col-span-3`), not a viewport variant
+
+#### Scenario: A data table switches layout with its container
+
+- **WHEN** `/admin/users` is shown on a 1280 px wide window whose section
+  sidebar leaves the table's container narrower than the table layout needs
+- **THEN** the table SHALL render its compact layout, not the table layout a
+  1280 px viewport breakpoint would give
