@@ -202,6 +202,10 @@ bun install
 bun run setup:dev   # writes the root .env with real secrets and the admin seed
 ```
 
+In Claude Code, `/inicio` (`.claude/commands/inicio.md`) runs these steps,
+checks the prerequisites and can start the dev stack and export its
+certificate.
+
 ### Configuration
 
 The whole repo is configured from one `.env` at the repo root; every app,
