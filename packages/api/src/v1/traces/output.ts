@@ -28,6 +28,11 @@ const traceSummary = z.object({
   startTime: z.string().describe("ISO start time of the trace"),
   durationMs: z.number(),
   errorCount: z.number().describe("Spans in error status across the trace"),
+  streaming: z
+    .boolean()
+    .describe(
+      "True for an event stream: the trace lasts as long as the subscription"
+    ),
 })
 
 const traceSpan = z.object({
@@ -49,6 +54,17 @@ const traceSpan = z.object({
     .number()
     .describe("Milliseconds from the trace start to the span start"),
   durationMs: z.number(),
+  bar: z
+    .object({
+      offsetMs: z.number(),
+      durationMs: z.number(),
+      continues: z
+        .boolean()
+        .describe("The measured span runs past the end of the scale"),
+    })
+    .describe(
+      "Where to draw the span: its measured range kept inside its parent's bar and inside [0, scaleMs]"
+    ),
   status: z.enum(SPAN_STATUSES),
   statusMessage: z.string().nullable(),
   attributes,
@@ -74,6 +90,14 @@ export const tracesOutput = {
     traceId: z.string(),
     startTime: z.string().describe("ISO start time of the earliest span"),
     durationMs: z.number(),
+    scaleMs: z
+      .number()
+      .describe(
+        "Duration the waterfall is drawn to: the request's root span for a stream, else the whole trace"
+      ),
+    streaming: z
+      .boolean()
+      .describe("True when the trace contains a streamed oRPC output"),
     spanCount: z.number().int().describe("Every span in the trace"),
     errorCount: z.number().int(),
     truncated: z

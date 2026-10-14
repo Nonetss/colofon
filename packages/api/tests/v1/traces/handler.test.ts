@@ -93,6 +93,9 @@ function searchResponse(traces: Record<string, unknown>[]) {
   return Response.json({ traces, metrics: { completedJobs: 1, totalJobs: 1 } })
 }
 
+/** The hint every search sends, so Tempo returns the newest matches. */
+const NEWEST = "with (most_recent=true)"
+
 function searchTrace(traceID: string, startOffsetMs: number) {
   return {
     traceID,
@@ -136,7 +139,7 @@ describe("traces.search", () => {
 
     const url = requestedUrl()
     expect(url.origin + url.pathname).toBe(`${TEMPO_URL}/api/search`)
-    expect(url.searchParams.get("q")).toBe("{ }")
+    expect(url.searchParams.get("q")).toBe(`{ } ${NEWEST}`)
     expect(url.searchParams.get("limit")).toBe("20")
     const start = Number(url.searchParams.get("start"))
     const end = Number(url.searchParams.get("end"))
@@ -160,7 +163,7 @@ describe("traces.search", () => {
 
     const url = requestedUrl()
     expect(url.searchParams.get("q")).toBe(
-      '{ resource.service.name = "stack-backend" || span.db.system.name = "postgresql" } && { status = error } && { trace:duration >= 500ms } && { trace:rootName =~ "(?i).*cron\\\\.list.*" }'
+      `{ resource.service.name = "stack-backend" || span.db.system.name = "postgresql" } && { status = error } && { trace:duration >= 500ms } && { trace:rootName =~ "(?i).*cron\\\\.list.*" } ${NEWEST}`
     )
     expect(url.searchParams.get("start")).toBe(
       String(Date.parse("2026-10-14T00:00:00Z") / 1000)
@@ -176,7 +179,7 @@ describe("traces.search", () => {
     await tracesHandler.search({ input: searchInput({ name: 'a"} || {b' }) })
 
     expect(requestedUrl().searchParams.get("q")).toBe(
-      '{ trace:rootName =~ "(?i).*a\\"\\\\} \\\\|\\\\| \\\\{b.*" }'
+      `{ trace:rootName =~ "(?i).*a\\"\\\\} \\\\|\\\\| \\\\{b.*" } ${NEWEST}`
     )
   })
 
@@ -185,10 +188,12 @@ describe("traces.search", () => {
       searchTrace("942dac5ae1610f0c180b4d39613cfc", 0),
       searchTrace(TRACE_ID, 60_000),
     ]
-    // A fresh body per call: the second search finds both in the database.
+    // A fresh body per call: the database search finds both, the stream
+    // search neither.
     fetchSpy
       .mockResolvedValueOnce(searchResponse(traces))
       .mockResolvedValueOnce(searchResponse(traces))
+      .mockResolvedValueOnce(searchResponse([]))
 
     const result = await tracesHandler.search({ input: searchInput() })
 
@@ -202,6 +207,7 @@ describe("traces.search", () => {
         startTime: "2026-10-14T10:42:01.249Z",
         durationMs: 7,
         errorCount: 2,
+        streaming: false,
       },
       {
         traceId: "00942dac5ae1610f0c180b4d39613cfc",
@@ -211,6 +217,7 @@ describe("traces.search", () => {
         startTime: "2026-10-14T10:41:01.249Z",
         durationMs: 7,
         errorCount: 2,
+        streaming: false,
       },
     ])
   })
@@ -222,6 +229,7 @@ describe("traces.search", () => {
         searchResponse([searchTrace(TRACE_ID, 60_000), searchTrace(other, 0)])
       )
       .mockResolvedValueOnce(searchResponse([searchTrace(TRACE_ID, 60_000)]))
+      .mockResolvedValueOnce(searchResponse([]))
 
     const result = await tracesHandler.search({
       input: searchInput({ errorsOnly: true }),
@@ -242,6 +250,29 @@ describe("traces.search", () => {
     expect(second.searchParams.get("limit")).toBe("2")
   })
 
+  test("flags as a stream only the traces the by-id stream search returns", async () => {
+    const stream = "2".repeat(32)
+    fetchSpy
+      .mockResolvedValueOnce(
+        searchResponse([searchTrace(stream, 60_000), searchTrace(TRACE_ID, 0)])
+      )
+      .mockResolvedValueOnce(searchResponse([]))
+      .mockResolvedValueOnce(searchResponse([searchTrace(stream, 60_000)]))
+
+    const result = await tracesHandler.search({ input: searchInput() })
+
+    expect(
+      result.traces.map((trace) => [trace.traceId, trace.streaming])
+    ).toEqual([
+      [stream, true],
+      [TRACE_ID, false],
+    ])
+    expect(requestedUrl(2).searchParams.get("q")).toBe(
+      `{ name = "consume_async_iterator_object_output" } && { trace:id = "${stream}" || trace:id = "${TRACE_ID}" }`
+    )
+    expect(fetchSpy).toHaveBeenCalledTimes(3)
+  })
+
   test("makes no second search when nothing was found", async () => {
     fetchSpy.mockResolvedValue(searchResponse([]))
 
@@ -254,6 +285,7 @@ describe("traces.search", () => {
     const traces = [searchTrace(TRACE_ID, 0), searchTrace(TRACE_ID, 1)]
     fetchSpy
       .mockResolvedValueOnce(searchResponse(traces))
+      .mockResolvedValueOnce(searchResponse([]))
       .mockResolvedValueOnce(searchResponse([]))
 
     const result = await tracesHandler.search({
@@ -440,6 +472,7 @@ describe("traces.get", () => {
       depth: 0,
       offsetMs: 0,
       durationMs: 0.285,
+      bar: { offsetMs: 0, durationMs: 0.285, continues: false },
       status: "error",
       statusMessage: "duplicate key",
       attributes: {
@@ -478,6 +511,83 @@ describe("traces.get", () => {
     expect(trace.spans.map((span) => [span.name, span.service])).toEqual([
       ["POST /rpc/v1/cron/list", "stack-backend"],
       ["pg.query:SELECT stack", "postgresql"],
+    ])
+  })
+
+  test("keeps a child's bar inside its parent's, but not its measured times", async () => {
+    fetchSpy.mockResolvedValue(
+      traceResponse({
+        "stack-backend": [
+          { id: 1, name: "handler", startMs: 0, durationMs: 6.5 },
+          // Starts at 6.0 (start times are whole milliseconds) and measures
+          // 0.9 ms, so it ends 0.4 ms past its parent.
+          {
+            id: 2,
+            parent: 1,
+            name: "db findOne user",
+            startMs: 6,
+            durationMs: 0.9,
+          },
+          // Entirely after its parent ended.
+          { id: 3, parent: 1, name: "late", startMs: 7, durationMs: 1 },
+        ],
+      })
+    )
+
+    const trace = await tracesHandler.get({ input: { traceId: TRACE_ID } })
+    const [, child, late] = trace.spans
+
+    expect(trace.scaleMs).toBe(trace.durationMs)
+    expect(trace.streaming).toBe(false)
+    expect(child).toMatchObject({
+      offsetMs: 6,
+      durationMs: 0.9,
+      bar: { offsetMs: 6, durationMs: 0.5, continues: false },
+    })
+    expect(late?.bar).toEqual({
+      offsetMs: 6.5,
+      durationMs: 0,
+      continues: false,
+    })
+  })
+
+  test("scales a stream to its request and marks the stream span as continuing", async () => {
+    fetchSpy.mockResolvedValue(
+      traceResponse({
+        "stack-backend": [
+          {
+            id: 1,
+            name: "QUERY /rpc/v1/cron/watchRuns",
+            startMs: 0,
+            durationMs: 4,
+          },
+          {
+            id: 2,
+            parent: 1,
+            name: "orpc.v1/cron/watchRuns",
+            startMs: 2,
+            durationMs: 270_000,
+          },
+          {
+            id: 3,
+            parent: 2,
+            name: "consume_async_iterator_object_output",
+            startMs: 3,
+            durationMs: 269_999,
+          },
+        ],
+      })
+    )
+
+    const trace = await tracesHandler.get({ input: { traceId: TRACE_ID } })
+
+    expect(trace.streaming).toBe(true)
+    expect(trace.scaleMs).toBe(4)
+    expect(trace.durationMs).toBe(270_002)
+    expect(trace.spans.map((span) => span.bar)).toEqual([
+      { offsetMs: 0, durationMs: 4, continues: false },
+      { offsetMs: 2, durationMs: 2, continues: true },
+      { offsetMs: 3, durationMs: 1, continues: true },
     ])
   })
 

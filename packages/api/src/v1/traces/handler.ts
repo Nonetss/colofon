@@ -41,6 +41,11 @@ function escapeRegex(value: string): string {
 /** A span of the database the trace's queries reach. */
 const DATABASE_SPANSET = '{ span.db.system.name = "postgresql" }'
 
+/** oRPC's span around a streamed output: the trace is an event stream. */
+const STREAM_SPAN_NAME = "consume_async_iterator_object_output"
+
+const STREAM_SPANSET = `{ name = "${STREAM_SPAN_NAME}" }`
+
 /** The span condition meaning "the trace touches `service`". */
 function touchCondition(service: SearchInput["services"] & {}): string[] {
   return service.map((name) => {
@@ -77,16 +82,24 @@ function joinSpansets(spansets: string[]): string {
   return spansets.join(" && ")
 }
 
+/**
+ * The search itself. `most_recent=true` makes Tempo return the newest
+ * matches: without it, it returns the first ones it finds, so a busy day
+ * fills the page with traces from hours ago.
+ */
 export function buildTraceQL(input: SearchInput): string {
-  return joinSpansets(searchSpansets(input))
+  return `${joinSpansets(searchSpansets(input))} with (most_recent=true)`
 }
 
-/** Which of the given traces queried the database. Tempo's search
- *  returns the first matches it finds, not the newest, so the traces are
- *  named by id rather than re-searched by filter. */
-export function buildDatabaseTraceQL(traceIds: readonly string[]): string {
+/** Which of the given traces have a span matching `spanset`. Tempo's
+ *  search returns the first matches it finds, not the newest, so the traces
+ *  are named by id rather than re-searched by filter. */
+export function buildByIdTraceQL(
+  spanset: string,
+  traceIds: readonly string[]
+): string {
   const ids = traceIds.map((id) => `trace:id = "${escapeTraceQLString(id)}"`)
-  return joinSpansets([DATABASE_SPANSET, `{ ${ids.join(" || ")} }`])
+  return joinSpansets([spanset, `{ ${ids.join(" || ")} }`])
 }
 
 /** Tempo takes the search window as Unix seconds. */
@@ -204,12 +217,19 @@ function servicesOf(trace: TempoSearchTrace, queriedDatabase: boolean) {
   return services
 }
 
-function toSummary(trace: TempoSearchTrace, databaseTraceIds: Set<string>) {
+/** The page's traces that queried the database and that are streams. */
+interface TraceMarks {
+  database: Set<string>
+  stream: Set<string>
+}
+
+function toSummary(trace: TempoSearchTrace, marks: TraceMarks) {
   const traceId = toHexId(trace.traceID, 16)
   return {
     traceId,
     rootService: trace.rootServiceName ?? "",
-    services: servicesOf(trace, databaseTraceIds.has(traceId)),
+    services: servicesOf(trace, marks.database.has(traceId)),
+    streaming: marks.stream.has(traceId),
     rootName: trace.rootTraceName ?? "",
     startTime: nanosToIso(nanos(trace.startTimeUnixNano)),
     durationMs: trace.durationMs ?? 0,
@@ -305,10 +325,46 @@ function serviceOf(
   return service
 }
 
+type SpanBar = TraceSpan["bar"]
+
+/** Rounds to the microsecond, the precision every offset here has. */
+function roundMs(ms: number): number {
+  return Math.round(ms * 1000) / 1000
+}
+
+/**
+ * Where to draw a span: its measured range kept inside its parent's bar
+ * and inside `[0, scaleMs]`. Start times only have millisecond resolution
+ * (the SDK takes them from `Date.now()`), so a child can measure up to 1 ms
+ * past its parent; the drawing never shows that, while `offsetMs` and
+ * `durationMs` keep the measured values.
+ */
+export function spanBar(
+  measured: { offsetMs: number; durationMs: number },
+  parent: SpanBar | undefined,
+  scaleMs: number
+): SpanBar {
+  const end = measured.offsetMs + measured.durationMs
+  let low = 0
+  let high = scaleMs
+  if (parent !== undefined) {
+    low = parent.offsetMs
+    high = Math.min(parent.offsetMs + parent.durationMs, scaleMs)
+  }
+  const start = Math.min(Math.max(measured.offsetMs, low), high)
+  const finish = Math.max(Math.min(end, high), start)
+  return {
+    offsetMs: roundMs(start),
+    durationMs: roundMs(finish - start),
+    continues: end > scaleMs + 0.001,
+  }
+}
+
 function toTraceSpan(
   node: LayoutNode,
   depth: number,
-  traceStart: bigint
+  traceStart: bigint,
+  bar: SpanBar
 ): TraceSpan {
   const { span, service } = node.entry
   const attributes = attributesOf(span.attributes)
@@ -321,6 +377,7 @@ function toTraceSpan(
     depth,
     offsetMs: msBetween(traceStart, node.start),
     durationMs: msBetween(node.start, nanos(span.endTimeUnixNano)),
+    bar,
     status: statusOf(span),
     statusMessage: statusMessageOf(span),
     attributes,
@@ -330,6 +387,27 @@ function toTraceSpan(
       attributes: attributesOf(event.attributes),
     })),
   }
+}
+
+/**
+ * What the waterfall is drawn to: the whole trace, except for an event
+ * stream, which lasts as long as its subscription. That one is drawn to its
+ * request (the first root span, which ends when the response carrying the
+ * open stream is returned), so the request stays readable.
+ */
+function waterfallScale(
+  ordered: { node: LayoutNode; depth: number }[],
+  streaming: boolean,
+  durationMs: number
+): number {
+  const root = ordered[0]
+  if (!streaming || root === undefined) return durationMs
+  const rootMs = msBetween(
+    root.node.start,
+    nanos(root.node.entry.span.endTimeUnixNano)
+  )
+  if (rootMs <= 0) return durationMs
+  return rootMs
 }
 
 /** Earliest start and latest end across a non-empty list of spans. */
@@ -349,18 +427,23 @@ function traceBounds(entries: ServiceSpan[]): { start: bigint; end: bigint } {
 }
 
 /**
- * Which of the found traces queried the database. Tempo's search reports
- * the services that emitted spans, not what they called, so a second
- * search over exactly those trace ids answers it.
+ * Which of the found traces have a span matching `spanset` (a database
+ * query, a stream). Tempo's search reports the services that emitted spans,
+ * not what they did, so a second search over exactly those trace ids
+ * answers it.
  */
-async function searchDatabaseTraceIds(
+async function searchMatchingIds(
   tempoUrl: string,
   window: { start: number; end: number },
-  traces: TempoSearchTrace[]
+  traces: TempoSearchTrace[],
+  spanset: string
 ): Promise<Set<string>> {
   if (traces.length === 0) return new Set()
   const matches = await searchTempo(tempoUrl, {
-    query: buildDatabaseTraceQL(traces.map((trace) => trace.traceID)),
+    query: buildByIdTraceQL(
+      spanset,
+      traces.map((trace) => trace.traceID)
+    ),
     ...window,
     limit: traces.length,
   })
@@ -390,16 +473,15 @@ export const tracesHandler = {
       ...window,
       limit: input.limit,
     })
-    const databaseTraceIds = await searchDatabaseTraceIds(
-      env.TEMPO_URL,
-      window,
-      traces
-    )
+    const [database, stream] = await Promise.all([
+      searchMatchingIds(env.TEMPO_URL, window, traces, DATABASE_SPANSET),
+      searchMatchingIds(env.TEMPO_URL, window, traces, STREAM_SPANSET),
+    ])
 
     return {
       traces: [...traces]
         .sort(newestFirst)
-        .map((trace) => toSummary(trace, databaseTraceIds)),
+        .map((trace) => toSummary(trace, { database, stream })),
       limitReached: traces.length >= input.limit,
     }
   },
@@ -411,21 +493,43 @@ export const tracesHandler = {
     }
 
     const { start, end } = traceBounds(entries)
+    const durationMs = msBetween(start, end)
     const ordered = layoutSpans(entries)
     const errorCount = entries.filter(
       ({ span }) => span.status?.code === "STATUS_CODE_ERROR"
     ).length
+    const streaming = entries.some(({ span }) => span.name === STREAM_SPAN_NAME)
+    const scaleMs = waterfallScale(ordered, streaming, durationMs)
+
+    // Parents come before their children in depth-first order, so each
+    // child's bar is computed against a bar that already exists.
+    const bars = new Map<string, SpanBar>()
+    const spans: TraceSpan[] = []
+    for (const { node, depth } of ordered.slice(0, MAX_TRACE_SPANS)) {
+      const measured = {
+        offsetMs: msBetween(start, node.start),
+        durationMs: msBetween(
+          node.start,
+          nanos(node.entry.span.endTimeUnixNano)
+        ),
+      }
+      const parentId = parentIdOf(node, depth)
+      const parent = parentId === null ? undefined : bars.get(parentId)
+      const bar = spanBar(measured, parent, scaleMs)
+      bars.set(node.id, bar)
+      spans.push(toTraceSpan(node, depth, start, bar))
+    }
 
     return {
       traceId: input.traceId,
       startTime: nanosToIso(start),
-      durationMs: msBetween(start, end),
+      durationMs,
+      scaleMs,
+      streaming,
       spanCount: entries.length,
       errorCount,
       truncated: ordered.length > MAX_TRACE_SPANS,
-      spans: ordered
-        .slice(0, MAX_TRACE_SPANS)
-        .map(({ node, depth }) => toTraceSpan(node, depth, start)),
+      spans,
     }
   },
 }
