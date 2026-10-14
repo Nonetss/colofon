@@ -6,6 +6,7 @@ const RotateCw = getIcon("actions", "refresh")
 
 import type { OnChangeFn, SortingState } from "@tanstack/react-table"
 import { useState } from "react"
+import { Text } from "@/components/shared/brand/typography"
 import { DataTableIdentityCell } from "@/components/shared/data-display/data-table-cell-content"
 import type { DataTableFilter } from "@/components/shared/data-display/data-table-column-filter"
 import { DataTableView } from "@/components/shared/data-display/data-table-view"
@@ -16,12 +17,11 @@ import { ResourceOverview } from "@/components/shared/resource/resource-overview
 import { Button } from "@/components/ui/button"
 import { DatePicker } from "@/components/ui/date-picker"
 import { Input } from "@/components/ui/input"
+import { Switch } from "@/components/ui/switch"
 import { TracePanel } from "@/features/admin/traces/detail"
 import { TraceNameFilter } from "@/features/admin/traces/overview/components/trace-name-filter"
 import {
   rootNameOf,
-  TRACE_ERROR_FILTER_VALUE,
-  TRACE_ERROR_OPTIONS,
   TRACE_NAME_COLUMN,
   traceColumnLayout,
   traceColumns,
@@ -45,6 +45,9 @@ import {
 import { cn } from "@/lib/utils"
 
 const TRACE_ID_PATTERN = /^[0-9a-f]{32}$/
+
+/** `?errors=` while the list keeps only traces with errors (`errorsOnly`). */
+const ERRORS_ONLY_PARAM = "error"
 
 /** Tempo only answers newest first, and every page continues that order,
  *  so the table has no sort to change. */
@@ -111,11 +114,7 @@ export function TracesContent() {
     NO_VALUES,
     valueListCodec
   )
-  const [errorsParam, setErrorsParam] = useQueryParam(
-    "errors",
-    NO_VALUES,
-    valueListCodec
-  )
+  const [errorsParam, setErrorsParam] = useQueryParam("errors", "")
   const [nameParam, setNameParam] = useQueryParam(
     "names",
     NO_VALUES,
@@ -130,7 +129,7 @@ export function TracesContent() {
 
   // Unknown values in the URL are dropped instead of emptying the list.
   const services = traceServicesOf(serviceParam)
-  const errorsOnly = errorsParam.includes(TRACE_ERROR_FILTER_VALUE)
+  const errorsOnly = errorsParam === ERRORS_ONLY_PARAM
   const minDurationMs = minDurationOf(debouncedMinDuration)
 
   const {
@@ -180,7 +179,7 @@ export function TracesContent() {
     to !== undefined
   const clearFilters = () => {
     setServiceParam(NO_VALUES)
-    setErrorsParam(NO_VALUES)
+    setErrorsParam("")
     setNameParam(NO_VALUES)
     setMinDuration("")
     setFrom(undefined)
@@ -202,11 +201,14 @@ export function TracesContent() {
       selected: services,
       onChange: valuesSetter(setServiceParam),
     },
-    errors: {
-      options: TRACE_ERROR_OPTIONS,
-      selected: errorsParam,
-      onChange: valuesSetter(setErrorsParam),
-    },
+  }
+
+  const setErrorsOnly = (checked: boolean) => {
+    if (checked) {
+      setErrorsParam(ERRORS_ONLY_PARAM)
+      return
+    }
+    setErrorsParam("")
   }
 
   // The panel needs the room: with a trace open the page fills the inset.
@@ -232,7 +234,7 @@ export function TracesContent() {
       }
       filters={
         <div className="@container">
-          <div className="grid gap-2 @xl:grid-cols-[minmax(0,1fr)_10rem_auto_auto]">
+          <div className="grid gap-2 @xl:grid-cols-[minmax(0,1fr)_10rem_auto_auto_auto]">
             <TraceNameFilter
               groups={rootNames}
               selected={nameParam}
@@ -259,6 +261,21 @@ export function TracesContent() {
               placeholder="Hasta"
               aria-label="Hasta"
             />
+            <div className="flex min-h-8 items-center gap-2">
+              <Switch
+                id="admin-traces-errors-only"
+                checked={errorsOnly}
+                onCheckedChange={(checked) => setErrorsOnly(checked === true)}
+              />
+              <Text
+                as="label"
+                variant="compact"
+                tone="muted"
+                htmlFor="admin-traces-errors-only"
+              >
+                Con errores
+              </Text>
+            </div>
           </div>
         </div>
       }
