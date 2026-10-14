@@ -16,8 +16,8 @@ function searchInput(overrides: Partial<SearchInput> = {}): SearchInput {
   return { limit: 50, ...overrides }
 }
 
-function requestedUrl(): URL {
-  const [url] = fetchSpy.mock.calls[0] ?? []
+function requestedUrl(call = 0): URL {
+  const [url] = fetchSpy.mock.calls[call] ?? []
   if (!(url instanceof URL)) throw new Error("fetch was not called with a URL")
   return url
 }
@@ -144,12 +144,12 @@ describe("traces.search", () => {
     expect(end).toBeGreaterThanOrEqual(before)
   })
 
-  test("ANDs each filter into one TraceQL spanset", async () => {
+  test("ANDs one spanset per filter, so each may match a different span", async () => {
     fetchSpy.mockResolvedValue(searchResponse([]))
 
     await tracesHandler.search({
       input: searchInput({
-        service: "stack-backend",
+        services: ["stack-backend", "postgresql"],
         errorsOnly: true,
         minDurationMs: 500,
         name: "cron.list",
@@ -160,7 +160,7 @@ describe("traces.search", () => {
 
     const url = requestedUrl()
     expect(url.searchParams.get("q")).toBe(
-      '{ trace:rootService = "stack-backend" && status = error && trace:duration >= 500ms && trace:rootName =~ "(?i).*cron\\\\.list.*" }'
+      '{ resource.service.name = "stack-backend" || span.db.system.name = "postgresql" } && { status = error } && { trace:duration >= 500ms } && { trace:rootName =~ "(?i).*cron\\\\.list.*" }'
     )
     expect(url.searchParams.get("start")).toBe(
       String(Date.parse("2026-10-14T00:00:00Z") / 1000)
@@ -181,12 +181,14 @@ describe("traces.search", () => {
   })
 
   test("maps Tempo's traces newest first, restoring trimmed id zeros", async () => {
-    fetchSpy.mockResolvedValue(
-      searchResponse([
-        searchTrace("942dac5ae1610f0c180b4d39613cfc", 0),
-        searchTrace(TRACE_ID, 60_000),
-      ])
-    )
+    const traces = [
+      searchTrace("942dac5ae1610f0c180b4d39613cfc", 0),
+      searchTrace(TRACE_ID, 60_000),
+    ]
+    // A fresh body per call: the second search finds both in the database.
+    fetchSpy
+      .mockResolvedValueOnce(searchResponse(traces))
+      .mockResolvedValueOnce(searchResponse(traces))
 
     const result = await tracesHandler.search({ input: searchInput() })
 
@@ -195,6 +197,7 @@ describe("traces.search", () => {
       {
         traceId: TRACE_ID,
         rootService: "stack-backend",
+        services: ["stack-frontend", "stack-backend", "postgresql"],
         rootName: "POST /rpc/*",
         startTime: "2026-10-14T10:42:01.249Z",
         durationMs: 7,
@@ -203,6 +206,7 @@ describe("traces.search", () => {
       {
         traceId: "00942dac5ae1610f0c180b4d39613cfc",
         rootService: "stack-backend",
+        services: ["stack-frontend", "stack-backend", "postgresql"],
         rootName: "POST /rpc/*",
         startTime: "2026-10-14T10:41:01.249Z",
         durationMs: 7,
@@ -211,10 +215,46 @@ describe("traces.search", () => {
     ])
   })
 
-  test("flags when the limit was reached", async () => {
-    fetchSpy.mockResolvedValue(
-      searchResponse([searchTrace(TRACE_ID, 0), searchTrace(TRACE_ID, 1)])
+  test("adds PostgreSQL only to the found traces a second search by id says queried it", async () => {
+    const other = "1".repeat(32)
+    fetchSpy
+      .mockResolvedValueOnce(
+        searchResponse([searchTrace(TRACE_ID, 60_000), searchTrace(other, 0)])
+      )
+      .mockResolvedValueOnce(searchResponse([searchTrace(TRACE_ID, 60_000)]))
+
+    const result = await tracesHandler.search({
+      input: searchInput({ errorsOnly: true }),
+    })
+
+    expect(
+      result.traces.map((trace) => [trace.traceId, trace.services])
+    ).toEqual([
+      [TRACE_ID, ["stack-frontend", "stack-backend", "postgresql"]],
+      [other, ["stack-frontend", "stack-backend"]],
+    ])
+    // Named by id: Tempo's search returns the first matches it finds, so
+    // re-running the filters could answer about other traces.
+    const second = requestedUrl(1)
+    expect(second.searchParams.get("q")).toBe(
+      `{ span.db.system.name = "postgresql" } && { trace:id = "${TRACE_ID}" || trace:id = "${other}" }`
     )
+    expect(second.searchParams.get("limit")).toBe("2")
+  })
+
+  test("makes no second search when nothing was found", async () => {
+    fetchSpy.mockResolvedValue(searchResponse([]))
+
+    await tracesHandler.search({ input: searchInput() })
+
+    expect(fetchSpy).toHaveBeenCalledTimes(1)
+  })
+
+  test("flags when the limit was reached", async () => {
+    const traces = [searchTrace(TRACE_ID, 0), searchTrace(TRACE_ID, 1)]
+    fetchSpy
+      .mockResolvedValueOnce(searchResponse(traces))
+      .mockResolvedValueOnce(searchResponse([]))
 
     const result = await tracesHandler.search({
       input: searchInput({ limit: 2 }),
@@ -411,6 +451,34 @@ describe("traces.get", () => {
       },
       events: [{ name: "exception", offsetMs: 0.25, attributes: { size: 3 } }],
     })
+  })
+
+  test("shows a query span under its database system, not the emitting service", async () => {
+    fetchSpy.mockResolvedValue(
+      traceResponse({
+        "stack-backend": [
+          { id: 1, name: "POST /rpc/v1/cron/list", startMs: 0, durationMs: 5 },
+          {
+            id: 2,
+            parent: 1,
+            name: "pg.query:SELECT stack",
+            startMs: 1,
+            durationMs: 2,
+            kind: "SPAN_KIND_CLIENT",
+            attributes: [
+              { key: "db.system.name", value: { stringValue: "postgresql" } },
+            ],
+          },
+        ],
+      })
+    )
+
+    const trace = await tracesHandler.get({ input: { traceId: TRACE_ID } })
+
+    expect(trace.spans.map((span) => [span.name, span.service])).toEqual([
+      ["POST /rpc/v1/cron/list", "stack-backend"],
+      ["pg.query:SELECT stack", "postgresql"],
+    ])
   })
 
   test(`cuts a trace past ${MAX_TRACE_SPANS} spans and flags it`, async () => {

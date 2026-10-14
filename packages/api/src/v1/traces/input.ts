@@ -3,15 +3,24 @@ import { z } from "zod"
 import { paginationLimit } from "#shared/pagination"
 import { traceIdSchema } from "#shared/trace-id"
 
-/** Services that export spans: the logger's `service` values. */
-export const TRACE_SERVICES = ["stack-backend", "stack-frontend"] as const
+/**
+ * What a trace can touch: the services that export spans (the logger's
+ * `service` values) and the database their queries reach.
+ */
+export const TRACE_SERVICES = [
+  "stack-frontend",
+  "stack-backend",
+  "postgresql",
+] as const
 
 export const tracesInput = {
   search: z.object({
-    service: z
-      .enum(TRACE_SERVICES)
+    services: z
+      .array(z.enum(TRACE_SERVICES))
       .optional()
-      .describe("Keep only traces whose root span is from this service"),
+      .describe(
+        "Keep only traces that touch any of these: a service with a span in the trace, or `postgresql` for a trace that queried the database; omitted or empty keeps all"
+      ),
     errorsOnly: z
       .boolean()
       .optional()

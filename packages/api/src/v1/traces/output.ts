@@ -19,6 +19,11 @@ const attributes = z
 const traceSummary = z.object({
   traceId: z.string(),
   rootService: z.string(),
+  services: z
+    .array(z.string())
+    .describe(
+      "Everything the trace touched: the services with spans in it, plus `postgresql` when it queried the database"
+    ),
   rootName: z.string(),
   startTime: z.string().describe("ISO start time of the trace"),
   durationMs: z.number(),
@@ -30,7 +35,11 @@ const traceSpan = z.object({
   /** `null` for a root, or for a span whose parent isn't in the trace. */
   parentSpanId: z.string().nullable(),
   name: z.string(),
-  service: z.string(),
+  service: z
+    .string()
+    .describe(
+      "Who did the work: the database system for a query (`postgresql`), else the service that emitted the span"
+    ),
   kind: z.enum(SPAN_KINDS),
   depth: z
     .number()

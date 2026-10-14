@@ -38,28 +38,55 @@ function escapeRegex(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
 }
 
+/** A span of the database the trace's queries reach. */
+const DATABASE_SPANSET = '{ span.db.system.name = "postgresql" }'
+
+/** The span condition meaning "the trace touches `service`". */
+function touchCondition(service: SearchInput["services"] & {}): string[] {
+  return service.map((name) => {
+    if (name === "postgresql") return 'span.db.system.name = "postgresql"'
+    return `resource.service.name = "${escapeTraceQLString(name)}"`
+  })
+}
+
 /**
- * One spanset filter ANDing every given condition. Each value goes through
- * `escapeTraceQLString`, so a filter can only ever be compared, never change
- * the query's structure.
+ * The search's spansets, ANDed: each spanset may match a different span of
+ * the trace (a backend span, an error somewhere else), whereas conditions
+ * inside one `{ }` would all have to hold on the same span. Each value goes
+ * through `escapeTraceQLString`, so a filter can only ever be compared,
+ * never change the query's structure.
  */
-export function buildTraceQL(input: SearchInput): string {
-  const conditions: string[] = []
-  if (input.service !== undefined) {
-    conditions.push(
-      `trace:rootService = "${escapeTraceQLString(input.service)}"`
-    )
+function searchSpansets(input: SearchInput): string[] {
+  const spansets: string[] = []
+  if (input.services !== undefined && input.services.length > 0) {
+    spansets.push(`{ ${touchCondition(input.services).join(" || ")} }`)
   }
-  if (input.errorsOnly) conditions.push("status = error")
+  if (input.errorsOnly) spansets.push("{ status = error }")
   if (input.minDurationMs !== undefined) {
-    conditions.push(`trace:duration >= ${input.minDurationMs}ms`)
+    spansets.push(`{ trace:duration >= ${input.minDurationMs}ms }`)
   }
   if (input.name !== undefined) {
     const pattern = `(?i).*${escapeRegex(input.name)}.*`
-    conditions.push(`trace:rootName =~ "${escapeTraceQLString(pattern)}"`)
+    spansets.push(`{ trace:rootName =~ "${escapeTraceQLString(pattern)}" }`)
   }
-  if (conditions.length === 0) return "{ }"
-  return `{ ${conditions.join(" && ")} }`
+  return spansets
+}
+
+function joinSpansets(spansets: string[]): string {
+  if (spansets.length === 0) return "{ }"
+  return spansets.join(" && ")
+}
+
+export function buildTraceQL(input: SearchInput): string {
+  return joinSpansets(searchSpansets(input))
+}
+
+/** Which of the given traces queried the database. Tempo's search
+ *  returns the first matches it finds, not the newest, so the traces are
+ *  named by id rather than re-searched by filter. */
+export function buildDatabaseTraceQL(traceIds: readonly string[]): string {
+  const ids = traceIds.map((id) => `trace:id = "${escapeTraceQLString(id)}"`)
+  return joinSpansets([DATABASE_SPANSET, `{ ${ids.join(" || ")} }`])
 }
 
 /** Tempo takes the search window as Unix seconds. */
@@ -167,10 +194,22 @@ function errorCountOf(trace: TempoSearchTrace): number {
   return count
 }
 
-function toSummary(trace: TempoSearchTrace) {
+/** The services with spans in the trace, frontend first, then the
+ *  database when the trace queried it. */
+function servicesOf(trace: TempoSearchTrace, queriedDatabase: boolean) {
+  const services = Object.keys(trace.serviceStats ?? {})
+    .sort()
+    .reverse()
+  if (queriedDatabase) services.push("postgresql")
+  return services
+}
+
+function toSummary(trace: TempoSearchTrace, databaseTraceIds: Set<string>) {
+  const traceId = toHexId(trace.traceID, 16)
   return {
-    traceId: toHexId(trace.traceID, 16),
+    traceId,
     rootService: trace.rootServiceName ?? "",
+    services: servicesOf(trace, databaseTraceIds.has(traceId)),
     rootName: trace.rootTraceName ?? "",
     startTime: nanosToIso(nanos(trace.startTimeUnixNano)),
     durationMs: trace.durationMs ?? 0,
@@ -252,24 +291,39 @@ function parentIdOf(node: LayoutNode, depth: number): string | null {
   return node.parentId
 }
 
+/**
+ * A query span is emitted by the backend's process but is the database's
+ * work, so it is shown under the database system it names (`postgresql`)
+ * rather than under `stack-backend`.
+ */
+function serviceOf(
+  service: string,
+  attributes: Record<string, JsonValue>
+): string {
+  const dbSystem = attributes["db.system.name"]
+  if (typeof dbSystem === "string" && dbSystem !== "") return dbSystem
+  return service
+}
+
 function toTraceSpan(
   node: LayoutNode,
   depth: number,
   traceStart: bigint
 ): TraceSpan {
   const { span, service } = node.entry
+  const attributes = attributesOf(span.attributes)
   return {
     spanId: node.id,
     parentSpanId: parentIdOf(node, depth),
     name: span.name,
-    service,
+    service: serviceOf(service, attributes),
     kind: kindOf(span.kind),
     depth,
     offsetMs: msBetween(traceStart, node.start),
     durationMs: msBetween(node.start, nanos(span.endTimeUnixNano)),
     status: statusOf(span),
     statusMessage: statusMessageOf(span),
-    attributes: attributesOf(span.attributes),
+    attributes,
     events: (span.events ?? []).map((event) => ({
       name: event.name,
       offsetMs: msBetween(traceStart, nanos(event.timeUnixNano)),
@@ -294,6 +348,25 @@ function traceBounds(entries: ServiceSpan[]): { start: bigint; end: bigint } {
   return { start, end }
 }
 
+/**
+ * Which of the found traces queried the database. Tempo's search reports
+ * the services that emitted spans, not what they called, so a second
+ * search over exactly those trace ids answers it.
+ */
+async function searchDatabaseTraceIds(
+  tempoUrl: string,
+  window: { start: number; end: number },
+  traces: TempoSearchTrace[]
+): Promise<Set<string>> {
+  if (traces.length === 0) return new Set()
+  const matches = await searchTempo(tempoUrl, {
+    query: buildDatabaseTraceQL(traces.map((trace) => trace.traceID)),
+    ...window,
+    limit: traces.length,
+  })
+  return new Set(matches.map((trace) => toHexId(trace.traceID, 16)))
+}
+
 function requireTempoUrl(): string {
   if (env.TEMPO_URL === undefined) {
     throw errors.SERVICE_UNAVAILABLE({
@@ -311,14 +384,22 @@ export const tracesHandler = {
       return { traces: [], limitReached: false }
     }
 
+    const window = searchWindow(input)
     const traces = await searchTempo(env.TEMPO_URL, {
       query: buildTraceQL(input),
-      ...searchWindow(input),
+      ...window,
       limit: input.limit,
     })
+    const databaseTraceIds = await searchDatabaseTraceIds(
+      env.TEMPO_URL,
+      window,
+      traces
+    )
 
     return {
-      traces: [...traces].sort(newestFirst).map(toSummary),
+      traces: [...traces]
+        .sort(newestFirst)
+        .map((trace) => toSummary(trace, databaseTraceIds)),
       limitReached: traces.length >= input.limit,
     }
   },
