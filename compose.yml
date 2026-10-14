@@ -20,6 +20,7 @@ services:
       NODE_ENV: production
       BACKEND_URL: http://backend:3000
       LOKI_URL: http://loki:3100
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://tempo:4318
     depends_on:
       backend:
         condition: service_healthy
@@ -50,6 +51,8 @@ services:
       BETTER_AUTH_URL: http://localhost:${FRONTEND_PORT:-4444}
       CORS_ORIGIN: http://localhost:${FRONTEND_PORT:-4444}
       LOKI_URL: http://loki:3100
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://tempo:4318
+      TEMPO_URL: http://tempo:3200
     depends_on:
       db:
         condition: service_healthy
@@ -123,6 +126,51 @@ services:
       start_period: 10s
     restart: unless-stopped
 
+  # Optional: backend/frontend export trace spans here when
+  # OTEL_EXPORTER_OTLP_ENDPOINT is set, and the backend reads them back for
+  # /admin/traces (TEMPO_URL). Neither depends on it at startup. The image has
+  # no shell, so no healthcheck.
+  tempo:
+    image: grafana/tempo:3.1.0
+    container_name: stack-tempo
+    expose:
+      - "3200"
+      - "4318"
+    volumes:
+      - tempo_data:/var/tempo
+    configs:
+      - source: tempo_config
+        target: /etc/tempo.yaml
+    command:
+      - -target=all
+      - -config.file=/etc/tempo.yaml
+      - -server.http-listen-port=3200
+      - -storage.trace.backend=local
+      - -storage.trace.local.path=/var/tempo/blocks
+      - -storage.trace.wal.path=/var/tempo/wal
+      - -log.level=warn
+      - -reporting.enabled=false
+    restart: unless-stopped
+
+# Tempo takes almost everything as flags (its `command`), like Loki, but its
+# OTLP receivers and retention exist only as YAML: they live here, inline, so
+# no config file has to sit next to the compose file. Same settings in every
+# compose file.
+configs:
+  tempo_config:
+    content: |
+      distributor:
+        receivers:
+          otlp:
+            protocols:
+              http:
+                endpoint: 0.0.0.0:4318
+      overrides:
+        defaults:
+          compaction:
+            block_retention: 168h
+
 volumes:
   db_data:
   loki_data:
+  tempo_data:

@@ -11,6 +11,7 @@ services:
     environment:
       BACKEND_URL: http://backend:3000
       LOKI_URL: http://loki:3100
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://tempo:4318
     depends_on:
       backend:
         condition: service_healthy
@@ -41,6 +42,8 @@ services:
       # CORS_ORIGIN (the public URL) comes from .env. `environment`
       # overrides `env_file`.
       LOKI_URL: http://loki:3100
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://tempo:4318
+      TEMPO_URL: http://tempo:3200
     env_file: .env
     depends_on:
       db:
@@ -123,9 +126,56 @@ services:
     networks:
       - stack
 
+  # Optional: backend/frontend export trace spans here when
+  # OTEL_EXPORTER_OTLP_ENDPOINT is set, and the backend reads them back for
+  # /admin/traces (TEMPO_URL). Neither depends on it at startup. The image has
+  # no shell, so no healthcheck.
+  tempo:
+    image: grafana/tempo:3.1.0
+    container_name: stack-tempo
+    expose:
+      - "3200"
+      - "4318"
+    volumes:
+      - tempo_data:/var/tempo
+    configs:
+      - source: tempo_config
+        target: /etc/tempo.yaml
+    command:
+      - -target=all
+      - -config.file=/etc/tempo.yaml
+      - -server.http-listen-port=3200
+      - -storage.trace.backend=local
+      - -storage.trace.local.path=/var/tempo/blocks
+      - -storage.trace.wal.path=/var/tempo/wal
+      - -log.level=warn
+      - -reporting.enabled=false
+    restart: unless-stopped
+    networks:
+      - stack
+
+# Tempo takes almost everything as flags (its `command`), like Loki, but its
+# OTLP receivers and retention exist only as YAML: they live here, inline, so
+# no config file has to sit next to the compose file. Same settings in every
+# compose file.
+configs:
+  tempo_config:
+    content: |
+      distributor:
+        receivers:
+          otlp:
+            protocols:
+              http:
+                endpoint: 0.0.0.0:4318
+      overrides:
+        defaults:
+          compaction:
+            block_retention: 168h
+
 volumes:
   db_data:
   loki_data:
+  tempo_data:
 
 networks:
   stack:
