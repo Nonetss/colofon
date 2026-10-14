@@ -18,6 +18,7 @@ A one-table match can stay in the relational API, as `organization.search` does 
 When the text has to match columns on more than one table (a record's name plus its related address), never write the `OR` across a join. The planner can't use an index for an `OR` whose sides belong to different tables, so the query scans everything. Instead:
 
 1. Build the matching ids as a `union` (`import { union } from "drizzle-orm/pg-core"`) of one select per column. Each select is a predicate on a single table, joining only to get back to the record's id:
+
    ```ts
    function searchMatchIds(text: string) {
      const pattern = likePattern(text)
@@ -30,6 +31,7 @@ When the text has to match columns on more than one table (a record's name plus 
      )
    }
    ```
+
    (`deviceTable`/`addressTable` are illustrative; no feature in this repo needs a cross-table search yet.)
 2. Filter the outer query with `inArray(table.id, searchMatchIds(input.query))` and keep the rest of the `where` (soft deletes, ownership) there.
 3. If the entity's `list` offers the same free-text filter, it uses the same helper, so the `search` and the filtered `list` always return the same set.

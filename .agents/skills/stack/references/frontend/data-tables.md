@@ -5,7 +5,7 @@ Every resource list is a data table on TanStack Table v9 (`@tanstack/react-table
 ## Pieces
 
 | Piece | Path | Role |
-|---|---|---|
+| --- | --- | --- |
 | `useDataTable`, `DataTableColumnMeta`, `columnLayoutOf`, `columnPreferenceProps`, `useLocalDataTable` | `apps/frontend/src/hooks/use-data-table.ts` | The table instance with only the column features (visibility, order, sizing, resizing, single-column sorting done outside the table, `manualSorting`), the column meta type, and the helpers below |
 | `useColumnPreferences` | `apps/frontend/src/hooks/use-column-preferences.ts` | Column visibility, order and widths in `localStorage` under `nonete:table-columns:<tableId>`, parsed defensively (a column with `enableResizing: false` always keeps its declared `size`), debounced writes, reset |
 | `useSortQueryParam` | `apps/frontend/src/hooks/use-sort-query-param.ts` | A page table's sort in the URL (`?sort=` + `?order=`), dropped at the default; returns `SortingState`, its setter and `{ sort, order }` for a server read |
@@ -54,7 +54,7 @@ For TanStack Table API beyond this file (a feature `useDataTable` doesn't enable
 
 - `apps/frontend/node_modules/@tanstack/react-table/skills/`: the React adapter (`getting-started`, with `references/with-tanstack-query.md` and `with-tanstack-virtual.md`; `table-state`; `migrate-v8-to-v9`).
 - The headless core skills (`core`, `table-features` with one reference per feature, `table-state`, `custom-features`, `migrate-v8-to-v9`) sit next to it in Bun's store, not in `apps/frontend/node_modules`. Find them with `find node_modules/.bun -path '*@tanstack/table-core/skills/*' -name SKILL.md`. Where they say `intent load @tanstack/table-core#<skill>`, read that skill's `SKILL.md`.
-- https://tanstack.com/table/latest/docs.
+- <https://tanstack.com/table/latest/docs>.
 
 ## Tests
 

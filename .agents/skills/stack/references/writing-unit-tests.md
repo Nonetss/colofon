@@ -5,7 +5,7 @@ Code that holds a rule ships with the unit tests that pin that rule, in the same
 ## When a test is required
 
 | You add or change | Write or update | Suite |
-|---|---|---|
+| --- | --- | --- |
 | A procedure's handler in `packages/api/src/v1/<feature>/handler.ts` | `packages/api/tests/v1/<feature>/handler.test.ts`, one `describe("<feature>.<method>")` per method (split by topic when it grows: `watch-runs.test.ts`) | `@nonete/api` |
 | A procedure builder, middleware, access rule or `src/index.ts` meta | `packages/api/tests/index.test.ts` | `@nonete/api` |
 | A helper in `packages/api/src/shared/` or `src/lib/` | `packages/api/tests/shared/<helper>.test.ts` | `@nonete/api` |

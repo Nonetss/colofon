@@ -37,4 +37,4 @@ Every server read and write in `apps/frontend` goes through TanStack Query v5, w
 
 ## Generic patterns
 
-For TanStack Query API patterns beyond this file, read the matching rule in the `tanstack-query-best-practices` skill (locked in `skills-lock.json`), `.agents/skills/tanstack-query-best-practices/rules/<prefix>-<rule>.md` (prefixes `qk-`, `cache-`, `mut-`, `err-`, `pf-`, `inf-`, `parallel-`, `perf-`; its `SKILL.md` lists them). Its examples use plain `useQuery` and hand-written keys; here they translate to the wrappers and oRPC keys above, and this file wins where they disagree. API reference: https://tanstack.com/query/v5/docs.
+For TanStack Query API patterns beyond this file, read the matching rule in the `tanstack-query-best-practices` skill (locked in `skills-lock.json`), `.agents/skills/tanstack-query-best-practices/rules/<prefix>-<rule>.md` (prefixes `qk-`, `cache-`, `mut-`, `err-`, `pf-`, `inf-`, `parallel-`, `perf-`; its `SKILL.md` lists them). Its examples use plain `useQuery` and hand-written keys; here they translate to the wrappers and oRPC keys above, and this file wins where they disagree. API reference: <https://tanstack.com/query/v5/docs>.

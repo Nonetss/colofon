@@ -5,6 +5,7 @@ Bun workspaces are `apps/*` and `packages/*` (root `package.json`). `bunfig.toml
 ## Apps
 
 ### `apps/frontend`
+
 - Astro 7 SSR (`@astrojs/node` standalone), React 19 islands, Tailwind v4 via Vite plugin, shadcn/ui (`base-nova` style on Base UI, neutral, lucide icons; `components.json`), TanStack Query + oRPC (`src/lib/orpc.ts`).
 - Dev `astro dev` on `:4320` (`dev` script, `strictPort`), behind the dev gateway's `https://localhost:4321`. It still proxies `/rpc`, `/api`, `/scalar`, `/openapi.json` → `BACKEND_URL` (default `http://localhost:3000`) for direct hits, but sign-in only works on the gateway origin. In the Docker dev stack it listens on `0.0.0.0:4320` inside its container (`expose`, never `ports`). In production Docker, Astro alone listens on `0.0.0.0:4321` (compose `expose`, never `ports`) and `apps/gateway` serves it, plus the backend API, on the public port.
 - Check `astro check`. Unit tests (`bun test` + happy-dom + Testing Library) in `tests/unit/`, outside `src/`; no end-to-end suite.
@@ -13,6 +14,7 @@ Bun workspaces are `apps/*` and `packages/*` (root `package.json`). `bunfig.toml
 - `scripts/generate-icon-catalog.ts` regenerates the entity icon picker's Lucide catalog (`bun run icons:catalog`, see `frontend/entity-icons.md`).
 
 ### `apps/backend`
+
 - Hono 4 + oRPC on Bun. HTTP only, `:3000` (`Bun.serve` without a `port`, so `PORT` or else 3000).
 - Served explicitly with `Bun.serve({ id: "backend", fetch: app.fetch })` — there is no `export default app`.
 - Entrypoint `src/index.ts`: `seed(auth)` from `@nonete/db/seed` applies migrations and seeds the admin, then `startCron()` (`src/cron/index.ts`) starts the scheduler and syncs code-declared jobs.
@@ -22,6 +24,7 @@ Bun workspaces are `apps/*` and `packages/*` (root `package.json`). `bunfig.toml
 - Dev `bun run --hot src/index.ts`. Build `tsdown` → `dist/index.mjs`; `deps.alwaysBundle` inlines every dependency because the runtime image ships no `node_modules`. Check `tsc -b`.
 
 ### `apps/gateway` (not a workspace)
+
 - Docker assets only: `routes.caddy`, `Caddyfile`, `Caddyfile.dev`, `Dockerfile` (`caddy:2-alpine`, copies the three into `/etc/caddy`, runs `Caddyfile`), and a dev `compose.yml` (host network for the native apps, `localhost` upstreams, runs `Caddyfile.dev`) started by `bun run gateway`. `routes.caddy` is the only place that maps requests to apps.
 - `routes.caddy`, the site body every site imports (zstd/gzip, security headers): `/health` answers `ok` (the compose healthcheck); `/rpc/*`, `/api/*`, `/scalar*`, `/openapi.json` → `BACKEND_HTTP_UPSTREAM` (`backend:3000`); everything else → `FRONTEND_HTTP_UPSTREAM` (`frontend:4321`).
 - `Caddyfile` (production): one HTTP site, `:{$GATEWAY_HTTP_PORT:80}` (`h1`/`h2c`, `admin off`, `auto_https off`).
@@ -33,7 +36,7 @@ Bun workspaces are `apps/*` and `packages/*` (root `package.json`). `bunfig.toml
 ## TypeScript packages
 
 | Package | Role |
-|---|---|
+| --- | --- |
 | `packages/api` (`@nonete/api`) | oRPC contract and handlers. Builders in `src/index.ts`, shared `context.ts`/`errors.ts`, `shared/`, `lib/`, top-level `router.ts` nesting `src/v1/router.ts`. Subpath exports for `"./*"`. Unit tests (`bun test`) in `tests/`, outside `src/`. See `references/api/layering.md`. |
 | `packages/auth` (`@nonete/auth`) | Better Auth factory `createAuth()` / `auth`, using the shared `db`. Plugins `admin()`, `apiKey({ enableSessionForAPIKeys: true })`, `organization()` (teams, access control, dynamic roles) and `genericOAuth` (`src/oauth.ts`, only when `OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET` and `OIDC_DISCOVERY_URL` are set). `src/permissions.ts` holds `appStatements` and the `owner`/`admin`/`member` roles; `src/session.ts` exposes `createUserSession()` (used by cron to run jobs as a user). |
 | `packages/db` (`@nonete/db`) | Drizzle ORM (1.0 RC, `node-postgres`). One shared pool per process: `db`, closed with `closeDb()`; `createDb()` is only called to build `db`. Schema per domain in `src/schema/<domain>/` (`auth`, `comment`, `cron`, `entity-icon`), relations in `src/relations.ts`, `src/keyset-pagination.ts`, `src/seed/` (migrations + admin seed), `src/migrations/`. Drizzle CLI scripts live here only. Test support (fake `db` and row factories) in `testing/`, exported as `@nonete/db/testing` and used only by test suites. |

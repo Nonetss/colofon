@@ -7,7 +7,7 @@ The package root holds infrastructure shared by every API version:
 - `index.ts` exports the procedure builders and the meta plugins built with `defineMeta`: `cronMeta`/`getCronMeta` and `getAccessMeta` (its `accessMeta` stays private). Each builder stamps `access` — never set it by hand:
 
 | Builder | Access |
-|---|---|
+| --- | --- |
 | `publicProcedure` | no auth |
 | `protectedProcedure` | any signed-in user; `UNAUTHORIZED` otherwise |
 | `adminProcedure` | global `user.role === "admin"` (`UNAUTHORIZED` without session, `FORBIDDEN` otherwise) |

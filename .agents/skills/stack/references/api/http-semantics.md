@@ -17,7 +17,7 @@ A streamed read (an `eventIterator` output that only listens, like `cron.watchRu
 Decide by what the handler does, not by its name:
 
 | The handler… | Method | Examples in this repo |
-|---|---|---|
+| --- | --- | --- |
 | Only reads, and its input fits a query string (scalars, optional filters, arrays of scalars) | `GET` | `cron.list`, `organization.search`, `logs.query` |
 | Only reads, and its input does not fit a query string (arrays of objects, batches of entity refs) | `QUERY` | `comment.counts`, `entityIcon.getMany` |
 | Creates a new resource whose id the server assigns | `POST` + `successStatus: 201` | `comment.create`, `organization.createTeam`, `cron.create` |
@@ -38,7 +38,7 @@ Rules behind the table:
 ## Success status
 
 | Case | `successStatus` |
-|---|---|
+| --- | --- |
 | The procedure exists to create a resource and creates one on every successful call | `201` |
 | Everything else: reads, updates, idempotent upserts (which may return an existing row), actions, deletes | omit (default `200`) |
 
@@ -49,7 +49,7 @@ Never declare `204`. Every procedure has an `.output()` and returns a body (dele
 Throw the `errors.<CODE>()` whose status names the **cause**. User-facing messages are Spanish (`errors.CONFLICT({ message: "Ya existe una organización con ese slug" })`), and internal ones are English.
 
 | Code | When | Examples |
-|---|---|---|
+| --- | --- | --- |
 | `BAD_REQUEST` 400 | The input itself is invalid or inconsistent beyond what zod checks | malformed pagination cursor, unknown custom role name, a reply whose parent belongs to another entity, an entity type that does not support icons, an invalid cron expression |
 | `UNAUTHORIZED` 401 | No authenticated caller | the builders, `if (!context.user)` guards |
 | `FORBIDDEN` 403 | Authenticated, but **this caller** lacks the role, permission or ownership. Another caller could do it | non-admin on an `adminProcedure`, editing someone else's visible comment, no active organization |

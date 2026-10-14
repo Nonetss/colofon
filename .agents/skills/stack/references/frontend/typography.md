@@ -17,7 +17,7 @@ Product text goes through the `Text` component (`apps/frontend/src/components/sh
 ## Choosing a role
 
 | Role | Use for |
-|---|---|
+| --- | --- |
 | `display` | The page title (`PageHero`) and overlay titles (`DialogTitle`, `SheetTitle`, the auth `CardTitle`) through `textVariants` |
 | `headline` | Tile and card titles (`SurfaceCard`) |
 | `title` | Name of a list row, picker result or selected entity, at body size |

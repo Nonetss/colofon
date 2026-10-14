@@ -5,7 +5,7 @@ The user does not accept code that forces types or packs logic into chained oper
 ## Not allowed
 
 | Pattern | Example |
-|---|---|
+| --- | --- |
 | Casts that silence the type checker | `value as Target`, `value as unknown as Target`, non-null `value!` |
 | Generic defaults or shapes made up so a type fits | `TData = unknown` that nothing needs, `(...args: never[]) => unknown` in a `satisfies` |
 | `??` chains (two or more) | `schedule.description ?? docs.description ?? docs.summary ?? null` |

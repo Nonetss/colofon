@@ -20,7 +20,7 @@
 Search the codebase first, and reuse or extend what exists. Look, in this order:
 
 | Need | Where to look |
-|---|---|
+| --- | --- |
 | A visual primitive (button, dialog, popover, select, sidebar, tooltip, card…) | `src/components/ui/` (one file per primitive). Missing there? Check the shadcn registry for the `base-nova` style before hand-building one; after `shadcn add`, rewrite its `cn` import to `@/lib/utils` (`typography.md`). |
 | An application pattern (page hero and shell, list rows, filters, metadata grids, status tags, row action menus, copy button, search input, entity picker, segmented picker, number stepper, avatar…) | `src/components/shared/<domain>/` — `brand`, `data-display`, `feedback`, `form`, `layout`, `navigation`, `resource`, `user`. |
 | Something a feature already built | The owning domain under `src/features/<domain>/`, through its slice's `index.ts` (or `public.ts`). If a second domain needs it, promote it rather than copy it. |

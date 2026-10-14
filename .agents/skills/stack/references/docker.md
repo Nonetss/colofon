@@ -26,7 +26,7 @@ Project `stack-dev`, started by `bun run dev` (`up --build --watch`), removed by
 Project `stack`, started by `bun run docker:up` (`up -d --build`); `docker:build`, `docker:down`, `docker:logs` are the other root scripts. The app is on `http://localhost:${FRONTEND_PORT:-4444}`.
 
 | Service | Ports | Notes |
-|---|---|---|
+| --- | --- | --- |
 | `frontend` | `expose` 4321 | Astro SSR only, reached through the gateway. Waits for a healthy backend. Healthcheck `bun -e fetch('http://localhost:4321/login')`. |
 | `backend` | `expose` 3000 | Waits for a healthy `db`. Healthcheck `bun -e fetch('http://localhost:3000/')`. |
 | `gateway` | `${FRONTEND_PORT:-4444}` → 80 | Caddy (`apps/gateway/`): `/rpc/*`, `/api/*`, `/scalar*`, `/openapi.json` → backend, the rest → frontend. Waits for a healthy frontend. Healthcheck `wget http://localhost/health`. |

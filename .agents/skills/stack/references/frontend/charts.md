@@ -43,6 +43,6 @@ The library ships its own docs and agent skills in the installed package. Read t
 
 - `apps/frontend/node_modules/@tanstack/charts/docs/` — guides (`guides/choosing-a-chart.md`, `guides/tooltips-and-focus.md`, `guides/themes-and-styling.md`, `guides/coming-from-recharts.md`), the API reference (`reference/marks/`, `reference/scales-guides-and-color.md`) and the example catalog (`examples/`).
 - `apps/frontend/node_modules/@tanstack/charts/skills/` — authoring skills (`design-a-chart`, `prepare-chart-data`, `configure-scales-guides-color`, `ship-accessible-charts`, `debug-and-verify-charts`).
-- https://tanstack.com/charts/latest/docs and the catalog at https://tanstack.com/charts/catalog/.
+- <https://tanstack.com/charts/latest/docs> and the catalog at <https://tanstack.com/charts/catalog/>.
 
 Then validate with `check-types` and Biome, and ask the user to check light/dark, keyboard focus and phone width in the running app.
