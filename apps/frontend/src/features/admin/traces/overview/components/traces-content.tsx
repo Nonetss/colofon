@@ -228,7 +228,7 @@ export function TracesContent() {
             <SearchInput
               value={name}
               onValueChange={setName}
-              placeholder="Filtrar por nombre: POST /rpc/*, cron.run..."
+              placeholder="Filtrar por nombre: /rpc/v1/cron, cron.run..."
               label="Filtrar por nombre de la traza"
             />
             <Input
