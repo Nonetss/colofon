@@ -8,6 +8,16 @@ export type AuthVariables = {
 
 export const sessionMiddleware = createMiddleware<{ Variables: AuthVariables }>(
   async (c, next) => {
+    // Better Auth resolves the session itself for its own routes (the
+    // frontend's SSR `get-session` lookup included), and they are outside the
+    // activity log, so resolving it here too would only double the work.
+    if (c.req.path.startsWith("/api/auth/")) {
+      c.set("user", null)
+      c.set("session", null)
+      await next()
+      return
+    }
+
     const session = await auth.api.getSession({
       headers: c.req.raw.headers,
     })
