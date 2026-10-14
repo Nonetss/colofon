@@ -1,7 +1,4 @@
-import {
-  type ResourceFilterDescriptor,
-  ResourceFilterFields,
-} from "@/components/shared/resource/resource-filters"
+import type { ReactNode } from "react"
 import { Button } from "@/components/ui/button"
 import {
   Sheet,
@@ -19,8 +16,9 @@ function confirmLabel(resultCount: number | null | undefined) {
 }
 
 /**
- * Bottom sheet edited by `ListActionBar`'s "Filtros" control: renders one
- * field per descriptor and a sticky confirm button reading how many results
+ * Bottom sheet edited by `ListActionBar`'s "Filtros" control: the caller's
+ * fields (`ResourceFilterFields`, a data table's column filters) and a
+ * sticky confirm button reading how many results
  * the current combination produces — see list-filter-experience's "Narrow
  * viewports filter through an action bar and a bottom sheet". Whether an
  * edit applies immediately or waits for the confirm button is the caller's
@@ -33,7 +31,7 @@ export function FilterSheet({
   open,
   onOpenChange,
   title = "Filtros",
-  filters,
+  children,
   resultCount,
   onApply,
   onClear,
@@ -41,7 +39,7 @@ export function FilterSheet({
   open: boolean
   onOpenChange: (open: boolean) => void
   title?: string
-  filters: ResourceFilterDescriptor[]
+  children: ReactNode
   /** `undefined` while the count for the current draft is still loading;
    *  `null` for a list that can't count its results (the button then just
    *  reads "Ver resultados"). */
@@ -72,9 +70,7 @@ export function FilterSheet({
             </Button>
           ) : null}
         </SheetHeader>
-        <div className="flex-1 overflow-y-auto p-4">
-          <ResourceFilterFields filters={filters} />
-        </div>
+        <div className="flex-1 overflow-y-auto p-4">{children}</div>
         <SheetFooter className="border-t bg-background pb-[calc(1rem+env(safe-area-inset-bottom))]">
           <Button
             type="button"

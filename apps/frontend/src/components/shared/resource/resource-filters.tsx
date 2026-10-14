@@ -797,11 +797,12 @@ function MobileResourceFilters({
       <FilterSheet
         open={open}
         onOpenChange={setOpen}
-        filters={draftFilters}
         resultCount={fetchDraftTotal ? draftTotal : null}
         onApply={apply}
         onClear={clear}
-      />
+      >
+        <ResourceFilterFields filters={draftFilters} />
+      </FilterSheet>
     </>
   )
 }

@@ -13,10 +13,11 @@ function renderSheet(resultCount: number | null | undefined) {
     <FilterSheet
       open
       onOpenChange={onOpenChange}
-      filters={[]}
       resultCount={resultCount}
       onApply={onApply}
-    />
+    >
+      <p>Campos</p>
+    </FilterSheet>
   )
   return { onApply, onOpenChange }
 }
