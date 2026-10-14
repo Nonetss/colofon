@@ -28,6 +28,15 @@ export const env = createEnv({
     // feature. Optional — logging to console/stdout works unchanged
     // without it, and the admin log screen simply shows no data.
     LOKI_URL: z.url().optional(),
+    // OpenTelemetry tracing. OTLP/HTTP base URL (e.g. http://tempo:4318)
+    // the backend exports spans to; optional — without it nothing is traced
+    // or exported. The sampler argument is the probability that a new trace
+    // is kept (spans with a parent follow the parent's decision).
+    OTEL_EXPORTER_OTLP_ENDPOINT: z.url().optional(),
+    OTEL_TRACES_SAMPLER_ARG: z.coerce.number().min(0).max(1).default(1),
+    // Tempo query API (e.g. http://tempo:3200) read by the admin trace
+    // viewer. Optional — without it the viewer simply shows no traces.
+    TEMPO_URL: z.url().optional(),
     // Admin
     ADMIN_EMAIL: z.email().optional(),
     ADMIN_PASSWORD: z.string().min(8).optional(),

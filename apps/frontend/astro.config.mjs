@@ -64,6 +64,21 @@ export default defineConfig({
         context: "server",
         optional: true,
       }),
+      // OpenTelemetry tracing for the SSR server, with the same meaning as
+      // the backend's variables. Optional — nothing is traced without the
+      // endpoint.
+      OTEL_EXPORTER_OTLP_ENDPOINT: envField.string({
+        access: "secret",
+        context: "server",
+        optional: true,
+      }),
+      OTEL_TRACES_SAMPLER_ARG: envField.number({
+        access: "secret",
+        context: "server",
+        min: 0,
+        max: 1,
+        default: 1,
+      }),
     },
   },
 

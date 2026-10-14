@@ -28,6 +28,9 @@ const placeholders = {
 const cleared = [
   "SKIP_ENV_VALIDATION",
   "LOKI_URL",
+  "OTEL_EXPORTER_OTLP_ENDPOINT",
+  "OTEL_TRACES_SAMPLER_ARG",
+  "TEMPO_URL",
   "ADMIN_EMAIL",
   "ADMIN_PASSWORD",
   "ADMIN_NAME",
