@@ -1,3 +1,4 @@
+import { activeTraceFields } from "@nonete/telemetry/span"
 import pino, { type Logger, type LoggerOptions, type StreamEntry } from "pino"
 import pretty from "pino-pretty"
 import { createLokiStream } from "#loki-stream"
@@ -38,6 +39,9 @@ export function createLogger({
     level,
     base: { service },
     timestamp: pino.stdTimeFunctions.isoTime,
+    // `traceId`/`spanId` of the active sampled span on every line, so a line
+    // links to its trace. Fields, never Loki labels: they are unbounded.
+    mixin: activeTraceFields,
   }
 
   const streams: StreamEntry[] = [
