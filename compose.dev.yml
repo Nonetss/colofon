@@ -6,17 +6,19 @@
 #   bun run dev:down   # remove the containers
 #   bun run loki:start # only Loki on 127.0.0.1:3100, for native dev
 #   bun run tempo:start # only Tempo on 127.0.0.1:4318/3200, for native dev
+#   bun run postgres:start # only PostgreSQL on 127.0.0.1:5432, for native dev
 #
 # Like production, the gateway is the only service that publishes a port:
-# https://localhost:4321 (local CA, HTTP/2). The apps, Loki and Tempo stay on the
+# https://localhost:4321 (local CA, HTTP/2). The apps, PostgreSQL, Loki and Tempo stay on the
 # stack's private network and reach each other by service name; the
 # `environment` overrides below swap .env's localhost addresses for those
 # names, everything else comes from the root .env unchanged. Native dev
 # (`bun run dev:local` + `bun run gateway`) uses the same ports on the host:
 # run one or the other, not both.
 #
-# There is no database here: DATABASE_URL in .env points at a dev PostgreSQL
-# that lives outside the project, on another server.
+# The database is the stack's own `db` (data in the db_data volume): the
+# backend's DATABASE_URL is overridden to reach it, whatever .env says. The
+# backend applies the committed migrations and seeds the admin on boot.
 name: stack-dev
 
 x-node-ignore: &node-ignore
@@ -39,6 +41,23 @@ x-loki: &loki
     - -compactor.retention-enabled=true
   healthcheck:
     test: [ "CMD", "wget", "--spider", "-q", "http://localhost:3100/ready" ]
+    interval: 10s
+    timeout: 5s
+    retries: 5
+    start_period: 10s
+  restart: unless-stopped
+
+# Same image, database and healthcheck as compose.yml's db.
+x-db: &db
+  image: postgres:17
+  environment:
+    POSTGRES_USER: postgres
+    POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    POSTGRES_DB: stack
+  volumes:
+    - db_data:/var/lib/postgresql/data
+  healthcheck:
+    test: [ "CMD-SHELL", "pg_isready -U postgres -d stack" ]
     interval: 10s
     timeout: 5s
     retries: 5
@@ -149,11 +168,15 @@ services:
       - path: .env
         required: false
     environment:
+      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:-postgres}@db:5432/stack
       LOKI_URL: http://loki:3100
       OTEL_EXPORTER_OTLP_ENDPOINT: http://tempo:4318
       TEMPO_URL: http://tempo:3200
     expose:
       - "3000"
+    depends_on:
+      db:
+        condition: service_healthy
     develop:
       watch:
         - action: sync
@@ -240,6 +263,26 @@ services:
     ports:
       - "127.0.0.1:3100:3100"
 
+  # The dev database, on the private network only (the backend's
+  # DATABASE_URL override). The backend waits for it to be healthy.
+  db:
+    <<: *db
+    container_name: stack-dev-db
+    expose:
+      - "5432"
+
+  # The same PostgreSQL for native dev (`bun run postgres:start` /
+  # `postgres:stop`, profile `native`), published on 127.0.0.1:5432 (or
+  # POSTGRES_PORT when that is taken), the DATABASE_URL in .env.example.
+  # `bun run dev` never starts it; it shares db_data, so run one or the other.
+  db-native:
+    <<: *db
+    container_name: stack-dev-db-native
+    profiles:
+      - native
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
+
   # Trace store for the dev stack, on the private network only (the apps'
   # OTEL_EXPORTER_OTLP_ENDPOINT and the backend's TEMPO_URL overrides).
   tempo:
@@ -263,6 +306,7 @@ services:
       - "127.0.0.1:3200:3200"
 
 volumes:
+  db_data:
   frontend_vite_cache:
   gateway_data:
   loki_data:
