@@ -22,7 +22,7 @@ Below the medium breakpoint (768 px), a list page with filters SHALL NOT show th
 
 - **WHEN** the sheet is open and the current filter combination matches 12 items
 - **THEN** the confirm button SHALL read "Ver 12 resultados"
-- **AND** it SHALL read "Ver 1 resultado" for one item, "Sin resultados" for zero items, and "Cargando…" while the count is not yet known
+- **AND** it SHALL read "Ver 1 resultado" for one item, "Sin resultados" for zero items, "Cargando…" while the count is not yet known, and "Ver resultados" on a list that can't count its results (`/admin/traces`, which loads page by page)
 
 #### Scenario: A draft with no results can still be applied
 
@@ -82,7 +82,7 @@ A list page with any active filter SHALL show each active filter value as a chip
 
 ### Requirement: Categorical options support include and exclude
 
-A categorical (facet) filter SHALL present its options as a list where a checkbox includes an option and a separate control excludes it; an option SHALL never be included and excluded at once. When the list provides per-option counts each option SHALL show its count, and an unselected option with a zero count SHALL be visually de-emphasized; when it provides none, options SHALL render without counts. A dimension with more than eight options SHALL offer a text box to narrow the options by label. A dimension marked as not excludable SHALL hide the exclude control. In the mobile sheet facet sections SHALL be collapsible and open by default only when already active; in the wide inline panel each facet SHALL be a trigger summarizing the selection ("Todos", the first label, or the first label plus "+N") that opens the option list in a popover.
+A categorical (facet) filter SHALL present its options as a list where a checkbox includes an option and a separate control excludes it; an option SHALL never be included and excluded at once. When the list provides per-option counts each option SHALL show its count, and an unselected option with a zero count SHALL be visually de-emphasized; when it provides none, options SHALL render without counts. A dimension with more than eight options SHALL offer a text box to narrow the options by label. A dimension marked as not excludable SHALL hide the exclude control. In the mobile sheet several facet sections SHALL be collapsible and open by default only when already active, while a sheet with a single facet section SHALL show its options open, with no title to click; in the wide inline panel each facet SHALL be a trigger summarizing the selection ("Todos", the first label, or the first label plus "+N") that opens the option list in a popover.
 
 #### Scenario: Excluding an option
 
