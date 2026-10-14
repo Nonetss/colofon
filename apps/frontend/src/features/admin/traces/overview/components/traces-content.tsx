@@ -40,6 +40,7 @@ import {
 import { useMinWidth } from "@/features/admin/traces/overview/hooks/use-min-width"
 import { useTraceRootNames } from "@/features/admin/traces/overview/hooks/use-trace-root-names"
 import { useTraceSearch } from "@/features/admin/traces/overview/hooks/use-trace-search"
+import { useTraceSheetHistory } from "@/features/admin/traces/overview/hooks/use-trace-sheet-history"
 import {
   TRACE_SERVICE_OPTIONS,
   type TraceSummary,
@@ -155,6 +156,7 @@ export function TracesContent() {
     valueListCodec
   )
   const [traceParam, setTraceParam] = useQueryParam("trace", "")
+  const traceSheet = useTraceSheetHistory(setTraceParam)
   const chosenTraceId = traceIdOf(traceParam)
   const [minDuration, setMinDuration] = useState("")
   const [from, setFrom] = useState<Date | undefined>(undefined)
@@ -432,7 +434,15 @@ export function TracesContent() {
                       trace={trace}
                       open={trace.traceId === shownTraceId}
                       beside={sidePanel}
-                      onOpen={() => setTraceParam(trace.traceId)}
+                      onOpen={() => {
+                        // Beside the list a trace replaces the last one;
+                        // the sheet gets a history entry back closes.
+                        if (sidePanel) {
+                          setTraceParam(trace.traceId)
+                          return
+                        }
+                        traceSheet.open(trace.traceId)
+                      }}
                     />
                   )
                 }}
@@ -460,7 +470,7 @@ export function TracesContent() {
           <Sheet
             open={!sidePanel && chosenTraceId !== ""}
             onOpenChange={(open) => {
-              if (!open) setTraceParam("")
+              if (!open) traceSheet.close()
             }}
           >
             <SheetContent className="w-full gap-0 sm:max-w-3xl">
