@@ -155,7 +155,6 @@ describe("traces.search", () => {
         services: ["stack-backend", "postgresql"],
         errorsOnly: true,
         minDurationMs: 500,
-        name: "cron.list",
         from: "2026-10-14T00:00:00Z",
         to: "2026-10-14T01:00:00Z",
       }),
@@ -163,23 +162,13 @@ describe("traces.search", () => {
 
     const url = requestedUrl()
     expect(url.searchParams.get("q")).toBe(
-      `{ resource.service.name = "stack-backend" || span.db.system.name = "postgresql" } && { status = error } && { trace:duration >= 500ms } && { trace:rootName =~ "(?i).*cron\\\\.list.*" } ${NEWEST}`
+      `{ resource.service.name = "stack-backend" || span.db.system.name = "postgresql" } && { status = error } && { trace:duration >= 500ms } ${NEWEST}`
     )
     expect(url.searchParams.get("start")).toBe(
       String(Date.parse("2026-10-14T00:00:00Z") / 1000)
     )
     expect(url.searchParams.get("end")).toBe(
       String(Date.parse("2026-10-14T01:00:00Z") / 1000)
-    )
-  })
-
-  test("escapes quotes and braces in the name, so they match literally", async () => {
-    fetchSpy.mockResolvedValue(searchResponse([]))
-
-    await tracesHandler.search({ input: searchInput({ name: 'a"} || {b' }) })
-
-    expect(requestedUrl().searchParams.get("q")).toBe(
-      `{ trace:rootName =~ "(?i).*a\\"\\\\} \\\\|\\\\| \\\\{b.*" } ${NEWEST}`
     )
   })
 
@@ -197,6 +186,10 @@ describe("traces.search", () => {
 
     const result = await tracesHandler.search({ input: searchInput() })
 
+    // The by-id searches name the ids normalized to 32 hex characters.
+    expect(requestedUrl(1).searchParams.get("q")).toContain(
+      'trace:id = "00942dac5ae1610f0c180b4d39613cfc"'
+    )
     expect(result.limitReached).toBe(false)
     expect(result.traces).toEqual([
       {

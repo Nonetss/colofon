@@ -2,7 +2,7 @@ import { env } from "@nonete/env/server"
 import type { z } from "zod"
 
 import { errors } from "#errors"
-import type { tracesInput } from "#v1/traces/input"
+import type { TRACE_SERVICES, tracesInput } from "#v1/traces/input"
 import type { SPAN_KINDS, SPAN_STATUSES, tracesOutput } from "#v1/traces/output"
 import {
   fetchTrace,
@@ -27,52 +27,43 @@ export const MAX_TRACE_SPANS = 2000
 const DEFAULT_SEARCH_WINDOW_MS = 24 * 60 * 60 * 1000
 
 // ── TraceQL ──────────────────────────────────────────────────────────────────
+//
+// Tempo only takes queries as TraceQL text, and there is no TraceQL builder
+// for JS, so the queries are assembled here, from fixed fragments only: every
+// value that reaches them is a closed enum, a validated integer or a trace id
+// normalized to hex, never free text, so nothing needs escaping.
 
-/** Escapes a value for a TraceQL double-quoted string. */
-function escapeTraceQLString(value: string): string {
-  return value.replace(/\\/g, "\\\\").replace(/"/g, '\\"')
-}
+type TraceService = (typeof TRACE_SERVICES)[number]
 
-/** Escapes RE2 metacharacters, so the text matches literally. */
-function escapeRegex(value: string): string {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
-}
+/** The span condition meaning "the trace touches this service". */
+const TOUCHES = {
+  "stack-frontend": 'resource.service.name = "stack-frontend"',
+  "stack-backend": 'resource.service.name = "stack-backend"',
+  postgresql: 'span.db.system.name = "postgresql"',
+} satisfies Record<TraceService, string>
 
 /** A span of the database the trace's queries reach. */
-const DATABASE_SPANSET = '{ span.db.system.name = "postgresql" }'
+const DATABASE_SPANSET = `{ ${TOUCHES.postgresql} }`
 
 /** oRPC's span around a streamed output: the trace is an event stream. */
 const STREAM_SPAN_NAME = "consume_async_iterator_object_output"
 
 const STREAM_SPANSET = `{ name = "${STREAM_SPAN_NAME}" }`
 
-/** The span condition meaning "the trace touches `service`". */
-function touchCondition(service: SearchInput["services"] & {}): string[] {
-  return service.map((name) => {
-    if (name === "postgresql") return 'span.db.system.name = "postgresql"'
-    return `resource.service.name = "${escapeTraceQLString(name)}"`
-  })
-}
-
 /**
  * The search's spansets, ANDed: each spanset may match a different span of
  * the trace (a backend span, an error somewhere else), whereas conditions
- * inside one `{ }` would all have to hold on the same span. Each value goes
- * through `escapeTraceQLString`, so a filter can only ever be compared,
- * never change the query's structure.
+ * inside one `{ }` would all have to hold on the same span.
  */
 function searchSpansets(input: SearchInput): string[] {
   const spansets: string[] = []
   if (input.services !== undefined && input.services.length > 0) {
-    spansets.push(`{ ${touchCondition(input.services).join(" || ")} }`)
+    const touches = input.services.map((service) => TOUCHES[service])
+    spansets.push(`{ ${touches.join(" || ")} }`)
   }
   if (input.errorsOnly) spansets.push("{ status = error }")
   if (input.minDurationMs !== undefined) {
     spansets.push(`{ trace:duration >= ${input.minDurationMs}ms }`)
-  }
-  if (input.name !== undefined) {
-    const pattern = `(?i).*${escapeRegex(input.name)}.*`
-    spansets.push(`{ trace:rootName =~ "${escapeTraceQLString(pattern)}" }`)
   }
   return spansets
 }
@@ -91,14 +82,14 @@ export function buildTraceQL(input: SearchInput): string {
   return `${joinSpansets(searchSpansets(input))} with (most_recent=true)`
 }
 
-/** Which of the given traces have a span matching `spanset`. Tempo's
- *  search returns the first matches it finds, not the newest, so the traces
- *  are named by id rather than re-searched by filter. */
+/** Which of the given traces (hex ids) have a span matching `spanset`.
+ *  Tempo's search returns the first matches it finds, not the newest, so
+ *  the traces are named by id rather than re-searched by filter. */
 export function buildByIdTraceQL(
   spanset: string,
   traceIds: readonly string[]
 ): string {
-  const ids = traceIds.map((id) => `trace:id = "${escapeTraceQLString(id)}"`)
+  const ids = traceIds.map((id) => `trace:id = "${id}"`)
   return joinSpansets([spanset, `{ ${ids.join(" || ")} }`])
 }
 
@@ -440,9 +431,10 @@ async function searchMatchingIds(
 ): Promise<Set<string>> {
   if (traces.length === 0) return new Set()
   const matches = await searchTempo(tempoUrl, {
+    // Normalized hex: whatever Tempo sent, only [0-9a-f] reaches the query.
     query: buildByIdTraceQL(
       spanset,
-      traces.map((trace) => trace.traceID)
+      traces.map((trace) => toHexId(trace.traceID, 16))
     ),
     ...window,
     limit: traces.length,
