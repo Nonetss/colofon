@@ -2,11 +2,11 @@
   "name": "@nonete/db",
   "type": "module",
   "imports": {
-    "#testing/*": "./testing/*.ts",
     "#schema": "./src/schema/index.ts",
     "#schema/*": "./src/schema/*/index.ts",
     "#seed": "./src/seed/index.ts",
     "#seed/*": "./src/seed/*.ts",
+    "#testing/*": "./testing/*.ts",
     "#*": "./src/*.ts"
   },
   "exports": {

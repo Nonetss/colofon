@@ -21,9 +21,15 @@ export type FakeDbOp =
   | "update"
   | "delete"
 
+/**
+ * What `calls()` records: every awaited chain, plus a `transaction` marker
+ * when `db.transaction` opens, so a test can tell which writes ran inside it.
+ */
+export type FakeDbRecordedOp = FakeDbOp | "transaction"
+
 export type FakeDbStep = { method: string; args: unknown[] }
 
-export type FakeDbCall = { op: FakeDbOp; steps: FakeDbStep[] }
+export type FakeDbCall = { op: FakeDbRecordedOp; steps: FakeDbStep[] }
 
 export type FakeDb = {
   /** The fake, typed as the real `db` so it can be injected or mocked in. */
@@ -33,7 +39,7 @@ export type FakeDb = {
   /** Makes the next awaited chain of `op` reject with `error`. */
   queueError: (op: FakeDbOp, error: unknown) => void
   /** Every awaited chain, optionally only those of one operation. */
-  calls: (op?: FakeDbOp) => FakeDbCall[]
+  calls: (op?: FakeDbRecordedOp) => FakeDbCall[]
   /** Clears queued results and recorded calls. */
   reset: () => void
 }
@@ -65,7 +71,10 @@ export function createFakeDb(): FakeDb {
     queues.set(op, queued)
   }
 
-  const settle = (call: FakeDbCall): Promise<unknown> => {
+  const settle = (call: {
+    op: FakeDbOp
+    steps: FakeDbStep[]
+  }): Promise<unknown> => {
     recorded.push(call)
     const outcome = queues.get(call.op)?.shift()
     if (!outcome) {
@@ -111,11 +120,22 @@ export function createFakeDb(): FakeDb {
     }
   )
 
-  const root = new Proxy(
+  // `transaction(fn)` runs `fn` against the fake itself, so writes on `tx`
+  // are queued and recorded exactly like writes on `db`.
+  const transaction = (fn: (tx: object) => unknown, ...args: unknown[]) => {
+    recorded.push({
+      op: "transaction",
+      steps: [{ method: "transaction", args }],
+    })
+    return Promise.resolve().then(() => fn(root))
+  }
+
+  const root: object = new Proxy(
     {},
     {
       get(_, prop) {
         if (prop === "query") return query
+        if (prop === "transaction") return transaction
         if (typeof prop !== "string" || !isBuilderOp(prop)) return undefined
         return (...args: unknown[]) => chain(prop, [{ method: prop, args }])
       },
