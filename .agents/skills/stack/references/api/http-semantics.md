@@ -1,6 +1,6 @@
 # HTTP methods, success statuses and error codes (`packages/api`)
 
-Every procedure declares its HTTP contract in `.meta(openapi({ method, successStatus? }))` (`openapi` from `@orpc/openapi`) and signals failure with `errors.<CODE>()` from `#errors`. This file says which ones to pick. The normative version is the `api-documentation` OpenSpec capability ("Documented operation metadata", "Error codes reflect the failure cause"), today in `openspec/changes/adopt-stack-foundation/specs/api-documentation/spec.md`.
+Every procedure declares its HTTP contract in `.meta(openapi({ method, successStatus? }))` (`openapi` from `@orpc/openapi`) and signals failure with `errors.<CODE>()` from `#errors`. This file says which ones to pick. The normative version is the `api-documentation` spec, `openspec/specs/api-documentation/spec.md` ("Documented operation metadata", "Error codes reflect the failure cause").
 
 ## The model: RPC paths, semantic verbs
 

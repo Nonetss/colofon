@@ -51,7 +51,7 @@ index("device_name_trgm_idx").using("gin", table.name.op("gin_trgm_ops")),
 index("address_ip_trgm_idx").using("gin", sql`(${table.ip}::text) gin_trgm_ops`),
 ```
 
-Editing the schema and generating migrations is the user's call: the agent proposes the extension migration and the index and stops, and the user runs `bun run db:generate`. The index's migration must sort after the extension's.
+Editing the schema and generating the migrations follow `AGENTS.md`: the agent proposes the extension migration and the index and stops, and the user runs `bun run db:generate`. The index's migration must sort after the extension's.
 
 **Rules that decide whether the index is used:**
 

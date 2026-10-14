@@ -18,7 +18,7 @@ The package root holds infrastructure shared by every API version:
 - `router.ts` assembles the top-level `appRouter` by nesting each version's router under its own key (`v1: v1Router`) — the only place a new version gets wired in.
 - `lifecycle.ts` exports `closeStreams()`, which the backend's shutdown calls before the HTTP drain. It calls each version's own `src/<version>/lifecycle.ts`, which ends that version's streams that outlive their requests (today the `v1.cron.watchRuns`/`watchJobs` watchers). A feature that adds such a stream registers its closer in its version's `lifecycle.ts`, never in `apps/backend`. A new version adds one call here.
 
-Procedure metadata (`cron`): see `references/cron.md`.
+Procedure metadata (`cron`): see `references/cron-and-mcp/cron.md`.
 
 ## Before adding a procedure or helper
 
@@ -38,6 +38,7 @@ Everything version-specific lives under `src/<version>/` (currently only `src/v1
 - `<feature>/router.ts` — oRPC wiring only, exported as `<feature>Router`: builder → `.meta(openapi({ summary, description, tags, method, successStatus? }), cronMeta(...)?)` → `.input(...)` (if any, called once: v2 stacks repeated `.input`/`.output` calls) → `.output(...)` → `.handler(({ context, input }) => featureHandler.method({ context, input }))`. Choosing `method` and `successStatus`: `references/api/http-semantics.md`.
 - `<feature>/events.ts` — only in a feature that streams events: its publisher and every event it carries. See "Event streams" below.
 - `src/<version>/router.ts` nests each feature's router under its own key (`apiKey: apiKeyRouter`, `health: healthRouter`).
+- `packages/api/tests/v1/<feature>/handler.test.ts` — the unit tests of the handler, written with it (`references/writing-unit-tests.md`). A feature isn't done without them.
 
 Some features also carry feature-specific modules beside those four (`cron/discovery.ts`, `cron/events.ts`, `cron/runtime.ts`, `entity-icon/targets.ts`).
 
@@ -61,10 +62,12 @@ A feature whose procedures push events over SSE keeps the same file split and ad
 
 ## Tests
 
-Every new or changed handler method gets its tests in `packages/api/tests/v1/<feature>/handler.test.ts` in the same change: happy path, each error code it throws, and the rows it writes. A new `src/shared` helper gets `tests/shared/<helper>.test.ts`. Recipe and fake database: `references/testing.md`.
+Every new or changed handler method gets its tests in `packages/api/tests/v1/<feature>/handler.test.ts` in the same change: happy path, each error code it throws, and the rows it writes. A new `src/shared` helper gets `tests/shared/<helper>.test.ts`. What to assert and the recipe: `references/writing-unit-tests.md`; the fake database and fixtures: `references/testing.md`.
 
 ## Wiring rules
 
 - Intra-feature imports use the version-scoped path (`import { apiKeyInput } from "#v1/api-key/input"`).
 - Shared modules (`context.ts`, `errors.ts`, `index.ts`, `shared/*`, `lib/*`) are reached via the unversioned `#*` alias (`import type { Context } from "#context"`), never copied into a version folder.
 - Client calls and HTTP paths always carry the version: `orpc.<version>.<feature>.<method>()`, `/rpc/<version>/<feature>/<method>`, `/api/<version>/<feature>/<method>` — the segment comes from the top-level `appRouter`'s nesting, not a hardcoded prefix in `apps/backend`. A new version is a new `src/<version>/` folder plus one key in the package-root `router.ts`; existing versions are never touched.
+
+Guides (Spanish): `docs/human/backend-api.md`.

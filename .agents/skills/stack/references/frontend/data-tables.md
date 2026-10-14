@@ -58,5 +58,5 @@ For TanStack Table API beyond this file (a feature `useDataTable` doesn't enable
 
 ## Tests
 
-- Hooks and helpers: `apps/frontend/tests/hooks/use-column-preferences.test.ts`, `use-sort-query-param.test.tsx`, `tests/lib/sort-rows.test.ts`.
-- Components: `tests/components/data-display/{data-table-view,data-table-columns-menu,data-table-ordering,row-action-items,sortable-list}.test.*`, `tests/components/resource/sort-controls.test.tsx`. Component tests call `cleanup()` in `afterEach`.
+- Hooks and helpers: `apps/frontend/tests/unit/hooks/use-column-preferences.test.ts`, `use-sort-query-param.test.tsx`, `tests/unit/lib/sort-rows.test.ts`.
+- Components: `tests/unit/components/data-display/{data-table-view,data-table-columns-menu,data-table-ordering,row-action-items,sortable-list}.test.*`, `tests/unit/components/resource/sort-controls.test.tsx`. Component tests call `cleanup()` in `afterEach`.
