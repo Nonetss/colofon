@@ -28,12 +28,15 @@ export function AdminShell({
       {/* `overflow-clip`, not `hidden`: a hidden box still scrolls when focus
           or scrollIntoView reaches something inside it, which slid the page
           up under its header. The page's tables and panels scroll inside
-          their own boxes. */}
+          their own boxes, so the content keeps clear of the phone's fixed
+          "Filtros" bar (`--list-action-bar-offset`, 0 without one) rather
+          than running under it: the page's own bottom padding (1.5rem)
+          plus this leaves 0.75rem above the bar. */}
       <SidebarInset className="h-dvh overflow-clip">
         <header className="flex h-14 shrink-0 items-center gap-2 border-border/40 border-b px-4">
           <SidebarTrigger />
         </header>
-        <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-clip p-4">
+        <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-clip p-4 pb-[max(1rem,calc(var(--list-action-bar-offset)-0.75rem+env(safe-area-inset-bottom)))]">
           {children}
         </div>
       </SidebarInset>

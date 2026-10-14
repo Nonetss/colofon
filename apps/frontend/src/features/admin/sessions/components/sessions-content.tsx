@@ -249,6 +249,7 @@ export function SessionsContent() {
           onResetColumns={preferences.reset}
           scrollRef={setScrollContainer}
           filters={filters}
+          mobileFilters={{ onClear: clearFilters }}
           emptyMessage={
             <FilteredEmpty
               message="Ninguna sesión coincide con los filtros."

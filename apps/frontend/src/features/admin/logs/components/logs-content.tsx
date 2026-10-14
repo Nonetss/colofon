@@ -39,6 +39,7 @@ import { useColumnPreferences } from "@/hooks/use-column-preferences"
 import { columnPreferenceProps, useDataTable } from "@/hooks/use-data-table"
 import { useDebouncedValue } from "@/hooks/use-debounced-value"
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll"
+import { useIsMobile } from "@/hooks/use-mobile"
 import {
   NO_VALUES,
   useQueryParam,
@@ -148,6 +149,7 @@ export function LogsContent() {
     hasNextPage && !isFetchingNextPage
   )
 
+  const isMobile = useIsMobile()
   const [userQuery, setUserQuery] = useState("")
   const userSearch = useAdminUserSearch(userQuery)
   const entryUsers = useMemo(() => usersOf(entries), [entries])
@@ -215,6 +217,32 @@ export function LogsContent() {
     },
   }
 
+  const pageFilterFields = (
+    <>
+      <SearchInput
+        value={path}
+        onValueChange={setPath}
+        placeholder="Filtrar por ruta: /admin/..."
+        label="Filtrar por ruta"
+      />
+      <DatePicker
+        value={from}
+        onChange={setFrom}
+        placeholder="Desde"
+        aria-label="Desde"
+      />
+      <DatePicker
+        value={to}
+        onChange={setTo}
+        placeholder="Hasta"
+        aria-label="Hasta"
+      />
+    </>
+  )
+  const activePageFilters = [path.trim() !== "", from, to].filter(
+    (active) => active !== false && active !== undefined
+  ).length
+
   return (
     <ResourceOverview
       maxWidth="80%"
@@ -233,54 +261,45 @@ export function LogsContent() {
           Actualizar
         </Button>
       }
+      // On phones with no trace notice the slot stays empty, so the list
+      // starts right under the hero.
       filters={
-        <div className="@container">
-          <div className="grid gap-2 @xl:grid-cols-[minmax(0,1fr)_auto_auto]">
-            <SearchInput
-              value={path}
-              onValueChange={setPath}
-              placeholder="Filtrar por ruta: /admin/..."
-              label="Filtrar por ruta"
-            />
-            <DatePicker
-              value={from}
-              onChange={setFrom}
-              placeholder="Desde"
-              aria-label="Desde"
-            />
-            <DatePicker
-              value={to}
-              onChange={setTo}
-              placeholder="Hasta"
-              aria-label="Hasta"
-            />
-          </div>
-          {traceId !== "" && (
-            <div
-              className={cn(
-                textVariants({ role: "compact", tone: "muted" }),
-                "mt-2 flex flex-wrap items-center gap-2"
-              )}
-            >
-              <span>
-                Entradas de la traza{" "}
-                <AppLink
-                  href={`/admin/traces?trace=${traceId}`}
-                  className="font-mono text-foreground underline underline-offset-4"
-                >
-                  {traceId.slice(0, 12)}…
-                </AppLink>
-              </span>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setTraceParam("")}
+        isMobile && traceId === "" ? undefined : (
+          <div className="@container">
+            {/* On phones these go to the bottom bar's sheet with the column
+              filters; the trace notice stays, it isn't a control. */}
+            {isMobile ? null : (
+              <div className="grid gap-2 @xl:grid-cols-[minmax(0,1fr)_auto_auto]">
+                {pageFilterFields}
+              </div>
+            )}
+            {traceId === "" ? null : (
+              <div
+                className={cn(
+                  textVariants({ role: "compact", tone: "muted" }),
+                  "mt-2 flex flex-wrap items-center gap-2"
+                )}
               >
-                Quitar filtro
-              </Button>
-            </div>
-          )}
-        </div>
+                <span>
+                  Entradas de la traza{" "}
+                  <AppLink
+                    href={`/admin/traces?trace=${traceId}`}
+                    className="font-mono text-foreground underline underline-offset-4"
+                  >
+                    {traceId.slice(0, 12)}…
+                  </AppLink>
+                </span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setTraceParam("")}
+                >
+                  Quitar filtro
+                </Button>
+              </div>
+            )}
+          </div>
+        )
       }
       query={{ data: entries, isPending, isError, refetch }}
       loading="Cargando registro de actividad..."
@@ -306,6 +325,11 @@ export function LogsContent() {
           onResetColumns={preferences.reset}
           scrollRef={setScrollContainer}
           filters={filters}
+          mobileFilters={{
+            fields: pageFilterFields,
+            activeCount: activePageFilters,
+            onClear: clearFilters,
+          }}
           emptyMessage={
             <FilteredEmpty
               message="Ninguna entrada coincide con los filtros."

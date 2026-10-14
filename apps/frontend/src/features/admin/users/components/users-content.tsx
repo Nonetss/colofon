@@ -232,6 +232,7 @@ export function UsersContent() {
             onResetColumns={preferences.reset}
             scrollRef={setScrollContainer}
             filters={filters}
+            mobileFilters={{ onClear: clearFilters }}
             emptyMessage={
               <FilteredEmpty
                 message="Ningún usuario coincide con los filtros."
