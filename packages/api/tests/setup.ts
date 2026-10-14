@@ -11,8 +11,8 @@ import { fakeDb } from "#tests/fixtures/db"
  */
 const placeholders = {
   NODE_ENV: "test",
-  // Port 1 on loopback refuses connections; the pg pool connects lazily, so
-  // nothing dials it unless a test runs a query.
+  // Port 1 on loopback refuses connections, and `@nonete/db` is replaced by
+  // the fake below, so nothing ever dials it.
   DATABASE_URL: "postgres://unit-test:unit-test@127.0.0.1:1/unit_test",
   BETTER_AUTH_SECRET: "unit-test-secret-at-least-32-characters-long",
   BETTER_AUTH_URL: "http://localhost:3000",
@@ -39,10 +39,16 @@ const cleared = [
 Object.assign(process.env, placeholders)
 for (const name of cleared) process.env[name] = ""
 
-// `mock.module` holds for the whole run, so `@nonete/db` is replaced once,
-// here, with the shared fake; a per-file mock would leak into other files.
+// `mock.module` holds for the whole run, so each process-wide boundary is
+// replaced once, here, with a shared fake the tests reconfigure and reset; a
+// per-file mock would leak into other files. The env fixture is imported
+// dynamically: a static import would validate the env before the
+// placeholders above are in place.
 mock.module("@nonete/db", () => ({
   db: fakeDb.db,
   createDb: () => fakeDb.db,
   closeDb: async () => {},
 }))
+
+const { testEnv } = await import("#tests/fixtures/env")
+mock.module("@nonete/env/server", () => ({ env: testEnv }))

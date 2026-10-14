@@ -1,24 +1,10 @@
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  mock,
-  spyOn,
-  test,
-} from "bun:test"
-import { env } from "@nonete/env/server"
+import { afterAll, beforeEach, describe, expect, spyOn, test } from "bun:test"
+import { resetEnv, testEnv } from "#tests/fixtures/env"
+import { expectErrorCode } from "#tests/fixtures/errors"
+import { logsHandler } from "#v1/logs/handler"
+import { logsInput } from "#v1/logs/input"
 
 const LOKI_URL = "http://loki.test:3100"
-
-// The preload leaves LOKI_URL unset; this copy lets each test choose. Module
-// mocks last for the whole run, so every other var keeps its real value.
-const testEnv = { ...env }
-mock.module("@nonete/env/server", () => ({ env: testEnv }))
-
-const { logsHandler } = await import("#v1/logs/handler")
-const { expectErrorCode } = await import("#tests/fixtures/errors")
-const { logsInput } = await import("#v1/logs/input")
 
 type QueryInput = Parameters<typeof logsHandler.query>[0]["input"]
 
@@ -44,12 +30,13 @@ function requestedUrl(): URL {
 }
 
 beforeEach(() => {
+  resetEnv()
   testEnv.LOKI_URL = LOKI_URL
   fetchSpy.mockReset()
 })
 
-afterEach(() => {
-  testEnv.LOKI_URL = undefined
+afterAll(() => {
+  fetchSpy.mockRestore()
 })
 
 describe("logs.query", () => {
