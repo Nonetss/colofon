@@ -1,4 +1,5 @@
 import { httpInstrumentationMiddleware } from "@hono/otel"
+import { withoutTracing } from "@nonete/telemetry/span"
 import type { Context } from "hono"
 import { createMiddleware } from "hono/factory"
 import { routePath } from "hono/route"
@@ -33,14 +34,28 @@ const traceHttp = httpInstrumentationMiddleware({
   getRoute: traceRoute,
 })
 
+/** The trace viewer's own procedures, over RPC and OpenAPI. */
+const TRACE_VIEWER_PATHS = ["/rpc/v1/traces/", "/api/v1/traces/"]
+
+function isHealthcheck(c: Context): boolean {
+  return c.req.method === "GET" && c.req.path === "/"
+}
+
+/** The viewer reading traces: tracing it would fill the list with itself. */
+function isTraceViewer(c: Context): boolean {
+  return TRACE_VIEWER_PATHS.some((prefix) => c.req.path.startsWith(prefix))
+}
+
 /**
  * One `SERVER` span per request (`<METHOD> <route>`, e.g.
  * `QUERY /rpc/v1/cron/list`), continuing the caller's `traceparent`.
  * Registered first, so request logging, session resolution and oRPC's own
- * spans run inside it. The compose healthcheck's `GET /` every 10 s is left
- * out.
+ * spans run inside it. Left out: the compose healthcheck's `GET /` every
+ * 10 s, and the trace viewer, run with tracing switched off so neither its
+ * request nor the oRPC and query spans inside it are recorded.
  */
 export const requestTracing = createMiddleware(async (c, next) => {
-  if (c.req.method === "GET" && c.req.path === "/") return next()
+  if (isHealthcheck(c)) return next()
+  if (isTraceViewer(c)) return withoutTracing(() => next())
   return traceHttp(c, next)
 })

@@ -12,6 +12,7 @@ import {
   TraceFlags,
   trace,
 } from "@opentelemetry/api"
+import { suppressTracing } from "@opentelemetry/core"
 import {
   ATTR_HTTP_REQUEST_METHOD,
   ATTR_HTTP_RESPONSE_STATUS_CODE,
@@ -20,8 +21,8 @@ import {
 } from "@opentelemetry/semantic-conventions"
 
 /**
- * Span helpers that depend on `@opentelemetry/api` only, so any package can
- * create spans without pulling in the SDK. With no tracer provider
+ * Span helpers that depend on `@opentelemetry/api` (and `core`'s context
+ * helpers) only, so any package can create spans without pulling in the SDK. With no tracer provider
  * registered (telemetry off, see `startTelemetry`) the API hands out no-op
  * spans and every helper here costs next to nothing.
  */
@@ -125,6 +126,16 @@ export function withServerSpan(
         }
       }
     )
+}
+
+/**
+ * Runs `fn` with tracing switched off: every span started inside it, by any
+ * instrumentation (oRPC, `pg`), is a no-op that is never exported, so the
+ * work leaves no trace at all rather than a trace hidden later. For
+ * requests not worth tracing, like the trace viewer reading traces.
+ */
+export function withoutTracing<T>(fn: () => T): T {
+  return context.with(suppressTracing(context.active()), fn)
 }
 
 /**

@@ -12,6 +12,7 @@ import {
   activeTraceFields,
   injectTraceHeaders,
   linksToActiveSpan,
+  withoutTracing,
   withServerSpan,
   withSpan,
 } from "#span"
@@ -231,5 +232,25 @@ describe("activeTraceFields", () => {
 describe("linksToActiveSpan", () => {
   test("is empty outside a span", () => {
     expect(linksToActiveSpan()).toEqual([])
+  })
+})
+
+describe("withoutTracing", () => {
+  test("records no span inside it, nested ones included", async () => {
+    const result = await withoutTracing(() =>
+      withSpan(TRACER, "outer", {}, () =>
+        withSpan(TRACER, "inner", {}, (span) => span.isRecording())
+      )
+    )
+
+    expect(result).toBe(false)
+    expect(tracing.spans()).toEqual([])
+  })
+
+  test("leaves tracing on outside it", async () => {
+    withoutTracing(() => undefined)
+    await withSpan(TRACER, "after", {}, () => undefined)
+
+    expect(tracing.spans().map((span) => span.name)).toEqual(["after"])
   })
 })
