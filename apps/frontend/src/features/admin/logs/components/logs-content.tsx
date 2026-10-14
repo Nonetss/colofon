@@ -265,7 +265,7 @@ export function LogsContent() {
               <span>
                 Entradas de la traza{" "}
                 <AppLink
-                  href={`/admin/traces/${traceId}`}
+                  href={`/admin/traces?trace=${traceId}`}
                   className="font-mono text-foreground underline underline-offset-4"
                 >
                   {traceId.slice(0, 12)}…
@@ -337,7 +337,7 @@ export function LogsContent() {
                     <dt className="text-muted-foreground">Traza</dt>
                     <dd className="mt-0.5">
                       <AppLink
-                        href={`/admin/traces/${entry.traceId}`}
+                        href={`/admin/traces?trace=${entry.traceId}`}
                         className="underline underline-offset-4"
                       >
                         Ver traza

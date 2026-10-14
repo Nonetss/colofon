@@ -14,7 +14,6 @@ export type SurfaceId =
   | "admin-sessions"
   | "admin-logs"
   | "admin-traces"
-  | "admin-trace"
   | "admin-organizations"
   | "admin-teams"
   | "admin-api-keys"
@@ -27,7 +26,6 @@ export type SurfaceId =
   | "login"
   | "signup"
   | "not-found"
-
 /**
  * Key of a navbar-search source: how to enumerate the records behind a dynamic
  * `[param]` surface. Resolved by the registry in
@@ -247,17 +245,6 @@ const appSurfaceDefinitions: Partial<Record<SurfaceId, SurfaceDefinition>> = {
         adminOnly: true,
       },
     },
-  },
-  // Top level, not an `admin` child: a dynamic route has no place in the
-  // admin navbar dropdown or sidebar. `/admin/...` is admin-gated anyway.
-  "admin-trace": {
-    id: "admin-trace",
-    path: "/admin/traces/[traceId]",
-    title: "Admin · Traza",
-    label: "Traza",
-    description: "Cascada de spans de una petición o ejecución.",
-    icon: iconRef("admin", "traces"),
-    adminOnly: true,
   },
   profile: {
     id: "profile",

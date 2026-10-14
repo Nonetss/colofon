@@ -3,13 +3,14 @@ import { getIcon } from "@/lib/icon-registry"
 const ChartGantt = getIcon("admin", "traces")
 const OctagonX = getIcon("status", "error")
 const ScrollText = getIcon("admin", "logs")
+const X = getIcon("controls", "close")
 
 import { useState } from "react"
 import { Text } from "@/components/shared/brand/typography"
 import { MetadataDefinitionList } from "@/components/shared/data-display/metadata-cell"
 import { StatusTag } from "@/components/shared/data-display/status-dot"
+import { Hint } from "@/components/shared/feedback/hint"
 import { StateCard } from "@/components/shared/feedback/state-card"
-import { PageHero } from "@/components/shared/layout/page-hero"
 import { AppLink } from "@/components/ui/app-link"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { TraceSpanDetail } from "@/features/admin/traces/detail/components/trace-span-detail"
@@ -45,7 +46,7 @@ function traceDescription(trace: TraceDetail): string {
   return `${traceServiceLabel(root.service)} · ${startedAt}`
 }
 
-/** The span the page shows: the one picked, else the root. */
+/** The span the panel shows: the one picked, else the root. */
 function selectedSpanOf(
   trace: TraceDetail,
   selectedSpanId: string | null
@@ -53,6 +54,21 @@ function selectedSpanOf(
   const picked = trace.spans.find((span) => span.spanId === selectedSpanId)
   if (picked) return picked
   return trace.spans[0]
+}
+
+function CloseButton({ onClose }: { onClose: () => void }) {
+  return (
+    <Hint label="Cerrar la traza">
+      <Button
+        variant="ghost"
+        size="icon-sm"
+        aria-label="Cerrar la traza"
+        onClick={onClose}
+      >
+        <X className="size-4" />
+      </Button>
+    </Hint>
+  )
 }
 
 function TraceError({
@@ -101,12 +117,29 @@ function TraceError({
   )
 }
 
-export function TraceContent({ traceId }: { traceId: string }) {
+/**
+ * One trace beside the list on `/admin/traces`: a summary, the waterfall of
+ * its spans and the selected span's attributes and events.
+ */
+export function TracePanel({
+  traceId,
+  onClose,
+}: {
+  traceId: string
+  onClose: () => void
+}) {
   const { data: trace, isPending, isError, error, refetch } = useTrace(traceId)
   const [selectedSpanId, setSelectedSpanId] = useState<string | null>(null)
 
   if (isError) {
-    return <TraceError error={error} onRetry={() => refetch()} />
+    return (
+      <div className="flex flex-col gap-2">
+        <div className="flex justify-end">
+          <CloseButton onClose={onClose} />
+        </div>
+        <TraceError error={error} onRetry={() => refetch()} />
+      </div>
+    )
   }
   if (isPending) {
     return <StateCard spinner title="Cargando traza..." />
@@ -115,28 +148,33 @@ export function TraceContent({ traceId }: { traceId: string }) {
   const selected = selectedSpanOf(trace, selectedSpanId)
 
   return (
-    <div className="flex flex-col gap-8">
-      <PageHero
-        surface="admin-trace"
-        title={traceTitle(trace)}
-        description={traceDescription(trace)}
-        status={
-          trace.errorCount > 0 ? (
-            <StatusTag dotTone="destructive">
+    <section
+      aria-label={`Traza ${traceTitle(trace)}`}
+      className="flex flex-col gap-6"
+    >
+      <header className="flex items-start gap-3">
+        <div className="flex min-w-0 flex-1 flex-col gap-1">
+          <Text as="h2" variant="headline" className="break-all">
+            {traceTitle(trace)}
+          </Text>
+          <Text variant="meta" tone="muted">
+            {traceDescription(trace)}
+          </Text>
+          {trace.errorCount > 0 ? (
+            <StatusTag dotTone="destructive" className="mt-1">
               {errorsLabel(trace.errorCount)}
             </StatusTag>
-          ) : null
-        }
-        action={
-          <AppLink
-            href={`/admin/logs?trace=${traceId}`}
-            className={buttonVariants({ variant: "outline", size: "sm" })}
-          >
-            <ScrollText className="size-3.5" />
-            Ver en el registro de actividad
-          </AppLink>
-        }
-      />
+          ) : null}
+        </div>
+        <AppLink
+          href={`/admin/logs?trace=${trace.traceId}`}
+          className={buttonVariants({ variant: "outline", size: "sm" })}
+        >
+          <ScrollText className="size-3.5" />
+          Registro
+        </AppLink>
+        <CloseButton onClose={onClose} />
+      </header>
 
       <MetadataDefinitionList
         columns={4}
@@ -196,6 +234,6 @@ export function TraceContent({ traceId }: { traceId: string }) {
       />
 
       {selected ? <TraceSpanDetail span={selected} /> : null}
-    </div>
+    </section>
   )
 }

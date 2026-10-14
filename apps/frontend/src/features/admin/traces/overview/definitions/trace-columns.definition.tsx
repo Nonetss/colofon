@@ -1,9 +1,6 @@
 import { createColumnHelper } from "@tanstack/react-table"
 import { Text } from "@/components/shared/brand/typography"
-import {
-  DataTableIdentityCell,
-  DataTableStatusCell,
-} from "@/components/shared/data-display/data-table-cell-content"
+import { DataTableStatusCell } from "@/components/shared/data-display/data-table-cell-content"
 import type { DataTableFilterOption } from "@/components/shared/data-display/data-table-column-filter"
 import {
   type TraceSummary,
@@ -36,11 +33,11 @@ export const TRACE_ERROR_OPTIONS: DataTableFilterOption[] = [
   { value: TRACE_ERROR_FILTER_VALUE, label: "Con errores" },
 ]
 
-export function traceHref(trace: Pick<TraceSummary, "traceId">): string {
-  return `/admin/traces/${trace.traceId}`
-}
+/** Rendered by the page (`renderControl`): opening a trace sets the page's
+ *  selection, which a module-level cell can't reach. */
+export const TRACE_NAME_COLUMN = "rootName"
 
-function rootNameOf(trace: TraceSummary): string {
+export function rootNameOf(trace: TraceSummary): string {
   if (trace.rootName === "") return "(span raíz pendiente)"
   return trace.rootName
 }
@@ -62,24 +59,17 @@ const helper = createColumnHelper<DataTableFeatures, TraceSummary>()
 
 export const traceColumns = helper.columns([
   helper.accessor(rootNameOf, {
-    id: "rootName",
+    id: TRACE_NAME_COLUMN,
     header: "Traza",
     size: 340,
     minSize: 200,
     enableSorting: true,
-    meta: { label: "Traza", reorderable: false, compact: "primary" },
-    cell: (info) => (
-      <DataTableIdentityCell
-        primary={info.getValue()}
-        secondary={
-          <span className="font-mono">
-            {info.row.original.traceId.slice(0, 16)}
-          </span>
-        }
-        href={traceHref(info.row.original)}
-        label={`Ver la traza ${info.getValue()}`}
-      />
-    ),
+    meta: {
+      label: "Traza",
+      reorderable: false,
+      compact: "primary",
+      rowRendered: true,
+    },
   }),
   helper.accessor((trace) => traceServiceLabel(trace.rootService), {
     id: "service",
