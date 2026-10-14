@@ -3,9 +3,7 @@
 ## Requisitos
 
 - [Bun](https://bun.sh) 1.4.2 (es a la vez runtime, gestor de paquetes y test runner).
-- Docker con Compose 2.23.1 o superior (para Loki, Tempo y el stack en contenedores).
-- Una base de datos PostgreSQL de desarrollo fuera del proyecto, en otro
-  servidor (ver [Base de datos](#base-de-datos)).
+- Docker con Compose 2.23.1 o superior (para PostgreSQL, Loki, Tempo y el stack en contenedores).
 - `openssl` (lo usan los scripts que generan secretos).
 
 ## Primera vez
@@ -18,8 +16,8 @@ bun run setup:dev
 `setup:dev` crea el `.env` de la raíz a partir de `.env.example`, rellena los
 secretos con valores aleatorios y añade las credenciales del administrador
 inicial, que imprime por pantalla. Si ya existe un `.env` no lo toca, salvo
-que le pases `--force`. Después pon en `DATABASE_URL` la dirección de tu base
-de datos de desarrollo.
+que le pases `--force`. Su `DATABASE_URL` ya apunta al PostgreSQL de
+desarrollo (ver [Base de datos](#base-de-datos)).
 
 ## Dos formas de arrancar
 
@@ -34,17 +32,17 @@ bun run dev:down   # elimina los contenedores
 ```
 
 Levanta el frontend (`astro dev`, en `:4320`), el backend (`bun --hot`), el
-gateway (con `Caddyfile.dev`, que sirve la app en `https://localhost:4321`) y
-Loki y Tempo con `compose.dev.yml`. Como en producción, **solo el gateway
-publica un puerto** (`https://localhost:4321`). Las apps, Loki y Tempo quedan
-en la red interna del stack y se encuentran por nombre de servicio: el compose
-sobrescribe `BACKEND_URL`, `LOKI_URL`, `OTEL_EXPORTER_OTLP_ENDPOINT` y
-`TEMPO_URL`, y el resto sale del `.env` sin cambios. No levanta
-ninguna base de datos: el backend usa la de `DATABASE_URL`, que está en otro
-servidor. No se monta el repositorio: `docker compose watch` copia tus cambios
+gateway (con `Caddyfile.dev`, que sirve la app en `https://localhost:4321`),
+PostgreSQL, Loki y Tempo con `compose.dev.yml`. Como en producción, **solo el
+gateway publica un puerto** (`https://localhost:4321`). Las apps, PostgreSQL,
+Loki y Tempo quedan en la red interna del stack y se encuentran por nombre de
+servicio: el compose sobrescribe `BACKEND_URL`, `DATABASE_URL`, `LOKI_URL`,
+`OTEL_EXPORTER_OTLP_ENDPOINT` y `TEMPO_URL`, y el resto sale del `.env` sin
+cambios. No se monta el repositorio: `docker compose watch` copia tus cambios
 dentro de los contenedores. Solo hay volúmenes con nombre para la caché de
-Vite (`frontend_vite_cache`) y la autoridad de certificación del gateway
-(`gateway_data`); `bun run dev:down -v` los borra.
+Vite (`frontend_vite_cache`), la autoridad de certificación del gateway
+(`gateway_data`) y los datos (`db_data`, `loki_data`, `tempo_data`);
+`bun run dev:down -v` los borra.
 
 | Si editas… | Pasa esto |
 | --- | --- |
@@ -56,6 +54,7 @@ Vite (`frontend_vite_cache`) y la autoridad de certificación del gateway
 ### En nativo (`bun run dev:local`)
 
 ```bash
+bun run postgres:start # solo PostgreSQL, en Docker, en 127.0.0.1:5432
 bun run loki:start  # solo Loki, en Docker, en 127.0.0.1:3100 (opcional)
 bun run tempo:start # solo Tempo, en Docker, en 127.0.0.1:4318 y :3200 (opcional)
 bun run gateway     # el gateway de desarrollo: https://localhost:4321
@@ -102,18 +101,20 @@ desarrollo comparten una conexión en vez de hacer cola en seis.
 
 ## Base de datos
 
-El proyecto no levanta ninguna base de datos en desarrollo. La de desarrollo
-vive **fuera del proyecto, en otro servidor**, y `DATABASE_URL` en el `.env`
-apunta a ella. Así:
+El desarrollo usa su propio PostgreSQL 17, en Docker:
 
-- El modo Docker y el nativo usan siempre los mismos datos.
-- Borrar los contenedores o los volúmenes del stack de desarrollo no toca los
-  datos.
-- Tu máquina no tiene que ejecutar PostgreSQL ni reservar el puerto 5432.
+- `bun run dev` lo levanta como el servicio `db` y el backend se conecta a él
+  solo, diga lo que diga el `.env`.
+- En nativo, `bun run postgres:start` publica la misma base de datos en
+  `localhost:5432` (o en `POSTGRES_PORT` si ese puerto está ocupado), que es el
+  `DATABASE_URL` de `.env.example`.
+- Los dos guardan los datos en el volumen `db_data`, así que comparten los
+  mismos datos. `bun run dev:down` no los borra; `bun run dev:down -v`, sí.
 
-Necesitas una base de datos PostgreSQL vacía (o con datos de desarrollo) y un
-usuario con permisos para crear tablas, porque el backend aplica las
-migraciones al arrancar. No apuntes `DATABASE_URL` a la base de datos de
+La base de datos empieza vacía: el backend aplica las migraciones y crea el
+administrador al arrancar. Si prefieres otro PostgreSQL (uno compartido en
+otro servidor, por ejemplo), apunta a él `DATABASE_URL` y usa el modo nativo.
+No apuntes `DATABASE_URL` a la base de datos de
 producción.
 
 | Comando | Qué hace |

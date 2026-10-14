@@ -6,8 +6,8 @@ Root scripts (`package.json`) go through Turbo (`turbo.json`) or `docker compose
 
 | Command | What it does |
 | --- | --- |
-| `bun run dev` | `docker compose -f compose.dev.yml up --build --watch`: the hot-reloading Docker dev stack, Loki and Tempo included and no database (see `docker.md`); `bun run dev:down` removes it. |
-| `bun run dev:local` | Native dev: `turbo watch dev`, persistent; depends on `^build`. Needs the external dev database in `DATABASE_URL` and `bun run gateway` for the dev URL `https://localhost:4321` (`astro dev` itself is on `:4320`); `bun run loki:start` for the activity log and `bun run tempo:start` for traces. Same host ports as the Docker dev stack, so only one runs at a time; never stop the user's running stack to start the other. |
+| `bun run dev` | `docker compose -f compose.dev.yml up --build --watch`: the hot-reloading Docker dev stack, PostgreSQL, Loki and Tempo included (see `docker.md`); `bun run dev:down` removes it. |
+| `bun run dev:local` | Native dev: `turbo watch dev`, persistent; depends on `^build`. Needs a PostgreSQL in `DATABASE_URL` (`bun run postgres:start` for the default one) and `bun run gateway` for the dev URL `https://localhost:4321` (`astro dev` itself is on `:4320`); `bun run loki:start` for the activity log and `bun run tempo:start` for traces. Same host ports as the Docker dev stack, so only one runs at a time; never stop the user's running stack to start the other. |
 | `bun run dev:frontend` / `dev:backend` | `turbo watch -F frontend dev` / `-F backend dev`. |
 | `bun run gateway` | Runs only the dev gateway container (`apps/gateway/compose.yml`, host network, `Caddyfile.dev`) in front of natively running apps: the dev URL `https://localhost:4321` (local CA, HTTP/2). Required for native dev. |
 | `bun run dev:cert` | Exports the dev gateway's local CA root (volume `stack-dev_gateway_data`) to `caddy-local-root.crt` (git-ignored), to import once in the browser as a trusted authority. The gateway must have started once. |
@@ -17,10 +17,12 @@ Per package: backend `bun run --hot src/index.ts`; frontend `astro dev`.
 
 ## Dev database, Loki and Tempo
 
-The repo runs no dev database: `DATABASE_URL` in `.env` points at a PostgreSQL outside the project, on another server.
+The Docker dev stack runs all three itself. For native dev, start only what you need:
 
 | Command | What it does |
 | --- | --- |
+| `bun run postgres:start` | `docker compose -f compose.dev.yml --profile native up -d db-native`: only the dev PostgreSQL, on `127.0.0.1:5432` or `POSTGRES_PORT` (the `.env.example` `DATABASE_URL`), for native dev. |
+| `bun run postgres:stop` | Stop it (the `db_data` volume stays). |
 | `bun run loki:start` | `docker compose -f compose.dev.yml --profile native up -d loki-native`: only the dev Loki, on `127.0.0.1:3100`, for native dev (`loki:stop` stops it). |
 | `bun run loki:stop` | Stop it (the `loki_data` volume stays). |
 | `bun run tempo:start` | `docker compose -f compose.dev.yml --profile native up -d tempo-native`: only the dev Tempo, OTLP on `127.0.0.1:4318` and its query API on `127.0.0.1:3200`, for native dev. |

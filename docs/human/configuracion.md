@@ -35,7 +35,7 @@ algo que ya existe.
 | Variable | Significado |
 | --- | --- |
 | `NODE_ENV` | Entorno de ejecución. En `production`, los logs salen como JSON. |
-| `DATABASE_URL` | La única configuración de base de datos que leen las apps. En desarrollo apunta a una base de datos fuera del proyecto, en otro servidor. |
+| `DATABASE_URL` | La única configuración de base de datos que leen las apps. En desarrollo nativo, el PostgreSQL de `bun run postgres:start` (`localhost:5432`); el stack de Docker la sobrescribe para usar su propio `db`. |
 | `BETTER_AUTH_URL` | La URL base de Better Auth. Solo la lee el backend, pero tiene que ser el origen público que usa el navegador (el mismo valor que `CORS_ORIGIN`), no la dirección del backend: con ella se construyen las URL de retorno de OAuth/OIDC (`<BETTER_AUTH_URL>/api/auth/callback/oidc`). En desarrollo, `https://localhost:4321` (el gateway de desarrollo). |
 | `BETTER_AUTH_SECRET` | Firma sesiones y cookies. Al menos 32 caracteres (`openssl rand -base64 48`). |
 | `CORS_ORIGIN` | El origen público que usa el navegador. Se usa para CORS y como origen de confianza de Better Auth. |

@@ -13,12 +13,12 @@ Hay cuatro ficheros compose, uno por forma de ejecutar el proyecto:
 
 Está explicado en [Desarrollo local](desarrollo.md#con-docker-bun-run-dev).
 Lo importante: como en producción, solo el gateway publica un puerto
-(`https://localhost:4321`, HTTPS + HTTP/2). Las apps, Loki y Tempo quedan en
-la red interna y leen el `.env` sin cambios, salvo `BACKEND_URL`, `LOKI_URL`,
-`OTEL_EXPORTER_OTLP_ENDPOINT` y `TEMPO_URL`, que el compose apunta a los
-nombres de servicio. No levanta base de datos: la de
-desarrollo está fuera del proyecto, en otro servidor, y las apps llegan a ella
-por el `DATABASE_URL` del `.env`. Sí levanta Loki (`stack-dev-loki`, solo en la
+(`https://localhost:4321`, HTTPS + HTTP/2). Las apps, PostgreSQL, Loki y Tempo
+quedan en la red interna y leen el `.env` sin cambios, salvo `BACKEND_URL`,
+`DATABASE_URL`, `LOKI_URL`, `OTEL_EXPORTER_OTLP_ENDPOINT` y `TEMPO_URL`, que el
+compose apunta a los nombres de servicio. Levanta su propio PostgreSQL
+(`stack-dev-db`, volumen `db_data`), y en nativo `bun run postgres:start`
+arranca `db-native` en `127.0.0.1:5432`. También levanta Loki (`stack-dev-loki`, solo en la
 red interna) con la misma imagen y retención que en `compose.yml`. Para el
 modo nativo, `bun run loki:start` arranca el servicio `loki-native` (perfil
 `native`) publicado solo en `127.0.0.1:3100`. Lo mismo con Tempo

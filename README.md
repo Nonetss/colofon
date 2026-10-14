@@ -224,10 +224,12 @@ prints the admin credentials it generated.
 
 ### Database
 
-The repo runs no database in development. Use a dev PostgreSQL that lives
-outside the project, on another server, and point `DATABASE_URL` in `.env` at
-it: native dev and the Docker dev stack share it, and it survives removing the
-dev containers. There is no manual schema step: on
+Development runs its own PostgreSQL 17. `bun run dev` starts it as the stack's
+`db` service and points the backend at it; for native dev, `bun run
+postgres:start` publishes the same database on `localhost:5432`, the
+`DATABASE_URL` of `.env.example`. Both keep their data in the `db_data` volume,
+so they share it; `bun run dev:down -v` deletes it. There is no manual schema
+step: on
 startup the backend applies the committed migrations from
 `packages/db/src/migrations/` and creates the admin user from `ADMIN_EMAIL` /
 `ADMIN_PASSWORD`. After changing the schema in `packages/db/src/schema/`,
@@ -237,9 +239,9 @@ restart the backend.
 ### Run everything
 
 ```bash
-bun run dev        # Docker dev stack with hot reload (Loki, Tempo and the gateway included); Ctrl+C stops
+bun run dev        # Docker dev stack with hot reload (PostgreSQL, Loki, Tempo and the gateway included); Ctrl+C stops
 bun run dev:local  # the same apps natively through Turbo; also run `bun run gateway`
-                   # (and `bun run loki:start` / `bun run tempo:start` for logs and traces)
+                   # plus `bun run postgres:start` (and `loki:start` / `tempo:start` for logs and traces)
 ```
 
 - App: [https://localhost:4321](https://localhost:4321), the dev gateway (HTTPS + HTTP/2) and the only port dev exposes. It routes `/rpc`, `/api`, `/scalar` and `/openapi.json` to the backend and everything else to `astro dev`, exactly like production.
@@ -272,13 +274,12 @@ bun run dev:down   # remove the dev containers
 
 `compose.dev.yml` runs the frontend (`astro dev` on `:4320`) and the backend
 (`bun --hot`) from `apps/*/Dockerfile.dev`, the gateway with
-`apps/gateway/Caddyfile.dev`, `loki` and `tempo`, so `/admin/logs` and
+`apps/gateway/Caddyfile.dev`, `db` (PostgreSQL), `loki` and `tempo`, so `/admin/logs` and
 `/admin/traces` work in development. As in production, **only the gateway publishes a port**
-(`https://localhost:4321`). The apps, Loki and Tempo stay on the stack's private
+(`https://localhost:4321`). The apps, PostgreSQL, Loki and Tempo stay on the stack's private
 network and reach each other by service name: compose overrides `BACKEND_URL`,
-`LOKI_URL`, `OTEL_EXPORTER_OTLP_ENDPOINT` and `TEMPO_URL`, and everything else comes from the root `.env` unchanged.
-There is no database service: the backend uses the external dev PostgreSQL in
-`DATABASE_URL`. `docker compose watch` copies your edits into the containers:
+`DATABASE_URL`, `LOKI_URL`, `OTEL_EXPORTER_OTLP_ENDPOINT` and `TEMPO_URL`, and everything else comes from the root `.env` unchanged.
+`docker compose watch` copies your edits into the containers:
 
 | You edit | What happens |
 |---|---|
@@ -342,6 +343,7 @@ There are no git hooks.
 - `bun run build`: Build all applications
 - `bun run setup:dev`: Generate the local root `.env`
 - `bun run loki:start` / `loki:stop`: Only the dev Loki container on `127.0.0.1:3100` (`loki-native`), for native dev
+- `bun run postgres:start` / `postgres:stop`: Only the dev PostgreSQL container on `127.0.0.1:5432` (`db-native`), for native dev
 - `bun run tempo:start` / `tempo:stop`: Only the dev Tempo container, OTLP on `127.0.0.1:4318` and its query API on `127.0.0.1:3200` (`tempo-native`), for native dev
 - `bun run db:push` / `db:generate` / `db:migrate` / `db:studio`: Drizzle schema commands
 - `bun run icons:catalog`: Regenerate the Lucide icon catalog used by the entity icon picker
