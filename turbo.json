@@ -33,6 +33,9 @@
     "@nonete/logger#build": {
       "outputs": []
     },
+    "@nonete/telemetry#build": {
+      "outputs": []
+    },
     "dev": {
       "dependsOn": ["^build"],
       "inputs": ["package.json", "$TURBO_ROOT$/.env*"],

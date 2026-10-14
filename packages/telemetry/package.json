@@ -1,0 +1,40 @@
+{
+  "name": "@nonete/telemetry",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "imports": {
+    "#tests/*": "./tests/*.ts",
+    "#*": "./src/*.ts"
+  },
+  "exports": {
+    ".": {
+      "default": "./src/index.ts"
+    },
+    "./span": {
+      "default": "./src/span.ts"
+    },
+    "./testing": {
+      "default": "./src/testing.ts"
+    }
+  },
+  "scripts": {
+    "build": "true",
+    "check-types": "tsc -b",
+    "test": "bun test --only-failures"
+  },
+  "dependencies": {
+    "@opentelemetry/api": "catalog:",
+    "@opentelemetry/context-async-hooks": "catalog:",
+    "@opentelemetry/core": "catalog:",
+    "@opentelemetry/exporter-trace-otlp-http": "catalog:",
+    "@opentelemetry/resources": "catalog:",
+    "@opentelemetry/sdk-trace-base": "catalog:",
+    "@opentelemetry/semantic-conventions": "catalog:"
+  },
+  "devDependencies": {
+    "@nonete/config": "workspace:*",
+    "@types/bun": "catalog:",
+    "typescript": "catalog:"
+  }
+}
