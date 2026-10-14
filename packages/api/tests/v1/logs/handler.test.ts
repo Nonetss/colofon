@@ -84,6 +84,22 @@ describe("logs.query", () => {
     )
   })
 
+  test("filters by trace id on top of the activity types", async () => {
+    fetchSpy.mockResolvedValue(lokiResponse([]))
+
+    await logsHandler.query({
+      input: input({ traceId: "25942dac5ae1610f0c180b4d39613cfc" }),
+    })
+
+    expect(requestedUrl().searchParams.get("query")).toBe(
+      '{service=~"stack-backend|stack-frontend"} | json | type=~"page_view|api_call" | traceId="25942dac5ae1610f0c180b4d39613cfc"'
+    )
+  })
+
+  test("rejects a trace id that is not 32 hex characters", () => {
+    expect(logsInput.query.safeParse({ traceId: "abc" }).success).toBe(false)
+  })
+
   test("fails with BAD_GATEWAY when Loki can't be reached", async () => {
     fetchSpy.mockRejectedValue(new TypeError("fetch failed"))
     await expectErrorCode(logsHandler.query({ input: input() }), "BAD_GATEWAY")
@@ -117,6 +133,7 @@ describe("logs.query", () => {
             status: 500,
             userId: "u1",
             email: "ana@example.com",
+            traceId: "25942dac5ae1610f0c180b4d39613cfc",
           }),
         ],
       ])
@@ -135,8 +152,13 @@ describe("logs.query", () => {
       path: null,
       userId: "u1",
       email: "ana@example.com",
+      traceId: "25942dac5ae1610f0c180b4d39613cfc",
     })
-    expect(entries[1]).toMatchObject({ userId: null, email: null })
+    expect(entries[1]).toMatchObject({
+      userId: null,
+      email: null,
+      traceId: null,
+    })
     expect(nextCursor).toBeNull()
   })
 

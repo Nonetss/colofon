@@ -72,6 +72,9 @@ function buildLogQL(input: LogsQueryInput): string {
   if (input.path) {
     query += ` | path=~"${escapeLogQLString(`.*${escapeRegex(input.path)}.*`)}"`
   }
+  if (input.traceId) {
+    query += ` | traceId="${escapeLogQLString(input.traceId)}"`
+  }
   return query
 }
 
@@ -137,6 +140,11 @@ function resolveLevel(level: unknown): string {
   return String(level ?? "info")
 }
 
+function stringOrNull(value: unknown): string | null {
+  if (typeof value === "string") return value
+  return null
+}
+
 /** `ts` is Loki's own stream timestamp (nanoseconds), not derived from the
  * pino line — that's what makes it a valid pagination cursor. */
 function parseLogEntry(ts: bigint, line: string): LogEntry | undefined {
@@ -157,6 +165,7 @@ function parseLogEntry(ts: bigint, line: string): LogEntry | undefined {
     path: typeof parsed.path === "string" ? parsed.path : null,
     method: typeof parsed.method === "string" ? parsed.method : null,
     statusCode: typeof parsed.status === "number" ? parsed.status : null,
+    traceId: stringOrNull(parsed.traceId),
     raw: parsed,
   }
 }

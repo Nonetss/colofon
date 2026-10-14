@@ -48,6 +48,7 @@ export function useActivityLog(
         path: textInput(filters.path),
         from: dayStart(filters.from),
         to: dayEnd(filters.to),
+        traceId: textInput(filters.traceId),
         order: ordering.order,
         cursor,
         limit: PAGE_SIZE,

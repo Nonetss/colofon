@@ -13,6 +13,7 @@ import { InfiniteScrollSentinel } from "@/components/shared/data-display/infinit
 import { JsonView } from "@/components/shared/data-display/json-view"
 import { SearchInput } from "@/components/shared/form/search-input"
 import { ResourceOverview } from "@/components/shared/resource/resource-overview"
+import { AppLink } from "@/components/ui/app-link"
 import { Button } from "@/components/ui/button"
 import { DatePicker } from "@/components/ui/date-picker"
 import {
@@ -45,6 +46,15 @@ import {
 } from "@/hooks/use-query-param"
 import { useSortQueryParam } from "@/hooks/use-sort-query-param"
 import { cn } from "@/lib/utils"
+
+const TRACE_ID_PATTERN = /^[0-9a-f]{32}$/
+
+/** The `?trace=` filter, set when arriving from a trace's page. Anything
+ *  that isn't a trace id is ignored instead of failing the query. */
+function traceIdOf(param: string): string {
+  if (TRACE_ID_PATTERN.test(param)) return param
+  return ""
+}
 
 /** The users named on the loaded entries. Entries carry the email logged
  *  with them but no name, so the email names them in the filter. */
@@ -82,6 +92,8 @@ export function LogsContent() {
     NO_VALUES,
     valueListCodec
   )
+  const [traceParam, setTraceParam] = useQueryParam("trace", "")
+  const traceId = traceIdOf(traceParam)
   const [path, setPath] = useState("")
   const [from, setFrom] = useState<Date | undefined>(undefined)
   const [to, setTo] = useState<Date | undefined>(undefined)
@@ -107,6 +119,7 @@ export function LogsContent() {
     path: debouncedPath,
     from,
     to,
+    traceId,
   })
   const rows = useMemo<ActivityLogRow[]>(
     () =>
@@ -151,8 +164,10 @@ export function LogsContent() {
     statuses.length > 0 ||
     debouncedPath.trim() !== "" ||
     from !== undefined ||
-    to !== undefined
+    to !== undefined ||
+    traceId !== ""
   const clearFilters = () => {
+    setTraceParam("")
     setUserParam(NO_VALUES)
     setTypeParam(NO_VALUES)
     setMethodParam(NO_VALUES)
@@ -240,6 +255,31 @@ export function LogsContent() {
               aria-label="Hasta"
             />
           </div>
+          {traceId !== "" && (
+            <div
+              className={cn(
+                textVariants({ role: "compact", tone: "muted" }),
+                "mt-2 flex flex-wrap items-center gap-2"
+              )}
+            >
+              <span>
+                Entradas de la traza{" "}
+                <AppLink
+                  href={`/admin/traces/${traceId}`}
+                  className="font-mono text-foreground underline underline-offset-4"
+                >
+                  {traceId.slice(0, 12)}…
+                </AppLink>
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setTraceParam("")}
+              >
+                Quitar filtro
+              </Button>
+            </div>
+          )}
         </div>
       }
       query={{ data: entries, isPending, isError, refetch }}
@@ -292,6 +332,19 @@ export function LogsContent() {
                     {logDateTime(entry)}
                   </dd>
                 </div>
+                {entry.traceId !== null && (
+                  <div>
+                    <dt className="text-muted-foreground">Traza</dt>
+                    <dd className="mt-0.5">
+                      <AppLink
+                        href={`/admin/traces/${entry.traceId}`}
+                        className="underline underline-offset-4"
+                      >
+                        Ver traza
+                      </AppLink>
+                    </dd>
+                  </div>
+                )}
               </dl>
               <JsonView
                 value={entry.raw}

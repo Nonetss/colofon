@@ -23,4 +23,6 @@ export interface ActivityLogFilters {
   from: Date | undefined
   /** Calendar day upper bound, interpreted as 23:59:59.999 local (inclusive). */
   to: Date | undefined
+  /** Only entries written inside this trace; `""` for any. */
+  traceId: string
 }

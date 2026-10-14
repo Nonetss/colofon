@@ -1,6 +1,7 @@
 import { z } from "zod"
 
 import { paginationLimit } from "#shared/pagination"
+import { traceIdSchema } from "#shared/trace-id"
 
 export const LOG_TYPES = ["page_view", "api_call"] as const
 
@@ -30,6 +31,9 @@ export const logsInput = {
       ),
     /** Substring match against the logged path. */
     path: z.string().optional(),
+    traceId: traceIdSchema
+      .optional()
+      .describe("Keep only entries written inside this trace"),
     methods: z
       .array(z.enum(LOG_METHODS))
       .optional()

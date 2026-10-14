@@ -13,6 +13,9 @@ const logEntry = z.object({
   path: z.string().nullable(),
   method: z.string().nullable(),
   statusCode: z.number().nullable(),
+  /** The trace the line was written in (`/admin/traces/<traceId>`), or
+   * `null` when tracing was off or the trace wasn't sampled. */
+  traceId: z.string().nullable(),
   /** Everything else pino attached to the line, for the expandable
    * "raw payload" view. */
   raw: z.record(z.string(), z.unknown()),
