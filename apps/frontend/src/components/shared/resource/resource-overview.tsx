@@ -82,7 +82,9 @@ export function ResourceOverview<TData>({
 }: ResourceOverviewProps<TData>) {
   return (
     <PageShell maxWidth={maxWidth} className={className}>
-      <div className="flex min-h-0 flex-1 flex-col gap-8">
+      {/* Tighter on phones, where the hero's action already wraps onto its
+          own row and the filters sit in the bottom bar. */}
+      <div className="flex min-h-0 flex-1 flex-col gap-4 sm:gap-6">
         <PageHero
           surface={surface}
           description={description}

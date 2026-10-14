@@ -84,7 +84,7 @@ rounded:
   full: "9999px"
 spacing:
   px: "0.25rem"                # Tailwind 1 unit
-  gap-section: "1.5rem"        # gap-6 between header and content
+  gap-section: "1.5rem"        # gap-6 (gap-4 below sm) between header and content
   padding-page: "1.5rem"       # py-6
   padding-shell: "1rem"        # px-4 on mobile
   stagger-row: "40ms"          # --dash-delay between list rows
@@ -281,7 +281,7 @@ Every role below is a `variant` of the `Text` component (`components/shared/bran
 
 **Columns follow the container, not the viewport.** In-page grids and tables size themselves with container queries, because the usable width changes with the section sidebar (expanded or icon-collapsed). Tile grids (`SurfaceCardGrid`) step `1 → @xl:2 → @4xl:3 → @6xl:4 → @min-[90rem]:5`; a data table switches from stacked rows to a real table at `@4xl/table`; fact grids (`MetadataCell`) and filter panels step at `@md`/`@xl`/`@3xl`. Viewport breakpoints are reserved for chrome (navbar, sidebar, bottom action bar).
 
-Vertical rhythm is `gap-6` between the header (`PageHero`) and the content block, `gap-2.5` between the hero icon column and the title, `gap-4` between sibling sections in a dialog body, and `gap-5` (`py-5`) inside a fact row. Card grids use `gap-3`. Spacing is on the 0.25rem Tailwind unit; nothing is invented outside the existing scale.
+Vertical rhythm is `gap-4` below `sm` and `gap-6` from `sm` between the header (`PageHero`) and the content block, `gap-2.5` between the hero icon column and the title, `gap-4` between sibling sections in a dialog body, and `gap-5` (`py-5`) inside a fact row. Card grids use `gap-3`. Spacing is on the 0.25rem Tailwind unit; nothing is invented outside the existing scale.
 
 Sticky chrome is reserved for `Navbar` (fixed, `z-40`), the section sidebar (pinned below the navbar, `h-[calc(100svh-var(--navbar-height))]`) (height `--navbar-height: 3.6rem` ≈ h-14) and `Footer` (`--footer-height: 13rem` stacked on mobile, `7.6rem` single-row on `sm+`). The layout utility `min-h-main` fills the remaining vertical space without hardcoding heights.
 
