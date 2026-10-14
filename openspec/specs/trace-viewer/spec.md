@@ -12,10 +12,10 @@ The API SHALL expose an administrator-only `v1.traces.search` procedure (HTTP `G
 - `services`: any of `frontend`, `backend` and `postgresql`, keeping the traces that touch at least one of them;
 - `errorsOnly`: only traces with at least one span in error status;
 - `minDurationMs`;
-- `name`: text the root span name contains, ignoring case;
+- `names`: exact root span names (as listed by `traces.rootNames`), keeping the traces whose root span has any of them;
 - `from`/`to`: a time range, defaulting to the last 24 hours.
 
-It SHALL return at most `limit` traces (default 50, maximum 200) per page and a `nextCursor` (`null` when no traces follow); passing it as `cursor` SHALL return the next page: the matching traces strictly older than the previous page's oldest, ordered by start time and then trace id, both descending, so no trace is repeated or skipped between pages. The Tempo query SHALL be built only from fixed fragments, closed enums, validated integers, trace ids normalized to hex and the `name` text with its regex metacharacters and string quoting escaped (control characters refused), so no input can change its structure.
+It SHALL return at most `limit` traces (default 50, maximum 200) per page and a `nextCursor` (`null` when no traces follow); passing it as `cursor` SHALL return the next page: the matching traces strictly older than the previous page's oldest, ordered by start time and then trace id, both descending, so no trace is repeated or skipped between pages. The Tempo query SHALL be built only from fixed fragments, closed enums, validated integers, trace ids normalized to hex and the `names` quoted as TraceQL strings (control characters refused), so no input can change its structure.
 
 #### Scenario: Errors in the backend
 
@@ -47,10 +47,19 @@ It SHALL return at most `limit` traces (default 50, maximum 200) per page and a 
 - **WHEN** more traces match than `limit` and the administrator asks again with the response's `nextCursor`
 - **THEN** the second response SHALL contain the next older traces, none of them already in the first
 
-#### Scenario: Name with regex characters
+#### Scenario: Names picked from the list
 
-- **WHEN** an administrator searches with `name: "/rpc/v1/cron.run"`
-- **THEN** the dots SHALL match only dots, and the search SHALL keep the traces whose root span name contains that text in any case
+- **WHEN** an administrator searches with `names: ["cron.run", "GET /crons"]`
+- **THEN** every returned trace SHALL have one of those two root span names, matched exactly
+
+### Requirement: Administrator trace root names
+
+The API SHALL expose an administrator-only `v1.traces.rootNames` procedure (HTTP `GET`) taking an optional `from`/`to` time range, defaulting to the last 24 hours. It SHALL return the distinct root span names Tempo has for traces in that range, alphabetical, without the empty name of a trace whose root span hasn't arrived. It SHALL read them from Tempo's tag-values API, never by searching traces, and SHALL return an empty list when `TEMPO_URL` is unset.
+
+#### Scenario: Names for the day
+
+- **WHEN** an administrator asks for the root names of today
+- **THEN** the response SHALL list each root span name seen today once, alphabetically
 
 ### Requirement: Administrator trace detail
 
@@ -121,7 +130,7 @@ Both trace procedures SHALL reject callers without the administrator role, and t
 
 ### Requirement: Trace list screen
 
-`/admin/traces` SHALL list the search results in a data table with the columns start time, root span, services touched (Frontend, Backend, PostgreSQL), duration and error state, newest first and not sortable, since every page continues Tempo's newest-first order. It SHALL load the next page when the administrator scrolls to the end of the list. A stream SHALL carry a "Stream" tag next to its duration. Its filters, the name filter included, SHALL map to the search inputs, and changing one SHALL start again from the first page. Opening a row SHALL show that trace beside the list on the same page and keep it in the URL as `?trace=<traceId>`, marking the open row; a URL carrying `?trace=` SHALL open that trace on load, even when it isn't in the current list. Without `?trace=`, the page SHALL show the newest trace of the list beside it, without writing it to the URL, until the administrator closes the panel. Closing the trace SHALL drop the parameter and stop showing the newest trace. The page SHALL be declared in `app-surfaces` and shown in the admin navigation, and there SHALL be no separate route per trace.
+`/admin/traces` SHALL list the search results in a data table with the columns start time, root span, services touched (Frontend, Backend, PostgreSQL), duration and error state, newest first and not sortable, since every page continues Tempo's newest-first order. It SHALL load the next page when the administrator scrolls to the end of the list. A stream SHALL carry a "Stream" tag next to its duration. Its filters SHALL map to the search inputs, and changing one SHALL start again from the first page. Root span names SHALL be filtered by picking, not typing: a filter above the table, beside the duration and day range, SHALL list the names `traces.rootNames` returns for the chosen day range, plus any kept name it no longer lists, nested by path segment (`/rpc` → `v1` → `cron` → `list`, each route's methods under its last segment, names that aren't routes at the top). Ticking a segment SHALL keep every name under it, a segment with only some kept SHALL show as partly ticked, and a search inside the filter SHALL narrow the tree to the matching names. The kept names SHALL stay in the URL as `?names=`. Opening a row SHALL show that trace beside the list on the same page and keep it in the URL as `?trace=<traceId>`, marking the open row; a URL carrying `?trace=` SHALL open that trace on load, even when it isn't in the current list. Without `?trace=`, the page SHALL show the newest trace of the list beside it, without writing it to the URL, until the administrator closes the panel. Closing the trace SHALL drop the parameter and stop showing the newest trace. The page SHALL be declared in `app-surfaces` and shown in the admin navigation, and there SHALL be no separate route per trace.
 
 #### Scenario: Opening a trace from the list
 
@@ -140,8 +149,13 @@ Both trace procedures SHALL reject callers without the administrator role, and t
 
 #### Scenario: Filtering by name
 
-- **WHEN** an administrator types `cron.run` in the name filter
-- **THEN** the table SHALL show the traces returned by a search with `name: "cron.run"`
+- **WHEN** an administrator ticks `cron.run` in the trace name filter
+- **THEN** the table SHALL show the traces returned by a search with `names: ["cron.run"]`
+
+#### Scenario: Picking a whole path
+
+- **WHEN** an administrator ticks `/rpc` → `v1` → `cron` in the trace name filter
+- **THEN** the search SHALL keep every listed name under `/rpc/v1/cron`, and `/rpc` and `v1` SHALL show as partly ticked
 
 #### Scenario: Scrolling past the loaded traces
 
