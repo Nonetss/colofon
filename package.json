@@ -72,7 +72,7 @@
     "@nonete/config": "workspace:*",
     "@types/bun": "catalog:",
     "tailwint": "^1.1.16",
-    "turbo": "^2.11.7",
+    "turbo": "^2.11.8",
     "typescript": "catalog:"
   },
   "packageManager": "bun@1.4.2",
