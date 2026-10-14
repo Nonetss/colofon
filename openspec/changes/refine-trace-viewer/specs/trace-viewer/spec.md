@@ -6,10 +6,9 @@ The API SHALL expose an administrator-only `v1.traces.search` procedure (HTTP `G
 - `services`: any of `stack-frontend`, `stack-backend` and `postgresql`, keeping the traces that touch at least one of them;
 - `errorsOnly`: only traces with at least one span in error status;
 - `minDurationMs`;
-- `name`: a substring of the root span name;
 - `from`/`to`: a time range, defaulting to the last 24 hours.
 
-It SHALL return at most `limit` traces (default 50, maximum 200) and SHALL NOT paginate. The response SHALL say whether the limit was reached. Filter values SHALL be escaped before they are placed in the Tempo query, so a filter can never change the query's structure.
+It SHALL return at most `limit` traces (default 50, maximum 200) and SHALL NOT paginate. The response SHALL say whether the limit was reached. The Tempo query SHALL be built only from fixed fragments, closed enums, validated integers and trace ids normalized to hex, never from free text, so no input can change its structure.
 
 #### Scenario: Errors in the backend
 
@@ -41,10 +40,6 @@ It SHALL return at most `limit` traces (default 50, maximum 200) and SHALL NOT p
 - **WHEN** more traces match than `limit`
 - **THEN** the response SHALL contain `limit` traces and flag that the limit was reached
 
-#### Scenario: Quoting in a filter
-
-- **WHEN** the `name` filter contains `"` or `}` characters
-- **THEN** the search SHALL match them literally and SHALL NOT fail with a query syntax error
 
 ### Requirement: Administrator trace detail
 
@@ -92,7 +87,7 @@ A span's service SHALL be the database system it names in `db.system.name` (`pos
 
 ### Requirement: Trace list screen
 
-`/admin/traces` SHALL list the search results in a data table with the columns start time, root span, services touched (Frontend, Backend, PostgreSQL), duration and error state, newest first by default, sortable in the browser with the sort kept in the URL. A stream SHALL carry a "Stream" tag next to its duration. Its filters SHALL map to the search inputs. Opening a row SHALL show that trace beside the list on the same page and keep it in the URL as `?trace=<traceId>`, marking the open row; a URL carrying `?trace=` SHALL open that trace on load, even when it isn't in the current list. Without `?trace=`, the page SHALL show the newest trace of the list beside it, without writing it to the URL, until the administrator closes the panel. Closing the trace SHALL drop the parameter and stop showing the newest trace. The page SHALL be declared in `app-surfaces` and shown in the admin navigation, and there SHALL be no separate route per trace.
+`/admin/traces` SHALL list the search results in a data table with the columns start time, root span, services touched (Frontend, Backend, PostgreSQL), duration and error state, newest first by default, sortable in the browser with the sort kept in the URL. A stream SHALL carry a "Stream" tag next to its duration. Its filters SHALL map to the search inputs, except the name filter, which SHALL narrow the loaded list in the browser (substring of the root span name, ignoring case and accents). Opening a row SHALL show that trace beside the list on the same page and keep it in the URL as `?trace=<traceId>`, marking the open row; a URL carrying `?trace=` SHALL open that trace on load, even when it isn't in the current list. Without `?trace=`, the page SHALL show the newest trace of the list beside it, without writing it to the URL, until the administrator closes the panel. Closing the trace SHALL drop the parameter and stop showing the newest trace. The page SHALL be declared in `app-surfaces` and shown in the admin navigation, and there SHALL be no separate route per trace.
 
 #### Scenario: Opening a trace from the list
 
@@ -108,6 +103,11 @@ A span's service SHALL be the database system it names in `db.system.name` (`pos
 
 - **WHEN** an administrator follows a "Ver traza" link to `/admin/traces?trace=<traceId>`
 - **THEN** the page SHALL open with that trace shown beside the list
+
+#### Scenario: Filtering by name
+
+- **WHEN** an administrator types `cron.run` in the name filter
+- **THEN** the table SHALL show the loaded traces whose root span name contains it, without a new search
 
 #### Scenario: Filtering the list
 

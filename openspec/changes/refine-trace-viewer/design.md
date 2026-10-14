@@ -59,6 +59,17 @@ In `packages/api/src/index.ts`, `o.middleware(async ({ context, next }) => …)`
 
 `sessionMiddleware` sets `user`/`session` to `null` and continues without calling `auth.api.getSession` when the path starts with `/api/auth/`. Better Auth's handler resolves the session itself for its own routes. `requestLogger` only uses `user` for activity entries, and `/api/auth` is excluded from those. No router under `/api/auth` reads `c.get("user")`; this is checked during apply.
 
+### 8. No free text in TraceQL; the name filter runs in the browser
+
+Raised in review: the query was assembled with hand-written escaping (`escapeTraceQLString`, `escapeRegex`) to fit the name filter's text into a TraceQL regex. TraceQL has no "contains" operator, and there is no TraceQL builder or Grafana Tempo client for JS: `@grafana/lezer-traceql` only parses, and Grafana's own editor emits TraceQL text. So the query is still text, but now only made of fixed fragments:
+- service conditions come from a map keyed by the closed `services` enum;
+- `minDurationMs` is a validated integer;
+- the by-id searches use ids normalized to 32 hex characters (Tempo accepts the padded form; checked against the dev Tempo).
+
+The name filter becomes a browser-side filter over the loaded page (`foldText` substring, like the other admin tables). With `most_recent=true` that page is the newest 100 matches. Both escaping helpers are gone.
+
+**Alternative:** keeping the server-side name search with escaping. It searches the whole window, but it was the one path where user text entered the query.
+
 ### 7. Newest traces first, by query hint
 
 Found during apply. With more traces in the window than `limit`, Tempo's search returns the first matches it finds rather than the newest. A 24-hour list was filled with traces from 10:48 to 11:59, still carrying the old `QUERY /rpc/*` names, while traces from the last hour were left out. The main search now ends with TraceQL's `with (most_recent=true)` hint. Checked against the dev Tempo 3.1: the same query returned 12:26 to 12:46, with the filters' `&&` spansets still working. The by-id searches don't need it, because they name their traces.

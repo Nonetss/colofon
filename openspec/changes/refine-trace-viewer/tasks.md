@@ -21,6 +21,7 @@
   - Add `streaming` to each summary.
 - [x] 3.3 `handler.ts`, get: compute `streaming` (a span named `consume_async_iterator_object_output`) and `scaleMs` (the first root span's duration for a stream, else the trace duration). During layout, compute each span's `bar` (`offsetMs`, `durationMs`, `continues`): the measured range intersected with the parent's bar (parents come first in depth-first order) and with `[0, scaleMs]`.
 - [x] 3.4 `output.ts`: `streaming` on summaries; `streaming`, `scaleMs` and per-span `bar` on `get`, with `.describe()` texts.
+- [x] 3.7 Build TraceQL from fixed fragments only: a `TOUCHES` map for services, the integer duration, hex-normalized ids in the by-id searches; drop the `name` input and both escaping helpers. Move the name filter to the browser (`overview/model/trace-name-filter.ts`, `foldText`). Update the tests' expected queries and check the by-id query uses normalized ids.
 - [x] 3.6 End the main search with `with (most_recent=true)`, so Tempo returns the newest matches instead of the first ones it finds (found during apply: a busy day filled the list with traces from hours ago). Update the tests' expected queries.
 - [x] 3.5 Extend `packages/api/tests/v1/traces/handler.test.ts`:
   - search:
