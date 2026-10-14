@@ -33,8 +33,10 @@ export function TraceSpanDetail({ span }: { span: TraceSpan }) {
       <Text as="h2" variant="title" className="break-all">
         {span.name}
       </Text>
+      {/* Short values: two per row even in a phone-wide sheet. */}
       <MetadataDefinitionList
         columns={5}
+        className="grid-cols-2"
         context={span}
         fields={[
           {
@@ -68,6 +70,8 @@ export function TraceSpanDetail({ span }: { span: TraceSpan }) {
           {
             key: "status",
             label: "Estado",
+            // Its message can be long: the whole row while there are two.
+            className: "col-span-2 @xl:col-span-1",
             tone: (current) => {
               if (current.status === "error") return "destructive"
               return "default"

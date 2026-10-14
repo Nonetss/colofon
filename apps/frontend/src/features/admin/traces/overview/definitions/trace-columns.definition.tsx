@@ -53,7 +53,8 @@ export const traceColumns = helper.columns([
     id: "services",
     header: "Servicios",
     size: 180,
-    meta: { label: "Servicios", reorderable: true },
+    // Compact rows show the services under the trace's name instead.
+    meta: { label: "Servicios", reorderable: true, compact: "omit" },
     cell: (info) => (
       <Text variant="status" tone="muted">
         {info.getValue()}
@@ -67,6 +68,7 @@ export const traceColumns = helper.columns([
     meta: {
       label: "Duración",
       reorderable: true,
+      compact: "status",
       cellClassName: "text-right tabular-nums",
       headerClassName: "text-right",
     },
