@@ -29,8 +29,8 @@ metadatos (`cronMeta`…), `context.ts` lo que recibe cada procedimiento
 Además, `src/router.ts` monta cada versión de la API bajo su clave (`v1`).
 
 Las features de v1 son `health`, `private`, `authConfig`, `apiKey`,
-`organization`, `plugins`, `sessionHistory`, `logs`, `cron`, `comment` y
-`entityIcon`.
+`organization`, `plugins`, `sessionHistory`, `adminUser`, `logs`, `traces`,
+`cron`, `comment` y `entityIcon`.
 
 ### Separación entre router y handler
 
@@ -121,7 +121,7 @@ El código tiene que decir **cuál es la causa**:
 | `NOT_FOUND` 404 | No existe, **o es privado de otra persona**. |
 | `CONFLICT` 409 | La entrada es válida y el usuario podría, pero el estado o el tipo del objetivo lo impide para todo el mundo (un slug duplicado, un cron declarado en código). |
 | `INTERNAL_SERVER_ERROR` 500 | El servidor rompió algo que debería cumplirse siempre. |
-| `BAD_GATEWAY` 502 / `SERVICE_UNAVAILABLE` 503 | Falla un servicio externo o no está configurado (Loki caído). |
+| `BAD_GATEWAY` 502 / `SERVICE_UNAVAILABLE` 503 | Falla un servicio externo o no está configurado (Loki o Tempo caídos; `traces.get` sin `TEMPO_URL`). |
 
 Dos distinciones que se confunden a menudo:
 

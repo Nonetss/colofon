@@ -30,6 +30,7 @@ aplicaciones y siete librerías compartidas, y todo se coordina con Turborepo.
 | `@nonete/db` | El esquema de la base de datos con Drizzle, las migraciones y el seed del admin. |
 | `@nonete/cron` | El planificador que ejecuta tareas programadas dentro del backend. |
 | `@nonete/logger` | El logger compartido (pino), con envío opcional a Loki. |
+| `@nonete/telemetry` | Las trazas de OpenTelemetry, con envío opcional a Tempo. |
 | `@nonete/env` | La lectura y validación de variables de entorno. |
 | `@nonete/config` | El `tsconfig` base que heredan todos. |
 
@@ -124,3 +125,6 @@ Todos los workspaces usan el mismo logger (`packages/logger`, sobre pino):
 - Si `LOKI_URL` está definido, los logs también se envían a Loki y alimentan
   el registro de actividad de `/admin/logs` (ver
   [Funcionalidades transversales](transversales.md)).
+- Si `OTEL_EXPORTER_OTLP_ENDPOINT` está definido, cada petición se traza y
+  sus líneas de log llevan también el `traceId`, que enlaza con su cascada en
+  `/admin/traces`.

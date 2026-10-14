@@ -1,6 +1,6 @@
 # Data tables
 
-Every resource list is a data table on TanStack Table v9 (`@tanstack/react-table`): the `/admin` pages (API keys, users, organizations, teams, plugins, sessions, logs), the organization detail and team member sheets, `/crons` and the run history of `/crons/{id}`. `EntityList` stays as the template's non-tabular list and has no production consumer.
+Every resource list is a data table on TanStack Table v9 (`@tanstack/react-table`): the `/admin` pages (API keys, users, organizations, teams, plugins, sessions, logs, traces), the organization detail and team member sheets, `/crons` and the run history of `/crons/{id}`. `EntityList` stays as the template's non-tabular list and has no production consumer.
 
 ## Pieces
 

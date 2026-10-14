@@ -78,3 +78,35 @@ falla con `BAD_GATEWAY` (502). Los tres compose (`compose.dev.yml`,
 `compose.yml` y `compose.prod.yml`) ya incluyen un Loki con 30 días de
 retención; en desarrollo escucha en `localhost:3100`, el `LOKI_URL` de
 `.env.example`.
+
+Si una entrada se escribió dentro de una traza, su detalle enlaza a esa traza
+en `/admin/traces`, y `/admin/logs?trace=<id>` muestra solo las entradas de
+una traza.
+
+## Trazas
+
+`/admin/traces` muestra por dónde pasa el tiempo de cada petición: el
+frontend, el backend, cada procedimiento y cada consulta SQL, como una
+cascada de *spans*.
+
+- `@nonete/telemetry` monta OpenTelemetry a mano, sin parchear módulos, así
+  que funciona en Bun y dentro de las imágenes empaquetadas.
+- El backend crea un *span* por petición HTTP, oRPC añade los suyos
+  (búsqueda del procedimiento, validación, handler…), `@nonete/db` uno por
+  consulta (con el SQL con marcadores, nunca los valores) y `@nonete/cron`
+  uno por ejecución.
+- El middleware del frontend crea un *span* por página renderizada en el
+  servidor y pasa el contexto (`traceparent`) a la consulta de sesión, así que
+  la página y el trabajo del backend salen en la misma traza.
+- El gateway borra las cabeceras `traceparent`, `tracestate` y `baggage` que
+  llegan de fuera: un cliente no puede elegir los ids de traza.
+- Las líneas de log escritas dentro de una traza llevan `traceId` y `spanId`.
+
+Las trazas se envían a **Grafana Tempo** (`OTEL_EXPORTER_OTLP_ENDPOINT`) y el
+backend las consulta para el visor (`TEMPO_URL`), igual que hace con Loki. No
+hay una interfaz aparte: el visor es parte de la app. Todo es opcional: sin
+`OTEL_EXPORTER_OTLP_ENDPOINT` no se traza nada, y sin `TEMPO_URL` el visor
+aparece vacío. `OTEL_TRACES_SAMPLER_ARG` (de 0 a 1, por defecto 1) decide qué
+parte de las trazas nuevas se guarda. Los tres compose incluyen un Tempo con
+7 días de retención; en desarrollo nativo, `bun run tempo:start` lo publica
+en `localhost:4318` (OTLP) y `localhost:3200` (consultas).

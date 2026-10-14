@@ -13,7 +13,7 @@ repite la lista entera.
 | --- | --- |
 | `packages/env/src/server.ts` (`@nonete/env/server`) | Las variables del backend y de los paquetes, con zod. Si falta una obligatoria, el backend no arranca. |
 | `packages/db/drizzle.config.ts` | `DATABASE_URL`, para los comandos de Drizzle. |
-| `apps/frontend/astro.config.mjs` | Las variables de servidor del frontend (`BACKEND_URL`, `LOKI_URL`) con `astro:env`. |
+| `apps/frontend/astro.config.mjs` | Las variables de servidor del frontend (`BACKEND_URL`, `LOKI_URL`, `OTEL_EXPORTER_OTLP_ENDPOINT`, `OTEL_TRACES_SAMPLER_ARG`) con `astro:env`. |
 
 ### Cómo se encuentra el fichero
 
@@ -43,6 +43,9 @@ algo que ya existe.
 | `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `ADMIN_NAME` | El administrador que se crea al arrancar el backend si no existe. Los jobs de cron declarados en código se ejecutan como este usuario. |
 | `OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET`, `OIDC_DISCOVERY_URL` | Inicio de sesión con un proveedor OIDC. Solo se activa si están las tres. `OIDC_DISCOVERY_URL` es la URL base del emisor (`https://idp.example.com`); el backend le añade `/.well-known/openid-configuration`. |
 | `LOKI_URL` | Opcional. Si está, los logs se envían a Loki y aparece el registro de actividad. |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | Opcional. Si está, el backend y el frontend envían trazas a esa dirección (OTLP/HTTP, normalmente Tempo). Sin ella no se traza nada. |
+| `OTEL_TRACES_SAMPLER_ARG` | Qué parte de las trazas nuevas se guarda, de 0 a 1 (por defecto 1). |
+| `TEMPO_URL` | Opcional. La API de consulta de Tempo, que el backend usa para el visor de `/admin/traces`. |
 | `LOG_LEVEL` | Nivel mínimo de log (por defecto `info`). |
 | `SKIP_ENV_VALIDATION` | Desactiva la validación. Solo para builds y tareas de CLI; los Dockerfiles lo usan al compilar. |
 

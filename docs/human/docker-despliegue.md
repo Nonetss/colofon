@@ -13,14 +13,24 @@ Hay cuatro ficheros compose, uno por forma de ejecutar el proyecto:
 
 Está explicado en [Desarrollo local](desarrollo.md#con-docker-bun-run-dev).
 Lo importante: como en producción, solo el gateway publica un puerto
-(`https://localhost:4321`, HTTPS + HTTP/2). Las apps y Loki quedan en la red
-interna y leen el `.env` sin cambios, salvo `BACKEND_URL` y `LOKI_URL`, que el
-compose apunta a los nombres de servicio. No levanta base de datos: la de
+(`https://localhost:4321`, HTTPS + HTTP/2). Las apps, Loki y Tempo quedan en
+la red interna y leen el `.env` sin cambios, salvo `BACKEND_URL`, `LOKI_URL`,
+`OTEL_EXPORTER_OTLP_ENDPOINT` y `TEMPO_URL`, que el compose apunta a los
+nombres de servicio. No levanta base de datos: la de
 desarrollo está fuera del proyecto, en otro servidor, y las apps llegan a ella
 por el `DATABASE_URL` del `.env`. Sí levanta Loki (`stack-dev-loki`, solo en la
 red interna) con la misma imagen y retención que en `compose.yml`. Para el
 modo nativo, `bun run loki:start` arranca el servicio `loki-native` (perfil
-`native`) publicado solo en `127.0.0.1:3100`.
+`native`) publicado solo en `127.0.0.1:3100`. Lo mismo con Tempo
+(`stack-dev-tempo`), y en nativo `bun run tempo:start` arranca `tempo-native`
+en `127.0.0.1:4318` (OTLP) y `127.0.0.1:3200` (consultas).
+
+Tempo, como Loki, no tiene fichero de configuración en el repo: casi todo va
+como flags en su `command`, y lo único que Tempo solo acepta en YAML (el
+receptor OTLP y la retención) va en línea en el propio compose
+(`configs: tempo_config`). Esa configuración se repite en los tres compose,
+porque en producción solo existen `compose.prod.yml` y `.env`: si cambias una,
+cambia las tres.
 
 Cuando un servicio empieza a importar un paquete o una carpeta nueva, hay que
 añadir su entrada `sync` en este fichero, o los cambios no llegarán al
@@ -28,7 +38,7 @@ contenedor.
 
 ## `compose.yml`: producción en local
 
-Construye las tres imágenes desde tu copia de trabajo y levanta cinco
+Construye las tres imágenes desde tu copia de trabajo y levanta seis
 servicios. La web queda en `http://localhost:${FRONTEND_PORT:-4444}`.
 
 | Servicio | Puertos | Notas |
@@ -38,6 +48,7 @@ servicios. La web queda en `http://localhost:${FRONTEND_PORT:-4444}`.
 | `backend` | interno 3000 | Espera a la base de datos. |
 | `db` | ninguno | `postgres:17`, base de datos `stack`, volumen `db_data`. |
 | `loki` | interno 3100 | Opcional; nadie espera por él. Retención de 720 horas. |
+| `tempo` | interno 3200, 4318 | Opcional; nadie espera por él y no tiene *healthcheck* (la imagen no trae shell). Retención de 168 horas. |
 
 Cada servicio tiene su *healthcheck* y arranca en orden: base de datos →
 backend → frontend → gateway. Las direcciones entre contenedores

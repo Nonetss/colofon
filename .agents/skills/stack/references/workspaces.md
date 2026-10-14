@@ -31,7 +31,7 @@ Bun workspaces are `apps/*` and `packages/*` (root `package.json`). `bunfig.toml
 - `Caddyfile.dev` (dev only): one site, `https://localhost:4321` (`tls internal`, `h1`/`h2`), the dev URL and the only port dev exposes; `auto_https disable_redirects`, `skip_install_trust`. Its CA lives in `/data` (volume `stack-dev_gateway_data`, shared by both dev compose files); `bun run dev:cert` exports the root.
 - It is the only service with `ports` in `compose.yml` and `compose.prod.yml`.
 
-`NODE_ENV` defaults to `development`; `production` (set by the compose files and Dockerfiles) switches logging to JSON lines. Logs go to stdout, and also to Loki when `LOKI_URL` is set.
+`NODE_ENV` defaults to `development`; `production` (set by the compose files and Dockerfiles) switches logging to JSON lines. Logs go to stdout, and also to Loki when `LOKI_URL` is set. Lines written inside a sampled trace carry `traceId`/`spanId`.
 
 ## TypeScript packages
 
@@ -42,6 +42,7 @@ Bun workspaces are `apps/*` and `packages/*` (root `package.json`). `bunfig.toml
 | `packages/db` (`@nonete/db`) | Drizzle ORM (1.0 RC, `node-postgres`). One shared pool per process: `db`, closed with `closeDb()`; `createDb()` is only called to build `db`. Schema per domain in `src/schema/<domain>/` (`auth`, `comment`, `cron`, `entity-icon`), relations in `src/relations.ts`, `src/keyset-pagination.ts`, `src/seed/` (migrations + admin seed), `src/migrations/`. Drizzle CLI scripts live here only. Test support (fake `db` and row factories) in `testing/`, exported as `@nonete/db/testing` and used only by test suites. |
 | `packages/cron` (`@nonete/cron`) | oRPC-agnostic scheduler on `Bun.cron` (UTC only) plus the CRUD service over `cron_job`/`cron_run` and the code-declared job sync. Wired to the API in `apps/backend/src/cron`. Unit tests (`bun test`) in `tests/`, outside `src/`. |
 | `packages/logger` (`@nonete/logger`) | pino factory (`@nonete/logger/factory`, used by the frontend's `src/lib/logger.ts`) and the backend `logger` / `child()`. Ships to Loki when `LOKI_URL` is set. |
+| `packages/telemetry` (`@nonete/telemetry`) | OpenTelemetry tracing. `startTelemetry()` (`.`) registers the trace pipeline (OTLP/HTTP to Tempo) and is called only by the two app entrypoints; it does nothing without `OTEL_EXPORTER_OTLP_ENDPOINT`. `@nonete/telemetry/span` holds the API-only helpers every other package uses (`withSpan`, `withServerSpan`, `injectTraceHeaders`, `activeTraceFields`, `linksToActiveSpan`), and `@nonete/telemetry/testing` an in-memory pipeline for test suites. No module patching: it works on Bun and inside the bundles. Unit tests (`bun test`) in `tests/`. |
 | `packages/env` (`@nonete/env`) | `@t3-oss/env-core`: `@nonete/env/server` and `@nonete/env/web`. See `references/env.md`. |
 | `packages/config` (`@nonete/config`) | Shared `tsconfig.base.json` (strict, `noUncheckedIndexedAccess`, `verbatimModuleSyntax`, `types: ["bun"]`). |
 

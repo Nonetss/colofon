@@ -56,7 +56,7 @@ Throw the `errors.<CODE>()` whose status names the **cause**. User-facing messag
 | `NOT_FOUND` 404 | The target does not exist **or is private to someone else** | another user's private record (filter by owner in the `where`, then `assertFound`) |
 | `CONFLICT` 409 | Valid input, allowed caller, but the target's **state or kind** rules it out for every caller | duplicate slug, role or membership; a code-declared cron job |
 | `INTERNAL_SERVER_ERROR` 500 | An invariant the server broke | an `insert().returning()` with no row |
-| `BAD_GATEWAY` 502 / `SERVICE_UNAVAILABLE` 503 | A downstream service failed / is not configured | Loki unreachable or answering an error in `logs.query` (502) |
+| `BAD_GATEWAY` 502 / `SERVICE_UNAVAILABLE` 503 | A downstream service failed / is not configured | Loki unreachable or answering an error in `logs.query` (502); `traces.get` without `TEMPO_URL` (503) |
 
 Two distinctions that are easy to get wrong:
 

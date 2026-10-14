@@ -3,7 +3,7 @@
 ## Requisitos
 
 - [Bun](https://bun.sh) 1.4.2 (es a la vez runtime, gestor de paquetes y test runner).
-- Docker con Compose 2.22 o superior (para Loki y el stack en contenedores).
+- Docker con Compose 2.23.1 o superior (para Loki, Tempo y el stack en contenedores).
 - Una base de datos PostgreSQL de desarrollo fuera del proyecto, en otro
   servidor (ver [Base de datos](#base-de-datos)).
 - `openssl` (lo usan los scripts que generan secretos).
@@ -35,10 +35,11 @@ bun run dev:down   # elimina los contenedores
 
 Levanta el frontend (`astro dev`, en `:4320`), el backend (`bun --hot`), el
 gateway (con `Caddyfile.dev`, que sirve la app en `https://localhost:4321`) y
-Loki con `compose.dev.yml`. Como en producción, **solo el gateway publica un
-puerto** (`https://localhost:4321`). Las apps y Loki quedan en la red interna
-del stack y se encuentran por nombre de servicio: el compose sobrescribe
-`BACKEND_URL` y `LOKI_URL`, y el resto sale del `.env` sin cambios. No levanta
+Loki y Tempo con `compose.dev.yml`. Como en producción, **solo el gateway
+publica un puerto** (`https://localhost:4321`). Las apps, Loki y Tempo quedan
+en la red interna del stack y se encuentran por nombre de servicio: el compose
+sobrescribe `BACKEND_URL`, `LOKI_URL`, `OTEL_EXPORTER_OTLP_ENDPOINT` y
+`TEMPO_URL`, y el resto sale del `.env` sin cambios. No levanta
 ninguna base de datos: el backend usa la de `DATABASE_URL`, que está en otro
 servidor. No se monta el repositorio: `docker compose watch` copia tus cambios
 dentro de los contenedores. Solo hay volúmenes con nombre para la caché de
@@ -56,6 +57,7 @@ Vite (`frontend_vite_cache`) y la autoridad de certificación del gateway
 
 ```bash
 bun run loki:start  # solo Loki, en Docker, en 127.0.0.1:3100 (opcional)
+bun run tempo:start # solo Tempo, en Docker, en 127.0.0.1:4318 y :3200 (opcional)
 bun run gateway     # el gateway de desarrollo: https://localhost:4321
 bun run dev:local   # frontend y backend con Turbo
 ```
