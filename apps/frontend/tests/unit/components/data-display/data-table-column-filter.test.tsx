@@ -71,3 +71,68 @@ describe("DataTableColumnFilter with a remote search", () => {
     expect(screen.getByText("Escribe dos letras")).toBeDefined()
   })
 })
+
+function listFilter(overrides: Partial<DataTableFilter> = {}): DataTableFilter {
+  return {
+    options: [
+      { value: "GET", label: "GET" },
+      { value: "POST", label: "POST" },
+      { value: "PUT", label: "PUT" },
+    ],
+    selected: [],
+    onChange: () => {},
+    ...overrides,
+  }
+}
+
+function checkedOf(name: string | RegExp): string | null {
+  return screen.getByRole("checkbox", { name }).getAttribute("aria-checked")
+}
+
+describe("DataTableColumnFilter select-all", () => {
+  test("clicking it while every value is kept unchecks them all, without filtering yet", () => {
+    const onChange = mock((_next: string[]) => {})
+    open(listFilter({ onChange }))
+
+    fireEvent.click(screen.getByRole("checkbox", { name: "Seleccionar todo" }))
+
+    expect(checkedOf("Seleccionar todo")).toBe("false")
+    for (const value of ["GET", "POST", "PUT"]) {
+      expect(checkedOf(value)).toBe("false")
+    }
+    expect(onChange).not.toHaveBeenCalled()
+  })
+
+  test("after unchecking them all, checking a value keeps only that one", () => {
+    const onChange = mock((_next: string[]) => {})
+    open(listFilter({ onChange }))
+
+    fireEvent.click(screen.getByRole("checkbox", { name: "Seleccionar todo" }))
+    fireEvent.click(screen.getByRole("checkbox", { name: "POST" }))
+
+    expect(onChange).toHaveBeenCalledWith(["POST"])
+  })
+
+  test("clicking it again after unchecking them all checks every value", () => {
+    open(listFilter())
+
+    const selectAll = () =>
+      fireEvent.click(
+        screen.getByRole("checkbox", { name: "Seleccionar todo" })
+      )
+    selectAll()
+    selectAll()
+
+    expect(checkedOf("Seleccionar todo")).toBe("true")
+    expect(checkedOf("GET")).toBe("true")
+  })
+
+  test("clicking it while some values are filtered out keeps every value", () => {
+    const onChange = mock((_next: string[]) => {})
+    open(listFilter({ selected: ["GET"], onChange }))
+
+    fireEvent.click(screen.getByRole("checkbox", { name: "Seleccionar todo" }))
+
+    expect(onChange).toHaveBeenCalledWith([])
+  })
+})

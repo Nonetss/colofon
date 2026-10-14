@@ -117,6 +117,13 @@ export function toggleIncludedValue(
   return [...selected, value]
 }
 
+/** The selection keeping only `value`, which is "every value" when the
+ *  column has no other. */
+export function onlyValue(values: readonly string[], value: string): string[] {
+  if (values.length === 1) return []
+  return [value]
+}
+
 function SortItem({
   active,
   onClick,
@@ -160,6 +167,10 @@ export function DataTableColumnFilter({
   placement: "header" | "compact"
 }) {
   const [localQuery, setLocalQuery] = useState("")
+  // "Seleccionar todo" clicked while every value was kept: every box shows
+  // unchecked so one value can be picked, but the column keeps filtering
+  // nothing until one is checked (closing the panel goes back to "all").
+  const [cleared, setCleared] = useState(false)
   const idPrefix = useId()
   const remote = filter.search
   const query = remote ? remote.query : localQuery
@@ -168,9 +179,11 @@ export function DataTableColumnFilter({
   const active = filter.selected.length > 0
   const folded = foldText(query.trim())
   const visible = visibleOptions(filter, folded)
-  const allChecked = !active
+  const showsCleared = cleared && !active
+  const allChecked = !active && !showsCleared
   const isChecked = (value: string) => {
     if (remote) return filter.selected.includes(value)
+    if (showsCleared) return false
     return !active || filter.selected.includes(value)
   }
   const toggle = (value: string) => {
@@ -178,12 +191,26 @@ export function DataTableColumnFilter({
       filter.onChange(toggleIncludedValue(filter.selected, value))
       return
     }
+    if (showsCleared) {
+      setCleared(false)
+      filter.onChange(onlyValue(values, value))
+      return
+    }
     filter.onChange(toggleFilterValue(filter.selected, values, value))
+  }
+  const toggleAll = () => {
+    if (allChecked) {
+      setCleared(true)
+      return
+    }
+    setCleared(false)
+    filter.onChange([])
   }
   const triggerLabel = triggerLabelOf(label, filter, values.length)
 
   // Keeping only the search's matches, Excel's "search, then OK".
   const keepVisible = () => {
+    setCleared(false)
     const kept = visible.map((option) => option.value)
     if (!remote && kept.length === values.length) {
       filter.onChange([])
@@ -244,7 +271,11 @@ export function DataTableColumnFilter({
     )
 
   return (
-    <Popover>
+    <Popover
+      onOpenChange={(open) => {
+        if (!open) setCleared(false)
+      }}
+    >
       {anchor}
       <PopoverContent align="end" className="w-72 p-2">
         {sort ? (
@@ -296,8 +327,7 @@ export function DataTableColumnFilter({
                   <Checkbox
                     id={`${idPrefix}-all`}
                     checked={allChecked}
-                    disabled={allChecked}
-                    onCheckedChange={() => filter.onChange([])}
+                    onCheckedChange={toggleAll}
                   />
                   <label
                     htmlFor={`${idPrefix}-all`}

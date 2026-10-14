@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test"
 import {
+  onlyValue,
   toggleFilterValue,
   toggleIncludedValue,
 } from "@/components/shared/data-display/data-table-column-filter"
@@ -31,5 +32,15 @@ describe("toggleIncludedValue", () => {
 
   test("unchecking the only kept value removes the filter", () => {
     expect(toggleIncludedValue(["a"], "a")).toEqual([])
+  })
+})
+
+describe("onlyValue", () => {
+  test("keeps just that value", () => {
+    expect(onlyValue(["a", "b", "c"], "b")).toEqual(["b"])
+  })
+
+  test("is every value when the column has no other", () => {
+    expect(onlyValue(["a"], "a")).toEqual([])
   })
 })
