@@ -89,6 +89,7 @@ const controlIcons = {
   collapse: Lucide.ChevronUp,
   check: Lucide.Check,
   checkIcon: Lucide.Check,
+  indeterminate: Lucide.Minus,
   chevronDown: Lucide.ChevronDown,
   chevronDownIcon: Lucide.ChevronDown,
   chevronLeft: Lucide.ChevronLeft,

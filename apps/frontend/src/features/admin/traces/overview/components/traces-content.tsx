@@ -12,12 +12,12 @@ import { DataTableView } from "@/components/shared/data-display/data-table-view"
 import { FilteredEmpty } from "@/components/shared/data-display/filtered-empty"
 import { InfiniteScrollSentinel } from "@/components/shared/data-display/infinite-scroll-sentinel"
 import { StatusDot } from "@/components/shared/data-display/status-dot"
-import { SearchInput } from "@/components/shared/form/search-input"
 import { ResourceOverview } from "@/components/shared/resource/resource-overview"
 import { Button } from "@/components/ui/button"
 import { DatePicker } from "@/components/ui/date-picker"
 import { Input } from "@/components/ui/input"
 import { TracePanel } from "@/features/admin/traces/detail"
+import { TraceNameFilter } from "@/features/admin/traces/overview/components/trace-name-filter"
 import {
   rootNameOf,
   TRACE_ERROR_FILTER_VALUE,
@@ -26,6 +26,7 @@ import {
   traceColumnLayout,
   traceColumns,
 } from "@/features/admin/traces/overview/definitions/trace-columns.definition"
+import { useTraceRootNames } from "@/features/admin/traces/overview/hooks/use-trace-root-names"
 import { useTraceSearch } from "@/features/admin/traces/overview/hooks/use-trace-search"
 import {
   TRACE_SERVICE_OPTIONS,
@@ -115,13 +116,16 @@ export function TracesContent() {
     NO_VALUES,
     valueListCodec
   )
+  const [nameParam, setNameParam] = useQueryParam(
+    "names",
+    NO_VALUES,
+    valueListCodec
+  )
   const [traceParam, setTraceParam] = useQueryParam("trace", "")
   const chosenTraceId = traceIdOf(traceParam)
-  const [name, setName] = useState("")
   const [minDuration, setMinDuration] = useState("")
   const [from, setFrom] = useState<Date | undefined>(undefined)
   const [to, setTo] = useState<Date | undefined>(undefined)
-  const debouncedName = useDebouncedValue(name)
   const debouncedMinDuration = useDebouncedValue(minDuration)
 
   // Unknown values in the URL are dropped instead of emptying the list.
@@ -142,10 +146,11 @@ export function TracesContent() {
     services,
     errorsOnly,
     minDurationMs,
-    name: debouncedName,
+    names: nameParam,
     from,
     to,
   })
+  const rootNames = useTraceRootNames({ from, to }, nameParam)
   const openTraceId = openTraceOf(chosenTraceId, traces)
   const preferences = useColumnPreferences("admin-traces", traceColumnLayout)
   const table = useDataTable({
@@ -170,13 +175,13 @@ export function TracesContent() {
     services.length > 0 ||
     errorsOnly ||
     minDurationMs !== undefined ||
-    debouncedName.trim() !== "" ||
+    nameParam.length > 0 ||
     from !== undefined ||
     to !== undefined
   const clearFilters = () => {
     setServiceParam(NO_VALUES)
     setErrorsParam(NO_VALUES)
-    setName("")
+    setNameParam(NO_VALUES)
     setMinDuration("")
     setFrom(undefined)
     setTo(undefined)
@@ -228,11 +233,10 @@ export function TracesContent() {
       filters={
         <div className="@container">
           <div className="grid gap-2 @xl:grid-cols-[minmax(0,1fr)_10rem_auto_auto]">
-            <SearchInput
-              value={name}
-              onValueChange={setName}
-              placeholder="Filtrar por nombre: /rpc/v1/cron, cron.run..."
-              label="Filtrar por nombre de la traza"
+            <TraceNameFilter
+              names={rootNames}
+              selected={nameParam}
+              onChange={valuesSetter(setNameParam)}
             />
             <Input
               type="number"

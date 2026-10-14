@@ -1,6 +1,9 @@
 import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query"
-import { endOfDay, startOfDay } from "date-fns"
 import { useMemo } from "react"
+import {
+  dayEnd,
+  dayStart,
+} from "@/features/admin/traces/overview/model/day-range"
 import type { TraceService, TraceSummary } from "@/features/admin/traces/shared"
 import { orpc } from "@/lib/orpc"
 
@@ -11,36 +14,18 @@ export interface TraceSearchFilters {
   errorsOnly: boolean
   /** Already debounced; `undefined` for any duration. */
   minDurationMs: number | undefined
-  /** Text in the root span name, already debounced. */
-  name: string
+  /** Root span names to keep; none keeps all. */
+  names: readonly string[]
   /** Calendar day lower bound, interpreted as 00:00 local. */
   from: Date | undefined
   /** Calendar day upper bound, interpreted as 23:59:59.999 local. */
   to: Date | undefined
 }
 
-/** Traces touching any of the chosen services; none chosen keeps all. */
-function servicesInput(
-  services: readonly TraceService[]
-): TraceService[] | undefined {
-  if (services.length === 0) return undefined
-  return [...services]
-}
-
-function dayStart(date: Date | undefined): string | undefined {
-  if (!date) return undefined
-  return startOfDay(date).toISOString()
-}
-
-function dayEnd(date: Date | undefined): string | undefined {
-  if (!date) return undefined
-  return endOfDay(date).toISOString()
-}
-
-function textInput(value: string): string | undefined {
-  const trimmed = value.trim()
-  if (!trimmed) return undefined
-  return trimmed
+/** The chosen values; none chosen keeps all. */
+function listInput<T>(values: readonly T[]): T[] | undefined {
+  if (values.length === 0) return undefined
+  return [...values]
 }
 
 function errorsOnlyInput(errorsOnly: boolean): true | undefined {
@@ -65,10 +50,10 @@ export function useTraceSearch(filters: TraceSearchFilters) {
   const query = useInfiniteQuery({
     ...orpc.v1.traces.search.infiniteOptions({
       input: (cursor: string | null) => ({
-        services: servicesInput(filters.services),
+        services: listInput(filters.services),
         errorsOnly: errorsOnlyInput(filters.errorsOnly),
         minDurationMs: filters.minDurationMs,
-        name: textInput(filters.name),
+        names: listInput(filters.names),
         from: dayStart(filters.from),
         to: dayEnd(filters.to),
         cursor,
