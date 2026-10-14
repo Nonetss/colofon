@@ -1,5 +1,13 @@
 import { cronJob, cronRun } from "@nonete/db/schema/cron"
 import type { logger as rootLogger } from "@nonete/logger"
+import {
+  type Attributes,
+  type Link,
+  linksToActiveSpan,
+  recordSpanError,
+  type Span,
+  withSpan,
+} from "@nonete/telemetry/span"
 import { and, eq } from "drizzle-orm"
 
 import { nextRunAt } from "#cron-expression"
@@ -7,6 +15,45 @@ import { CronNotFoundError, CronValidationError } from "#errors"
 import type { Db } from "#service"
 
 type CronLogger = typeof rootLogger
+
+const TRACER = "@nonete/cron"
+
+type CronTrigger = "schedule" | "manual"
+
+/**
+ * Starts the run's own trace (`root`): a run is background work, never part
+ * of whatever triggered it. A manual run links back to the triggering
+ * request's span instead.
+ */
+function runSpan<T>(
+  trigger: CronTrigger,
+  attributes: Attributes,
+  links: Link[],
+  fn: (span: Span) => Promise<T>
+): Promise<T> {
+  return withSpan(
+    TRACER,
+    "cron.run",
+    {
+      root: true,
+      links,
+      attributes: { ...attributes, "cron.trigger": trigger },
+    },
+    fn
+  )
+}
+
+/** Names the span after the job's handler once the job is loaded. */
+function describeRunSpan(
+  span: Span,
+  job: typeof cronJob.$inferSelect,
+  run?: typeof cronRun.$inferSelect
+) {
+  span.updateName(`cron.run ${job.handlerKey}`)
+  span.setAttribute("cron.job.id", job.id)
+  span.setAttribute("cron.job.handler_key", job.handlerKey)
+  if (run) span.setAttribute("cron.run.id", run.id)
+}
 
 export type CronResolver = (
   key: string,
@@ -142,9 +189,11 @@ export function createScheduler({
   const performRun = async (
     job: typeof cronJob.$inferSelect,
     run: typeof cronRun.$inferSelect,
-    jobLog: CronLogger
+    jobLog: CronLogger,
+    span: Span
   ) => {
     const startedAt = run.startedAt
+    describeRunSpan(span, job, run)
 
     try {
       const handlerResult = await resolve(job.handlerKey, {
@@ -190,6 +239,7 @@ export function createScheduler({
         })
         .where(eq(cronJob.id, job.id))
 
+      span.setAttribute("cron.run.status", "success")
       notifyRunChange({ jobId: job.id, runId: run.id, status: "success" })
 
       jobLog.info(
@@ -202,6 +252,8 @@ export function createScheduler({
     } catch (err) {
       const finishedAt = new Date()
       const errorMessage = err instanceof Error ? err.message : String(err)
+      span.setAttribute("cron.run.status", "failed")
+      recordSpanError(span, err)
 
       await db
         .update(cronRun)
@@ -235,7 +287,14 @@ export function createScheduler({
     }
   }
 
-  const executeJob = async (jobId: string) => {
+  // The whole fire is one trace, so the job's own lookups nest under the run
+  // instead of each query starting a trace of its own.
+  const executeJob = (jobId: string) =>
+    runSpan("schedule", { "cron.job.id": jobId }, [], (span) =>
+      executeJobInSpan(jobId, span)
+    )
+
+  const executeJobInSpan = async (jobId: string, span: Span) => {
     const job = await db.query.cronJob.findFirst({
       where: { id: jobId },
     })
@@ -243,6 +302,7 @@ export function createScheduler({
     if (!job?.enabled) {
       return
     }
+    describeRunSpan(span, job)
 
     const jobLog = jobLogger(job)
 
@@ -265,6 +325,7 @@ export function createScheduler({
       if (skipped) {
         notifyRunChange({ jobId: job.id, runId: skipped.id, status: "skipped" })
       }
+      span.setAttribute("cron.run.status", "skipped")
       jobLog.warn("cron job skipped: previous run still in progress")
       return
     }
@@ -275,7 +336,7 @@ export function createScheduler({
       return
     }
 
-    await performRun(job, run, jobLog)
+    await performRun(job, run, jobLog, span)
   }
 
   const runJobNow = async (jobId: string) => {
@@ -303,7 +364,9 @@ export function createScheduler({
 
     // Not awaited: the caller (an admin action) gets the `running` row back
     // immediately, same as a scheduled fire that isn't blocking anything.
-    void performRun(job, run, jobLog).catch((err) => {
+    void runSpan("manual", {}, linksToActiveSpan(), (span) =>
+      performRun(job, run, jobLog, span)
+    ).catch((err) => {
       jobLog.error({ err }, "unexpected error while executing manual cron run")
     })
 
