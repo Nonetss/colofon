@@ -12,23 +12,21 @@ describe("traceSearchQuery", () => {
   })
 
   test("ORs the services inside one spanset", () => {
-    expect(
-      traceSearchQuery({ services: ["stack-frontend", "postgresql"] })
-    ).toBe(
-      `{ resource.service.name = "stack-frontend" || span.db.system.name = "postgresql" } ${NEWEST}`
+    expect(traceSearchQuery({ services: ["frontend", "postgresql"] })).toBe(
+      `{ resource.service.name = "frontend" || span.db.system.name = "postgresql" } ${NEWEST}`
     )
   })
 
   test("ANDs one spanset per filter, so each may match a different span", () => {
     expect(
       traceSearchQuery({
-        services: ["stack-backend"],
+        services: ["backend"],
         errorsOnly: true,
         minDurationMs: 500,
         name: "POST /rpc",
       })
     ).toBe(
-      `{ resource.service.name = "stack-backend" } && { status = error } && { trace:duration >= 500ms } && { trace:rootName =~ "(?i).*POST /rpc.*" } ${NEWEST}`
+      `{ resource.service.name = "backend" } && { status = error } && { trace:duration >= 500ms } && { trace:rootName =~ "(?i).*POST /rpc.*" } ${NEWEST}`
     )
   })
 

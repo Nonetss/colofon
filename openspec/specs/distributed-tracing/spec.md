@@ -8,7 +8,7 @@ Opt-in OpenTelemetry tracing across the backend, the frontend SSR server, oRPC p
 
 ### Requirement: Opt-in trace pipeline
 
-`@nonete/telemetry` SHALL export `startTelemetry({ serviceName, endpoint, sampleRatio, instrumentations })`, which registers a global OpenTelemetry tracer provider, an `AsyncLocalStorage` context manager and the W3C trace-context propagator. It SHALL export spans in batches over OTLP/HTTP to `<endpoint>/v1/traces`. Spans SHALL carry the resource attributes `service.name` (`stack-backend` or `stack-frontend`, the same values as the logger's `service`) and `deployment.environment.name` (`NODE_ENV`). When `endpoint` is not set, it SHALL register nothing and return a handle whose `shutdown()` resolves immediately. The pipeline SHALL NOT rely on module patching (`require-in-the-middle`, `import-in-the-middle`, or `--require`/`--import` preloads).
+`@nonete/telemetry` SHALL export `startTelemetry({ serviceName, endpoint, sampleRatio, instrumentations })`, which registers a global OpenTelemetry tracer provider, an `AsyncLocalStorage` context manager and the W3C trace-context propagator. It SHALL export spans in batches over OTLP/HTTP to `<endpoint>/v1/traces`. Spans SHALL carry the resource attributes `service.name` (`backend` or `frontend`, the same values as the logger's `service`) and `deployment.environment.name` (`NODE_ENV`). When `endpoint` is not set, it SHALL register nothing and return a handle whose `shutdown()` resolves immediately. The pipeline SHALL NOT rely on module patching (`require-in-the-middle`, `import-in-the-middle`, or `--require`/`--import` preloads).
 
 #### Scenario: Tracing disabled
 
@@ -18,7 +18,7 @@ Opt-in OpenTelemetry tracing across the backend, the frontend SSR server, oRPC p
 #### Scenario: Tracing enabled
 
 - **WHEN** the backend runs with `OTEL_EXPORTER_OTLP_ENDPOINT=http://tempo:4318`
-- **THEN** finished spans SHALL be sent to `http://tempo:4318/v1/traces` with `service.name=stack-backend`
+- **THEN** finished spans SHALL be sent to `http://tempo:4318/v1/traces` with `service.name=backend`
 
 #### Scenario: Bundled runtime
 
@@ -137,7 +137,7 @@ Each cron run, whether scheduled or manually triggered, SHALL execute inside a s
 
 ### Requirement: Frontend SSR spans and propagation
 
-The frontend's server SHALL start telemetry once per process (`service.name=stack-frontend`) from the `astro:env` variables `OTEL_EXPORTER_OTLP_ENDPOINT` and `OTEL_TRACES_SAMPLER_ARG`. Every request handled by its middleware outside the public paths SHALL run inside a `SERVER` span. The SSR session lookup SHALL send the active trace context to the backend as `traceparent`, so that the backend's spans for that lookup join the page's trace.
+The frontend's server SHALL start telemetry once per process (`service.name=frontend`) from the `astro:env` variables `OTEL_EXPORTER_OTLP_ENDPOINT` and `OTEL_TRACES_SAMPLER_ARG`. Every request handled by its middleware outside the public paths SHALL run inside a `SERVER` span. The SSR session lookup SHALL send the active trace context to the backend as `traceparent`, so that the backend's spans for that lookup join the page's trace.
 
 #### Scenario: Page and its session lookup share a trace
 

@@ -73,8 +73,8 @@ function allOf(spansets: readonly string[]): string {
 
 /** The span condition meaning "the trace touches this service". */
 const TOUCHES = {
-  "stack-frontend": `resource.service.name = ${stringLiteral("stack-frontend")}`,
-  "stack-backend": `resource.service.name = ${stringLiteral("stack-backend")}`,
+  frontend: `resource.service.name = ${stringLiteral("frontend")}`,
+  backend: `resource.service.name = ${stringLiteral("backend")}`,
   postgresql: `span.db.system.name = ${stringLiteral("postgresql")}`,
 } satisfies Record<TraceService, string>
 

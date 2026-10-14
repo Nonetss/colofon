@@ -5,7 +5,7 @@ import {
 import { startTelemetry, type Telemetry } from "@nonete/telemetry"
 
 /** Tracer name of the SSR server's own spans. */
-export const FRONTEND_TRACER = "stack-frontend"
+export const FRONTEND_TRACER = "frontend"
 
 declare global {
   var __frontendTelemetry: Telemetry | undefined
@@ -17,7 +17,7 @@ declare global {
 // spans) can be lost when the container stops.
 if (!globalThis.__frontendTelemetry) {
   globalThis.__frontendTelemetry = startTelemetry({
-    serviceName: "stack-frontend",
+    serviceName: "frontend",
     environment: import.meta.env.MODE,
     endpoint: OTEL_EXPORTER_OTLP_ENDPOINT,
     sampleRatio: OTEL_TRACES_SAMPLER_ARG,

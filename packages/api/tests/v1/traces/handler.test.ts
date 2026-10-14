@@ -99,13 +99,13 @@ const NEWEST = "with (most_recent=true)"
 function searchTrace(traceID: string, startOffsetMs: number) {
   return {
     traceID,
-    rootServiceName: "stack-backend",
+    rootServiceName: "backend",
     rootTraceName: "POST /rpc/*",
     startTimeUnixNano: ns(startOffsetMs),
     durationMs: 7,
     serviceStats: {
-      "stack-backend": { spanCount: 4, errorCount: 2 },
-      "stack-frontend": { spanCount: 1 },
+      backend: { spanCount: 4, errorCount: 2 },
+      frontend: { spanCount: 1 },
     },
   }
 }
@@ -153,7 +153,7 @@ describe("traces.search", () => {
 
     await tracesHandler.search({
       input: searchInput({
-        services: ["stack-backend", "postgresql"],
+        services: ["backend", "postgresql"],
         errorsOnly: true,
         minDurationMs: 500,
         name: "POST /rpc",
@@ -164,7 +164,7 @@ describe("traces.search", () => {
 
     const url = requestedUrl()
     expect(url.searchParams.get("q")).toBe(
-      `{ resource.service.name = "stack-backend" || span.db.system.name = "postgresql" } && { status = error } && { trace:duration >= 500ms } && { trace:rootName =~ "(?i).*POST /rpc.*" } ${NEWEST}`
+      `{ resource.service.name = "backend" || span.db.system.name = "postgresql" } && { status = error } && { trace:duration >= 500ms } && { trace:rootName =~ "(?i).*POST /rpc.*" } ${NEWEST}`
     )
     expect(url.searchParams.get("start")).toBe(
       String(Date.parse("2026-10-14T00:00:00Z") / 1000)
@@ -196,8 +196,8 @@ describe("traces.search", () => {
     expect(result.traces).toEqual([
       {
         traceId: TRACE_ID,
-        rootService: "stack-backend",
-        services: ["stack-frontend", "stack-backend", "postgresql"],
+        rootService: "backend",
+        services: ["frontend", "backend", "postgresql"],
         rootName: "POST /rpc/*",
         startTime: "2026-10-14T10:42:01.249Z",
         durationMs: 7,
@@ -206,8 +206,8 @@ describe("traces.search", () => {
       },
       {
         traceId: "00942dac5ae1610f0c180b4d39613cfc",
-        rootService: "stack-backend",
-        services: ["stack-frontend", "stack-backend", "postgresql"],
+        rootService: "backend",
+        services: ["frontend", "backend", "postgresql"],
         rootName: "POST /rpc/*",
         startTime: "2026-10-14T10:41:01.249Z",
         durationMs: 7,
@@ -233,8 +233,8 @@ describe("traces.search", () => {
     expect(
       result.traces.map((trace) => [trace.traceId, trace.services])
     ).toEqual([
-      [TRACE_ID, ["stack-frontend", "stack-backend", "postgresql"]],
-      [other, ["stack-frontend", "stack-backend"]],
+      [TRACE_ID, ["frontend", "backend", "postgresql"]],
+      [other, ["frontend", "backend"]],
     ])
     // Named by id: Tempo's search returns the first matches it finds, so
     // re-running the filters could answer about other traces.
@@ -457,7 +457,7 @@ describe("traces.get", () => {
   test("lays the spans out depth-first, siblings by start, across services", async () => {
     fetchSpy.mockResolvedValue(
       traceResponse({
-        "stack-backend": [
+        backend: [
           { id: 4, parent: 2, name: "INSERT", startMs: 7, durationMs: 1 },
           {
             id: 2,
@@ -468,9 +468,7 @@ describe("traces.get", () => {
           },
           { id: 3, parent: 2, name: "SELECT", startMs: 3, durationMs: 2 },
         ],
-        "stack-frontend": [
-          { id: 1, name: "GET /crons", startMs: 0, durationMs: 12 },
-        ],
+        frontend: [{ id: 1, name: "GET /crons", startMs: 0, durationMs: 12 }],
       })
     )
 
@@ -486,10 +484,10 @@ describe("traces.get", () => {
         span.durationMs,
       ])
     ).toEqual([
-      ["GET /crons", "stack-frontend", 0, null, 0, 12],
-      ["call_procedure", "stack-backend", 1, spanId(1), 2, 8],
-      ["SELECT", "stack-backend", 2, spanId(2), 3, 2],
-      ["INSERT", "stack-backend", 2, spanId(2), 7, 1],
+      ["GET /crons", "frontend", 0, null, 0, 12],
+      ["call_procedure", "backend", 1, spanId(1), 2, 8],
+      ["SELECT", "backend", 2, spanId(2), 3, 2],
+      ["INSERT", "backend", 2, spanId(2), 7, 1],
     ])
     expect(trace).toMatchObject({
       traceId: TRACE_ID,
@@ -504,7 +502,7 @@ describe("traces.get", () => {
   test("places a span whose parent is missing as a root", async () => {
     fetchSpy.mockResolvedValue(
       traceResponse({
-        "stack-backend": [
+        backend: [
           { id: 1, name: "POST /rpc/*", startMs: 0, durationMs: 5 },
           { id: 3, parent: 99, name: "orphan", startMs: 1, durationMs: 1 },
         ],
@@ -524,7 +522,7 @@ describe("traces.get", () => {
   test("maps kind, status, attributes and events", async () => {
     fetchSpy.mockResolvedValue(
       traceResponse({
-        "stack-backend": [
+        backend: [
           {
             id: 1,
             name: "INSERT",
@@ -559,7 +557,7 @@ describe("traces.get", () => {
       spanId: spanId(1),
       parentSpanId: null,
       name: "INSERT",
-      service: "stack-backend",
+      service: "backend",
       kind: "client",
       depth: 0,
       offsetMs: 0,
@@ -581,7 +579,7 @@ describe("traces.get", () => {
   test("shows a query span under its database system, not the emitting service", async () => {
     fetchSpy.mockResolvedValue(
       traceResponse({
-        "stack-backend": [
+        backend: [
           { id: 1, name: "POST /rpc/v1/cron/list", startMs: 0, durationMs: 5 },
           {
             id: 2,
@@ -601,7 +599,7 @@ describe("traces.get", () => {
     const trace = await tracesHandler.get({ input: { traceId: TRACE_ID } })
 
     expect(trace.spans.map((span) => [span.name, span.service])).toEqual([
-      ["POST /rpc/v1/cron/list", "stack-backend"],
+      ["POST /rpc/v1/cron/list", "backend"],
       ["pg.query:SELECT stack", "postgresql"],
     ])
   })
@@ -609,7 +607,7 @@ describe("traces.get", () => {
   test("keeps a child's bar inside its parent's, but not its measured times", async () => {
     fetchSpy.mockResolvedValue(
       traceResponse({
-        "stack-backend": [
+        backend: [
           { id: 1, name: "handler", startMs: 0, durationMs: 6.5 },
           // Starts at 6.0 (start times are whole milliseconds) and measures
           // 0.9 ms, so it ends 0.4 ms past its parent.
@@ -646,7 +644,7 @@ describe("traces.get", () => {
   test("scales a stream to its request and marks the stream span as continuing", async () => {
     fetchSpy.mockResolvedValue(
       traceResponse({
-        "stack-backend": [
+        backend: [
           {
             id: 1,
             name: "QUERY /rpc/v1/cron/watchRuns",
@@ -696,7 +694,7 @@ describe("traces.get", () => {
         durationMs: 0.5,
       })
     }
-    fetchSpy.mockResolvedValue(traceResponse({ "stack-backend": spans }))
+    fetchSpy.mockResolvedValue(traceResponse({ backend: spans }))
 
     const trace = await tracesHandler.get({ input: { traceId: TRACE_ID } })
 

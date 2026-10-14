@@ -333,7 +333,7 @@ function parentIdOf(node: LayoutNode, depth: number): string | null {
 /**
  * A query span is emitted by the backend's process but is the database's
  * work, so it is shown under the database system it names (`postgresql`)
- * rather than under `stack-backend`.
+ * rather than under `backend`.
  */
 function serviceOf(
   service: string,

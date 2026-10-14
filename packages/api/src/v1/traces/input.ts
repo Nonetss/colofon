@@ -7,11 +7,7 @@ import { traceIdSchema } from "#shared/trace-id"
  * What a trace can touch: the services that export spans (the logger's
  * `service` values) and the database their queries reach.
  */
-export const TRACE_SERVICES = [
-  "stack-frontend",
-  "stack-backend",
-  "postgresql",
-] as const
+export const TRACE_SERVICES = ["frontend", "backend", "postgresql"] as const
 
 export const tracesInput = {
   search: z.object({

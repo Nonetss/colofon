@@ -10,14 +10,14 @@ interface ServiceMeta {
 /** Our two services, plus the database: `traces.get` puts a query span
  *  under it, and the search tells which traces queried it. */
 const serviceMeta: Record<TraceService, ServiceMeta> = {
-  "stack-frontend": { label: "Frontend", barClassName: "bg-chart-2" },
-  "stack-backend": { label: "Backend", barClassName: "bg-chart-1" },
+  frontend: { label: "Frontend", barClassName: "bg-chart-2" },
+  backend: { label: "Backend", barClassName: "bg-chart-1" },
   postgresql: { label: "PostgreSQL", barClassName: "bg-chart-6" },
 }
 
 export const TRACE_SERVICES: readonly TraceService[] = [
-  "stack-frontend",
-  "stack-backend",
+  "frontend",
+  "backend",
   "postgresql",
 ]
 

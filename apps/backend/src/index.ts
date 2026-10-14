@@ -34,7 +34,7 @@ const TELEMETRY_FLUSH_TIMEOUT_MS = 2_000
 // registered once per process. Off, and free, without an OTLP endpoint.
 if (!globalThis.__backendTelemetry) {
   globalThis.__backendTelemetry = startTelemetry({
-    serviceName: "stack-backend",
+    serviceName: "backend",
     environment: env.NODE_ENV,
     endpoint: env.OTEL_EXPORTER_OTLP_ENDPOINT,
     sampleRatio: env.OTEL_TRACES_SAMPLER_ARG,

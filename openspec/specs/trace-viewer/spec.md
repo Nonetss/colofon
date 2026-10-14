@@ -9,7 +9,7 @@ Administrator screens and procedures to search traces stored in Tempo and inspec
 ### Requirement: Administrator trace search
 
 The API SHALL expose an administrator-only `v1.traces.search` procedure (HTTP `GET`). It SHALL return the traces stored in Tempo, newest first, a page at a time, each with its trace id, root service, the services it touched (the services with spans in it, plus `postgresql` when it queried the database), root span name, start time, duration in milliseconds and whether it is an event stream (it has oRPC's `consume_async_iterator_object_output` span). It SHALL accept these optional filters, all combined with AND:
-- `services`: any of `stack-frontend`, `stack-backend` and `postgresql`, keeping the traces that touch at least one of them;
+- `services`: any of `frontend`, `backend` and `postgresql`, keeping the traces that touch at least one of them;
 - `errorsOnly`: only traces with at least one span in error status;
 - `minDurationMs`;
 - `name`: text the root span name contains, ignoring case;
@@ -19,7 +19,7 @@ It SHALL return at most `limit` traces (default 50, maximum 200) per page and a 
 
 #### Scenario: Errors in the backend
 
-- **WHEN** an administrator searches with `services: ["stack-backend"]` and `errorsOnly: true`
+- **WHEN** an administrator searches with `services: ["backend"]` and `errorsOnly: true`
 - **THEN** the response SHALL contain only traces with a backend span that have a span in error status (not necessarily the same one), newest first
 
 #### Scenario: Traces that queried the database

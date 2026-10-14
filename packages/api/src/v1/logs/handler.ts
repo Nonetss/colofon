@@ -64,7 +64,7 @@ function statusPatterns(
 
 function buildLogQL(input: LogsQueryInput): string {
   let query =
-    '{service=~"stack-backend|stack-frontend"} | json | type=~"page_view|api_call"'
+    '{service=~"backend|frontend"} | json | type=~"page_view|api_call"'
   query += anyOf("type", exactly(input.types))
   query += anyOf("userId", exactly(input.userIds))
   query += anyOf("method", exactly(input.methods))

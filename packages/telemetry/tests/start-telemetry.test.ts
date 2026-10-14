@@ -38,7 +38,7 @@ describe("startTelemetry", () => {
     let built = false
 
     const telemetry = startTelemetry({
-      serviceName: "stack-backend",
+      serviceName: "backend",
       environment: "test",
       endpoint: undefined,
       sampleRatio: 1,
@@ -61,7 +61,7 @@ describe("startTelemetry", () => {
     await tracing.shutdown()
 
     const telemetry = startTelemetry({
-      serviceName: "stack-backend",
+      serviceName: "backend",
       environment: "test",
       endpoint: undefined,
       sampleRatio: 1,

@@ -80,7 +80,7 @@ describe("logs.query", () => {
     })
 
     expect(requestedUrl().searchParams.get("query")).toBe(
-      '{service=~"stack-backend|stack-frontend"} | json | type=~"page_view|api_call"'
+      '{service=~"backend|frontend"} | json | type=~"page_view|api_call"'
     )
   })
 
@@ -92,7 +92,7 @@ describe("logs.query", () => {
     })
 
     expect(requestedUrl().searchParams.get("query")).toBe(
-      '{service=~"stack-backend|stack-frontend"} | json | type=~"page_view|api_call" | traceId="25942dac5ae1610f0c180b4d39613cfc"'
+      '{service=~"backend|frontend"} | json | type=~"page_view|api_call" | traceId="25942dac5ae1610f0c180b4d39613cfc"'
     )
   })
 
