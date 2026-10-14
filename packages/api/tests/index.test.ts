@@ -160,3 +160,25 @@ describe("access meta", () => {
     expect(procedures[builder]["~orpc"].meta.access).toBe(access)
   })
 })
+
+describe("middleware names", () => {
+  // oRPC names each middleware's span `middleware.<function name>`; an
+  // anonymous arrow would show up as `middleware.` in every trace.
+  test("each access builder's middleware is a named function", () => {
+    const names = (builder: {
+      "~orpc": {
+        orderedMiddlewares: readonly { middleware: { name: string } }[]
+      }
+    }) =>
+      builder["~orpc"].orderedMiddlewares.map(
+        ({ middleware }) => middleware.name
+      )
+
+    expect(names(protectedProcedure)).toEqual(["requireAuth"])
+    expect(names(adminProcedure)).toEqual(["requireAdmin"])
+    expect(names(permissionProcedure(resource, action))).toEqual([
+      "requirePermission",
+    ])
+    expect(names(cronProcedure)).toEqual(["requireCron"])
+  })
+})

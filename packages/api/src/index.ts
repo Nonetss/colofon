@@ -55,7 +55,9 @@ export const o = os.$context<Context>().errors(errorMap)
 
 export const publicProcedure = o.meta(accessMeta("public"))
 
-const requireAuth = o.middleware(async ({ context, next }) => {
+// Named functions: oRPC names each middleware's span after the function
+// (`middleware.requireAuth`), so an anonymous arrow shows up as `middleware.`.
+const requireAuth = o.middleware(async function requireAuth({ context, next }) {
   if (!context.user) {
     throw errors.UNAUTHORIZED()
   }
@@ -72,7 +74,10 @@ export const protectedProcedure = publicProcedure
   .use(requireAuth)
   .meta(accessMeta("protected"))
 
-const requireAdmin = o.middleware(async ({ context, next }) => {
+const requireAdmin = o.middleware(async function requireAdmin({
+  context,
+  next,
+}) {
   if (!context.user) {
     throw errors.UNAUTHORIZED()
   }
@@ -96,7 +101,7 @@ function requirePermission<Resource extends AppResource>(
   resource: Resource,
   action: AppAction<Resource>
 ) {
-  return o.middleware(async ({ context, next }) => {
+  return o.middleware(async function requirePermission({ context, next }) {
     if (!context.user || !context.session) {
       throw errors.UNAUTHORIZED()
     }
@@ -147,7 +152,7 @@ export function permissionProcedure<Resource extends AppResource>(
     .meta(accessMeta("admin"))
 }
 
-const requireCron = o.middleware(async ({ context, next }) => {
+const requireCron = o.middleware(async function requireCron({ context, next }) {
   if (!context.cron) {
     throw errors.FORBIDDEN({ message: "This endpoint is cron-only" })
   }
