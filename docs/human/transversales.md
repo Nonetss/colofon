@@ -102,6 +102,17 @@ cascada de *spans*.
   llegan de fuera: un cliente no puede elegir los ids de traza.
 - Las líneas de log escritas dentro de una traza llevan `traceId` y `spanId`.
 
+Las llamadas del propio visor (`traces.search`, `traces.get`) no se trazan: el
+backend las ejecuta con el tracing suprimido, así que abrir `/admin/traces` no
+llena la lista consigo mismo. La lista enseña las trazas más recientes. Las
+suscripciones a
+eventos (`cron.watchRuns`, `cron.watchJobs`) llevan la etiqueta «Stream»: su
+traza dura lo que estuvo abierta la suscripción, así que su cascada se ajusta a
+la petición y marca con una flecha lo que sigue después. Las barras de cada
+*span* nunca se salen de las de su padre: el inicio de los *spans* solo tiene
+precisión de milisegundo, y el detalle de cada *span* muestra siempre los
+tiempos medidos.
+
 Las trazas se envían a **Grafana Tempo** (`OTEL_EXPORTER_OTLP_ENDPOINT`) y el
 backend las consulta para el visor (`TEMPO_URL`), igual que hace con Loki. No
 hay una interfaz aparte: el visor es parte de la app. Todo es opcional: sin

@@ -46,7 +46,8 @@ Vite (`frontend_vite_cache`), la autoridad de certificación del gateway
 
 | Si editas… | Pasa esto |
 | --- | --- |
-| `apps/*/src`, `packages/*/src`, `apps/frontend/public` | Se sincroniza y la recarga en caliente lo recoge. |
+| `apps/*/src`, `apps/frontend/public` y los `packages/*/src` que usa el frontend | Se sincroniza y la recarga en caliente lo recoge. |
+| Los `packages/*/src` que usa el backend | Se sincroniza y el backend se reinicia (`bun --hot` no recarga esos cambios). |
 | `apps/frontend/astro.config.mjs`, `apps/gateway/Caddyfile.dev`, `apps/gateway/routes.caddy` | Se sincroniza y se reinicia ese servicio. |
 | `package.json`, `bun.lock` | Se reconstruyen las imágenes afectadas. |
 

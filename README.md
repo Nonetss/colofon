@@ -151,8 +151,10 @@ spans and one span per SQL query), every cron run and every server-rendered
 page is exported to Grafana Tempo. A page and the backend work it triggers
 share one trace, and log lines written inside a trace carry its `traceId`.
 With `TEMPO_URL` set, admins browse traces at `/admin/traces` (a waterfall per
-trace) and jump between a trace and its activity-log entry. Without the
-endpoint nothing is traced. There is no separate observability UI.
+trace) and jump between a trace and its activity-log entry. The viewer's own calls
+aren't traced, the list shows the newest traces, and event-stream
+subscriptions are tagged and their waterfall scaled to the request. Without the endpoint nothing is traced.
+There is no separate observability UI.
 
 ## Project Structure
 
@@ -283,7 +285,8 @@ network and reach each other by service name: compose overrides `BACKEND_URL`,
 
 | You edit | What happens |
 |---|---|
-| `apps/*/src`, `packages/*/src`, `apps/frontend/public` | synced, hot reload picks it up |
+| `apps/*/src`, `apps/frontend/public`, the `packages/*/src` the frontend uses | synced, hot reload picks it up |
+| the `packages/*/src` the backend uses | synced, the backend restarts (`bun --hot` doesn't reload them) |
 | `apps/frontend/astro.config.mjs`, `apps/gateway/Caddyfile.dev`, `apps/gateway/routes.caddy` | synced, that service restarts |
 | `package.json`, `bun.lock` | the affected images rebuild |
 
