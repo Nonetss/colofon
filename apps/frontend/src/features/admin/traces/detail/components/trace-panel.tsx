@@ -2,17 +2,13 @@ import { getIcon } from "@/lib/icon-registry"
 
 const ChartGantt = getIcon("admin", "traces")
 const OctagonX = getIcon("status", "error")
-const ScrollText = getIcon("admin", "logs")
-const X = getIcon("controls", "close")
 
 import { useState } from "react"
 import { Text } from "@/components/shared/brand/typography"
 import { MetadataDefinitionList } from "@/components/shared/data-display/metadata-cell"
 import { StatusTag } from "@/components/shared/data-display/status-dot"
-import { Hint } from "@/components/shared/feedback/hint"
 import { StateCard } from "@/components/shared/feedback/state-card"
-import { AppLink } from "@/components/ui/app-link"
-import { Button, buttonVariants } from "@/components/ui/button"
+import { Button } from "@/components/ui/button"
 import { TraceSpanDetail } from "@/features/admin/traces/detail/components/trace-span-detail"
 import { TraceWaterfall } from "@/features/admin/traces/detail/components/trace-waterfall"
 import { useTrace } from "@/features/admin/traces/detail/hooks/use-trace"
@@ -54,21 +50,6 @@ function selectedSpanOf(
   const picked = trace.spans.find((span) => span.spanId === selectedSpanId)
   if (picked) return picked
   return trace.spans[0]
-}
-
-function CloseButton({ onClose }: { onClose: () => void }) {
-  return (
-    <Hint label="Cerrar la traza">
-      <Button
-        variant="ghost"
-        size="icon-sm"
-        aria-label="Cerrar la traza"
-        onClick={onClose}
-      >
-        <X className="size-4" />
-      </Button>
-    </Hint>
-  )
 }
 
 function TraceError({
@@ -121,25 +102,12 @@ function TraceError({
  * One trace beside the list on `/admin/traces`: a summary, the waterfall of
  * its spans and the selected span's attributes and events.
  */
-export function TracePanel({
-  traceId,
-  onClose,
-}: {
-  traceId: string
-  onClose: () => void
-}) {
+export function TracePanel({ traceId }: { traceId: string }) {
   const { data: trace, isPending, isError, error, refetch } = useTrace(traceId)
   const [selectedSpanId, setSelectedSpanId] = useState<string | null>(null)
 
   if (isError) {
-    return (
-      <div className="flex flex-col gap-2">
-        <div className="flex justify-end">
-          <CloseButton onClose={onClose} />
-        </div>
-        <TraceError error={error} onRetry={() => refetch()} />
-      </div>
-    )
+    return <TraceError error={error} onRetry={() => refetch()} />
   }
   if (isPending) {
     return <StateCard spinner title="Cargando traza..." />
@@ -166,14 +134,6 @@ export function TracePanel({
             </StatusTag>
           ) : null}
         </div>
-        <AppLink
-          href={`/admin/logs?trace=${trace.traceId}`}
-          className={buttonVariants({ variant: "outline", size: "sm" })}
-        >
-          <ScrollText className="size-3.5" />
-          Registro
-        </AppLink>
-        <CloseButton onClose={onClose} />
       </header>
 
       <MetadataDefinitionList

@@ -61,17 +61,12 @@ function traceIdOf(param: string): string {
 
 /**
  * The trace the panel shows: the one in the URL, else the newest of the
- * list (the API answers newest first, whatever the table's sort) until the
- * admin closes the panel. The newest one stays out of the URL, so a refresh
- * keeps following the latest request.
+ * list (the API answers newest first, whatever the table's sort). The
+ * newest one stays out of the URL, so a refresh keeps following the latest
+ * request.
  */
-function openTraceOf(
-  chosen: string,
-  followNewest: boolean,
-  traces: readonly TraceSummary[]
-): string {
+function openTraceOf(chosen: string, traces: readonly TraceSummary[]): string {
   if (chosen !== "") return chosen
-  if (!followNewest) return ""
   const newest = traces[0]
   if (newest === undefined) return ""
   return newest.traceId
@@ -127,7 +122,6 @@ export function TracesContent() {
   )
   const [traceParam, setTraceParam] = useQueryParam("trace", "")
   const chosenTraceId = traceIdOf(traceParam)
-  const [followNewest, setFollowNewest] = useState(true)
   const [name, setName] = useState("")
   const [minDuration, setMinDuration] = useState("")
   const [from, setFrom] = useState<Date | undefined>(undefined)
@@ -151,7 +145,7 @@ export function TracesContent() {
     () => tracesNamed(data?.traces ?? [], debouncedName),
     [data, debouncedName]
   )
-  const openTraceId = openTraceOf(chosenTraceId, followNewest, traces)
+  const openTraceId = openTraceOf(chosenTraceId, traces)
   const rows = useMemo(
     () => sortRows(traces, sorting, traceSortValues),
     [traces, sorting]
@@ -318,14 +312,7 @@ export function TracesContent() {
             </div>
             {openTraceId !== "" ? (
               <aside className="min-h-0 overflow-y-auto rounded-lg border p-4">
-                <TracePanel
-                  key={openTraceId}
-                  traceId={openTraceId}
-                  onClose={() => {
-                    setTraceParam("")
-                    setFollowNewest(false)
-                  }}
-                />
+                <TracePanel key={openTraceId} traceId={openTraceId} />
               </aside>
             ) : null}
           </div>
