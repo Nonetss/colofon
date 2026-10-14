@@ -163,7 +163,9 @@ export function SuggestInput({
             <span
               className={cn(
                 "w-full truncate",
-                labelStyle === "medium" ? "font-medium" : "font-mono"
+                labelStyle === "medium"
+                  ? "font-medium"
+                  : "font-mono tabular-nums"
               )}
             >
               {suggestion.label}
