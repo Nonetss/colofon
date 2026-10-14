@@ -1,4 +1,9 @@
-import { skipToken, useInfiniteQuery, useQuery } from "@tanstack/react-query"
+import {
+  keepPreviousData,
+  skipToken,
+  useInfiniteQuery,
+  useQuery,
+} from "@tanstack/react-query"
 import type { CronRunStatus } from "@/features/crons/shared/model/types"
 import { orpc } from "@/lib/orpc"
 
@@ -54,7 +59,8 @@ function runsInput(
 }
 
 // The filter and the order are part of the input, so each combination gets
-// its own query key and a fresh infinite list starting from page one.
+// its own query key and a fresh infinite list starting from page one; the
+// previous list stays on screen until it loads.
 export const useCronRuns = (
   jobId: string | null,
   { statuses, sort = "startedAt", order = "desc" }: CronRunsQuery = {}
@@ -64,5 +70,6 @@ export const useCronRuns = (
       input: runsInput(jobId, { statuses, sort, order }),
       initialPageParam: null,
       getNextPageParam: (lastPage) => lastPage.nextCursor,
+      placeholderData: keepPreviousData,
     })
   )

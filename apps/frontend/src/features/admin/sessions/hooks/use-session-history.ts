@@ -1,4 +1,4 @@
-import { useInfiniteQuery } from "@tanstack/react-query"
+import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query"
 import type {
   SessionSortKey,
   SessionStatus,
@@ -33,6 +33,7 @@ export function useSessionHistory(
       }),
       initialPageParam: null,
       getNextPageParam: (lastPage) => lastPage.nextCursor,
+      placeholderData: keepPreviousData,
     }),
   })
 

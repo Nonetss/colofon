@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query"
+import { keepPreviousData, useQuery } from "@tanstack/react-query"
 import { endOfDay, startOfDay } from "date-fns"
 import type { TraceService } from "@/features/admin/traces/shared"
 import { orpc } from "@/lib/orpc"
@@ -41,7 +41,8 @@ function errorsOnlyInput(errorsOnly: boolean): true | undefined {
 }
 
 /** The newest traces matching the filters; the filters are the query's
- *  input, so a change runs a new search. */
+ *  input, so a change runs a new search while the previous results stay on
+ *  screen. */
 export function useTraceSearch(filters: TraceSearchFilters) {
   return useQuery(
     orpc.v1.traces.search.queryOptions({
@@ -53,6 +54,7 @@ export function useTraceSearch(filters: TraceSearchFilters) {
         to: dayEnd(filters.to),
         limit: TRACE_SEARCH_LIMIT,
       },
+      placeholderData: keepPreviousData,
     })
   )
 }

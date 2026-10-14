@@ -1,4 +1,4 @@
-import { useInfiniteQuery } from "@tanstack/react-query"
+import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query"
 import type {
   UserRole,
   UserSortKey,
@@ -42,6 +42,7 @@ export function useUsersList(
       }),
       initialPageParam: null,
       getNextPageParam: (lastPage) => lastPage.nextCursor,
+      placeholderData: keepPreviousData,
     }),
   })
 

@@ -1,4 +1,4 @@
-import { useInfiniteQuery } from "@tanstack/react-query"
+import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query"
 import { endOfDay, startOfDay } from "date-fns"
 import type { LogSortKey } from "@/features/admin/logs/definitions/log-columns.definition"
 import type {
@@ -55,6 +55,7 @@ export function useActivityLog(
       }),
       initialPageParam: null,
       getNextPageParam: (lastPage) => lastPage.nextCursor,
+      placeholderData: keepPreviousData,
     }),
   })
 
