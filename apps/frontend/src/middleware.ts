@@ -1,7 +1,10 @@
 import { defineMiddleware } from "astro:middleware"
+import { injectTraceHeaders, withServerSpan } from "@nonete/telemetry/span"
+import type { APIContext, MiddlewareNext } from "astro"
 import { splitSetCookieHeader } from "better-auth/cookies"
 import { authServer } from "@/lib/auth-server"
 import { logger } from "@/lib/logger"
+import { FRONTEND_TRACER } from "@/lib/telemetry"
 
 const publicPaths = ["/login", "/signup"]
 const publicExactPaths = new Set(["/logo.svg"])
@@ -78,23 +81,41 @@ function logPageView({
   }
 }
 
-export const onRequest = defineMiddleware(async (context, next) => {
-  const start = performance.now()
-  const path = context.url.pathname
-  const method = context.request.method
-
+export const onRequest = defineMiddleware((context, next) => {
   context.locals.session = null
   context.locals.user = null
 
+  const path = context.url.pathname
   if (publicExactPaths.has(path) || matchesAnyPathSegment(path, publicPaths)) {
     return next()
   }
+
+  // One SERVER span per protected request, named after the route pattern
+  // (`GET /admin/traces/[traceId]`), so the session lookup below and the
+  // backend's spans for it land in the same trace. Public paths stay out.
+  return withServerSpan(FRONTEND_TRACER, context.request, (span) => {
+    span.updateName(`${context.request.method} ${context.routePattern}`)
+    span.setAttribute("http.route", context.routePattern)
+    return handleProtectedRequest(context, next)
+  })
+})
+
+async function handleProtectedRequest(
+  context: APIContext,
+  next: MiddlewareNext
+): Promise<Response> {
+  const start = performance.now()
+  const path = context.url.pathname
+  const method = context.request.method
 
   let refreshedCookies: string[] = []
 
   const sessionResult = await authServer.getSession({
     fetchOptions: {
-      headers: Object.fromEntries(context.request.headers.entries()),
+      // The trace context goes along, so the backend continues this trace.
+      headers: injectTraceHeaders(
+        Object.fromEntries(context.request.headers.entries())
+      ),
       onResponse: (ctx) => {
         refreshedCookies = splitSetCookieHeader(
           ctx.response.headers.get("set-cookie") ?? ""
@@ -147,4 +168,4 @@ export const onRequest = defineMiddleware(async (context, next) => {
   }
 
   return appendRefreshedCookies(response, refreshedCookies)
-})
+}
