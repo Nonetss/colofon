@@ -196,4 +196,4 @@
 - [x] 15.2 Run Biome and `bun run tailwind:check`.
 - [x] 15.3 Run `bun run test` from the repo root. Every suite, including the new `packages/telemetry` and `packages/db` suites, passes (telemetry 19, db 5, cron 54, api 172, frontend 237).
 - [x] 15.4 Run `openspec validate add-opentelemetry --strict`.
-- [ ] 15.5 Ask the user to run `bun run dev` (or `tempo:start` + `dev:local`) and confirm that a page load appears at `/admin/traces` as one trace spanning frontend → backend → SQL, and that the activity-log entry links to it. Don't probe the running app yourself.
+- [x] 15.5 Ask the user to run `bun run dev` (or `tempo:start` + `dev:local`) and confirm that a page load appears at `/admin/traces` as one trace spanning frontend → backend → SQL, and that the activity-log entry links to it. Don't probe the running app yourself.
