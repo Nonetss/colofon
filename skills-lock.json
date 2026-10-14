@@ -65,10 +65,9 @@
       "computedHash": "82fb11a63fb1e35ee2469516ed02d54695f783115b1540c0e783197af4240a3a"
     },
     "hono": {
-      "source": "honojs/skills",
-      "sourceType": "github",
-      "skillPath": "skills/hono/SKILL.md",
-      "computedHash": "e3f141a41800df815000216a53510fe6f888629471c214706cc05adff27297fb"
+      "source": "yusukebe/hono-skill",
+      "sourceType": "autoskills-registry",
+      "computedHash": "bc1c40e71ec13faa82ab7e9464bfd57cc282780a1087b021d26ba0d2c082059b"
     },
     "impeccable": {
       "source": "pbakaus/impeccable",
@@ -138,9 +137,8 @@
     },
     "turborepo": {
       "source": "vercel/turborepo",
-      "sourceType": "github",
-      "skillPath": "skills/turborepo/SKILL.md",
-      "computedHash": "9681d8dfeb5e6cdff767f1bcaba5d7ac55732a9d6c02ee120f44229f8ec25e7e"
+      "sourceType": "autoskills-registry",
+      "computedHash": "341f67c77a99b473c48207db023503509de7955af1517ce39e17b21a0127d79c"
     },
     "twoFactor": {
       "source": "better-auth/skills",
