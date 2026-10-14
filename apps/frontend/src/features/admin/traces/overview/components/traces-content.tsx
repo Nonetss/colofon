@@ -125,7 +125,9 @@ function TraceNameCell({
               {traceServicesLabel(trace.services)} ·{" "}
             </span>
           )}
-          <span className="font-mono">{trace.traceId.slice(0, 16)}</span>
+          <Text as="span" variant="data">
+            {trace.traceId.slice(0, 16)}
+          </Text>
         </>
       }
       onOpen={onOpen}

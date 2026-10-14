@@ -98,7 +98,9 @@ function LeafRow({
         htmlFor={id}
         className="flex min-w-0 flex-1 cursor-pointer items-center gap-2"
       >
-        <span className="min-w-0 flex-1 truncate text-sm">{label}</span>
+        <Text as="span" className="min-w-0 flex-1 truncate">
+          {label}
+        </Text>
         {tag ? (
           <Text as="span" variant="status" tone="muted">
             {tag}
@@ -174,9 +176,9 @@ function NodeRows({
           htmlFor={id}
           className="flex min-w-0 flex-1 cursor-pointer items-center gap-2 py-0.5"
         >
-          <span className="min-w-0 flex-1 truncate font-medium text-sm">
+          <Text as="span" variant="title" className="min-w-0 flex-1 truncate">
             {label}
-          </span>
+          </Text>
           <Text
             as="span"
             variant="compact"
