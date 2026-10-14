@@ -9,6 +9,14 @@ import { traceIdSchema } from "#shared/trace-id"
  */
 export const TRACE_SERVICES = ["frontend", "backend", "postgresql"] as const
 
+/** A root span name, as `traces.rootNames` lists them. Control characters
+ *  can't be written in a TraceQL string. */
+const rootName = z
+  .string()
+  .min(1)
+  .max(500)
+  .regex(/^[^\p{Cc}]*$/u, "Invalid root span name")
+
 export const tracesInput = {
   search: z.object({
     services: z
@@ -27,15 +35,12 @@ export const tracesInput = {
       .min(0)
       .optional()
       .describe("Keep only traces lasting at least this many milliseconds"),
-    name: z
-      .string()
-      .trim()
-      .min(1)
+    names: z
+      .array(rootName)
       .max(200)
-      .regex(/^[^\p{Cc}]*$/u, "Invalid name filter")
       .optional()
       .describe(
-        "Keep only traces whose root span name contains this text, ignoring case"
+        "Keep only traces whose root span has any of these exact names (from traces.rootNames); omitted or empty keeps all"
       ),
     /** ISO timestamp lower bound. Defaults to 24 hours ago. */
     from: z.iso.datetime({ offset: true }).optional(),
@@ -52,6 +57,12 @@ export const tracesInput = {
         "Opaque pagination cursor from a previous response's nextCursor; omit for the first page"
       ),
     limit: paginationLimit(50, 200),
+  }),
+  rootNames: z.object({
+    /** ISO timestamp lower bound. Defaults to 24 hours ago. */
+    from: z.iso.datetime({ offset: true }).optional(),
+    /** ISO timestamp upper bound. Defaults to now. */
+    to: z.iso.datetime({ offset: true }).optional(),
   }),
   get: z.object({
     traceId: traceIdSchema,

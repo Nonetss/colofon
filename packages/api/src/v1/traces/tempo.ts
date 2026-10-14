@@ -3,8 +3,9 @@ import { z } from "zod"
 import { errors } from "#errors"
 
 /**
- * Tempo's HTTP API, as the trace viewer reads it: `GET /api/search` (TraceQL)
- * and `GET /api/v2/traces/<id>` (OTLP JSON). Every response is validated
+ * Tempo's HTTP API, as the trace viewer reads it: `GET /api/search` (TraceQL),
+ * `GET /api/v2/search/tag/<tag>/values` and `GET /api/v2/traces/<id>` (OTLP
+ * JSON). Every response is validated
  * before use; a body that doesn't match is a `BAD_GATEWAY`, like an
  * unreachable Tempo. Shapes checked against `grafana/tempo:3.1.0`.
  */
@@ -104,6 +105,12 @@ const searchResponse = z.object({
     .optional(),
 })
 
+const tagValuesResponse = z.object({
+  tagValues: z
+    .array(z.object({ type: z.string(), value: z.string() }))
+    .optional(),
+})
+
 export type TempoSearchTrace = NonNullable<
   z.infer<typeof searchResponse>["traces"]
 >[number]
@@ -157,6 +164,23 @@ export async function searchTempo(
   assertOk(response)
   const body = await parseBody(response, searchResponse)
   return body.traces ?? []
+}
+
+/** The distinct values `tag` (a TraceQL identifier) took in the window. */
+export async function fetchTagValues(
+  tempoUrl: string,
+  tag: string,
+  params: { start: number; end: number; limit: number }
+): Promise<string[]> {
+  const url = new URL(`/api/v2/search/tag/${tag}/values`, tempoUrl)
+  url.searchParams.set("start", String(params.start))
+  url.searchParams.set("end", String(params.end))
+  url.searchParams.set("limit", String(params.limit))
+
+  const response = await fetchTempo(tempoUrl, url)
+  assertOk(response)
+  const body = await parseBody(response, tagValuesResponse)
+  return (body.tagValues ?? []).map((tagValue) => tagValue.value)
 }
 
 function resourceService(attributes: OtlpKeyValue[] | undefined): string {

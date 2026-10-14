@@ -1,7 +1,11 @@
 import { afterAll, beforeEach, describe, expect, spyOn, test } from "bun:test"
 import { resetEnv, testEnv } from "#tests/fixtures/env"
 import { expectErrorCode } from "#tests/fixtures/errors"
-import { MAX_TRACE_SPANS, tracesHandler } from "#v1/traces/handler"
+import {
+  MAX_ROOT_NAMES,
+  MAX_TRACE_SPANS,
+  tracesHandler,
+} from "#v1/traces/handler"
 
 const TEMPO_URL = "http://tempo.test:3200"
 const TRACE_ID = "25942dac5ae1610f0c180b4d39613cfc"
@@ -156,7 +160,7 @@ describe("traces.search", () => {
         services: ["backend", "postgresql"],
         errorsOnly: true,
         minDurationMs: 500,
-        name: "POST /rpc",
+        names: ["POST /rpc/*"],
         from: "2026-10-14T00:00:00Z",
         to: "2026-10-14T01:00:00Z",
       }),
@@ -164,7 +168,7 @@ describe("traces.search", () => {
 
     const url = requestedUrl()
     expect(url.searchParams.get("q")).toBe(
-      `{ resource.service.name = "backend" || span.db.system.name = "postgresql" } && { status = error } && { trace:duration >= 500ms } && { trace:rootName =~ "(?i).*POST /rpc.*" } ${NEWEST}`
+      `{ resource.service.name = "backend" || span.db.system.name = "postgresql" } && { status = error } && { trace:duration >= 500ms } && { trace:rootName = "POST /rpc/*" } ${NEWEST}`
     )
     expect(url.searchParams.get("start")).toBe(
       String(Date.parse("2026-10-14T00:00:00Z") / 1000)
@@ -412,6 +416,71 @@ describe("traces.search", () => {
       tracesHandler.search({ input: searchInput() }),
       "BAD_GATEWAY"
     )
+  })
+})
+
+describe("traces.rootNames", () => {
+  function tagValuesResponse(values: string[]) {
+    return Response.json({
+      tagValues: values.map((value) => ({ type: "string", value })),
+      metrics: {},
+    })
+  }
+
+  test("returns nothing without calling Tempo when TEMPO_URL is unset", async () => {
+    testEnv.TEMPO_URL = undefined
+
+    expect(await tracesHandler.rootNames({ input: {} })).toEqual({
+      names: [],
+    })
+    expect(fetchSpy).not.toHaveBeenCalled()
+  })
+
+  test("asks Tempo for the root names of the window", async () => {
+    fetchSpy.mockResolvedValue(tagValuesResponse([]))
+
+    await tracesHandler.rootNames({
+      input: { from: "2026-10-14T00:00:00Z", to: "2026-10-14T01:00:00Z" },
+    })
+
+    const url = requestedUrl()
+    expect(url.origin + url.pathname).toBe(
+      `${TEMPO_URL}/api/v2/search/tag/trace:rootName/values`
+    )
+    expect(url.searchParams.get("start")).toBe(
+      String(Date.parse("2026-10-14T00:00:00Z") / 1000)
+    )
+    expect(url.searchParams.get("end")).toBe(
+      String(Date.parse("2026-10-14T01:00:00Z") / 1000)
+    )
+    expect(url.searchParams.get("limit")).toBe(String(MAX_ROOT_NAMES))
+  })
+
+  test("defaults to the last 24 hours", async () => {
+    fetchSpy.mockResolvedValue(tagValuesResponse([]))
+
+    await tracesHandler.rootNames({ input: {} })
+
+    const url = requestedUrl()
+    const start = Number(url.searchParams.get("start"))
+    const end = Number(url.searchParams.get("end"))
+    expect(end - start).toBeGreaterThanOrEqual(24 * 60 * 60)
+  })
+
+  test("lists the names once each, alphabetical, without the empty one", async () => {
+    fetchSpy.mockResolvedValue(
+      tagValuesResponse(["cron.run", "", "GET /crons", "cron.run"])
+    )
+
+    expect(await tracesHandler.rootNames({ input: {} })).toEqual({
+      names: ["cron.run", "GET /crons"],
+    })
+  })
+
+  test("is BAD_GATEWAY when Tempo's body isn't a tag-values response", async () => {
+    fetchSpy.mockResolvedValue(Response.json({ tagValues: [{ value: 1 }] }))
+
+    await expectErrorCode(tracesHandler.rootNames({ input: {} }), "BAD_GATEWAY")
   })
 })
 

@@ -11,7 +11,7 @@ export const tracesRouter = {
       openapi({
         summary: "Search traces",
         description:
-          "Returns an administrator-only page of the traces stored in Tempo, newest first, filtered by the services they touch, error status, minimum duration, text in the root span name and time range (default: the last 24 hours). Pass the previous response's nextCursor as `cursor` to fetch the next, older page. Empty when the trace store isn't configured.",
+          "Returns an administrator-only page of the traces stored in Tempo, newest first, filtered by the services they touch, error status, minimum duration, root span names and time range (default: the last 24 hours). Pass the previous response's nextCursor as `cursor` to fetch the next, older page. Empty when the trace store isn't configured.",
         tags: ["Admin - Traces", "Admin"],
         method: "GET",
       })
@@ -19,6 +19,20 @@ export const tracesRouter = {
     .input(tracesInput.search)
     .output(tracesOutput.search)
     .handler(({ input }) => tracesHandler.search({ input })),
+
+  rootNames: adminProcedure
+    .meta(
+      openapi({
+        summary: "List trace root span names",
+        description:
+          "Returns an administrator-only, alphabetical list of the distinct root span names of the traces stored in Tempo within a time range (default: the last 24 hours), for picking `names` in traces.search. Empty when the trace store isn't configured.",
+        tags: ["Admin - Traces", "Admin"],
+        method: "GET",
+      })
+    )
+    .input(tracesInput.rootNames)
+    .output(tracesOutput.rootNames)
+    .handler(({ input }) => tracesHandler.rootNames({ input })),
 
   get: adminProcedure
     .meta(

@@ -23,10 +23,10 @@ describe("traceSearchQuery", () => {
         services: ["backend"],
         errorsOnly: true,
         minDurationMs: 500,
-        name: "POST /rpc",
+        names: ["POST /rpc/*"],
       })
     ).toBe(
-      `{ resource.service.name = "backend" } && { status = error } && { trace:duration >= 500ms } && { trace:rootName =~ "(?i).*POST /rpc.*" } ${NEWEST}`
+      `{ resource.service.name = "backend" } && { status = error } && { trace:duration >= 500ms } && { trace:rootName = "POST /rpc/*" } ${NEWEST}`
     )
   })
 
@@ -34,15 +34,21 @@ describe("traceSearchQuery", () => {
     expect(traceSearchQuery({ errorsOnly: false })).toBe(`{ } ${NEWEST}`)
   })
 
-  test("matches the name literally, whatever regex or quote it holds", () => {
-    expect(traceSearchQuery({ name: String.raw`a.b"c\(d)*` })).toBe(
-      String.raw`{ trace:rootName =~ "(?i).*a\\.b\"c\\\\\\(d\\)\\*.*" } ` +
-        NEWEST
+  test("ORs the names inside one spanset, matching them exactly", () => {
+    expect(traceSearchQuery({ names: ["cron.run", "GET /crons"] })).toBe(
+      `{ trace:rootName = "cron.run" || trace:rootName = "GET /crons" } ${NEWEST}`
+    )
+    expect(traceSearchQuery({ names: [] })).toBe(`{ } ${NEWEST}`)
+  })
+
+  test("quotes a name so no quote or backslash in it can close the string", () => {
+    expect(traceSearchQuery({ names: ['a"} || { true \\'] })).toBe(
+      `{ trace:rootName = "a\\"} || { true \\\\" } ${NEWEST}`
     )
   })
 
   test("refuses a name with control characters", () => {
-    expect(() => traceSearchQuery({ name: 'a"\n} || { true' })).toThrow()
+    expect(() => traceSearchQuery({ names: ['a"\n} || { true'] })).toThrow()
   })
 
   test("refuses a duration that isn't whole non-negative milliseconds", () => {

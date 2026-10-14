@@ -5,10 +5,11 @@ import type { TRACE_SERVICES } from "#v1/traces/input"
  *
  * Tempo only takes queries as text, and there is no TraceQL builder for JS,
  * so the text is assembled here from a closed vocabulary: fixed attributes,
- * strings quoted by `stringLiteral`, regexes escaped by `containsIgnoringCase`,
- * durations checked to be whole milliseconds and trace ids checked to be hex.
- * No value can change a query's structure. Callers ask for a query by what
- * it means (`traceSearchQuery`, `markedTracesQuery`) and never see TraceQL.
+ * strings quoted by `stringLiteral`, durations checked to be whole
+ * milliseconds and trace ids checked to be hex. No value can change a
+ * query's structure. Callers ask for a query by what it means
+ * (`traceSearchQuery`, `markedTracesQuery`) and never see TraceQL, except
+ * for `ROOT_NAME_TAG`, the identifier Tempo lists root span names under.
  */
 
 type TraceService = (typeof TRACE_SERVICES)[number]
@@ -21,9 +22,6 @@ const STRING_META = /[\\"]/g
 /** Raw control characters end a string literal's parse. */
 const CONTROL_CHARACTER = /\p{Cc}/u
 
-/** RE2's metacharacters. */
-const REGEX_META = /[\\.+*?()|[\]{}^$]/g
-
 const HEX_TRACE_ID = /^[0-9a-f]{32}$/
 
 function stringLiteral(value: string): string {
@@ -31,11 +29,6 @@ function stringLiteral(value: string): string {
     throw new Error("TraceQL strings can't hold control characters")
   }
   return `"${value.replace(STRING_META, "\\$&")}"`
-}
-
-/** A regex string matching `text` anywhere, literally, in any case. */
-function containsIgnoringCase(text: string): string {
-  return stringLiteral(`(?i).*${text.replace(REGEX_META, "\\$&")}.*`)
 }
 
 function durationLiteral(ms: number): string {
@@ -80,6 +73,9 @@ const TOUCHES = {
 
 // ── Queries ──────────────────────────────────────────────────────────────────
 
+/** The trace's root span name, as Tempo's tag-values API takes it. */
+export const ROOT_NAME_TAG = "trace:rootName"
+
 /** oRPC's span around a streamed output: the trace is an event stream. */
 export const STREAM_SPAN_NAME = "consume_async_iterator_object_output"
 
@@ -99,8 +95,9 @@ export interface TraceSearchFilters {
   services?: readonly TraceService[]
   errorsOnly?: boolean
   minDurationMs?: number
-  /** Text the root span name contains, in any case. */
-  name?: string
+  /** Traces whose root span has any of these names; none or empty keeps
+   *  all. */
+  names?: readonly string[]
 }
 
 function filterSpansets(filters: TraceSearchFilters): string[] {
@@ -114,9 +111,11 @@ function filterSpansets(filters: TraceSearchFilters): string[] {
       spanset([`trace:duration >= ${durationLiteral(filters.minDurationMs)}`])
     )
   }
-  if (filters.name !== undefined) {
+  if (filters.names !== undefined && filters.names.length > 0) {
     spansets.push(
-      spanset([`trace:rootName =~ ${containsIgnoringCase(filters.name)}`])
+      spanset(
+        filters.names.map((name) => `${ROOT_NAME_TAG} = ${stringLiteral(name)}`)
+      )
     )
   }
   return spansets

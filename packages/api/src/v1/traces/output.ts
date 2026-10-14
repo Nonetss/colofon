@@ -84,6 +84,11 @@ export const tracesOutput = {
      *  for the next page's `cursor` input; `null` when no traces follow. */
     nextCursor: z.string().nullable(),
   }),
+  rootNames: z.object({
+    names: z
+      .array(z.string())
+      .describe("Distinct root span names in the window, alphabetical"),
+  }),
   get: z.object({
     traceId: z.string(),
     startTime: z.string().describe("ISO start time of the earliest span"),

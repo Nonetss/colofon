@@ -5,6 +5,7 @@ import { errors } from "#errors"
 import type { tracesInput } from "#v1/traces/input"
 import type { SPAN_KINDS, SPAN_STATUSES, tracesOutput } from "#v1/traces/output"
 import {
+  fetchTagValues,
   fetchTrace,
   type OtlpAnyValue,
   type OtlpKeyValue,
@@ -15,17 +16,23 @@ import {
 } from "#v1/traces/tempo"
 import {
   markedTracesQuery,
+  ROOT_NAME_TAG,
   STREAM_SPAN_NAME,
   type TraceMark,
   traceSearchQuery,
 } from "#v1/traces/traceql"
 
 type SearchInput = z.infer<typeof tracesInput.search>
+type RootNamesInput = z.infer<typeof tracesInput.rootNames>
 type GetInput = z.infer<typeof tracesInput.get>
 type SearchOutput = z.infer<typeof tracesOutput.search>
+type RootNamesOutput = z.infer<typeof tracesOutput.rootNames>
 type GetOutput = z.infer<typeof tracesOutput.get>
 type TraceSpan = GetOutput["spans"][number]
 type JsonValue = TraceSpan["attributes"][string]
+
+/** Root span names `traces.rootNames` asks Tempo for, at most. */
+export const MAX_ROOT_NAMES = 1000
 
 /** Spans past this are left out of `traces.get`, flagged as `truncated`. */
 export const MAX_TRACE_SPANS = 2000
@@ -65,19 +72,28 @@ function encodeCursor(cursor: SearchCursor): string {
   return `${cursor.startNs}-${cursor.traceId}`
 }
 
-/** Tempo takes the search window as Unix seconds; a cursor ends it on the
- *  second after the previous page's oldest trace. */
+/** Tempo takes a time range as Unix seconds; the default is the last 24
+ *  hours. */
+function timeWindow(range: { from?: string; to?: string }): {
+  start: number
+  end: number
+} {
+  const now = Date.now()
+  const end = range.to === undefined ? now : Date.parse(range.to)
+  const start =
+    range.from === undefined
+      ? now - DEFAULT_SEARCH_WINDOW_MS
+      : Date.parse(range.from)
+  return { start: Math.floor(start / 1000), end: Math.ceil(end / 1000) }
+}
+
+/** The search's time window; a cursor ends it on the second after the
+ *  previous page's oldest trace. */
 function searchWindow(
   input: SearchInput,
   cursor: SearchCursor | undefined
 ): { start: number; end: number } {
-  const now = Date.now()
-  const end = input.to === undefined ? now : Date.parse(input.to)
-  const start =
-    input.from === undefined
-      ? now - DEFAULT_SEARCH_WINDOW_MS
-      : Date.parse(input.from)
-  const window = { start: Math.floor(start / 1000), end: Math.ceil(end / 1000) }
+  const window = timeWindow(input)
   if (cursor === undefined) return window
   const cursorEnd = Number(cursor.startNs / NANOS_PER_SECOND + 1n)
   return { start: window.start, end: Math.min(window.end, cursorEnd) }
@@ -470,6 +486,10 @@ async function searchMatchingIds(
   return new Set(matches.map((trace) => toHexId(trace.traceID, 16)))
 }
 
+function byName(a: string, b: string): number {
+  return a.localeCompare(b)
+}
+
 function requireTempoUrl(): string {
   if (env.TEMPO_URL === undefined) {
     throw errors.SERVICE_UNAVAILABLE({
@@ -513,6 +533,22 @@ export const tracesHandler = {
       traces: page.map((trace) => toSummary(trace, { database, stream })),
       nextCursor: nextCursorOf(page, hasMore, cursor),
     }
+  },
+
+  rootNames: async ({
+    input,
+  }: {
+    input: RootNamesInput
+  }): Promise<RootNamesOutput> => {
+    if (env.TEMPO_URL === undefined) return { names: [] }
+
+    const values = await fetchTagValues(env.TEMPO_URL, ROOT_NAME_TAG, {
+      ...timeWindow(input),
+      limit: MAX_ROOT_NAMES,
+    })
+    // A trace whose root span hasn't arrived yet has no name to pick.
+    const names = new Set(values.filter((name) => name !== ""))
+    return { names: [...names].sort(byName) }
   },
 
   get: async ({ input }: { input: GetInput }): Promise<GetOutput> => {
