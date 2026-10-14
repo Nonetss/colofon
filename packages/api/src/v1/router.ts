@@ -11,6 +11,7 @@ import { organizationRouter } from "#v1/organization/router"
 import { pluginsRouter } from "#v1/plugins/router"
 import { privateRouter } from "#v1/private/router"
 import { sessionHistoryRouter } from "#v1/session-history/router"
+import { tracesRouter } from "#v1/traces/router"
 
 export const appRouter = {
   authConfig: authConfigRouter,
@@ -25,6 +26,7 @@ export const appRouter = {
   sessionHistory: sessionHistoryRouter,
   adminUser: adminUserRouter,
   logs: logsRouter,
+  traces: tracesRouter,
 }
 export type AppRouter = typeof appRouter
 export type AppRouterClient = RouterClient<typeof appRouter>
