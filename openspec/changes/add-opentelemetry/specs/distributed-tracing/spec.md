@@ -40,12 +40,17 @@ Root spans SHALL be sampled with probability `OTEL_TRACES_SAMPLER_ARG` (default 
 
 ### Requirement: Backend HTTP server span
 
-Every backend HTTP request except the `GET /` health probe SHALL run inside a `SERVER` span. The span SHALL be started before any other middleware, so that request logging, session resolution and oRPC handling run inside it. It SHALL be named `<METHOD> <matched route>` and carry `http.request.method`, `url.full`, `http.route` and `http.response.status_code`. A response with a 5xx status SHALL mark the span as an error. For an event-stream response, the span SHALL end when the response is returned, not when the stream closes.
+Every backend HTTP request except the `GET /` health probe SHALL run inside a `SERVER` span. The span SHALL be started before any other middleware, so that request logging, session resolution and oRPC handling run inside it. It SHALL be named `<METHOD> <route>`, where the route is the request path for `/rpc/*` and `/api/*` (an oRPC procedure path, or a fixed Better Auth route, never carrying an id) and Hono's matched pattern for any other path, and SHALL carry `http.request.method`, `url.full`, `http.route` and `http.response.status_code`. A response with a 5xx status SHALL mark the span as an error. For an event-stream response, the span SHALL end when the response is returned, not when the stream closes.
 
 #### Scenario: oRPC request
 
 - **WHEN** a client calls `POST /rpc/v1/cron/list`
-- **THEN** one `SERVER` span named `POST /rpc/*` SHALL be recorded with `http.response.status_code` set, and the oRPC and database spans of that call SHALL be its descendants
+- **THEN** one `SERVER` span named `POST /rpc/v1/cron/list` SHALL be recorded with `http.response.status_code` set, and the oRPC and database spans of that call SHALL be its descendants
+
+#### Scenario: Unknown path
+
+- **WHEN** a scanner requests `/wp-login.php`
+- **THEN** its span SHALL be named after Hono's matched pattern (`GET /*`), not after the path
 
 #### Scenario: Server error
 

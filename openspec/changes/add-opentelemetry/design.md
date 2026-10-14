@@ -74,7 +74,7 @@ It returns `{ shutdown(): Promise<void> }`. Without an endpoint it registers not
 - sets `http.request.method`, `url.path`, `http.route`, `http.response.status_code` and `user_agent.original`;
 - marks 5xx as error and ends the span. For event-stream responses the span ends when the response is returned, not when the stream closes, so a long subscription doesn't hold a span open for minutes.
 
-**Resolved during apply:** `@hono/otel`'s `httpInstrumentationMiddleware` (1.2.0) does all of the above (with `url.full` instead of `url.path`), so the backend uses it behind a small wrapper that skips `GET /`. `withServerSpan` stays for the frontend's Astro middleware.
+**Resolved during apply:** `@hono/otel`'s `httpInstrumentationMiddleware` (1.2.0) does all of the above (with `url.full` instead of `url.path`), so the backend uses it behind a small wrapper that skips `GET /`. Every oRPC call matches Hono's `/rpc/*` wildcard, so the wrapper names spans after the request path for `/rpc/*` and `/api/*` (procedure paths and fixed Better Auth routes: no ids, so a bounded set of names) and keeps Hono's pattern for anything else. `withServerSpan` stays for the frontend's Astro middleware.
 
 The health route (`GET /`, hit every 10 s by the compose healthcheck) is not traced, so it doesn't flood Tempo.
 
