@@ -2,6 +2,7 @@ import { closeStreams } from "@nonete/api/lifecycle"
 import { auth } from "@nonete/auth"
 import { closeDb } from "@nonete/db"
 import { seed } from "@nonete/db/seed"
+import { pgTracing } from "@nonete/db/tracing"
 import { env } from "@nonete/env/server"
 import { logger } from "@nonete/logger"
 import { startTelemetry, type Telemetry } from "@nonete/telemetry"
@@ -37,7 +38,7 @@ if (!globalThis.__backendTelemetry) {
     environment: env.NODE_ENV,
     endpoint: env.OTEL_EXPORTER_OTLP_ENDPOINT,
     sampleRatio: env.OTEL_TRACES_SAMPLER_ARG,
-    instrumentations: () => [new ORPCInstrumentation()],
+    instrumentations: () => [new ORPCInstrumentation(), pgTracing()],
   })
 }
 

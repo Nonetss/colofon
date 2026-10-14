@@ -7,6 +7,7 @@
     "#seed": "./src/seed/index.ts",
     "#seed/*": "./src/seed/*.ts",
     "#testing/*": "./testing/*.ts",
+    "#tests/*": "./tests/*.ts",
     "#*": "./src/*.ts"
   },
   "exports": {
@@ -36,11 +37,14 @@
     "db:custom": "drizzle-kit generate --custom",
     "db:studio": "drizzle-kit studio",
     "db:migrate": "drizzle-kit migrate",
-    "check-types": "tsc --noEmit -p ."
+    "check-types": "tsc --noEmit -p .",
+    "test": "bun test --only-failures"
   },
   "dependencies": {
     "@nonete/env": "workspace:*",
     "@nonete/logger": "workspace:*",
+    "@nonete/telemetry": "workspace:*",
+    "@opentelemetry/instrumentation-pg": "catalog:",
     "dotenv": "catalog:",
     "drizzle-orm": "catalog:",
     "pg": "catalog:",
