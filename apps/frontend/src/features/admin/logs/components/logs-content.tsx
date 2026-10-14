@@ -370,10 +370,7 @@ export function LogsContent() {
                   </div>
                 )}
               </dl>
-              <JsonView
-                value={entry.raw}
-                className="overflow-x-auto rounded-md border-0 bg-muted/40"
-              />
+              <JsonView value={entry.raw} variant="flush" />
             </div>
           )}
           detailLabel={(entry) =>

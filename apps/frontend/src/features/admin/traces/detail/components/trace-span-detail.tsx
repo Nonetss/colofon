@@ -89,10 +89,7 @@ export function TraceSpanDetail({ span }: { span: TraceSpan }) {
         <Text variant="label" tone="muted">
           Atributos
         </Text>
-        <JsonView
-          value={span.attributes}
-          className="overflow-x-auto rounded-md border-0 bg-muted/40"
-        />
+        <JsonView value={span.attributes} variant="flush" />
       </div>
       {span.events.length > 0 ? (
         <div className="flex flex-col gap-2">
@@ -108,10 +105,7 @@ export function TraceSpanDetail({ span }: { span: TraceSpan }) {
                 <Text variant="data">
                   {event.name} · {formatDurationMs(event.offsetMs)}
                 </Text>
-                <JsonView
-                  value={event.attributes}
-                  className="overflow-x-auto rounded-md border-0 bg-muted/40"
-                />
+                <JsonView value={event.attributes} variant="flush" />
               </li>
             ))}
           </ul>
