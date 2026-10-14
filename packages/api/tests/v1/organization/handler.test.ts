@@ -11,6 +11,7 @@ import {
   NOW,
   organizationRow,
   stepArgs,
+  teamRow,
   userRow,
 } from "@nonete/db/testing"
 import { userContext } from "#tests/fixtures/context"
@@ -175,5 +176,38 @@ describe("organization invitations", () => {
       expiresAt,
     })
     expect(invitation.expiresAt).toBe(expiresAt.toISOString())
+  })
+})
+
+describe("organization teams", () => {
+  test("listTeams without an organization passes an empty filter", async () => {
+    fakeDb.queue("query.team.findMany", [{ ...teamRow(), teamMembers: [] }])
+
+    const teams = await organizationHandler.listTeams({ input: {} })
+
+    const [call] = fakeDb.calls("query.team.findMany")
+    if (!call) throw new Error("listTeams made no query")
+    expect(stepArgs(call, "findMany")[0]).toHaveProperty("where", {})
+    expect(teams).toEqual([
+      {
+        id: "team-1",
+        name: "Platform",
+        organizationId: ORG,
+        memberCount: 0,
+        createdAt: NOW.toISOString(),
+      },
+    ])
+  })
+
+  test("listTeams filters by the organization when one is given", async () => {
+    fakeDb.queue("query.team.findMany", [])
+
+    await organizationHandler.listTeams({ input: { organizationId: ORG } })
+
+    const [call] = fakeDb.calls("query.team.findMany")
+    if (!call) throw new Error("listTeams made no query")
+    expect(stepArgs(call, "findMany")[0]).toMatchObject({
+      where: { organizationId: ORG },
+    })
   })
 })
