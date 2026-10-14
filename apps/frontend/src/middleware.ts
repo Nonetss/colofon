@@ -94,11 +94,22 @@ export const onRequest = defineMiddleware((context, next) => {
   // (`GET /admin/traces/[traceId]`), so the session lookup below and the
   // backend's spans for it land in the same trace. Public paths stay out.
   return withServerSpan(FRONTEND_TRACER, context.request, (span) => {
-    span.updateName(`${context.request.method} ${context.routePattern}`)
+    const prefetch = isPrefetchRequest(context.request.headers)
+    span.updateName(serverSpanName(context, prefetch))
     span.setAttribute("http.route", context.routePattern)
+    span.setAttribute("http.request.prefetch", prefetch)
     return handleProtectedRequest(context, next)
   })
 })
+
+// A hover prefetch is rendered in full, so it keeps its trace, but under its
+// own name: the click that follows is a second request with a second trace,
+// and the list would otherwise show both as the same page load.
+function serverSpanName(context: APIContext, prefetch: boolean): string {
+  const name = `${context.request.method} ${context.routePattern}`
+  if (prefetch) return `${name} (prefetch)`
+  return name
+}
 
 async function handleProtectedRequest(
   context: APIContext,
