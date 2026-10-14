@@ -2,7 +2,7 @@ import { env } from "@nonete/env/server"
 import type { z } from "zod"
 
 import { errors } from "#errors"
-import type { TRACE_SERVICES, tracesInput } from "#v1/traces/input"
+import type { tracesInput } from "#v1/traces/input"
 import type { SPAN_KINDS, SPAN_STATUSES, tracesOutput } from "#v1/traces/output"
 import {
   fetchTrace,
@@ -13,6 +13,12 @@ import {
   searchTempo,
   type TempoSearchTrace,
 } from "#v1/traces/tempo"
+import {
+  markedTracesQuery,
+  STREAM_SPAN_NAME,
+  type TraceMark,
+  traceSearchQuery,
+} from "#v1/traces/traceql"
 
 type SearchInput = z.infer<typeof tracesInput.search>
 type GetInput = z.infer<typeof tracesInput.get>
@@ -25,94 +31,6 @@ type JsonValue = TraceSpan["attributes"][string]
 export const MAX_TRACE_SPANS = 2000
 
 const DEFAULT_SEARCH_WINDOW_MS = 24 * 60 * 60 * 1000
-
-// ── TraceQL ──────────────────────────────────────────────────────────────────
-//
-// Tempo only takes queries as TraceQL text, and there is no TraceQL builder
-// for JS, so the queries are assembled here, from fixed fragments only: every
-// value that reaches them is a closed enum, a validated integer, a trace id
-// normalized to hex or the name filter, which `nameMatcher` escapes, so no
-// input can change a query's structure.
-
-type TraceService = (typeof TRACE_SERVICES)[number]
-
-/** The span condition meaning "the trace touches this service". */
-const TOUCHES = {
-  "stack-frontend": 'resource.service.name = "stack-frontend"',
-  "stack-backend": 'resource.service.name = "stack-backend"',
-  postgresql: 'span.db.system.name = "postgresql"',
-} satisfies Record<TraceService, string>
-
-/** A span of the database the trace's queries reach. */
-const DATABASE_SPANSET = `{ ${TOUCHES.postgresql} }`
-
-/** oRPC's span around a streamed output: the trace is an event stream. */
-const STREAM_SPAN_NAME = "consume_async_iterator_object_output"
-
-const STREAM_SPANSET = `{ name = "${STREAM_SPAN_NAME}" }`
-
-/** RE2's metacharacters, escaped so the name filter matches as plain text. */
-const REGEX_META = /[\\.+*?()|[\]{}^$]/g
-
-/** What a TraceQL string literal escapes (Go's quoting rules). */
-const STRING_META = /[\\"]/g
-
-/**
- * The name filter as a TraceQL string holding a case-insensitive regex for
- * "contains": the text's regex metacharacters are escaped first, so it
- * matches literally, then the string's own `\` and `"`, so nothing can close
- * the literal. Control characters never get here (the input refuses them).
- */
-export function nameMatcher(text: string): string {
-  const pattern = text.replace(REGEX_META, "\\$&")
-  return `"(?i).*${pattern.replace(STRING_META, "\\$&")}.*"`
-}
-
-/**
- * The search's spansets, ANDed: each spanset may match a different span of
- * the trace (a backend span, an error somewhere else), whereas conditions
- * inside one `{ }` would all have to hold on the same span.
- */
-function searchSpansets(input: SearchInput): string[] {
-  const spansets: string[] = []
-  if (input.services !== undefined && input.services.length > 0) {
-    const touches = input.services.map((service) => TOUCHES[service])
-    spansets.push(`{ ${touches.join(" || ")} }`)
-  }
-  if (input.errorsOnly) spansets.push("{ status = error }")
-  if (input.minDurationMs !== undefined) {
-    spansets.push(`{ trace:duration >= ${input.minDurationMs}ms }`)
-  }
-  if (input.name !== undefined) {
-    spansets.push(`{ trace:rootName =~ ${nameMatcher(input.name)} }`)
-  }
-  return spansets
-}
-
-function joinSpansets(spansets: string[]): string {
-  if (spansets.length === 0) return "{ }"
-  return spansets.join(" && ")
-}
-
-/**
- * The search itself. `most_recent=true` makes Tempo return the newest
- * matches: without it, it returns the first ones it finds, so a busy day
- * fills the page with traces from hours ago.
- */
-export function buildTraceQL(input: SearchInput): string {
-  return `${joinSpansets(searchSpansets(input))} with (most_recent=true)`
-}
-
-/** Which of the given traces (hex ids) have a span matching `spanset`.
- *  Tempo's search returns the first matches it finds, not the newest, so
- *  the traces are named by id rather than re-searched by filter. */
-export function buildByIdTraceQL(
-  spanset: string,
-  traceIds: readonly string[]
-): string {
-  const ids = traceIds.map((id) => `trace:id = "${id}"`)
-  return joinSpansets([spanset, `{ ${ids.join(" || ")} }`])
-}
 
 // ── Paging ───────────────────────────────────────────────────────────────────
 //
@@ -528,8 +446,8 @@ function traceBounds(entries: ServiceSpan[]): { start: bigint; end: bigint } {
 }
 
 /**
- * Which of the found traces have a span matching `spanset` (a database
- * query, a stream). Tempo's search reports the services that emitted spans,
+ * Which of the found traces carry `mark` (they queried the database, or
+ * are a stream). Tempo's search reports the services that emitted spans,
  * not what they did, so a second search over exactly those trace ids
  * answers it.
  */
@@ -537,13 +455,13 @@ async function searchMatchingIds(
   tempoUrl: string,
   window: { start: number; end: number },
   traces: FoundTrace[],
-  spanset: string
+  mark: TraceMark
 ): Promise<Set<string>> {
   if (traces.length === 0) return new Set()
   const matches = await searchTempo(tempoUrl, {
     // Normalized hex: whatever Tempo sent, only [0-9a-f] reaches the query.
-    query: buildByIdTraceQL(
-      spanset,
+    query: markedTracesQuery(
+      mark,
       traces.map((trace) => trace.traceId)
     ),
     ...window,
@@ -574,7 +492,7 @@ export const tracesHandler = {
 
     const fetchLimit = fetchLimitOf(input.limit, cursor)
     const found = await searchTempo(env.TEMPO_URL, {
-      query: buildTraceQL(input),
+      query: traceSearchQuery(input),
       ...window,
       limit: fetchLimit,
     })
@@ -587,8 +505,8 @@ export const tracesHandler = {
     // the cursor's second leaves this page short.
     const hasMore = older.length > input.limit || found.length >= fetchLimit
     const [database, stream] = await Promise.all([
-      searchMatchingIds(env.TEMPO_URL, window, page, DATABASE_SPANSET),
-      searchMatchingIds(env.TEMPO_URL, window, page, STREAM_SPANSET),
+      searchMatchingIds(env.TEMPO_URL, window, page, "database"),
+      searchMatchingIds(env.TEMPO_URL, window, page, "stream"),
     ])
 
     return {

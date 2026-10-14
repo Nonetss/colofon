@@ -1,7 +1,7 @@
 import { afterAll, beforeEach, describe, expect, spyOn, test } from "bun:test"
 import { resetEnv, testEnv } from "#tests/fixtures/env"
 import { expectErrorCode } from "#tests/fixtures/errors"
-import { MAX_TRACE_SPANS, nameMatcher, tracesHandler } from "#v1/traces/handler"
+import { MAX_TRACE_SPANS, tracesHandler } from "#v1/traces/handler"
 
 const TEMPO_URL = "http://tempo.test:3200"
 const TRACE_ID = "25942dac5ae1610f0c180b4d39613cfc"
@@ -411,14 +411,6 @@ describe("traces.search", () => {
     await expectErrorCode(
       tracesHandler.search({ input: searchInput() }),
       "BAD_GATEWAY"
-    )
-  })
-})
-
-describe("nameMatcher", () => {
-  test("matches the text literally, whatever regex or quote it holds", () => {
-    expect(nameMatcher(String.raw`a.b"c\(d)*`)).toBe(
-      String.raw`"(?i).*a\\.b\"c\\\\\\(d\\)\\*.*"`
     )
   })
 })
