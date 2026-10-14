@@ -3,19 +3,23 @@ name: stack
 description: A quiet-editorial technical console on monochrome paper with one warm accent.
 colors:
   primary: "oklch(0.6724 0.1308 38.7559)"
-  neutral-bg: "oklch(0.9818 0.0054 95.0986)"
+  neutral-bg: "oklch(0.95 0.009 95.0986)"
   neutral-fg: "oklch(0.3438 0.0269 95.7226)"
   neutral-muted: "oklch(0.5341 0.0078 97.4503)"
   neutral-card: "oklch(0.9665 0.0067 97.3521)"
   neutral-card-fg: "oklch(0.1908 0.002 106.5859)"
-  neutral-border: "oklch(0.94 0.003 97.3627)"
-  neutral-input: "oklch(0.92 0.004 98.3528)"
+  neutral-muted-surface: "oklch(0.92 0.0153 90.239)"
+  neutral-popover: "oklch(0.985 0.004 97.3521)"
+  neutral-border: "oklch(0.89 0.006 97.3627)"
+  neutral-input: "oklch(0.87 0.007 98.3528)"
   destructive: "oklch(0.1908 0.002 106.5859)"
   destructive-fg: "oklch(1 0 0)"
   dark-bg: "oklch(0.2679 0.0036 106.6427)"
   dark-fg: "oklch(0.9576 0.0027 106.4494)"
   dark-muted: "oklch(0.7713 0.0169 99.0657)"
   dark-card: "oklch(0.2928 0.0018 106.5092)"
+  dark-muted-surface: "oklch(0.2213 0.0038 106.707)"
+  dark-popover: "oklch(0.3085 0.0035 106.6039)"
   dark-border: "oklch(0.31 0.004 106.8928)"
   dark-input: "oklch(0.34 0.005 100.2195)"
   dark-destructive: "oklch(0.6368 0.2078 25.3313)"
@@ -49,6 +53,17 @@ typography:
     fontFamily: "Space Grotesk Variable, Space Grotesk, sans-serif"
     fontSize: "0.8125rem"
     lineHeight: 1.625
+  status:
+    fontFamily: "Space Grotesk Variable, Space Grotesk, sans-serif"
+    fontSize: "0.75rem"
+    lineHeight: 1.35
+    letterSpacing: "0.08em"
+    textCase: "uppercase"
+  data:
+    fontFamily: "Space Mono, ui-monospace, monospace"
+    fontSize: "0.75rem"
+    letterSpacing: "-0.025em"
+    fontFeature: "tnum"
   stat:
     fontFamily: "Space Grotesk Variable, Space Grotesk, sans-serif"
     fontSize: "1.5rem"
@@ -65,8 +80,8 @@ rounded:
   sm: "calc(0.375rem - 4px)"   # 2px
   md: "calc(0.375rem - 2px)"   # 4px
   lg: "0.375rem"               # 6px (radius base)
-  xl: "calc(0.375rem + 4px)"   # 10px
-  container: "0.75rem"          # 12px — list containers, state cards
+  xl: "calc(0.375rem + 4px)"   # 10px — table boxes, tiles, state cards (rounded-xl)
+  full: "9999px"
 spacing:
   px: "0.25rem"                # Tailwind 1 unit
   gap-section: "1.5rem"        # gap-6 between header and content
@@ -76,36 +91,42 @@ spacing:
 components:
   page-shell-default:
     padding: "{spacing.padding-page}"
-    maxWidth: "72rem"          # 6xl — list/overview pages
-  page-shell-full:
-    padding: "{spacing.padding-page}"
-    maxWidth: "none"           # full — wide tables or canvases on desktop
+    width: "80%"               # lg:max-w-[80%], full width below lg — the default
   page-shell-profile:
     padding: "{spacing.padding-page}"
-    maxWidth: "56rem"          # 4xl — /me only (not detail routes)
+    width: "48rem"             # 3xl — /me only
   page-hero-title:
     typography: "{typography.display}"
-  section-nav-tile:
+  surface-card:
     backgroundColor: "oklch(0.9665 0.0067 97.3521 / 0.4)"  # bg-card/40
-    borderRadius: "{rounded.container}"
-    padding: "1.25rem"
-  row-list-container:
+    rounded: "{rounded.xl}"
+    padding: "1rem"
+  data-table-box:
     backgroundColor: "oklch(0.9665 0.0067 97.3521 / 0.4)"  # bg-card/40
-    borderRadius: "{rounded.container}"
-    borderColor: "{colors.neutral-border}"
+    rounded: "{rounded.xl}"
+  data-table-head:
+    typography: "{typography.label}"
+    textColor: "{colors.neutral-muted}"
+    height: "2.25rem"          # h-9
+    padding: "0 0.75rem"
+  data-table-cell:
+    typography: "{typography.body}"
+    padding: "0.625rem 0.75rem"
   state-card-default:
     backgroundColor: "oklch(0.9665 0.0067 97.3521 / 0.4)"  # bg-card/40
-    borderRadius: "{rounded.container}"
+    rounded: "{rounded.xl}"
     padding: "4rem 1.5rem"
   form-dialog-header:
-    borderColor: "{colors.neutral-border}"
     padding: "1.25rem 1.5rem"
     typography: "{typography.display}"
   field-label:
     typography: "{typography.label}"
-    textColor: "oklch(0.5341 0.0078 97.4503)"              # muted-foreground, full opacity (4.92:1 light / 7.36:1 dark — /80 failed WCAG AA at 3.33:1)
+    textColor: "{colors.neutral-muted}"  # full opacity (4.92:1 light / 7.36:1 dark — /80 failed WCAG AA at 3.33:1)
   section-heading:
     typography: "{typography.label}"
+    textColor: "{colors.neutral-muted}"
+  status-tag:
+    typography: "{typography.status}"
     textColor: "{colors.neutral-muted}"
   hint:
     backgroundColor: "{colors.neutral-fg}"
@@ -116,6 +137,21 @@ components:
     backgroundColor: "{colors.primary}"
     textColor: "oklch(1 0 0)"  # --primary-foreground
     rounded: "{rounded.md}"
+  nav-pill-active:
+    backgroundColor: "oklch(0.6724 0.1308 38.7559 / 0.1)"  # bg-primary/10
+    textColor: "{colors.primary}"
+    rounded: "{rounded.md}"
+    padding: "0.375rem 0.75rem"
+  kbd:
+    backgroundColor: "{colors.neutral-muted-surface}"
+    textColor: "{colors.neutral-muted}"
+    typography: "{typography.data}"
+    height: "1.25rem"
+  search-result-tile:
+    backgroundColor: "oklch(0.6724 0.1308 38.7559 / 0.1)"  # bg-primary/10; fills solid primary when the row is selected
+    textColor: "{colors.primary}"
+    rounded: "{rounded.md}"
+    size: "2rem"
   filter-chip:
     textColor: "{colors.neutral-fg}"
     rounded: "{rounded.md}"
@@ -135,7 +171,7 @@ components:
     rounded: "{rounded.md}"
     height: "2rem"
   list-action-bar:
-    backgroundColor: "oklch(0.9818 0.0054 95.0986 / 0.95)"  # bg-background/95
+    backgroundColor: "oklch(0.95 0.009 95.0986 / 0.95)"  # bg-background/95
     padding: "0.75rem 1rem"
   list-action-bar-button:
     height: "2.75rem"          # h-11, 44px touch target
@@ -144,7 +180,7 @@ components:
     backgroundColor: "{colors.primary}"
     textColor: "oklch(1 0 0)"
     size: "2.75rem"            # size-11 mobile, size-9 on md+
-    rounded: "9999px"
+    rounded: "{rounded.full}"
 ---
 
 # Design System: stack
@@ -153,18 +189,18 @@ components:
 
 **Creative North Star: "El Espacio de Trabajo Sereno."**
 
-stack is a quiet-editorial technical console. Every page reads like a watchmaker's catalogue page or a typeset datasheet: a single primary hero, a facts strip or list, and a state column — never a wall of cards. The personality is **typography-first, monochrome-by-default, one-accent-by-policy**: hierarchy comes from size, weight, tracking, and tabular numerals, not from a rainbow of semantic colors. The single warm accent (Brand Terracotta) is reserved for the hero icon, the primary CTA, and the "alive" state dot. Everything else is the foreground/muted-foreground/border vocabulary of a printed page.
+stack is a quiet-editorial technical console. Every page reads like a watchmaker's catalogue page or a typeset datasheet: a single primary hero, a facts strip or a ruled table, and a state column — never a wall of cards. The personality is **typography-first, monochrome-by-default, one-accent-by-policy**: hierarchy comes from size, weight, tracking, and tabular numerals, not from a rainbow of semantic colors. The single warm accent (Brand Terracotta) marks where you are, what to do and what is alive: the hero icon, the primary CTA, the "alive" state dot, the active navigation item and an active filter. Everything else is the foreground/muted-foreground/border vocabulary of a printed page.
 
-Density is calm rather than compact. Containers are flat by default (no shadows, no glows); depth comes from `border-y` rules, `divide-y` lists, and one optional `rounded-xl border bg-card/40` for navigation tiles or state blocks. Motion is short and useful: a 0.3s staggered entrance (`dash-enter`, ~40ms per item) and a 0.25s pop (`dash-pop`) for nested icons. The whole product lives in a `6xl` rhythm, framed by `PageShell` for list/overview pages and by `Detail.astro`'s own frame for detail routes, always headed by `PageHero`. Anti-references: "shadcn by default with badge primary + badge outline + icon box primary/15", and any surface that uses cards where a `divide-y` list would do.
+Density is calm rather than compact. Containers are flat by default (no shadows, no glows); depth comes from hairlines (`border-y`, `divide-y`, table row rules) and one `rounded-xl border bg-card/40` box per data block — the table's scroll box, a navigation tile, a state block. Motion is short and useful: a 0.3s staggered entrance (`dash-enter`, ~40ms per item), a 0.25s pop (`dash-pop`) for nested icons, and 200ms slides for floating chrome. The product lives in a wide rhythm — `PageShell` and `Detail.astro` default to 80% of the viewport from `lg`, full width below — always headed by `PageHero`, with in-page grids and tables sized by container queries so columns follow the space beside the sidebar. Anti-references: "shadcn by default with badge primary + badge outline + icon box primary/15", and any surface that uses cards where a ruled table or list would do.
 
 **The Marginalia Rule.** Every screen must pass this test: if the design "shows up" because it adds color, a card, a glow, or a chip cluster, it is almost certainly out of style. It earns notice by making the eye land on the name, the expression, and the state — not on the chrome.
 
 **Key Characteristics:**
 
-- Monochrome page; one warm accent reserved for three jobs.
+- Monochrome page; one warm accent for "here, act, alive".
 - Hierarchy lives in type, not color.
-- Lists are `divide-y`, not free-floating cards.
-- Hairlines (`border-y`, `divide-y`, dialog `border-b`/`border-t`) carry structure.
+- Lists are data tables in one rounded box (stacked rows below the table breakpoint), not free-floating cards.
+- Hairlines (`border-y`, `divide-y`, table row rules, dialog `border-b`/`border-t`) carry structure.
 - Motion is staggered entrance + pop, never decorative.
 
 ## Colors
@@ -173,7 +209,7 @@ The palette is a single neutral ramp (paper → ink → mute → border) plus on
 
 ### Primary
 
-- **Brand Terracotta** (`oklch(0.6724 0.1308 38.7559)`): warm, between vermilion and ochre, calibrated for daylight paper. Reserved exclusively for (a) the hero icon at `size-5`, (b) the primary CTA button, and (c) the "active / running" state dot. Aliases: `--brand-orange`, `--primary`, `--ring`, `--sidebar-primary`, `--chart-1`.
+- **Brand Terracotta** (`oklch(0.6724 0.1308 38.7559)`): warm, between vermilion and ochre, calibrated for daylight paper. Full strength on (a) the hero icon and tile icons at `size-5`, (b) the primary CTA and the floating back-to-top control, (c) the "active / running" state dot, (d) the top layer of the logo and the section sidebar's header icon, (e) links inside rendered markdown and text selection. As a 10% tint (`bg-primary/10 text-primary`) it marks the active navigation pill/menu row, the search result tile and an active header filter; as a hairline it marks a column being resized or dropped. Aliases: `--brand-orange`, `--primary`, `--ring`, `--sidebar-primary`, `--chart-1`, `--icon-orange`.
 
 ### Tertiary (Destructive)
 
@@ -181,21 +217,31 @@ The palette is a single neutral ramp (paper → ink → mute → border) plus on
 
 ### Neutral
 
-- **Paper** (`oklch(0.9818 0.0054 95.0986)`): page background — `--background`.
+- **Paper** (`oklch(0.95 0.009 95.0986)`): page background — `--background`. A warm, slightly toned paper, not white; the card and popover sit *lighter* than it.
 - **Ink** (`oklch(0.3438 0.0269 95.7226)`): body text — `--foreground`.
-- **Mute** (`oklch(0.5341 0.0078 97.4503)`): secondary text, descriptions, dates, hints — `--muted-foreground`.
-- **Card** (`oklch(0.9665 0.0067 97.3521)`, used at 40% opacity via `bg-card/40`): the surface tint for list rows, navigation tiles, and state blocks.
+- **Mute** (`oklch(0.5341 0.0078 97.4503)`): secondary text, descriptions, dates, hints, table headers — `--muted-foreground`.
+- **Card** (`oklch(0.9665 0.0067 97.3521)`, used at 40% opacity via `bg-card/40`): the surface tint for table boxes, navigation tiles, and state blocks.
 - **Card Ink** (`oklch(0.1908 0.002 106.5859)`): high-contrast text on cards.
-- **Border** (`oklch(0.94 0.003 97.3627)`): all hairlines — list dividers, dialog headers/footers, fact rows, tile borders.
-- **Input** (`oklch(0.92 0.004 98.3528)`): the resting line of text inputs.
+- **Muted Surface** (`oklch(0.92 0.0153 90.239)`): the hover/fill tone — `bg-muted/40`–`/50` row hover, `bg-muted` tile hover, shortcut pills, keycaps, day-group rows at `/30`.
+- **Popover** (`oklch(0.985 0.004 97.3521)`): menus, popovers, the command dialog and the mobile nav sheet.
+- **Border** (`oklch(0.89 0.006 97.3627)`): all hairlines — table rules, list dividers, dialog headers/footers, fact rows, tile borders; also the scrollbar thumb.
+- **Input** (`oklch(0.87 0.007 98.3528)`): the resting line of text inputs and unselected picker cells.
 
-Dark theme mirrors the same roles with a slightly warm dark surface (`oklch(0.2679 0.0036 106.6427)` foreground #957 / mute #771 / card #292 / border #31) and the accent stays Brand Terracotta — the warm accent survives the inversion.
+Dark theme mirrors the same roles with a slightly warm dark surface (`oklch(0.2679 0.0036 106.6427)`, card one step lighter, muted surface one step darker, popover the lightest layer) and the accent stays Brand Terracotta — the warm accent survives the inversion.
+
+### Scoped Palettes
+
+Three palettes in `apps/frontend/src/styles/global.css` carry hues other than terracotta. Each is confined to the one place named here; none of them may leak into chrome, status or copy.
+
+- **Chart palette** (`--chart-1` … `--chart-6`, read by the `Chart` primitive through `.ts-chart-host`): categorical series in data visualisations only. `--chart-1` is Brand Terracotta. A chart that encodes *status* (the cron run pulse) ignores it and paints with the status vocabulary instead: ink for success, destructive for failure, muted for skipped, primary for running.
+- **Syntax palette** (`--th-*`, for `@tanstack/highlight` tokens): code inside `JsonView`. Properties use the primary, comments the mute; operators and punctuation keep the text color.
+- **Entity icon palette** (`--icon-*`, keyed by name in `features/entity-icons/picker/model/palette.ts`): the user-selectable color of an entity's icon. No entity type is registered yet (`entityIconTargets` is empty); a consumer that passes `allowColor={false}` renders in `--icon-orange` (= primary), and the other hues stay dormant until a screen opts in.
 
 ### Named Rules
 
-**The One Accent Rule.** Brand Terracotta appears on ≤ 3 elements per screen: hero icon, primary CTA, alive-state dot. It is **never** used for badges, success indicators, info, or warning. Its rarity is the point. The one standing exception is the floating back-to-top control (see Components → Scroll-to-top), which only exists once the page has scrolled well past the hero, so the two never share a viewport in practice.
+**The One Accent Rule.** Brand Terracotta is the only chromatic voice in product chrome, and it speaks only for *here* (active navigation, current section), *act* (primary CTA, back-to-top, active filter) and *alive* (running dot, hero icon). It is **never** used for badges, success indicators, info, or warning, and never as a large fill behind content. Full-strength fills are limited to buttons, the selected search tile and the running dot; everything else is the 10% tint or the bare glyph.
 
-**The No-Green-No-Blue-No-Amber Rule.** Inventing semantic colors for success/info/warning is prohibited. Success is communicated by a `bg-foreground` dot and the word "ok"; failure is the destructive ramp above; everything else is mute.
+**The No-Green-No-Blue-No-Amber Rule.** Inventing semantic colors for success/info/warning is prohibited. Success is communicated by a `bg-foreground` dot and the word "ok"; failure is the destructive ramp above; everything else is mute. The Scoped Palettes above are not semantic and do not count as exceptions to this rule.
 
 ## Typography
 
@@ -209,17 +255,17 @@ Dark theme mirrors the same roles with a slightly warm dark surface (`oklch(0.26
 
 Every role below is a `variant` of the `Text` component (`components/shared/brand/typography.tsx`), which owns its full recipe on top of the `--font-size-*` / `--line-height-*` / `--tracking-*` tokens in `global.css`. Call sites pick a role and a tone (`default`, `muted`, `primary`, `destructive`) and keep only layout in `className`; components that can't be a `Text` (shadcn primitives, `button`, `summary`, `Input`) take the same classes through `textVariants({ role, tone })`.
 
-- **Display** (`font-semibold`, `text-lg`, `tracking-tight`, `line-height: 1.2`): page title in `PageHero`, used on both overview and detail pages. Single line, never eyebrowed.
-- **Headline** (`font-medium`, `text-base`, `tracking-tight`): tile and card titles (`SurfaceCard`).
-- **Title** (`font-medium`, `text-sm`, `tracking-tight`): the name of a list row, a picker result or a selected entity — the body-size counterpart to Headline.
+- **Display** (`font-semibold`, `text-lg`, `tracking-tight`, `line-height: 1.2`): the page `<h1>` — the `PageHero` title on overview and detail pages, the name on the `/me` identity row, the 404 heading — and the title of a celebrate `StateCard`. Single line, never eyebrowed.
+- **Headline** (`font-medium`, `text-base`, `tracking-tight`): the title of a muted or destructive `StateCard`, list/tile/dialog titles. Never resized with a `text-*` override; a title that needs more weight takes Display.
+- **Title** (`font-medium`, `text-sm`, `tracking-tight`): the name on a tile (`SurfaceCard`), a table identity cell, a picker or search result, or a selected entity — the body-size counterpart to Headline.
 - **Body** (`text-sm`, `line-height: 1.5`): prose, form values, fact values inside `MetadataCell`.
 - **Meta** (`0.8125rem`, `leading-relaxed`): secondary copy — descriptions, hints, hero counters, inline errors.
 - **Meta-sm** (`0.6875rem`, sentence case): inline metadata inside dense rows (suggestion details).
 - **Label** (micro-caps, `0.6875rem`, `font-medium`, `uppercase`, `0.12em` tracking, `muted-foreground` at full opacity): the recurring field label in fact rows, form fields, filters, section headings and tile subaccess. This is the signature detail that ties the whole system together. Full opacity, not `/80` — the faded version fails WCAG AA contrast (3.33:1 light mode).
 - **Status** (`text-xs`, `uppercase`, `0.08em` tracking): state words ("Vigente", "En pausa"); `StatusTag` adds the dot.
-- **Stat** (`1.5rem`, `font-medium`, `tabular-nums`, `line-height: 1.1`): a single big number in an overview fact cell.
-- **Data** (`Space Mono`, `text-xs`, `tabular-nums`, `tracking-tight`): any technical value — cron expressions, durations, ISO timestamps, IDs, keys, JSON.
-- **Compact** (`text-xs`): any other dense copy — menu descriptions, secondary row lines, dialog and sheet descriptions, footers.
+- **Stat** (`1.5rem`, `font-medium`, `tabular-nums`, `line-height: 1.1`): a single big number in an overview fact cell (admin overview counters, the cron pulse's success rate and streak).
+- **Data** (`Space Mono`, `text-xs`, `tabular-nums`, `tracking-tight`): any technical value — cron expressions, durations, ISO timestamps, IDs, keys, JSON, chart axis dates. Keycaps (`Kbd`) use the same face at the 11px label size.
+- **Compact** (`text-xs`): any other dense copy — tile and menu descriptions, a table cell's sub-line, dialog and sheet descriptions, counts beside section titles, footers.
 
 ### Named Rules
 
@@ -231,40 +277,43 @@ Every role below is a `variant` of the `Text` component (`components/shared/bran
 
 ## Layout
 
-Almost every list/overview page (`/`, `/admin` and its subsections) sits in `PageShell maxWidth="6xl"` (72rem), `px-4 py-6 sm:px-6` padding; `/crons` uses `maxWidth="80%"` (full width below `lg`, capped at 80% from `lg`). **Detail routes** (`/crons/[id]`) don't use `PageShell` at all: the `Detail.astro` layout owns its own `px-4 py-6 sm:px-6` `<main>` plus the back link, with a `maxWidth` prop (`6xl` by default, `80%` to match an `80%` overview), and the mounted feature island renders `PageHero` directly inside it — wrapped in a bare `QueryProvider`, never a second `PageShell` (that would nest a second `<main>`). Detail pages take the same width as their overview, not narrower (`/crons/[id]` passes `maxWidth="80%"`); the only current `4xl` user is `/me` (a single-column profile form, not the general detail pattern), and `3xl` is a defined `PageShell` option with no current caller. Whichever wrapper is in play, the inner `.astro` file never adds a second `<main class="container…">`.
+**The default width is 80%.** `PageShell`, `ResourceOverview` and `Detail.astro` all default to `maxWidth="80%"`: full width below `lg`, capped at `lg:max-w-[80%]` from there, centred, with `px-4 py-6 sm:px-6` padding. Every admin overview, `/crons` and the cron detail route use it. The home page goes one step wider (`maxWidth="full"` with `lg:w-4/5`). Narrower caps are deliberate exceptions: `3xl` (48rem) for `/me`, a single compact profile block with no hero. **Detail routes** (`/crons/[id]`) don't use `PageShell`: `Detail.astro` owns its own `<main>` plus the back link with the same `maxWidth` prop, and the mounted island renders `PageHero` directly inside a bare `QueryProvider`, never a second `PageShell` (that would nest a second `<main>`). Detail pages take the same width as their overview, never narrower. Whichever wrapper is in play, the inner `.astro` file never adds a second `<main class="container…">`.
 
-Vertical rhythm is `gap-6` between the header (`PageHero`) and the content block, `gap-2.5` between the hero icon column and the title, `gap-4` between sibling sections in a dialog body, and `gap-5` (`py-5`) inside a fact row. Lists in single-column on mobile expand to `sm:grid-cols-3 lg:grid-cols-5` for facts and `md:grid-cols-2 xl:grid-cols-3` for section-nav tiles. Spacing is on the 0.25rem Tailwind unit; nothing is invented outside the existing scale.
+**Columns follow the container, not the viewport.** In-page grids and tables size themselves with container queries, because the usable width changes with the section sidebar (expanded or icon-collapsed). Tile grids (`SurfaceCardGrid`) step `1 → @xl:2 → @4xl:3 → @6xl:4 → @min-[90rem]:5`; a data table switches from stacked rows to a real table at `@4xl/table`; fact grids (`MetadataCell`) and filter panels step at `@md`/`@xl`/`@3xl`. Viewport breakpoints are reserved for chrome (navbar, sidebar, bottom action bar).
 
-Sticky chrome is reserved for `Navbar` (height `--navbar-height: 3.6rem` ≈ h-14) and `Footer` (`--footer-height: 13rem` stacked on mobile, `7.6rem` single-row on `sm+`). The layout utility `min-h-main` fills the remaining vertical space without hardcoding heights.
+Vertical rhythm is `gap-6` between the header (`PageHero`) and the content block, `gap-2.5` between the hero icon column and the title, `gap-4` between sibling sections in a dialog body, and `gap-5` (`py-5`) inside a fact row. Card grids use `gap-3`. Spacing is on the 0.25rem Tailwind unit; nothing is invented outside the existing scale.
 
-**Below `md` (768px), list pages gain bottom chrome.** Filters leave the inline panel and move to a fixed bottom `ListActionBar` (`border-t`, `bg-background/95 backdrop-blur-sm`, `px-4 pt-3`, bottom padding `0.75rem + env(safe-area-inset-bottom)`). It slides away (`translate-y-full`, 200ms ease-out) on scroll down and returns on scroll up, so it never covers what is being read. While visible it publishes `--list-action-bar-offset` (4.25rem) on `:root`; the floating back-to-top control adds that offset to its `bottom` so the two never overlap, and drops back to the corner when the bar hides. Every fixed bottom element respects the safe-area insets; touch targets on this chrome are 44px (`h-11` / `size-11`).
+Sticky chrome is reserved for `Navbar` (fixed, `z-40`), the section sidebar (pinned below the navbar, `h-[calc(100svh-var(--navbar-height))]`) (height `--navbar-height: 3.6rem` ≈ h-14) and `Footer` (`--footer-height: 13rem` stacked on mobile, `7.6rem` single-row on `sm+`). The layout utility `min-h-main` fills the remaining vertical space without hardcoding heights.
+
+**Below `md` (768px), list pages gain bottom chrome.** Filters leave the inline panel and move to a fixed bottom `ListActionBar` (`border-t`, `bg-background/95 backdrop-blur-sm`, `px-4 pt-3`, bottom padding `0.75rem + env(safe-area-inset-bottom)`). It slides away (`translate-y-full`, 200ms ease-out) on scroll down and returns on scroll up, so it never covers what is being read. While visible it publishes `--list-action-bar-offset` (4.25rem) on `:root`; the floating back-to-top control adds that offset to its `bottom` so the two never overlap, and drops back to the corner when the bar hides. Every fixed bottom element respects the safe-area insets; touch targets on this chrome are 44px (`h-11` / `size-11`). Under a coarse pointer every icon-only button (`icon-xs` … `icon-lg`) also grows an invisible 44px hit area around its unchanged visible box.
 
 ## Elevation & Depth
 
-**Flat by default. Borders carry structure.** Shadows are present in the token system (`--shadow-sm` … `--shadow-2xl`) because shadcn/ui requires them, but they are not the design's vocabulary. A list row is `border-y` on the container with `divide-y` between rows, never a card with `shadow-md`. A state block is `rounded-xl border border-dashed bg-card/40`, never a card with `shadow-lg`.
+**Flat by default. Borders carry structure.** Shadows are present in the token system (`--shadow-sm` … `--shadow-2xl`) because shadcn/ui requires them, but they are not the design's vocabulary. A table is one `rounded-xl border bg-card/40` box with hairline row rules, never a stack of cards with `shadow-md`. A state block is `rounded-xl border border-dashed bg-card/40`, never a card with `shadow-lg`.
 
-**The Flat-By-Default Rule.** Surfaces are flat at rest. Shadows appear only as a response to state (focus ring, dialog overlay, dropdown menus) and use the small Tailwind/Shadcn ramp. Decorative `shadow-md` / `shadow-lg` / `shadow-xl` on rows, tiles, or heroes is out of style.
+**The Flat-By-Default Rule.** Surfaces are flat at rest. Shadows appear only as a response to state (navbar scroll cue, dialog overlay, menus and popovers) and use the project's soft ramp, which is deliberately shallow (`--shadow-md` = `0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 2px 4px -1px hsl(0 0% 0% / 0.1)`). Decorative `shadow-md` / `shadow-lg` / `shadow-xl` on rows, tiles, or heroes is out of style.
 
-**The Floating-Layer Exception.** Elements that float over scrolling content — the fixed `ListActionBar` and the back-to-top control — need to read as detached from the page beneath them. The bar does it with a hairline `border-t` over a 95% translucent, blurred background (the same recipe as the navbar); the back-to-top button carries the system's only resting `shadow-lg`, because a round control hovering over arbitrary content has no hairline to lean on. Nothing anchored in the page flow inherits this.
+**The Floating-Layer Exception.** Elements that float over scrolling content need to read as detached from the page beneath them. The fixed `ListActionBar` and the navbar do it with a hairline over a translucent, blurred background (`bg-background/95` / `/80` + `backdrop-blur`). The round back-to-top control in the bottom-right corner carries the system's only resting `shadow-lg`, because a round control hovering over arbitrary content has no hairline to lean on. Popovers and the navigation dropdown pair a light `shadow` with a `ring-1 ring-foreground/10` hairline. Nothing anchored in the page flow inherits this.
 
 Depth instead comes from:
 
-1. **Hairlines.** `divide-y` between rows, `border-y` on fact blocks, `border-b` + `border-t` on dialog header/footer.
-2. **Tonal layering.** `bg-card/40` (40% opacity over `card`) for list containers and state blocks — quieter than a card, more present than the page.
-3. **Dashed state.** Empty/error/loading states use `border-dashed` to read as a placeholder, not a container.
-4. **Focus ring.** `ring-2 ring-ring ring-offset-2 ring-offset-background` on keyboard focus only — never a permanent decoration.
+1. **Hairlines.** Row rules inside tables, `divide-y` in stacked lists, `border-y` on fact blocks, `border-b` + `border-t` on dialog header/footer. A sticky table header draws its bottom rule as an inset shadow (`shadow-[inset_0_-1px_0_0_var(--border)]`) so the line stays put while rows scroll under it.
+2. **Tonal layering.** `bg-card/40` (40% opacity over `card`) for table boxes, tiles and state blocks — quieter than a card, more present than the page. Inside a box, `bg-muted/30` sets apart a group row and `bg-muted/40`–`/50` marks hover.
+3. **Inversion.** Tooltips (`Hint`, chart tooltips) invert to ink-on-paper (`bg-foreground text-background`), reading as a floating layer without leaning on shadow.
+4. **Dashed state.** Empty/error/loading states use `border-dashed` to read as a placeholder, not a container.
+5. **Focus ring.** `ring-2 ring-ring` (Brand Terracotta, `/50` on most controls) on keyboard focus only — never a permanent decoration.
 
 ## Shapes
 
-The form language is restrained. Containers and list rows use `rounded-xl` (12px) — corners are visible enough to read as a "block" without screaming for attention. Inline controls (button, input) use the smaller `--radius` step (base 6px, the project's `--radius: 0.375rem`) — buttons end up ~4px, inputs the same. Tiles (`SectionNavCard`, hub grids) inherit the 12px corner so they feel like cards of paper, not sticky notes.
+The form language is restrained. Boxes — table scroll boxes, tiles, state cards, the pulse card — use `rounded-xl` (10px): corners visible enough to read as a "block" without screaming for attention. Inline controls (button, input, nav pill, chip, search tile) step down to `rounded-md` (4px) or `rounded-lg` (6px, the base `--radius: 0.375rem`); menu rows and icon-grid cells use `rounded-lg`. Only the floating back-to-top control, status dots and color swatches are fully round. Sheets that rise from the bottom get `rounded-t-xl`.
 
-Borders are full hairline width (1px). `border-dashed` is reserved for empty/error/loading blocks. `border-solid` is reclaimed for the success/celebrate variant of `StateCard`.
+Borders are full hairline width (1px). `border-dashed` is reserved for empty/error/loading blocks. `border-solid` is reclaimed for the success/celebrate variant of `StateCard`. Accent-colored strokes are 1–2px *markers*, never frames: the active row bar in the mobile menu (`w-0.5`), a column's drop marker and resize line.
 
-There is no decorative clipping (no blob masks, no wave dividers, no svg ornaments).
+There is no decorative clipping (no blob masks, no wave dividers, no svg ornaments) and no background texture: the login/signup card sits on the plain `background`.
 
 ## Components
 
-The shared primitives — `PageShell`, `PageHero`, `StateCard`, `FormDialog`, `FormField`/`FieldLabel`, `CollapsibleFilters`/`FilterField`, `SearchInput`, `SectionNavOverview` — are the system, plus the `Detail.astro` layout that frames detail routes server-side. shadcn/ui (`components/ui/**`) provides the building blocks (Button, Input, Dialog primitives, etc.) but the editorial chrome always lives in `shared/`.
+The shared primitives — `PageShell`, `PageHero`, `DataTableView`, `StateCard`, `FormDialog`, `FormField`/`FieldLabel`, `CollapsibleFilters`/`FilterField`, `SearchInput`, `SectionNavOverview` — are the system, plus the `Detail.astro` layout that frames detail routes server-side. shadcn/ui (`components/ui/**`) provides the building blocks (Button, Input, Dialog primitives, etc.) but the editorial chrome always lives in `shared/`.
 
 ### Shared vs. feature-internal extraction
 
@@ -281,12 +330,13 @@ first belongs in `components/shared/`.
   only exists inside an already-shared list component).
 - **Feature-internal decomposition is not shared extraction.** A large file
   with several focused responsibilities but no equivalent use elsewhere (the
-  cron run timeline, organization detail sections) gets split into
-  feature-owned files under its semantic slice, such as
-  `features/crons/detail/components/`, and imported through `@/` — never moved
+  cron run timeline, organization detail sections)
+  gets split into feature-owned files under its semantic slice, such as
+  `features/crons/detail/components/` or
+  `features/admin/organizations/components/`, and imported through `@/` — never moved
   into application `components/shared/`. Code used by two slices of one domain
   belongs in `features/<domain>/shared`; these internal components don't gain
-  generic props or configuration options to "future-proof"
+  generic props, configuration options or public stories to "future-proof"
   them and stay shaped for their actual callers.
 - **A shared component owns the structure it promises.** Once something is
   shared, callers pass typed data and behavior, not structural JSX that
@@ -325,8 +375,8 @@ spacing, and the loading/error/empty cascade.
   identity: one `AppSurface` per `SurfaceId` (`id`, `path`, `title`, `label`,
   `description`, `icon`, optional `subItems`/`adminOnly`/`nav`). Every page's
   `<title>`, every `PageHero`'s icon/title/description, every nav entry
-  (navbar, sidebar, section overview) and every `SurfaceCard` read from this
-  one place — `site-nav.ts` is derived from it, not a second source of truth.
+  (navbar, sidebar, section overview), every `SurfaceCard` and every static
+  result of the ⌘K surface search read from this one place — `site-nav.ts` is derived from it, not a second source of truth.
   Adding a page means adding one entry here, never hardcoding a label/icon/
   description at the call site.
 - **Resource Overview (`ResourceOverview`).** The outer stack for a list/
@@ -335,16 +385,19 @@ spacing, and the loading/error/empty cascade.
   cascade (`QueryState` underneath). Named slots only (`heroMeta`,
   `heroStatus`, `heroAction`, `heroChildren`, `filters`) — `children` is
   strictly the query-success renderer, never a place to rebuild the shell.
-- **Entity List (`EntityList` + `EntityListDefinition`).** The row-rendering
-  contract for a resource list: `getPrimary`/`getSecondary`, `getStatus`
-  (state dot + micro-caps label), optional `metadata` fact columns,
-  `actions` (label/icon/destructive/disabled/hidden, all callback-driven),
-  `getOpenHref`/`onOpen`. One `<T, TContext>` definition per resource; a page
-  supplies `context` for cross-cutting concerns (current user, lookup maps)
-  instead of closing over page state inside the row. A page whose row shape
-  doesn't fit this contract (a custom expandable disclosure row, a
-  non-uniform layout) renders its own row inside `ResourceOverview`'s
-  `children` instead of forcing an ill-fitting `EntityListDefinition`.
+- **Data Table (`DataTableView` + `useDataTable` + column definitions).**
+  The row-rendering contract for every resource list: admin users,
+  sessions, logs, API keys, plugins, organizations (and their member,
+  invitation, role and team sections), teams, cron jobs and the cron run
+  history. A page supplies TanStack Table column definitions (identity and
+  status cells come from `DataTableIdentityCell` / `DataTableStatusCell`,
+  row actions from `RowActionsMenu`), and the view owns the scroll box,
+  sticky header, sorting, resizing, reordering, column visibility (saved
+  per table), header filters, row states (`muted`, `disabled`), expandable
+  detail rows, day-group rows and the stacked layout below `@4xl/table`.
+  Sort and filter state lives in the URL. `EntityList` and `SoftCardList`
+  are superseded and have no production caller left; don't build new lists
+  on them.
 - **Resource Filters (`ResourceFilters` + `ResourceFilterDescriptor`).** The
   `CollapsibleFilters` panel driven by typed descriptors instead of
   hand-wired controls: `kind: "search" | "suggestion" | "select" | "date" |
@@ -387,7 +440,7 @@ spacing, and the loading/error/empty cascade.
 
 - **Shape:** rounded none — it's a frame, not a container. Vertical `min-h-main` flex child of the body.
 - **Padding:** `px-4 py-6 sm:px-6` (page), `px-3 py-3 sm:px-6 sm:py-6` (compact for tables).
-- **Max-width:** `6xl` for essentially every list/overview page; `80%` (`lg:max-w-[80%]`, full width below `lg`) on `/crons`; `full` (`max-w-none`) is a declared option for pages whose content is a wide table or canvas that should fill the sidebar inset on desktop; `4xl` currently only on `/me`; `3xl` is a declared option with no current caller. Centred with `mx-auto`. Detail routes skip `PageShell` entirely (see `Detail.astro` below).
+- **Max-width:** `80%` (`lg:max-w-[80%]`, full width below `lg`) is the default and what every table-backed overview uses; `full` (`max-w-none`) for the home grid (narrowed with `lg:w-4/5`); `3xl` for `/me`; `4xl` and `6xl` are declared options with no current caller. Centred with `mx-auto`. Detail routes skip `PageShell` entirely (see `Detail.astro` below).
 - **Wraps:** `QueryProvider` for TanStack Query. Pages with their own layout or that already sit inside another `<main>` skip it.
 
 ### Page Hero
@@ -395,7 +448,7 @@ spacing, and the loading/error/empty cascade.
 - **Shape:** flat, no border. `gap-4` vertical, `gap-2.5` between icon and title.
 - **Icon:** `size-5`, `text-primary`, **no** `rounded-lg bg-primary/15` box — the icon is the accent, not its backdrop.
 - **Title:** the `display` role (18px semibold, tight). Single line, no eyebrow line above.
-- **Description:** the muted `meta` role (13px, relaxed leading), max width by parent. Hero counters (`3 activos · 5 total`) use the same role with `tabular-nums` and the count itself in `text-foreground`.
+- **Description:** the muted `meta` role (13px, relaxed leading), max width by parent. Hero counters (`HeroCount`: `3 activos · 5 total`, each segment optionally with a small icon) use the same role with `tabular-nums` and the count itself in `text-foreground`.
 - **Meta slot (right-aligned on `sm+`):** one primary `Button` + calm counter copy (`3 activos · 5 total`) or a tiny state dot + micro-caps label (`Activo` / `Deshabilitado`). Never badges.
 - **Used everywhere:** the same `PageHero` renders the dynamic icon/title/description/status on both overview pages (inside `PageShell`) and detail pages (inside `Detail.astro`'s frame). There is no separate detail-only header component.
 
@@ -410,16 +463,35 @@ The typographic heading one level below `PageHero`, for a section inside a page,
 
 ### Detail Layout (`Detail.astro`)
 
-- **Shape:** an Astro layout, not a React component — it owns the `<main class="px-4 py-6 sm:px-6">` frame, centred at `max-w-6xl` by default or `lg:max-w-[80%]` with `maxWidth="80%"` (the same width as its overview), and a static, zero-JS back link so the mounted feature island only supplies the dynamic content via `PageHero`.
+- **Shape:** an Astro layout, not a React component — it owns the `<main class="px-4 py-6 sm:px-6">` frame, centred at `lg:max-w-[80%]` by default (`maxWidth="80%"`, the same width as its overview) or `max-w-6xl` with `maxWidth="6xl"`, and a static, zero-JS back link so the mounted feature island only supplies the dynamic content via `PageHero`.
 - **Back link:** `text-muted-foreground text-xs uppercase tracking-[0.08em]`, hover → `text-foreground`; `size-3` arrow icon, real `<a href>` (no client directive needed).
 - **Island rule:** because `Detail.astro` already owns `<main>`/width/back-link, the mounted feature component wraps itself in a bare `QueryProvider`, never a second `PageShell`.
 
-### List Row
+### Data Table (`DataTableView`)
 
-- **Container:** single `rounded-xl border bg-card/40 divide-y` — one container per page, never row-as-card. `SoftCardList` is that container as a component (`as="ul"` when children are `<li>`); reach for it instead of re-typing the class string.
-- **Row:** `hover:bg-muted/40`, **no** `translate` or shadow. Disabled rows: `opacity-60`.
-- **Status dot:** `size-1.5` left margin; `bg-primary` for active/running, `bg-border` for inactive/paused, `bg-destructive` for failed, `bg-foreground` for success (neutral — never green), `bg-muted-foreground/40` for skipped. Rendered through `StatusDot` (see below), never an ad-hoc `span`.
-- **Entrance:** `dash-enter` with `style={{ "--dash-delay":`${index * 40}ms`}}`. Cap stagger at ~40ms/item; for huge lists, drop the stagger rather than slow it down.
+Every record list in the product: a ruled table set in micro-caps, inside one quiet box.
+
+- **Box:** one `rounded-xl border bg-card/40` scroll box per table that scrolls both ways, with the toolbar above it and the footer (infinite-scroll sentinel) inside it. Pages that sit under the window scroller cap it (`max-h-[70dvh]` on the run history) so the header stays visible. Never a stack of row cards.
+- **Header:** `h-9 px-3`, `label` role in `muted-foreground`, sticky at the top of the box on `bg-background` with an inset 1px bottom rule. The sort control is the header text itself: unsorted columns show a faint `size-3` sort glyph at 50% opacity; the sorted column turns **ink** (`text-foreground`) with an asc/desc glyph — sorting is not an accent state.
+- **Header filter:** a ghost `size-6` filter-glyph button beside the label, named by a `Hint` ("Filtrar …"). When the column is filtered it takes the accent tint (`bg-primary/10 text-primary`). Its `w-72` popover stacks sort options, a `SearchInput`, a checkbox list with mono details and tabular counts, and a hairline-separated "Quitar filtro".
+- **Resize & reorder:** a 12px hit strip on each column edge draws a 1px `muted-foreground/40` divider at rest, thickening to 4px `bg-primary/70` on hover and solid primary while dragging or focused (←/→ resize by 16px, double-click resets). Dragging a header shows a 2px primary drop marker and fades the dragged column to 50%.
+- **Columns menu:** an outline `h-9` "Columnas" button above the table (table layout only) opening a `w-72` checklist with drag handles; pinned columns read "Siempre visible"; a hairline-separated "Restablecer columnas" resets.
+- **Rows:** cells `px-3 py-2.5`, hairline `border-b` between rows, `hover:bg-muted/50`, **no** `translate` or shadow. A `muted` row (paused or code-declared job) drops to `text-muted-foreground`; a `disabled` row is `opacity-60` with no hover. Numbers right-align with `tabular-nums`.
+- **Cells:** identity cells pair a `title`-role name with a muted `compact` sub-line; status cells are a `StatusDot` + label. Row actions live in a trailing column as a ghost kebab (`size-10 md:size-9`) at 60% opacity, rising to full on row hover or focus.
+- **Expandable & grouped rows:** the expand toggle is a ghost chevron that rotates 180° when open, the detail row continues the cell grid (`px-3 pb-4`); day-group rows (run history while sorted by start) are `bg-muted/30` with a micro-caps date.
+- **Stacked layout (below `@4xl/table`):** the same data as a `divide-y` list of `px-4 py-4` items, each laid out as `MetadataCell` facts (`grid-cols-2 @md:3 @xl:4`), with `SortControls` and full-width outline filter buttons above (`border-primary/40 text-primary` while active).
+- **Empty:** `FilteredEmpty` as `emptyMessage` — a centred muted `message` line plus an outline "Limpiar filtros" (`clearLabel`, with `FilterX`) calling `onClear`, hidden with `clearable={false}` when no filter is active. Loading belongs to `ResourceOverview` or a `StateCard`, never to skeleton rows.
+- **Entrance:** `dash-enter` with a ~40ms `--dash-delay` step where rows animate; for long or paginated lists, drop the stagger rather than slow it down.
+
+### Status Colors on Rows and Charts
+
+The status vocabulary is a fixed mapping shared by `StatusDot` tones, table status cells and the cron run pulse: **running** → `primary`, **success** → `foreground` (never green), **failed** → `destructive`, **paused / inactive** → `border`, **skipped** → `muted-foreground/40`.
+
+### Chart (`components/ui/chart.tsx`)
+
+- **Primitive:** TanStack Charts behind a themed wrapper; width follows the container, height is a fixed pixel value; type is the sans in `muted-foreground` with `tabular-nums`. Series colors come from the chart palette (see Colors → Scoped Palettes) and recolor live with the theme.
+- **Tooltip:** the `Hint` look — inverted ink bubble, `rounded-md`, `0.375rem 0.75rem`, 12px sans — reachable by keyboard.
+- **Run pulse (cron detail):** a 56px strip of thin bars (radius 1, inset 1.5) with no axes, in a `rounded-xl border bg-card/40` card whose right (or bottom, on mobile) side is a `dl` of `MetadataCell` stats in the `stat` and `data` roles. Bar height carries meaning (failed full, running half, skipped a sliver, success scaled to p95) and color follows the status mapping above, success at 30% ink. The legend is micro-caps with tiny square swatches. Mobile shows the newest 24 runs.
 
 ### Surface Card (`SurfaceCard`/`SurfaceCardGrid`)
 
@@ -427,19 +499,20 @@ Registry-driven destination tile — the single component behind both the home
 page's top-level module grid and a section overview's per-subroute grid (see
 `app-surfaces.ts` under Icon System below). One component, two states:
 
-- **Shape:** `rounded-xl border bg-card/40`, `p-5`, no shadow.
-- **Icon:** flat, `size-5 text-primary`, no backdrop box.
-- **Title:** the `headline` role (16px medium, tight), single line, truncated.
-- **Description:** the muted `meta` role at normal leading, ≤ 2 lines (`line-clamp-2`), always reserving two lines (`min-h-[3em]`) so the shortcuts' hairline lands at the same height across a row of tiles.
-- **Leaf state** (a surface with no children, e.g. a section-overview card): `Entrar →` microcopy at the bottom-right, `text-muted-foreground` → `text-foreground` on hover.
-- **Parent state** (a surface with children, e.g. `/admin` on the home grid): instead of "Entrar", a hairline-separated "Accesos directos" block (titled in the `label` role) lists up to a handful of child-surface shortcuts as filled pills (`bg-muted`, `hover:bg-primary hover:text-primary-foreground`, 1 or 2 columns depending on count) — a quick-access affordance for a section's own subroutes, not a plain link list.
-- **Hover (whole tile):** `bg-muted/40` and a slightly firmer border (`border-foreground/15`), no lift, no shadow.
+- **Shape:** `rounded-xl border bg-card/40`, `p-4`, `gap-3`, no shadow; the whole tile is one stretched link with a `ring-[3px] ring-ring/50` focus ring.
+- **Icon:** flat, `size-5 text-primary`, no backdrop box, beside the text column (`gap-2.5`).
+- **Title:** the `title` role (14px medium, tight), single line, truncated.
+- **Description:** the muted `compact` role at relaxed leading, ≤ 2 lines (`line-clamp-2`), always reserving two lines (`min-h-[3.25em]`) so the shortcuts' hairline lands at the same height across a row of tiles.
+- **Leaf state** (a surface with no children, e.g. a section-overview card): a muted `size-4` chevron at the right of the title row that nudges `translate-x-0.5` and turns ink on hover.
+- **Parent state** (a surface with children, e.g. `/admin` on the home grid): instead of the chevron, a hairline-separated (`border-t pt-2.5`) two-column grid of child-surface shortcuts as filled `h-7 rounded-md bg-muted` pills (icon, label, `↗`), turning `bg-primary text-primary-foreground` on hover — a quick-access affordance for a section's own subroutes, not a plain link list.
+- **Hover (whole tile):** `bg-muted` and a slightly firmer border (`border-foreground/15`), no lift, no shadow.
+- **Grid:** `SurfaceCardGrid` with container-query columns (see Layout), `gap-3`, each tile entering with `dash-enter`.
 
 ### State Card (`StateCard`)
 
 - **Shape:** `rounded-xl border border-dashed bg-card/40 px-6 py-16` — placeholder, not container.
 - **Icon:** flat (no box), `size-10`. Tones: `muted` (default), `destructive` (errors only), `celebrate` (success/solid border).
-- **Title:** `font-medium tracking-tight`, `text-base` (muted/destructive), `text-lg` (celebrate).
+- **Title:** Headline role (muted/destructive), Display role (celebrate).
 - **Description:** `text-muted-foreground text-sm leading-relaxed`, `max-w-sm mx-auto`.
 - **Action slot:** one inline button. No toasts invented here.
 - **Motion:** `dash-enter` on the container; `dash-pop` on nested icons.
@@ -456,10 +529,10 @@ The typographic replacement for a status badge.
 
 The bubble that names an icon-only control, in place of the browser's native `title` tooltip.
 
-- **Shape:** the `components/ui/tooltip` popup — `bg-foreground text-background`, `rounded-md`, `px-3 py-1.5 text-xs`, with a 6px arrow pointing at the control. It inverts against the page in both themes (ink bubble on paper, paper bubble on dark), so it reads as a floating layer without a shadow.
+- **Shape:** the `components/ui/tooltip.tsx` popup — `bg-foreground text-background`, `rounded-md`, `px-3 py-1.5 text-xs`, with a 6px arrow pointing at the control. It inverts against the page in both themes (ink bubble on paper, paper bubble on dark), so it reads as a floating layer without a shadow.
 - **Timing:** opens after 300ms on hover or keyboard focus; a quick zoom-and-fade from the control's side. Never on touch.
 - **Placement:** `top` by default; `bottom` for navbar/header actions; `left` for controls on the right edge.
-- **Where:** icon-only row actions, kebab menus, compact comments toggles, copy, back-to-top, navbar actions and the sidebar toggle; also a status tag's explanation (e.g. a ban reason). Not on labelled buttons, obvious inline `×` clear buttons, or touch-only controls.
+- **Where:** icon-only row actions, kebab menus, compact comments toggles, copy, back-to-top, navbar actions and the sidebar toggle; also a status tag's explanation (e.g. a ban reason). Not on labelled buttons, obvious inline `×` clear buttons, buttons beside a text field being typed in, or touch-only controls.
 - **Rule:** the control keeps its `aria-label`; the bubble is the visual name, not the accessible one.
 
 ### Active Filter Chips (`FilterChips`)
@@ -516,15 +589,40 @@ Dense, precise inputs for small finite values (currently the cron schedule build
 - **Trigger:** `SlidersHorizontal` icon (`size-4 text-muted-foreground`) + label + an active count in muted tabular text (`3 activos`) when `activeCount > 0` — typeset, never a `Badge`.
 - **Body:** `FilterField` children (label + control) in a responsive grid (`columns` prop: 1–4, e.g. `grid-cols-1 sm:grid-cols-3`), plus an outline "Limpiar filtros" button with `FilterX` icon when a filter is active.
 - **Count:** optional `text-xs text-muted-foreground` line below the panel.
-- **Rule:** this is the only filter UI for list pages at `md+` — never a hand-rolled flat filter row. Below `md` the same descriptors render as `ListActionBar` + `FilterSheet`; both halves come from `ResourceFilters`, never wired by hand. `FilterBar` (the old always-visible search+filters+count row) is superseded and no longer used anywhere in the codebase.
+- **Rule:** a list filters either from its **column headers** (the data table's header filters — users, sessions, cron jobs, run history) or from this **panel** (filters that aren't a column, as on logs, teams and organizations) — never a hand-rolled flat filter row. Below `md` the same descriptors render as `ListActionBar` + `FilterSheet`; both halves come from `ResourceFilters`, never wired by hand. `FilterBar` (the old always-visible search+filters+count row) is superseded and no longer used anywhere in the codebase.
 
 ### Navigation (sidebar / navbar)
 
-- **Navbar:** translucent, `bg-background/80 backdrop-blur`, height `--navbar-height: 3.6rem`. At rest the bottom hairline is faint (`border-border/40`); past a scroll threshold it firms up to `border-border` plus a hairline `shadow-sm` — the one navbar affordance allowed to leave "flat by default", used only as a scroll cue.
-- **Nav pill (navbar hub menu):** active item is `bg-primary/10 text-primary`; resting item is `text-muted-foreground`, hover `bg-muted/40 hover:text-foreground`.
-- **Sidebar (`SectionSidebar`, admin/section sidebars):** built on shadcn's `Sidebar`/`SidebarMenuButton` primitives, which key hover and `data-[active=true]` state off the dedicated `--sidebar-accent` / `--sidebar-accent-foreground` tokens (`hover:bg-sidebar-accent`), not the generic `bg-muted/40` utility the rest of the system uses. No badge clusters.
+- **Navbar:** fixed, translucent (`bg-background/80 backdrop-blur`, `/60` where backdrop-filter is supported), height `--navbar-height: 3.6rem`. At rest the bottom hairline is faint (`border-border/40`); past a scroll threshold it firms up to `border-border` plus a hairline `shadow-sm` — the one navbar affordance allowed to leave "flat by default", used only as a scroll cue. From `lg` it is a three-column grid: logo, a short vertical separator, the pills, and the search/actions on the right.
+- **Nav pill (`NavbarPillLink` / `NavbarPillTrigger`):** `rounded-md px-3 py-1.5`, 12px medium. Active is `bg-primary/10 text-primary` with a primary `StatusDot`; resting is `text-muted-foreground`, hover `bg-muted/40 hover:text-foreground`. Lower-priority pills collapse into a "Más" menu between `lg` and `xl`.
+- **Navigation dropdown:** a `w-72` popover (`rounded-lg bg-popover`, light `shadow` + `ring-1 ring-foreground/10`, a 0.35s scale-in on an ease-out curve). The first row is the section hub, written in the accent (`text-primary`, `min-h-11`) so it reads as "go to the section"; a `bg-foreground/10` separator divides it from the sub-route rows (`min-h-10`, `text-foreground/80`, muted `size-3.5` icon). Hover and active rows share the `bg-primary/10` tint; the active row's text and icon turn primary.
+- **Navbar actions (`NavbarAction`):** square icon buttons, `size-11` below `lg` and `size-9` from it, `rounded-lg border bg-background/60 text-muted-foreground`; hover or open firms the border to `primary/30` over `bg-accent`. Each carries a `Hint` below it.
+- **Mobile menu:** below `lg`, a right `Sheet` on `bg-popover` (`sm:max-w-xs`). Rows are `rounded-lg px-3 py-2.5` 14px medium; the active row gets the `bg-primary/10 text-primary` tint plus a 2px primary bar on its left edge; sub-items indent behind a `border-l` hairline and only turn primary when active. Rows enter with `dash-enter` at a 45ms step.
+- **Sidebar (`SectionSidebar`):** pinned below the navbar, collapsible to icons. The header names the section with its icon in Brand Terracotta and a semibold label; items are shadcn `SidebarMenuButton`s (`h-8 rounded-md text-sm`) whose hover and active states use the neutral `--sidebar-accent` tokens — the active item is medium weight on a tonal fill, **not** orange. The footer holds a full-width muted "Contraer menú / Extender menú" button (`md+`) plus the rail; there is no top bar. No badge clusters.
 - **Rich menu rows (`MenuItemText`):** navigation-menu links and dropdown items that pair an icon with a name and a short explanation render their text column through `MenuItemText` — a compact medium label (inherits the row color, so active rows turn `text-primary`) over a muted description clamped to two lines. The row itself owns padding, icon and hover/active styling.
-- **Theme toggle:** circular `clip-path` reveal animation (see `use-theme-toggle.ts`), never abrupt flicker.
+- **Theme toggle:** circular `clip-path` reveal animation through the View Transitions API (see `hooks/use-theme-mode.ts`), never abrupt flicker; persisted chrome (navbar, sidebar) is excluded from page-navigation cross-fades.
+
+### Surface Search (⌘K)
+
+The navbar's jump-to-anything dialog.
+
+- **Trigger:** from `lg`, a `h-9 w-52` field-shaped button (`rounded-lg border bg-background/60`, muted "Buscar…" + `Kbd` `⌘K` / `Ctrl K`), with the same hover as navbar actions; below `lg`, a `NavbarAction` with a search glyph.
+- **Dialog:** a `sm:max-w-xl` command palette anchored near the top (`top-[12vh]`) so it doesn't jump while results filter. The input row is `h-14` with a `size-5` primary search glyph and an `esc` keycap as its close control.
+- **Results:** each row leads with a `size-8 rounded-md bg-primary/10` icon tile holding a primary `size-4` glyph; on the selected row the tile **fills solid primary** with a white glyph and a `↵` keycap appears at the end. Labels show their section trail before the name, separated by muted `size-3` chevrons; the current page carries a primary `StatusDot`. Group headings are micro-caps `label` text pinned to the top of the list while scrolling. "Recientes" leads when the query is empty; record groups (crons) appear only once there's a query.
+- **Empty:** a centred search glyph, "Sin resultados para «…»" in the `title` role and a muted `meta` hint.
+- **Footer legend:** from `sm`, a `border-t bg-muted/40` strip of keycaps — ↑↓ navegar, ↵ abrir, esc cerrar. Arrow navigation wraps from the first result to the last.
+
+### Keycap (`Kbd`)
+
+The one style for shortcut hints, never a hand-built `<kbd>`: `h-5 min-w-5 px-1.5`, hairline border on `bg-muted`, Space Mono at the 11px label size in medium `muted-foreground`. `KbdGroup` spaces several keys with `gap-1`.
+
+### Logo (`AppLogo`)
+
+Three rounded layers stacked in a stair: the two lower layers in ink (`fill-foreground`) so they follow the theme, the top layer in Brand Terracotta (`fill-primary`). Drawn inline so it themes live; 32px in the navbars (scales to 110% on hover), 24px in the admin sidebar, 26px on the auth cards inside a `size-12 rounded-xl bg-primary/15` tile — the one place an accent backdrop box is sanctioned, because it frames the brand mark, not a feature icon. The static footer uses `assets/logo.svg`, whose ink layer is set from `--logo-ink`.
+
+### Icon Picker (`features/entity-icons/picker`)
+
+Chooses a Lucide glyph for a user-owned entity (no entity type is registered yet). Opens as a `w-[22rem]` popover or, for roomier forms, a `sm:max-w-2xl` dialog. Category filters are `xs` secondary/ghost buttons; the grid is `aspect-square rounded-lg` cells in `text-foreground/80` (8 columns of `size-5` glyphs, or 10 columns of `size-6` in the dialog) and the selected cell takes `bg-muted` plus the icon color. When a screen allows color, swatches are `size-6` circles whose selection is an ink ring (`ring-2 ring-foreground/70 ring-offset-2`) — never an accent ring. The trigger is an outline icon button showing the current glyph.
 
 ### Buttons (shadcn `Button` over the token system)
 
@@ -539,13 +637,17 @@ Dense, precise inputs for small finite values (currently the cron schedule build
 - **Focus:** `ring-2 ring-ring ring-offset-2 ring-offset-background` (Brand Terracotta). Visible only on keyboard focus.
 - **Error:** shifts `border-color` to `var(--destructive)`; no inline icon, no color icon box — message lives in `text-destructive text-xs` microcopy beneath the field.
 
+### Code Blocks (`JsonView`)
+
+Technical payloads are set in the `data` role inside a `rounded-lg border bg-muted/50 p-3` block at `text-foreground/90` with relaxed leading, wrapping long values rather than scrolling sideways. Tokens are colored by `@tanstack/highlight` from the syntax palette (see Colors → Scoped Palettes).
+
 ## Icon System
 
 All icons are sourced from **Lucide React** (`lucide-react`). To ensure visual consistency across the entire application, every feature has a **single canonical icon** defined in a centralised registry.
 
 ### Icon Registry
 
-The file `apps/frontend/src/lib/icon-registry.ts` is the single source of truth for all icons, grouped by semantic domain rather than a flat feature list: `navigation`, `auth`, `admin`, `entities`, `identity`, `security`, `actions`, `controls`, `status`, `views`, `communication`, `scheduling`, `theme`. Within a group, keys name the concept (`navigationIcons.crons`, `statusIcons.loading`), and the same Lucide icon can legitimately appear under two keys when it serves two concepts — the invariant is one canonical icon per *concept*, not one key per file.
+The file `apps/frontend/src/lib/icon-registry.ts` is the single source of truth for all icons, grouped by semantic domain rather than a flat feature list: `navigation`, `auth`, `admin`, `entities`, `identity`, `security`, `actions`, `controls`, `status`, `views`, `communication`, `scheduling`, `theme`, `config`. Within a group, keys name the concept (`navigationIcons.crons`, `statusIcons.loading`), and the same Lucide icon can legitimately appear under two keys when it serves two concepts — the invariant is one canonical icon per *concept*, not one key per file.
 
 ### Usage
 
@@ -570,26 +672,28 @@ const LoadingIcon = getIcon("status", "loading")
 
 If an icon needs to change, update it in `icon-registry.ts` — all references propagate automatically.
 
-**Lucide only.** Do not import custom SVG icons or use system icons. Every icon comes from Lucide.
+**Lucide only.** Do not import custom SVG icons or use system icons. Every icon comes from Lucide. The two sanctioned exceptions: the brand mark (`AppLogo`), and the icon picker's own catalog (`features/entity-icons/picker`), which reads the full Lucide set because choosing among all glyphs is its job.
 
 ## Do's and Don'ts
 
 ### Do
 
-- **Do** use `PageShell` to frame list/overview authenticated pages; let it own `QueryProvider`, padding, and max-width. Detail routes use `Detail.astro` (bare `QueryProvider` + `PageHero`); auth keeps its own frame.
+- **Do** use `PageShell` (or `ResourceOverview`) to frame list/overview authenticated pages at its default 80% width; let it own padding and max-width. Detail routes use `Detail.astro` at the same width as their overview (bare `QueryProvider` + `PageHero`); auth keeps its own frame.
 - **Do** keep the page header to one icon, one title, one description, and one primary action. Counters and statuses are typeset, not badged.
 - **Do** express state as a dot (`bg-primary` / `bg-border` / `bg-destructive` / `bg-foreground`) plus a micro-caps label, never as a filled `Badge`.
-- **Do** reserve Brand Terracotta for hero icon, primary CTA, and "alive" state dot.
-- **Do** wrap list rows in one `divide-y` container; one container per page.
+- **Do** keep Brand Terracotta to *here / act / alive*: hero and tile icons, primary CTA and back-to-top, running dot, active navigation and active filters — full strength on glyphs and buttons, `bg-primary/10` tint on active rows.
+- **Do** render record lists with `DataTableView` and column definitions: one `rounded-xl border bg-card/40` box, sticky micro-caps header, hairline rows, stacked layout below `@4xl/table`.
+- **Do** size in-page grids and tables with container queries, not viewport breakpoints.
 - **Do** use `FieldLabel` for form labels, `SectionHeading` for section titles and the `label` role of `Text` for every other micro-caps label; never hand-build the class string.
 - **Do** set text through a `Text` role (or `textVariants` on a component's `className`); use the `data` role (Space Mono, `tabular-nums`) for cron expressions, durations, ISO timestamps, and IDs.
 - **Do** name every icon-only control with a `Hint` bubble and keep its `aria-label`.
 - **Do** animate list entrances with `dash-enter` and a `--dash-delay` step of ~40ms.
 - **Do** reach for `FormDialog` + `FormField` for every create/edit dialog; let it own header/footer hairlines.
-- **Do** drive list-page filters through `ResourceFilters` descriptors: `CollapsibleFilters` at `md+`, `ListActionBar` + `FilterSheet` below; never a hand-rolled always-open filter row.
+- **Do** filter a table from its column headers when the filter is a column; otherwise drive it through `ResourceFilters` descriptors (`CollapsibleFilters` at `md+`, `ListActionBar` + `FilterSheet` below). Never a hand-rolled always-open filter row.
 - **Do** show active filters as `FilterChips` above the list, with a 44px hit area on every remove control.
 - **Do** keep every fixed bottom element clear of `env(safe-area-inset-bottom)` and give its controls 44px touch targets.
-- **Do** express selection in compact pickers by inverting to ink (`bg-foreground text-background`), not with the accent.
+- **Do** express selection in compact pickers by inverting to ink (`bg-foreground text-background`), and a sorted column by turning its header ink — not with the accent.
+- **Do** show shortcut hints with `Kbd`.
 - **Do** keep `DialogHeader` `border-b` and `DialogFooter` `border-t`; long bodies separated with `border-t`.
 - **Do** reach for `AppLink` for internal routing; raw `<a>` is out.
 - **Do** format dates through `@/lib/format`; never reinvent `formatDate`.
@@ -599,12 +703,14 @@ If an icon needs to change, update it in `icon-registry.ts` — all references p
 
 - **Don't** wrap an icon in `rounded-lg bg-primary/15 text-primary` on a row or tile; the flat accent is the accent.
 - **Don't** invent semantic colors for success/info/warning; success is `bg-foreground` + word, failure is destructive, neutral state is `bg-border`.
-- **Don't** render rows as free-floating cards with `shadow-md`; one `divide-y` container.
+- **Don't** use raw Tailwind palette colors (`text-amber-500`, `text-rose-500`, …) in product surfaces, and don't lift the chart, syntax or entity-icon palettes out of their scope.
+- **Don't** render rows as free-floating cards with `shadow-md`, and don't build new lists on the superseded `EntityList` / `SoftCardList`.
 - **Don't** count things with `Badge variant="outline"`; typeset `3 activos · 5 total` as text.
 - **Don't** nest cards (`Card` inside `Card`, or `Card` around a facts grid); `border-y` + `<dl>` is enough.
-- **Don't** use gradients, glow, or decorative `shadow-lg`/`shadow-xl` in product chrome. The floating back-to-top button is the single sanctioned resting shadow.
+- **Don't** use gradients, glow, or decorative `shadow-lg`/`shadow-xl` in product chrome. The floating back-to-top control carries the only sanctioned resting shadow.
 - **Don't** build chip/pill clusters in the hero or on tiles; subaccess is a typographic list. The only chips in the product are removable active-filter chips.
 - **Don't** add another `<main class="container…">` in the `.astro`; `PageShell` is the frame.
+- **Don't** cap an overview or detail page at `6xl` by habit; the 80% default is the rhythm, narrower caps need a reason.
 - **Don't** use `formatDate` / `formatDateTime` locals; the helper `@/lib/format` is the source of truth.
 - **Don't** link internally with raw `<a>`; `AppLink` is the source of truth.
 - **Don't** use generic `DialogContent` + `Label` for forms; reach for `FormDialog` + `FieldLabel`.
@@ -619,4 +725,4 @@ The style applies to product surfaces (lists, detail, forms, settings). It does 
 
 - `components/ui/**` (shadcn base — they remain the available primitives).
 - `features/app-shell` chrome (navbar, sidebar, theme toggle) — small adjustments permitted.
-- `/login`, `/signup` — may stay as form-card; not a list/detail page.
+- `/login`, `/signup` — may stay as form-card (`max-w-md` card with hairline header/footer) on the plain `background`; not a list/detail page.
