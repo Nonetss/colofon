@@ -42,7 +42,8 @@ The repo SHALL provide `compose.dev.yml`, with compose project name `stack-dev`,
 ### Requirement: Edits reach containers without rebuilding
 
 `compose.dev.yml` SHALL declare `develop.watch` rules, used by `docker compose watch` / `up --watch`, so that:
-- edits under an app's source (`apps/frontend/src`, `apps/frontend/public`, `apps/backend/src`) and under the `packages/*/src` each app uses (`api`, `auth`, `env`, `logger` for the frontend; `api`, `auth`, `cron`, `db`, `env`, `logger` for the backend) are synced into the containers that use them and picked up by the running dev server without restarting the container;
+- edits under an app's source (`apps/frontend/src`, `apps/frontend/public`, `apps/backend/src`) and under the `packages/*/src` the frontend uses (`api`, `auth`, `env`, `logger`, `telemetry`) are synced into the containers that use them and picked up by the running dev server without restarting the container;
+- edits under the `packages/*/src` the backend uses (`api`, `auth`, `cron`, `db`, `env`, `logger`, `telemetry`) are synced into the backend container and restart it, because `bun --hot` doesn't reload synced edits to workspace packages;
 - edits to `apps/frontend/astro.config.mjs` are synced and restart the frontend;
 - edits to `apps/gateway/Caddyfile.dev` or `apps/gateway/routes.caddy` are synced and restart the gateway;
 - edits to a dependency manifest or lockfile (`package.json`, `bun.lock`, `apps/<app>/package.json`) rebuild the affected services.
@@ -51,8 +52,13 @@ Dev images SHALL NOT bind-mount the repository, so host `node_modules` never sha
 
 #### Scenario: Backend code change
 
-- **WHEN** a developer saves a change under `packages/api/src` while the dev stack runs
+- **WHEN** a developer saves a change under `apps/backend/src` while the dev stack runs
 - **THEN** the file SHALL be synced into the backend container and `bun --hot` SHALL reload it without a rebuild or a container restart
+
+#### Scenario: Shared package change
+
+- **WHEN** a developer saves a change under `packages/api/src` while the dev stack runs
+- **THEN** the file SHALL be synced into the backend container and the backend SHALL restart, so it never serves the old code next to a frontend that already has the new one
 
 #### Scenario: Frontend component change
 

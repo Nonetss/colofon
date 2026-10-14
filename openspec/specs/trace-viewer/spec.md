@@ -8,14 +8,13 @@ Administrator screens and procedures to search traces stored in Tempo and inspec
 
 ### Requirement: Administrator trace search
 
-The API SHALL expose an administrator-only `v1.traces.search` procedure (HTTP `GET`). It SHALL return the most recent traces stored in Tempo, newest first, each with its trace id, root service, the services it touched (the services with spans in it, plus `postgresql` when it queried the database), root span name, start time and duration in milliseconds. It SHALL accept these optional filters, all combined with AND:
+The API SHALL expose an administrator-only `v1.traces.search` procedure (HTTP `GET`). It SHALL return the most recent traces stored in Tempo, newest first, each with its trace id, root service, the services it touched (the services with spans in it, plus `postgresql` when it queried the database), root span name, start time, duration in milliseconds and whether it is an event stream (it has oRPC's `consume_async_iterator_object_output` span). It SHALL accept these optional filters, all combined with AND:
 - `services`: any of `stack-frontend`, `stack-backend` and `postgresql`, keeping the traces that touch at least one of them;
 - `errorsOnly`: only traces with at least one span in error status;
 - `minDurationMs`;
-- `name`: a substring of the root span name;
 - `from`/`to`: a time range, defaulting to the last 24 hours.
 
-It SHALL return at most `limit` traces (default 50, maximum 200) and SHALL NOT paginate. The response SHALL say whether the limit was reached. Filter values SHALL be escaped before they are placed in the Tempo query, so a filter can never change the query's structure.
+It SHALL return at most `limit` traces (default 50, maximum 200) and SHALL NOT paginate. The response SHALL say whether the limit was reached. The Tempo query SHALL be built only from fixed fragments, closed enums, validated integers and trace ids normalized to hex, never from free text, so no input can change its structure.
 
 #### Scenario: Errors in the backend
 
@@ -27,6 +26,16 @@ It SHALL return at most `limit` traces (default 50, maximum 200) and SHALL NOT p
 - **WHEN** an administrator searches with `services: ["postgresql"]`
 - **THEN** every returned trace SHALL list `postgresql` among its services
 
+#### Scenario: Newest traces on a busy day
+
+- **WHEN** more traces match in the window than `limit`
+- **THEN** the response SHALL contain the newest ones, not the first ones Tempo happens to find
+
+#### Scenario: Stream flagged
+
+- **WHEN** the results include a `cron.watchRuns` subscription
+- **THEN** that trace SHALL be flagged as a stream, and a plain request SHALL NOT
+
 #### Scenario: Slow requests
 
 - **WHEN** an administrator searches with `minDurationMs: 500`
@@ -37,17 +46,12 @@ It SHALL return at most `limit` traces (default 50, maximum 200) and SHALL NOT p
 - **WHEN** more traces match than `limit`
 - **THEN** the response SHALL contain `limit` traces and flag that the limit was reached
 
-#### Scenario: Quoting in a filter
-
-- **WHEN** the `name` filter contains `"` or `}` characters
-- **THEN** the search SHALL match them literally and SHALL NOT fail with a query syntax error
-
 ### Requirement: Administrator trace detail
 
 The API SHALL expose an administrator-only `v1.traces.get` procedure (HTTP `GET`) taking a 32-character hex `traceId`. It SHALL return:
-- the trace's start time, total duration and span count;
+- the trace's start time, total duration, span count, whether it is an event stream, and the scale its waterfall is drawn to (`scaleMs`): the first root span's duration for a stream, else the total duration;
 - its spans in depth-first order, with siblings ordered by start time;
-- for each span: hex span id, parent span id (or `null`), name, service, kind, `depth`, offset from the trace start in ms, duration in ms, status (`unset`, `ok` or `error`), status message, attributes, and events with their offsets and attributes.
+- for each span: hex span id, parent span id (or `null`), name, service, kind, `depth`, offset from the trace start in ms, duration in ms, status (`unset`, `ok` or `error`), status message, attributes, events with their offsets and attributes, and a `bar` to draw: the span's measured range intersected with its parent's bar and with `[0, scaleMs]`, flagged as `continues` when the measured span runs past the bar's end because of the scale.
 
 A span's service SHALL be the database system it names in `db.system.name` (`postgresql` for a query), else the `service.name` of the process that emitted it. A span whose parent is not in the trace SHALL be placed as a root. The response SHALL contain at most 2000 spans and SHALL flag when spans were left out.
 
@@ -60,6 +64,16 @@ A span's service SHALL be the database system it names in `db.system.name` (`pos
 
 - **WHEN** a trace contains a backend query span with `db.system.name=postgresql`
 - **THEN** that span's service SHALL be `postgresql`, and the viewer SHALL label it "PostgreSQL" with its own bar color
+
+#### Scenario: Child bar kept inside its parent
+
+- **WHEN** a child span's measured end lies 0.4 ms past its parent's end (millisecond start-time resolution)
+- **THEN** its `bar` SHALL end at its parent's bar end, while its `offsetMs` and `durationMs` SHALL keep the measured values
+
+#### Scenario: Stream scaled to its request
+
+- **WHEN** an administrator opens a `cron.watchRuns` trace whose request took 4 ms and whose subscription lasted 270 s
+- **THEN** the response SHALL flag it as a stream, `scaleMs` SHALL be 4 ms, and the stream's span SHALL have a bar cut at 4 ms flagged as `continues`
 
 #### Scenario: Missing parent
 
@@ -101,7 +115,7 @@ Both trace procedures SHALL reject callers without the administrator role, and t
 
 ### Requirement: Trace list screen
 
-`/admin/traces` SHALL list the search results in a data table with the columns start time, root span, services touched (Frontend, Backend, PostgreSQL), duration and error state, newest first by default, sortable in the browser with the sort kept in the URL. Its filters SHALL map to the search inputs. Opening a row SHALL show that trace beside the list on the same page and keep it in the URL as `?trace=<traceId>`, marking the open row; a URL carrying `?trace=` SHALL open that trace on load, even when it isn't in the current list. Without `?trace=`, the page SHALL show the newest trace of the list beside it, without writing it to the URL, until the administrator closes the panel. Closing the trace SHALL drop the parameter and stop showing the newest trace. The page SHALL be declared in `app-surfaces` and shown in the admin navigation, and there SHALL be no separate route per trace.
+`/admin/traces` SHALL list the search results in a data table with the columns start time, root span, services touched (Frontend, Backend, PostgreSQL), duration and error state, newest first by default, sortable in the browser with the sort kept in the URL. A stream SHALL carry a "Stream" tag next to its duration. Its filters SHALL map to the search inputs, except the name filter, which SHALL narrow the loaded list in the browser (substring of the root span name, ignoring case and accents). Opening a row SHALL show that trace beside the list on the same page and keep it in the URL as `?trace=<traceId>`, marking the open row; a URL carrying `?trace=` SHALL open that trace on load, even when it isn't in the current list. Without `?trace=`, the page SHALL show the newest trace of the list beside it, without writing it to the URL, until the administrator closes the panel. Closing the trace SHALL drop the parameter and stop showing the newest trace. The page SHALL be declared in `app-surfaces` and shown in the admin navigation, and there SHALL be no separate route per trace.
 
 #### Scenario: Opening a trace from the list
 
@@ -118,6 +132,11 @@ Both trace procedures SHALL reject callers without the administrator role, and t
 - **WHEN** an administrator follows a "Ver traza" link to `/admin/traces?trace=<traceId>`
 - **THEN** the page SHALL open with that trace shown beside the list
 
+#### Scenario: Filtering by name
+
+- **WHEN** an administrator types `cron.run` in the name filter
+- **THEN** the table SHALL show the loaded traces whose root span name contains it, without a new search
+
 #### Scenario: Filtering the list
 
 - **WHEN** an administrator turns on "Con errores"
@@ -125,7 +144,7 @@ Both trace procedures SHALL reject callers without the administrator role, and t
 
 ### Requirement: Trace waterfall panel
 
-The open trace's panel SHALL show a summary of the trace: root span, service, start, total duration, and span and error counts. It SHALL also link to the trace's activity-log entries (`/admin/logs?trace=<traceId>`) and offer a way to close it. Below the summary, it SHALL show a waterfall with one row per span in the order returned by `traces.get`. Each row SHALL be indented by its depth and carry a bar whose position and width are proportional to the span's offset and duration within the trace. Spans in error status SHALL be visually distinct. Selecting a span SHALL show its attributes and events. When the trace was truncated, the panel SHALL say so.
+The open trace's panel SHALL show a summary of the trace: root span, service, start, total duration, and span and error counts. It SHALL also link to the trace's activity-log entries (`/admin/logs?trace=<traceId>`) and offer a way to close it. Below the summary, it SHALL show a waterfall with one row per span in the order returned by `traces.get`. Each row SHALL be indented by its depth and carry the span's `bar`, positioned and sized as a proportion of `scaleMs`, marked as continuing past the right edge when `bar.continues` is set. Spans in error status SHALL be visually distinct. Selecting a span SHALL show its attributes and events. When the trace was truncated, the panel SHALL say so. When the trace is a stream, the panel SHALL say that it lasts as long as the subscription, that the waterfall is scaled to the request, and that spans may still be arriving while the subscription is open.
 
 #### Scenario: Reading a slow request
 
@@ -136,6 +155,11 @@ The open trace's panel SHALL show a summary of the trace: root span, service, st
 
 - **WHEN** an administrator selects a query span
 - **THEN** the panel SHALL show its attributes, including `db.query.text`
+
+#### Scenario: Reading a stream
+
+- **WHEN** an administrator opens a `cron.watchRuns` trace
+- **THEN** the request's bars SHALL be readable at full width, the stream's bar SHALL be marked as continuing, and the panel SHALL explain the stream
 
 #### Scenario: Error span
 
