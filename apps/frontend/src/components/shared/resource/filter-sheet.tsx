@@ -11,7 +11,8 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet"
 
-function confirmLabel(resultCount: number | undefined) {
+function confirmLabel(resultCount: number | null | undefined) {
+  if (resultCount === null) return "Ver resultados"
   if (resultCount === undefined) return "Cargando…"
   if (resultCount === 0) return "Sin resultados"
   return `Ver ${resultCount} resultado${resultCount === 1 ? "" : "s"}`
@@ -41,8 +42,10 @@ export function FilterSheet({
   onOpenChange: (open: boolean) => void
   title?: string
   filters: ResourceFilterDescriptor[]
-  /** `undefined` while the count for the current draft is still loading. */
-  resultCount: number | undefined
+  /** `undefined` while the count for the current draft is still loading;
+   *  `null` for a list that can't count its results (the button then just
+   *  reads "Ver resultados"). */
+  resultCount: number | null | undefined
   onApply: () => void
   /** Clears every filter (drafted and live) and closes the sheet. Omitted
    *  when the caller has nothing to clear. */

@@ -544,12 +544,19 @@ function filterHtmlFor(filter: ResourceFilterDescriptor) {
     : filter.key
 }
 
+/** The only facet section, which needs no accordion; none when there are
+ *  zero or several. */
+function loneFacetOf<T>(facets: readonly T[]): T | undefined {
+  if (facets.length !== 1) return undefined
+  return facets[0]
+}
+
 /** One labelled field per descriptor, stacked — the layout `FilterSheet`
  *  renders its sections with, and the piece `ResourceFilters`' inline grid
- *  wraps for wide viewports. Facet sections collapse into an accordion
- *  (open by default only when already active): a sheet with several
- *  option-list dimensions is otherwise an uncomfortable amount of scrolling
- *  on a phone. */
+ *  wraps for wide viewports. Several facet sections collapse into an
+ *  accordion (open by default only when already active): a sheet with
+ *  several option-list dimensions is otherwise an uncomfortable amount of
+ *  scrolling on a phone. A single one stays open, like any other field. */
 export function ResourceFilterFields({
   filters,
   className,
@@ -562,6 +569,7 @@ export function ResourceFilterFields({
     (filter): filter is ResourceFilterDescriptor & { kind: "facet" } =>
       filter.kind === "facet"
   )
+  const loneFacet = loneFacetOf(facetFilters)
   const openByDefault = facetFilters
     .filter(
       (filter) =>
@@ -580,7 +588,12 @@ export function ResourceFilterFields({
           {renderFilterControl(filter)}
         </FilterField>
       ))}
-      {facetFilters.length > 0 ? (
+      {loneFacet ? (
+        <FilterField label={loneFacet.label}>
+          <FacetOptionsList filter={loneFacet} />
+        </FilterField>
+      ) : null}
+      {facetFilters.length > 1 ? (
         <Accordion defaultValue={openByDefault}>
           {facetFilters.map((filter) => {
             const activeCount =
@@ -785,7 +798,7 @@ function MobileResourceFilters({
         open={open}
         onOpenChange={setOpen}
         filters={draftFilters}
-        resultCount={fetchDraftTotal ? draftTotal : undefined}
+        resultCount={fetchDraftTotal ? draftTotal : null}
         onApply={apply}
         onClear={clear}
       />
