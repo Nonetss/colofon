@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Provides a shared Drizzle keyset pagination helper used by every `(timestamp, id)` cursor-paginated list, consumable by `packages/cron` without oRPC dependencies.
+Provides the shared Drizzle keyset pagination helpers: a fixed `(timestamp, id)` cursor builder and a caller-ordered builder, both consumable by `packages/cron` without oRPC dependencies.
 
 ## Requirements
 
@@ -10,14 +10,14 @@ Provides a shared Drizzle keyset pagination helper used by every `(timestamp, id
 
 Any backend list endpoint that paginates by a `(timestamp, id)` keyset cursor SHALL build its query through the shared `withKeysetPagination` Drizzle helper (`@nonete/db/keyset-pagination`) instead of hand-rolling its own `SQL[]` filter accumulation, cursor condition and `orderBy`/`limit` chain. The helper SHALL combine the defined filters, add the cursor condition `timestamp < cursor.timestamp OR (timestamp = cursor.timestamp AND id < cursor.id)` when a cursor is given, order by the timestamp and then the id descending, and apply the requested limit. It SHALL also page ascending when the caller asks for it, with `>` in the cursor condition and the timestamp and the `id` tiebreak ordered ascending; descending (newest first) SHALL stay the default.
 
-#### Scenario: Cron runs are paginated through the shared builder
+#### Scenario: A page is built through the shared builder
 
-- **WHEN** `cron.listRuns` is called with filters, a cursor and a limit
-- **THEN** its query SHALL be built with `withKeysetPagination` over `(cron_run.started_at, cron_run.id)`, returning only rows that match the filters and come strictly after the cursor, in the requested direction, capped at the limit
+- **WHEN** a list paginated by a `(timestamp, id)` cursor is called with filters, a cursor and a limit
+- **THEN** its query SHALL be built with `withKeysetPagination` over its `(timestamp, id)` columns, returning only rows that match the filters and come strictly after the cursor, in the requested direction, capped at the limit
 
 #### Scenario: Cursor ordering is stable across duplicate timestamps
 
-- **WHEN** two or more rows share the exact same ordering timestamp (`cron_run.started_at`)
+- **WHEN** two or more rows share the exact same ordering timestamp
 - **THEN** the query builder breaks ties using `id` in the paging direction, so no row is skipped or duplicated across pages
 
 #### Scenario: Descending stays the default

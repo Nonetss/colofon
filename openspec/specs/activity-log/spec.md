@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Records structured page-view and API-call entries for authenticated traffic, degrading gracefully without Loki, and lets administrators query that activity within a bounded retention window.
+Capture every authenticated page navigation (frontend) and authenticated API/oRPC call (backend) as structured log entries indexed in Loki, and let administrators browse and filter that activity from `/admin/logs` in the panel — without requiring per-route opt-in and without the browser talking to the log store directly.
 
 ## Requirements
 

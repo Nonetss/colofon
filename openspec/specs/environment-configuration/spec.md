@@ -51,7 +51,7 @@ The repo SHALL be configured from one `.env` file at the repo root. Every worksp
 
 ### Requirement: One example documents every variable
 
-The repo SHALL ship a single `.env.example` at the root that lists every variable any workspace, compose file or script reads, grouped by concern. Each entry SHALL say whether it is required and what it defaults to. Optional variables SHALL be commented out, except `LOKI_URL`, set to the dev stack's Loki (`http://localhost:3100`). No `apps/*/.env.example` SHALL exist. The documented variables SHALL be `NODE_ENV`, `LOG_LEVEL`, `SKIP_ENV_VALIDATION`, `DATABASE_URL` (a placeholder for the external dev PostgreSQL, e.g. `postgresql://USER:PASSWORD@dev-db.example.com:5432/stack`), `BETTER_AUTH_URL`, `BETTER_AUTH_SECRET`, `CORS_ORIGIN`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `ADMIN_NAME`, `OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET`, `OIDC_DISCOVERY_URL`, `BACKEND_URL`, `LOKI_URL`, `PUBLIC_SERVER_URL`, `GATEWAY_HTTP_PORT`, `BACKEND_HTTP_UPSTREAM`, `FRONTEND_HTTP_UPSTREAM`, `POSTGRES_PASSWORD` and `FRONTEND_PORT`.
+The repo SHALL ship a single `.env.example` at the root that lists every variable any workspace, compose file or script reads, grouped by concern; the code that reads a variable is the source of truth for whether it belongs there. Each entry SHALL say whether it is required and what it defaults to. Uncommented lines SHALL be what local dev needs: the required values, with `DATABASE_URL` as a placeholder for the external dev PostgreSQL (`postgresql://USER:PASSWORD@dev-db.example.com:5432/stack`), and the optional values local dev relies on, such as `LOKI_URL` set to the dev stack's Loki (`http://localhost:3100`). Every other optional variable SHALL be commented out, showing its default. No `apps/*/.env.example` SHALL exist.
 
 #### Scenario: Example covers the code
 
@@ -109,7 +109,7 @@ Every compose file (`compose.yml`, `compose.dev.yml`, `compose.prod.yml`) SHALL 
 
 #### Scenario: Stale per-app files
 
-- **WHEN** `scripts/setup-dev.sh` runs and `apps/web/.env` exists
+- **WHEN** `scripts/setup-dev.sh` runs and `apps/backend/.env` exists
 - **THEN** it SHALL print a warning naming that file and SHALL NOT delete it
 
 #### Scenario: Production bootstrap

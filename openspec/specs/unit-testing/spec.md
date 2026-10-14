@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Defines how unit tests run from one root command, stay hermetic and outside production source, and what they cover: the API procedure builders, shared helpers and feature handlers, the cron package, and the frontend helpers, hooks and shared components.
+Defines the repo's unit-test suites: which workspaces have one, how a single root command runs them all, and the isolation and coverage rules every unit test follows.
 
 ## Requirements
 
@@ -27,7 +27,7 @@ The repo SHALL run every workspace's unit-test suite from the root with `bun run
 
 ### Requirement: Unit tests are hermetic
 
-Unit tests SHALL NOT open a database connection, make a network call, or depend on a running service (backend, frontend, gateway, Postgres or Loki). A unit suite SHALL pass on a machine where none of those is running and no `.env` file is present. The `packages/api` suite SHALL preload a setup file that overwrites the required server variables with placeholders (a `DATABASE_URL` pointing at a loopback port that refuses connections) and clears the optional variables that switch on integrations (`LOKI_URL`, `ADMIN_*`, `OIDC_*`, `SKIP_ENV_VALIDATION`). Code that queries the database SHALL be tested against the fake database fixture, never a real or in-process database. Code that calls `fetch` SHALL be tested with `fetch` replaced for the duration of the test. Results that depend on the timezone or the current time SHALL be computed under a fixed timezone and a fixed system clock.
+Unit tests SHALL NOT open a database connection, make a network call, or depend on a running service (backend, frontend, gateway, Postgres or Loki). A unit suite SHALL pass on a machine where none of those is running and no `.env` file is present, and SHALL produce the same results when a root `.env` is present. The `packages/api` suite SHALL preload a setup file (`packages/api/tests/setup.ts`) that overwrites the required server variables with placeholders (a `DATABASE_URL` pointing at a loopback port that refuses connections) and sets the optional variables that switch on integrations (`LOKI_URL`, `ADMIN_*`, `OIDC_*`, `SKIP_ENV_VALIDATION`) to an empty value, so loading the root `.env` cannot re-enable them. The same setup file SHALL replace `@nonete/env/server` once, for the whole run, with the shared env fixture (`testEnv` in `packages/api/tests/fixtures/env.ts`): a test turns an integration on by setting it on `testEnv`, and `resetEnv()` in `beforeEach` restores the placeholder env with every integration off. Code that queries the database SHALL be tested against the fake database fixture, never a real or in-process database. Code that calls `fetch` SHALL be tested with `fetch` replaced for the duration of the test. Results that depend on the timezone or the current time SHALL be computed under a fixed timezone and a fixed system clock.
 
 #### Scenario: Suites pass with nothing running
 
@@ -39,6 +39,16 @@ Unit tests SHALL NOT open a database connection, make a network call, or depend 
 - **WHEN** `bun run test` runs with a `DATABASE_URL` that points at a live database exported in the shell
 - **THEN** no `packages/api` or `packages/cron` test SHALL connect to that database
 
+#### Scenario: The root .env does not re-enable integrations
+
+- **WHEN** the `packages/api` suite runs with a root `.env` that sets `LOKI_URL`, `OIDC_*` or `ADMIN_*`
+- **THEN** `@nonete/env/server` SHALL read those variables as unset unless a test sets them on `testEnv`
+
+#### Scenario: An integration a test turns on does not leak
+
+- **WHEN** a test sets `testEnv.LOKI_URL` and the next test starts after `resetEnv()` in `beforeEach`
+- **THEN** the next test SHALL read `LOKI_URL` as unset
+
 #### Scenario: Results do not depend on the machine's timezone
 
 - **WHEN** the frontend suite runs on machines whose local timezone differs
@@ -46,7 +56,7 @@ Unit tests SHALL NOT open a database connection, make a network call, or depend 
 
 ### Requirement: Unit tests live outside production source
 
-Each workspace's unit tests SHALL live in a `tests/` directory at the workspace root, outside the `src/` directory that ships as runtime source. Test files SHALL be type-checked by the workspace's `check-types` and linted by Biome.
+Each workspace's unit tests SHALL live in a `tests/` directory at the workspace root, outside the `src/` directory that ships as runtime source. In `apps/frontend` the unit tests SHALL live in `tests/unit/`, the `bun test` root its `bunfig.toml` sets. Test files SHALL be type-checked by the workspace's `check-types` and linted by Biome.
 
 #### Scenario: TypeScript test file placement
 
@@ -57,7 +67,7 @@ Each workspace's unit tests SHALL live in a `tests/` directory at the workspace 
 #### Scenario: Frontend test file placement
 
 - **WHEN** a unit test is added for `apps/frontend/src/lib/format.ts`
-- **THEN** it SHALL live under `apps/frontend/tests/` (e.g. `apps/frontend/tests/lib/format.test.ts`)
+- **THEN** it SHALL live under `apps/frontend/tests/unit/` (e.g. `apps/frontend/tests/unit/lib/format.test.ts`)
 - **AND** `bun run --filter frontend check-types` SHALL type-check it
 
 ### Requirement: API access builders are covered
@@ -114,7 +124,7 @@ The `packages/api` unit suite SHALL cover the pure helpers in `src/shared/`:
 
 ### Requirement: A fake database fixture stands in for Drizzle
 
-The test fixtures SHALL provide a fake database that accepts the Drizzle call chains the tested code uses (`query.<table>.findFirst`/`findMany`, `select…from…where…groupBy`, `insert…values…onConflictDoUpdate…returning`, `update…set…where…returning`, `delete…where`), resolves each awaited chain with a result the test queued for that operation, and records every call with its arguments so a test can assert what was written. It SHALL fail the test when a chain is awaited with no queued result, and SHALL be resettable between tests. It SHALL NOT open a connection or execute SQL.
+`@nonete/db/testing` SHALL provide a fake database that accepts the Drizzle call chains the tested code uses (`query.<table>.findFirst`/`findMany`, `select…from…innerJoin…where…groupBy…orderBy…limit`, `$dynamic()`, `insert…values…onConflictDoNothing`/`onConflictDoUpdate…returning`, `update…set…where…returning`, `delete…where`, and `transaction` running its callback against the same fake), resolves each awaited chain with a result the test queued for that operation, and records every call with its arguments so a test can assert what was written. It SHALL fail the test when a chain is awaited with no queued result, and SHALL be resettable between tests. It SHALL NOT open a connection or execute SQL. The same module SHALL provide typed row factories with fixed defaults for the tables the suites use.
 
 #### Scenario: A queued result is returned
 
@@ -126,14 +136,28 @@ The test fixtures SHALL provide a fake database that accepts the Drizzle call ch
 - **WHEN** the code under test awaits `update(table).set(values).where(condition)`
 - **THEN** the test SHALL be able to read the `set` values from the fake's recorded calls
 
+#### Scenario: Writes inside a transaction are observable
+
+- **WHEN** the code under test awaits writes on the `tx` passed to `db.transaction`
+- **THEN** those writes SHALL be recorded like writes on `db`
+
 #### Scenario: An unexpected query fails loudly
 
 - **WHEN** the code under test awaits a chain for which the test queued no result
 - **THEN** the call SHALL reject with an error naming the operation
 
+### Requirement: Relational filters are never undefined
+
+Handlers SHALL NOT pass `where: undefined` to Drizzle's relational query API. When a filter is optional (no `organizationId` in `organization.listTeams`), the handler SHALL pass an empty filter object built by a named helper.
+
+#### Scenario: Teams listed without an organization
+
+- **WHEN** `organization.listTeams` is called without `organizationId`
+- **THEN** the relational query SHALL receive an empty `where` object and the call SHALL succeed
+
 ### Requirement: API feature handlers are covered
 
-The `packages/api` unit suite SHALL cover the rules each feature handler enforces beyond the procedure builders, calling handlers or procedures with the fake database and with `@nonete/auth`, `#v1/cron/runtime` and `fetch` mocked at their boundaries:
+The `packages/api` unit suite SHALL cover the rules each feature handler enforces beyond the procedure builders, calling handlers or procedures with the fake database, with `@nonete/env/server` replaced by the shared env fixture, with the cron service bound to a fake through `bindCronService` (`#v1/cron/runtime`), and with `@nonete/auth` and `fetch` spied at their boundaries:
 
 - `comment`: the list is nested by `parentId` and drops a soft-deleted root with no replies while keeping one with replies, with its content blanked; `counts` returns `0` for entities with no rows; `create` rejects a missing or deleted parent with `NOT_FOUND` and a parent on another entity with `BAD_REQUEST`; `update` and `delete` reject a non-author with `FORBIDDEN`; deleting an already deleted comment succeeds without writing.
 - `entity-icon`: an entity type with no registered target fails with `BAD_REQUEST`; `set`/`clear` on an entity the target does not report as writable fail with `NOT_FOUND`; `getMany` returns only icons of readable entities and makes no query when none is readable; `deleteEntityIcons` with no ids makes no query.
@@ -218,6 +242,11 @@ The `apps/frontend` unit suite SHALL cover the pure helpers in `src/lib` that do
 - **WHEN** the navigable surfaces are requested for a non-admin
 - **THEN** no admin-only surface SHALL be included
 
+#### Scenario: The most specific nav item is current
+
+- **WHEN** the current path is `/config/appearance`
+- **THEN** only the `/config/appearance` sub-item SHALL be marked current, not its parent `/config`
+
 #### Scenario: Client errors are not retried
 
 - **WHEN** the retry policy is asked about a first failure whose error carries a status from 400 to 499 other than 408 and 429 (an oRPC error or an auth client error)
@@ -240,7 +269,7 @@ The `apps/frontend` unit suite SHALL render hooks from `src/hooks` that depend o
 
 ### Requirement: Frontend shared components are covered
 
-The `apps/frontend` unit suite SHALL render a set of shared components with logic of their own (`IpInput`, `CidrInput`, `NumberStepper`, `SegmentedPicker`, `FilterChips`, `QueryState`) with `@testing-library/react`, and SHALL assert what the user sees and what the component reports through its callbacks, querying by role and accessible name.
+The `apps/frontend` unit suite SHALL render a set of shared components with logic of their own (`IpInput`, `CidrInput`, `NumberStepper`, `SegmentedPicker`, `FilterChips`, `QueryState`, `FilteredEmpty`) with `@testing-library/react`, and SHALL assert what the user sees and what the component reports through its callbacks, querying by role and accessible name.
 
 #### Scenario: Number stepper wraps at its bounds
 
@@ -251,3 +280,8 @@ The `apps/frontend` unit suite SHALL render a set of shared components with logi
 
 - **WHEN** `QueryState` receives a query in the error state
 - **THEN** it SHALL render the error state instead of its children
+
+#### Scenario: Filtered empty offers no no-op clear
+
+- **WHEN** `FilteredEmpty` renders with `clearable={false}`
+- **THEN** it SHALL show its message and no "Limpiar filtros" button

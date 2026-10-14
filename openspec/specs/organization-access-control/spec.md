@@ -2,7 +2,9 @@
 
 ## Purpose
 
-Defines a shared access-control module with application permission statements and organization roles, preserving Better Auth's default permissions and wiring it into the server and client organization plugins.
+Define one shared Better Auth access-control model for organization and
+application permissions, with identical role behavior across server, browser,
+and SSR clients.
 
 ## Requirements
 

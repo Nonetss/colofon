@@ -31,6 +31,11 @@ Both root layouts SHALL include `src/layouts/service-worker.astro`. In productio
 - **WHEN** a page is loaded in a browser without `navigator.serviceWorker`
 - **THEN** no registration SHALL be attempted and the page SHALL work normally
 
+#### Scenario: Production registers the worker
+
+- **WHEN** a page from a production build finishes loading in a browser that supports service workers
+- **THEN** it SHALL register `/sw.js` with scope `/`
+
 #### Scenario: Development removes a stale worker
 
 - **WHEN** a developer opens the dev app in a browser that registered `/sw.js` on that origin earlier

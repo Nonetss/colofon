@@ -128,6 +128,15 @@ relative paths.
 - **THEN** it SHALL import that component from a public feature or slice entry
   point and retain `client:only="react"`
 
+#### Scenario: A route renders one slice of a multi-slice domain
+
+- **WHEN** an Astro route renders a page owned by one use-case slice of a domain
+  with several slices (such as `crons/overview` and `crons/detail`, or
+  `auth/sign-in` and `auth/sign-up`)
+- **THEN** it SHALL import the page from that slice's `index.ts` (for example
+  `@/features/crons/overview` or `@/features/auth/sign-in`), so the route does
+  not bundle or hydrate the sibling slices
+
 #### Scenario: One feature needs another feature's type
 
 - **WHEN** a feature intentionally consumes a type owned by another domain

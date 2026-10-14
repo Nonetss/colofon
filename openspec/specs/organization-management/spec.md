@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Lets administrators manage organizations, members, invitations, teams and team members through admin-only procedures and admin panel pages, with role pickers that summarize each role's permissions.
+Let global administrators manage every organization in the system — organizations, members and their roles, invitations, teams and team members — through admin-only API procedures and the Organizations and Teams pages of the admin panel, independently of their own organization memberships.
 
 ## Requirements
 

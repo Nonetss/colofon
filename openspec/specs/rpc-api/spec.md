@@ -102,7 +102,7 @@ The system SHALL provide a protected `v1.private.getPrivateData` procedure that 
 
 ### Requirement: Feature-nested router
 
-The router SHALL group procedures by feature, nesting each feature's procedures under its own key (for example `v1.health.check`, `v1.apiKey.create`, `v1.private.getPrivateData`). Client calls SHALL address procedures as `<version>.<feature>.<method>`, never as a flat top-level name and never omitting the version. The `v1` router SHALL contain the features `health`, `private`, `authConfig`, `apiKey`, `organization`, `plugins`, `sessionHistory`, `logs`, `cron`, `comment` and `entityIcon`.
+The router SHALL group procedures by feature, nesting each feature's procedures under its own key (for example `v1.health.check`, `v1.apiKey.create`, `v1.private.getPrivateData`). Client calls SHALL address procedures as `<version>.<feature>.<method>`, never as a flat top-level name and never omitting the version. The `v1` router SHALL contain the features `health`, `private`, `authConfig`, `apiKey`, `organization`, `plugins`, `sessionHistory`, `adminUser`, `logs`, `cron`, `comment` and `entityIcon`.
 
 #### Scenario: Client calls a nested procedure
 

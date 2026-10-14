@@ -59,19 +59,29 @@ run.
 
 Product text SHALL be rendered through the `Text` component or
 `textVariants({ role, tone })` from `components/shared/brand/typography.tsx`,
-selecting a semantic role and a tone (`default`, `muted`, `primary`,
-`destructive`) instead of hand-built size, weight, tracking and case utilities.
-Role tokens (`--font-size-*`, `--line-height-*`, tracking tokens and a
-`--text-<role>` theme entry per role) SHALL live in `src/styles/global.css`.
-Adding a role SHALL update the tokens, `textVariants` and the `typeRoles` list
-in `lib/utils.ts` together. `components/ui` primitives keep their own classes
-and are styled from call sites through `className={textVariants(...)}`.
+selecting a semantic role (the `variant` prop of `Text`, the `role` option of
+`textVariants`) and a tone (`default`, `muted`, `primary`, `destructive`)
+instead of hand-built size, weight, tracking and case utilities. Monospaced,
+tabular data such as identifiers, cron expressions, durations or counts SHALL
+use the `data` role. Role tokens (`--font-size-*`, `--line-height-*`, tracking
+tokens and a `--text-<role>` theme entry per role) SHALL live in
+`src/styles/global.css`. Adding a role that defines its own font size SHALL
+update the tokens, `textVariants` and the `typeRoles` list in `lib/utils.ts`
+together. `components/ui` primitives keep their own classes and are styled from
+call sites through `className={textVariants(...)}`.
 
 #### Scenario: Secondary copy is rendered
 
 - **WHEN** a feature renders a description below a title
 - **THEN** it SHALL use `Text` with the `meta` role and `muted` tone rather than
   `text-xs text-muted-foreground` utilities
+
+#### Scenario: Mono data is rendered
+
+- **WHEN** a feature renders an identifier, a cron expression or another
+  monospaced tabular value
+- **THEN** it SHALL use `Text` with `variant="data"` (or
+  `textVariants({ role: "data" })`) rather than `font-mono text-xs` utilities
 
 #### Scenario: Text sits on a component that cannot be `Text`
 
@@ -163,6 +173,15 @@ queries or mutation hooks.
 - **WHEN** source data exists but the active filters produce no visible items
 - **THEN** the shared state API SHALL render the configured filtered-empty state
   and clear-filter action
+
+#### Scenario: Filters hide every row of a data table
+
+- **WHEN** the active filters of a `DataTableView` leave no visible rows
+- **THEN** its `emptyMessage` SHALL be the shared `FilteredEmpty` component
+  (`components/shared/data-display/filtered-empty.tsx`), which renders the
+  `message` in a muted tone and, while `clearable` is true, an outline action
+  with the `FilterX` icon and `clearLabel` (default "Limpiar filtros") that calls
+  `onClear`
 
 #### Scenario: Data is available
 
@@ -363,13 +382,14 @@ MUST NOT acquire unrelated variants merely to fit a shared API.
 ### Requirement: Static validation of shared components
 
 Each change to the shared component system SHALL pass Biome checks for the
-affected files and frontend type checking before superseded code is removed.
+affected files, frontend type checking and the frontend unit tests under
+`apps/frontend/tests/unit/` before superseded code is removed.
 
 #### Scenario: A feature migration is complete
 
 - **WHEN** a feature no longer needs its previous hand-built composition
-- **THEN** the affected Biome checks and frontend type check SHALL succeed before
-  the superseded implementation is deleted
+- **THEN** the affected Biome checks, frontend type check and frontend unit
+  tests SHALL succeed before the superseded implementation is deleted
 
 ### Requirement: Behavioral and visual migration parity
 

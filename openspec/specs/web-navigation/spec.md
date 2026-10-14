@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Defines the web navigation shell: authenticated and guest navbars driven by the surface registry, responsive menus, active link highlighting, account menu, admin entry point, page layouts, view-transition navigation and the navbar surface search.
+Defines the web navigation shell: authenticated and guest navbars driven by the surface registry, responsive menus, active link highlighting, account menu, admin entry point, page layouts, view-transition navigation, section-sidebar scroll restoration and the navbar surface search.
 
 ## Requirements
 
@@ -10,9 +10,9 @@ Defines the web navigation shell: authenticated and guest navbars driven by the 
 
 The web layout SHALL render an authenticated navbar for signed-in users and a
 guest navbar for public pages (such as login and registration) or when no
-session exists. Both navbars SHALL show the "STACK" brand linking to `/`. The
-guest navbar SHALL omit application navigation links, the surface search and
-the user menu.
+session exists. Both navbars SHALL show the application logo and the name the
+layout passes as `nameApp`, linking to `/`. The guest navbar SHALL omit
+application navigation links, the surface search and the user menu.
 
 #### Scenario: Public page renders the guest navbar
 
@@ -184,8 +184,11 @@ content fades in.
 ### Requirement: Section-sidebar scroll restoration
 
 Section-sidebar pages SHALL restore their content scroller offset. Pages under
-the section-sidebar layout whose scroll persistence is enabled (the default)
-SHALL save that offset per path plus query string and SHALL show the scroller at the saved offset as soon as the page is swapped in on
+the section-sidebar layout whose scroll persistence is enabled (the default,
+turned off with `persistScroll={false}` on `WithSidebar.astro`) SHALL save that
+offset in `sessionStorage` per path plus query string, through
+`useElementScrollRestoration` (`hooks/use-scroll-restoration.ts`), and SHALL
+show the scroller at the saved offset as soon as the page is swapped in on
 back/forward navigation, on a link to the same URL, or on a reload in the same
 tab. They SHALL NOT wait for their islands to render or fetch data. Once a
 navigation starts, the page being left SHALL save its offset under its own URL,

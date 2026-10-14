@@ -1,7 +1,7 @@
 schema: spec-driven
 
-# Project context, shown to AI when creating artifacts. Adapted from the
-# reference repo (/opt/dev/stack); see the stack skill in .agents/skills/stack.
+# Project context, shown to AI when creating artifacts. Conventions in
+# full: the stack skill in .agents/skills/stack.
 
 context: |
   Frontend feature convention: features live under
@@ -75,10 +75,17 @@ context: |
 
 rules:
   tasks:
-    - Every task group that adds or changes a procedure, API helper, cron
-      module, frontend src/lib helper, src/hooks hook or components/shared
-      component ends with a task that writes its unit tests (stack skill,
-      references/testing.md) and runs bun run test.
+    - >-
+      Code that holds a rule ships with its unit tests: every task group that
+      adds or changes a procedure handler, a packages/api shared helper, an
+      apps/frontend src/lib helper, a React-only hook, a shared component with
+      logic or a packages/cron module includes tasks that write their unit
+      tests (file path and the behaviors to assert), following the stack
+      skill's references/writing-unit-tests.md. A bug fix includes a task for
+      a test that fails without the fix.
+    - >-
+      The last task group runs check-types, Biome and bun run test from the
+      repo root.
 
 # Per-artifact rules (optional)
 # Add custom rules for specific artifacts.

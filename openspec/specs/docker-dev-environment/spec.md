@@ -3,7 +3,9 @@
 ## Purpose
 
 Provides a hot-reloading Docker Compose dev stack with a local Loki that shares the native dev configuration, uses an external dev PostgreSQL and coexists with native dev.
+
 ## Requirements
+
 ### Requirement: Hot-reloading Docker dev stack
 
 The repo SHALL provide `compose.dev.yml`, with compose project name `stack-dev`, running `frontend`, `backend`, `gateway` and `loki` on the stack's private network. Like production, the `gateway` SHALL be the only service that publishes a port (`4321:4321`, see "HTTPS and HTTP/2 dev entry on the usual port"). `frontend`, `backend` and `loki` SHALL use `expose` only, and no dev service SHALL use `network_mode: host`. Each app SHALL run its development server from source: the frontend `astro dev` on `0.0.0.0:4320` and the backend `bun --hot` on `:3000`. The gateway SHALL reach them as `frontend:4320` and `backend:3000`, the apps SHALL reach Loki as `loki:3100`, and the backend SHALL reach the database through `DATABASE_URL`. `bun run dev` SHALL run `docker compose -f compose.dev.yml up --build --watch` and `bun run dev:down` SHALL remove the containers.
@@ -54,7 +56,7 @@ The repo SHALL provide `compose.dev.yml`, with compose project name `stack-dev`,
 - edits to `apps/gateway/Caddyfile.dev` or `apps/gateway/routes.caddy` are synced and restart the gateway;
 - edits to a dependency manifest or lockfile (`package.json`, `bun.lock`, `apps/<app>/package.json`) rebuild the affected services.
 
-Dev images SHALL NOT bind-mount the repository, so host `node_modules` never shadow the container's own.
+Dev images SHALL NOT bind-mount the repository, so host `node_modules` never shadow the container's own. Named volumes for caches and data (the Vite cache, the gateway's CA) are allowed.
 
 #### Scenario: Backend code change
 
@@ -130,7 +132,7 @@ Native dev (`bun run dev:local` plus `bun run gateway`, and optionally `bun run 
 
 `apps/frontend/astro.config.mjs` SHALL configure the Astro dev server, for both native dev and the Docker dev stack, so that:
 - the view-transition modules that `<ClientRouter />` injects (`astro/virtual-modules/transitions-*`) are listed in `vite.optimizeDeps.include` and optimized at startup rather than discovered on the first page load;
-- `vite.server.warmup` pre-transforms the island entry modules mounted from `.astro` files (the feature barrels under `src/features`) on the client side, and the `.astro` pages and the middleware on the SSR side.
+- `vite.server.warmup` pre-transforms, on the client side, the island entry modules mounted from `.astro` files (the feature barrels under `src/features` and the layout components imported directly from `src/components`), and on the SSR side the `.astro` pages and the middleware.
 
 These settings SHALL only affect the dev server; `astro build` output SHALL be unchanged.
 
@@ -146,7 +148,12 @@ These settings SHALL only affect the dev server; `astro build` output SHALL be u
 
 ### Requirement: HTTPS and HTTP/2 dev entry on the usual port
 
-In development the app SHALL be served at `https://localhost:4321` over TLS with HTTP/2. The dev gateway SHALL terminate TLS on `:4321` with a certificate issued by its local certificate authority (`tls internal`), negotiate `h2` (and `http/1.1` as fallback), and forward requests with the production routing to the backend and to `astro dev` (`:4320`). The CA SHALL persist in the named volume `gateway_data` shared by `compose.dev.yml` and `apps/gateway/compose.yml`, so it doesn't change across restarts. The root script `dev:cert` SHALL export the CA's root certificate to a git-ignored file at the repo root, for the developer to trust in their browser once. `.env.example` SHALL set `BETTER_AUTH_URL` and `CORS_ORIGIN` to `https://localhost:4321`. The dev gateway SHALL serve no other site and SHALL NOT bind ports 80 or 443.
+In development the app SHALL be served at `https://localhost:4321` over TLS with HTTP/2. The dev gateway SHALL:
+- terminate TLS on `:4321` with a certificate issued by its local certificate authority (`tls internal`);
+- negotiate `h2`, with `http/1.1` as fallback;
+- forward requests with the production routing to the backend and to `astro dev` (`:4320`).
+
+The CA SHALL persist in the named volume `gateway_data`, shared by `compose.dev.yml` and `apps/gateway/compose.yml` (both compose project `stack-dev`), so it doesn't change across restarts. The root script `dev:cert` SHALL export the CA's root certificate to a git-ignored file at the repo root, for the developer to trust in their browser once. `.env.example` SHALL set `BETTER_AUTH_URL` and `CORS_ORIGIN` to `https://localhost:4321`. The dev gateway SHALL serve no other site and SHALL NOT bind ports 80 or 443. `astro dev` SHALL fail to start rather than move to another port when `:4320` is taken.
 
 #### Scenario: Browser negotiates HTTP/2
 

@@ -96,12 +96,12 @@ Every service in `compose.prod.yml` SHALL declare a healthcheck and `restart: un
 
 ### Requirement: Local production-like compose
 
-`compose.yml`, with compose project name `stack`, SHALL build the production images locally from the same `Dockerfile`s and run `frontend`, `backend`, `gateway` and `loki` with the same healthchecks, using the root `.env` (optional) through `env_file`. The gateway SHALL publish `4321:80` and the backend SHALL receive `CORS_ORIGIN=http://localhost:4321`. The root scripts `docker:build`, `docker:up`, `docker:down` and `docker:logs` SHALL operate on it.
+`compose.yml`, with compose project name `stack`, SHALL build the production images locally from the same `Dockerfile`s and run `frontend`, `backend`, `gateway`, `db` and `loki` with the same healthchecks, using the root `.env` (optional) through `env_file`. Its `db` service (`postgres:17`, database `stack`, data in the named volume `db_data`) SHALL publish no port, and the backend SHALL start only after it is healthy. The gateway SHALL publish `${FRONTEND_PORT:-4444}:80`, and the backend SHALL receive `NODE_ENV=production`, a `DATABASE_URL` pointing at `db:5432/stack`, and `BETTER_AUTH_URL` and `CORS_ORIGIN` both set to `http://localhost:${FRONTEND_PORT:-4444}`. The root scripts `docker:build`, `docker:up`, `docker:down` and `docker:logs` SHALL operate on it.
 
 #### Scenario: Running production images locally
 
-- **WHEN** a developer runs `bun run docker:up`
-- **THEN** the production images SHALL be built from source and the app SHALL be served through the gateway at `http://localhost:4321`
+- **WHEN** a developer runs `bun run docker:up` without `FRONTEND_PORT` set
+- **THEN** the production images SHALL be built from source, the database SHALL start in the `db` container, and the app SHALL be served through the gateway at `http://localhost:4444`
 
 ### Requirement: Secrets never baked into images
 
