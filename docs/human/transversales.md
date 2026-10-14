@@ -113,6 +113,26 @@ la petición y marca con una flecha lo que sigue después. Las barras de cada
 precisión de milisegundo, y el detalle de cada *span* muestra siempre los
 tiempos medidos.
 
+La cascada de una traza no pinta un *span* por fila:
+
+- Oculta los *spans* internos de oRPC (`call_procedure`, `middleware.*`,
+  `validate_input`/`validate_output`, `handler`, `consume_*`) subiendo sus
+  hijos al *span* visible más cercano. Un interruptor los muestra, y los que
+  fallan siempre se ven.
+- Agrupa en una fila tres o más hermanos seguidos con el mismo nombre y
+  servicio (p. ej. `pg.query:UPDATE … ×400`), con la suma de duraciones y una
+  barra del primero al último.
+- Abre el árbol nivel a nivel solo mientras quepa en unas 60 filas, más el
+  camino hasta cada *span* con error. Cada fila con hijos o cada grupo se
+  pliega con su chevron, y «Desplegar todo» / «Plegar todo» abren o cierran
+  todo.
+- Una fila plegada pinta en su barra, con el color de cada servicio, dónde
+  trabajaron los *spans* que esconde de otros servicios y los que fallaron; un
+  grupo pinta así a sus miembros.
+
+La lógica está en
+[`waterfall-tree.ts`](../../apps/frontend/src/features/admin/traces/detail/model/waterfall-tree.ts).
+
 Las trazas se envían a **Grafana Tempo** (`OTEL_EXPORTER_OTLP_ENDPOINT`) y el
 backend las consulta para el visor (`TEMPO_URL`), igual que hace con Loki. No
 hay una interfaz aparte: el visor es parte de la app. Todo es opcional: sin

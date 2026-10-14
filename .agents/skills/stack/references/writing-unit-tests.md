@@ -14,6 +14,7 @@ Code that holds a rule ships with the unit tests that pin that rule, in the same
 | A helper in `apps/frontend/src/lib/` | `apps/frontend/tests/unit/lib/<file>.test.ts` | `frontend` |
 | A hook in `apps/frontend/src/hooks/` that depends only on React and the browser | `apps/frontend/tests/unit/hooks/<hook>.test.tsx` | `frontend` |
 | A component in `apps/frontend/src/components/shared/` with logic of its own (parsing, bounds, branches, callbacks) | `apps/frontend/tests/unit/components/<group>/<component>.test.tsx` | `frontend` |
+| A pure `model/` module of a frontend feature with logic of its own (tree building, grouping, defaults) | `apps/frontend/tests/unit/features/<feature path>/<module>.test.ts` | `frontend` |
 | A surface in `app-surfaces.ts` or a nav rule in `site-nav.ts` | the matching `tests/unit/lib/` test, when the change alters a lookup the tests assert | `frontend` |
 | A bug fix anywhere above | a test that fails without the fix, written first | the owning suite |
 
