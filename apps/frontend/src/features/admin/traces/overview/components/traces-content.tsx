@@ -234,7 +234,7 @@ export function TracesContent() {
         <div className="@container">
           <div className="grid gap-2 @xl:grid-cols-[minmax(0,1fr)_10rem_auto_auto]">
             <TraceNameFilter
-              names={rootNames}
+              groups={rootNames}
               selected={nameParam}
               onChange={valuesSetter(setNameParam)}
             />

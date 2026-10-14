@@ -18,6 +18,7 @@ import {
   checkStateOf,
   matchingTree,
   namesUnder,
+  type RootNameGroup,
   type RootNameLeaf,
   type RootNameNode,
   toggleNames,
@@ -47,16 +48,16 @@ function indentOf(depth: number): CSSProperties {
   return { paddingInlineStart: `${0.5 + depth * 1}rem` }
 }
 
-/** A top-level segment reads as the path it starts (`/rpc`); deeper ones
- *  as the segment alone (`v1`). */
-function segmentLabelOf(node: RootNameNode, depth: number): string {
-  if (depth === 0) return `/${node.segment}`
-  return node.segment
+function emptyTextOf(groups: readonly RootNameGroup[]): string {
+  if (groups.length === 0) return "No hay trazas en este periodo."
+  return "Ninguna traza coincide."
 }
 
-function emptyTextOf(names: readonly string[]): string {
-  if (names.length === 0) return "No hay trazas en este periodo."
-  return "Ninguna traza coincide."
+/** What a group's checkbox and expand button are named after: the
+ *  service, or the path under it. */
+function accessibleNameOf(node: RootNameNode): string {
+  if (node.kind === "service") return node.label
+  return node.path.slice(node.path.indexOf(":") + 1).trim()
 }
 
 function triggerLabelOf(count: number): string {
@@ -117,10 +118,12 @@ function NodeRows({
   depth: number
   state: TreeState
 }) {
-  const label = segmentLabelOf(node, depth)
+  const label = node.label
   const onlyLeaf = node.leaves[0]
-  // A segment holding a single name and nothing deeper is that name.
+  // A segment holding a single name and nothing deeper is that name; a
+  // service always stays a group, so every service reads the same way.
   if (
+    node.kind === "segment" &&
     node.children.length === 0 &&
     node.leaves.length === 1 &&
     onlyLeaf !== undefined
@@ -154,7 +157,7 @@ function NodeRows({
           size="icon-sm"
           className="size-5 shrink-0"
           aria-expanded={open}
-          aria-label={`${expandAction} ${node.path}`}
+          aria-label={`${expandAction} ${accessibleNameOf(node)}`}
           onClick={() => state.onToggleExpanded(node.path)}
           disabled={state.expandAll}
         >
@@ -165,7 +168,7 @@ function NodeRows({
           checked={check === "checked"}
           indeterminate={check === "partial"}
           onCheckedChange={() => state.onToggleNames(names)}
-          aria-label={`Todas las trazas de ${node.path}`}
+          aria-label={`Todas las trazas de ${accessibleNameOf(node)}`}
         />
         <label
           htmlFor={id}
@@ -222,23 +225,25 @@ function TreeRows({
 }
 
 /**
- * The trace list's root span name filter: the names Tempo saw, nested by
- * path segment (`/rpc` → `v1` → `cron` → `list`). Ticking a segment keeps
- * every name under it; nothing ticked keeps every trace.
+ * The trace list's root span name filter: the names Tempo saw, grouped by
+ * the service that started the trace (Frontend, Backend, Worker…) and, under
+ * each, nested by path segment (`/rpc` → `v1` → `cron` → `list`). Ticking a
+ * service or a segment keeps every name under it; nothing ticked keeps every
+ * trace.
  */
 export function TraceNameFilter({
-  names,
+  groups,
   selected,
   onChange,
 }: {
-  names: readonly string[]
+  groups: readonly RootNameGroup[]
   selected: readonly string[]
   onChange: (next: string[]) => void
 }) {
   const idPrefix = useId()
   const [query, setQuery] = useState("")
   const [expanded, setExpanded] = useState<ReadonlySet<string>>(new Set())
-  const tree = useMemo(() => buildRootNameTree(names), [names])
+  const tree = useMemo(() => buildRootNameTree(groups), [groups])
   const folded = foldText(query.trim())
   const visible = useMemo(() => matchingTree(tree, folded), [tree, folded])
   const selectedSet = useMemo(() => new Set(selected), [selected])
@@ -289,7 +294,7 @@ export function TraceNameFilter({
         <div className="mt-2 max-h-80 overflow-y-auto">
           {visible === null ? (
             <Text as="p" variant="compact" tone="muted" className="px-2 py-3">
-              {emptyTextOf(names)}
+              {emptyTextOf(groups)}
             </Text>
           ) : (
             <ul aria-label="Trazas" className="grid gap-0.5">
