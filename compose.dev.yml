@@ -179,29 +179,32 @@ services:
         condition: service_healthy
     develop:
       watch:
+        # The backend's own source hot-reloads (`bun --hot`). Synced edits to
+        # the workspace packages below were seen not to reload it, leaving a
+        # stale backend, so they restart the container (a few seconds).
         - action: sync
           path: ./apps/backend/src
           target: /app/apps/backend/src
           ignore: *node-ignore
-        - action: sync
+        - action: sync+restart
           path: ./packages/api/src
           target: /app/packages/api/src
-        - action: sync
+        - action: sync+restart
           path: ./packages/auth/src
           target: /app/packages/auth/src
-        - action: sync
+        - action: sync+restart
           path: ./packages/cron/src
           target: /app/packages/cron/src
-        - action: sync
+        - action: sync+restart
           path: ./packages/db/src
           target: /app/packages/db/src
-        - action: sync
+        - action: sync+restart
           path: ./packages/env/src
           target: /app/packages/env/src
-        - action: sync
+        - action: sync+restart
           path: ./packages/logger/src
           target: /app/packages/logger/src
-        - action: sync
+        - action: sync+restart
           path: ./packages/telemetry/src
           target: /app/packages/telemetry/src
         - action: rebuild
