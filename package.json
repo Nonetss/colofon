@@ -53,6 +53,7 @@
     "db:push": "turbo -F @nonete/db db:push",
     "db:studio": "turbo -F @nonete/db db:studio",
     "db:generate": "turbo -F @nonete/db db:generate",
+    "db:custom": "turbo -F @nonete/db db:custom",
     "db:migrate": "turbo -F @nonete/db db:migrate",
     "loki:start": "docker compose -f compose.dev.yml --profile native up -d loki-native",
     "loki:stop": "docker compose -f compose.dev.yml --profile native stop loki-native",

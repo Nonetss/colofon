@@ -48,5 +48,5 @@ A package-specific task in root `turbo.json` (e.g. `@nonete/api#build`) does **n
 
 ## Database migrations and Docker
 
-- `bun run db:push | db:generate | db:migrate | db:studio` — filtered to `@nonete/db`. **The agent never runs these.** The backend applies pending migrations itself on startup.
+- `bun run db:push | db:generate | db:migrate | db:studio` — filtered to `@nonete/db`. `bun run db:custom` runs `drizzle-kit generate --custom`, an empty migration to fill by hand (data, extensions). Name it with `bun run db:custom -- --name=<name>`. **The agent never runs these.** The backend applies pending migrations itself on startup.
 - `bun run docker:build | docker:up | docker:down | docker:logs` — `docker compose` on root `compose.yml` (the production-like stack built from this checkout; `docker:up` is `up -d --build`). See `docker.md`.

@@ -55,7 +55,7 @@ Only commit when the user asks. Messages follow Conventional Commits: `type(scop
 
 **Never generate, run, push, or edit database migrations.** That is the user's job, always. Concretely, the agent must NOT:
 
-- Run `bun run db:generate` / `drizzle-kit generate`
+- Run `bun run db:generate` / `bun run db:custom` / `drizzle-kit generate`
 - Run `bun run db:push` / `drizzle-kit push`
 - Run `bun run db:migrate` / `drizzle-kit migrate`
 - Create, rename, edit, or delete anything under `packages/db/src/migrations/` (folder-per-migration format `<timestamp>_<name>/{migration.sql,snapshot.json}`)
