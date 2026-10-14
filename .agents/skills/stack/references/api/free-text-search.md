@@ -40,7 +40,7 @@ A B-tree index can serve `like 'abc%'` but not `ilike '%abc%'`, so a "contains" 
 
 **When to add them.** Only when a searched table is large: from tens of thousands of rows, or when `EXPLAIN ANALYZE` of the `search` query shows a sequential scan taking more than a few milliseconds. On small tables a scan is as fast as the index, and every index adds write cost.
 
-**The extension is not enabled yet.** `gin_trgm_ops` needs `pg_trgm`, and no migration in `packages/db/src/migrations/` creates it. drizzle-kit doesn't emit `CREATE EXTENSION` from the schema, so the first trigram index needs a custom migration before it: the user runs `drizzle-kit generate --custom --name=enable_pg_trgm` from `packages/db`, which creates an empty `<timestamp>_<name>/{migration.sql,snapshot.json}`, and writes `CREATE EXTENSION IF NOT EXISTS pg_trgm;` below its placeholder comment. Any other extension the schema can't express is added the same way.
+**The extension is already there.** `gin_trgm_ops` needs `pg_trgm`. drizzle-kit doesn't emit `CREATE EXTENSION` from the schema, so the template enables it with a custom migration, `packages/db/src/migrations/20261014080231_enable_pg_trgm` (`CREATE EXTENSION IF NOT EXISTS pg_trgm;`). An extension the schema can't express is added the same way: the user runs `drizzle-kit generate --custom --name=<name>` from `packages/db`, which creates an empty `<timestamp>_<name>/{migration.sql,snapshot.json}`, and writes the SQL below its placeholder comment.
 
 **Declaring an index.** In the table's schema file, next to its other indexes:
 
@@ -51,7 +51,7 @@ index("device_name_trgm_idx").using("gin", table.name.op("gin_trgm_ops")),
 index("address_ip_trgm_idx").using("gin", sql`(${table.ip}::text) gin_trgm_ops`),
 ```
 
-Editing the schema and generating the migrations follow `AGENTS.md`: the agent proposes the extension migration and the index and stops, and the user runs `bun run db:generate`. The index's migration must sort after the extension's.
+Editing the schema and generating the migration follow `AGENTS.md`: the agent proposes the index and stops, and the user runs `bun run db:generate`. The generated migration sorts after the extension's.
 
 **Rules that decide whether the index is used:**
 
