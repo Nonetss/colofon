@@ -161,12 +161,12 @@
   - the `traceId` filter appears in the LogQL sent to Loki, together with the type filter.
 - [x] 12.3 `apps/frontend/src/features/admin/logs`:
   - read `traceId` from the URL as a filter (shown and clearable like the other filters);
-  - in `renderDetail`, a "Ver traza" link to `/admin/traces/<traceId>` when the entry has one, with `Hint`/`aria-label` if it is icon-only.
+  - in `renderDetail`, a "Ver traza" link to `/admin/traces?trace=<traceId>` when the entry has one, with `Hint`/`aria-label` if it is icon-only.
 
 ## 13. Trace screens (`apps/frontend`)
 
 - [x] 13.1 Read `references/frontend/feature-structure.md`, `navigation-and-layouts.md`, `data-tables.md`, `data-fetching.md` and `typography.md`, and look for components to reuse (`DataTableView`, `ResourceOverview`, `JsonView`, the filter components, `Text`, `Hint`, `Badge`).
-- [x] 13.2 Add the surfaces `admin-traces` (`/admin/traces`, in the admin nav, Spanish title, label and description, an icon from the catalog) and `admin-trace` (`/admin/traces/[traceId]`, not in the nav) to `src/lib/app-surfaces.ts` and, if needed, `site-nav.ts`.
+- [x] 13.2 Add the surfaces `admin-traces` (`/admin/traces`, in the admin nav, Spanish title, label and description, an icon from the catalog) to `src/lib/app-surfaces.ts` and, if needed, `site-nav.ts`.
 - [x] 13.3 Create `src/features/admin/traces/` with an `overview` slice:
   - a `traces-page.tsx` provider boundary and `traces-content.tsx` with `useQuery(orpc.v1.traces.search.queryOptions(...))`;
   - filters mapped to the inputs;
@@ -179,7 +179,7 @@
   - a span detail panel (attributes in `JsonView`, events list);
   - a truncation banner, plus `NOT_FOUND` and `SERVICE_UNAVAILABLE` states.
   Narrow `index.ts` barrels.
-- [x] 13.5 Add the pages `src/pages/admin/traces/index.astro` and `src/pages/admin/traces/[traceId].astro` with the `Admin` layout and `client:only="react"` islands, like `pages/admin/logs/index.astro`.
+- [x] 13.5 Add the page `src/pages/admin/traces/index.astro` with the `Admin` layout; the trace detail is a panel beside the list (`?trace=`), not a route of its own, and `client:only="react"` islands, like `pages/admin/logs/index.astro`.
 - [x] 13.6 Run `bun run tailwind:check` on the new markup.
 
 ## 14. Docs

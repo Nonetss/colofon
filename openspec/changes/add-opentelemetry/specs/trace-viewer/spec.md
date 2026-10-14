@@ -85,21 +85,31 @@ Both trace procedures SHALL reject callers without the administrator role, and t
 
 ### Requirement: Trace list screen
 
-`/admin/traces` SHALL list the search results in a data table with the columns start time, root span, service, duration and error state, newest first by default, sortable in the browser with the sort kept in the URL. Its filters SHALL map to the search inputs. Each row SHALL link to that trace's detail page. The page SHALL be declared in `app-surfaces` and shown in the admin navigation.
+`/admin/traces` SHALL list the search results in a data table with the columns start time, root span, service, duration and error state, newest first by default, sortable in the browser with the sort kept in the URL. Its filters SHALL map to the search inputs. Opening a row SHALL show that trace beside the list on the same page and keep it in the URL as `?trace=<traceId>`, marking the open row; a URL carrying `?trace=` SHALL open that trace on load, even when it isn't in the current list. Without `?trace=`, the page SHALL show the newest trace of the list beside it, without writing it to the URL, until the administrator closes the panel. Closing the trace SHALL drop the parameter and stop showing the newest trace. The page SHALL be declared in `app-surfaces` and shown in the admin navigation, and there SHALL be no separate route per trace.
 
 #### Scenario: Opening a trace from the list
 
-- **WHEN** an administrator clicks a row on `/admin/traces`
-- **THEN** the browser SHALL navigate to `/admin/traces/<traceId>`
+- **WHEN** an administrator opens a row on `/admin/traces`
+- **THEN** the trace's waterfall SHALL appear beside the list, the URL SHALL become `/admin/traces?trace=<traceId>` and the admin sidebar SHALL stay in place
+
+#### Scenario: Landing on the list
+
+- **WHEN** an administrator opens `/admin/traces` with no `?trace=` and the list has traces
+- **THEN** the newest trace SHALL be shown beside the list, and the URL SHALL stay `/admin/traces`
+
+#### Scenario: Arriving from the activity log
+
+- **WHEN** an administrator follows a "Ver traza" link to `/admin/traces?trace=<traceId>`
+- **THEN** the page SHALL open with that trace shown beside the list
 
 #### Scenario: Filtering the list
 
-- **WHEN** an administrator turns on "solo errores"
+- **WHEN** an administrator turns on "Con errores"
 - **THEN** the table SHALL show only traces returned by a search with `errorsOnly: true`
 
-### Requirement: Trace waterfall screen
+### Requirement: Trace waterfall panel
 
-`/admin/traces/<traceId>` SHALL show a summary of the trace: root span, service, start, total duration, and span and error counts. It SHALL also link to the trace's activity-log entries (`/admin/logs?traceId=<traceId>`). Below the summary, it SHALL show a waterfall with one row per span in the order returned by `traces.get`. Each row SHALL be indented by its depth and carry a bar whose position and width are proportional to the span's offset and duration within the trace. Spans in error status SHALL be visually distinct. Selecting a span SHALL show its attributes and events. When the trace was truncated, the page SHALL say so.
+The open trace's panel SHALL show a summary of the trace: root span, service, start, total duration, and span and error counts. It SHALL also link to the trace's activity-log entries (`/admin/logs?trace=<traceId>`) and offer a way to close it. Below the summary, it SHALL show a waterfall with one row per span in the order returned by `traces.get`. Each row SHALL be indented by its depth and carry a bar whose position and width are proportional to the span's offset and duration within the trace. Spans in error status SHALL be visually distinct. Selecting a span SHALL show its attributes and events. When the trace was truncated, the panel SHALL say so.
 
 #### Scenario: Reading a slow request
 
@@ -109,7 +119,7 @@ Both trace procedures SHALL reject callers without the administrator role, and t
 #### Scenario: Inspecting a span
 
 - **WHEN** an administrator selects a query span
-- **THEN** the page SHALL show its attributes, including `db.query.text`
+- **THEN** the panel SHALL show its attributes, including `db.query.text`
 
 #### Scenario: Error span
 

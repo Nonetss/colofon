@@ -168,19 +168,20 @@ There is no shutdown hook in Astro's standalone server, so the frontend relies o
   - browser sort with the sort kept in the URL (`useSortQueryParam`, default `startTime desc`);
   - each row links to the detail page;
   - the empty state mentions `TEMPO_URL`, like the logs page mentions `LOKI_URL`.
-- `/admin/traces/<traceId>` (`pages/admin/traces/[traceId].astro`, surface `admin-trace`, not in the nav):
-  - header with the root span, service, total duration, start, span and error counts, and a link to the trace's activity-log entries (`/admin/logs?traceId=…`);
+- **Master-detail, one page.** Opening a trace sets `?trace=<traceId>` and shows it in a panel beside the list (stacked below it on narrow containers); the page widens to the full inset while a trace is open. Without `?trace=`, the panel shows the newest trace of the list (kept out of the URL, so a refresh follows the latest request) until the admin closes it. The trace link from the activity log lands on the same URL. The panel (the `detail` slice's `TracePanel`) holds:
+  - a summary header with a link to `/admin/logs?trace=…` and a close button;
   - the waterfall: one row per span with name, a service tag and duration, indented by `depth`, and a bar positioned and sized as percentages of the trace duration (status token for errors, palette tokens per service);
   - selecting a row shows its attributes (the existing `JsonView`) and events;
-  - a `truncated` banner when needed.
+  - a `truncated` notice, plus `NOT_FOUND` and `SERVICE_UNAVAILABLE` states.
+  The list marks the open trace in its name cell, rendered by the page (`renderControl`), so the shared `DataTableView` needs no selection state.
 - Reuse first: `DataTableView`, `ResourceOverview`, `JsonView`, `Text`, `Hint` and the filter components from `components/shared`. The waterfall is a new slice component. It isn't a TanStack Charts chart: it is rows of HTML with proportional bars, which keeps names, selection and keyboard access simple.
 
 **Activity log both ways:**
-- `logsOutput` entries gain `traceId: string | null`, read from the line, and the log detail shows a "Ver traza" link when it is set.
+- `logsOutput` entries gain `traceId: string | null`, read from the line, and the log detail shows a "Ver traza" link (`/admin/traces?trace=…`) when it is set.
 - `logsInput` gains `traceId?` (hex), added to the LogQL pipeline as `| traceId="…"`, and the logs page reads it from the URL.
 - The activity log's existing type filter (page views and API calls) still applies, so a trace links to its request's entry, not to every line it produced.
 
-**Alternative:** a trace sheet opened in place from `/admin/logs`. Rejected: a page per trace is linkable and shareable, and keeps `features/admin/logs` from importing another feature's components.
+**Alternatives:** a page per trace (`/admin/traces/<traceId>`, the first version) lost the list and the admin sidebar; the user preferred the master-detail panel. A sheet opened from `/admin/logs` would make `features/admin/logs` import another feature's components; the logs page links to `/admin/traces?trace=…` instead.
 
 ### 11. Environment
 

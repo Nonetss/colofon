@@ -2,7 +2,7 @@
 
 ### Requirement: Activity entries link to their trace
 
-Each entry returned by the administrator log query SHALL include the `traceId` written on its log line, or `null` when the line has none. The query SHALL accept an optional `traceId` filter that returns only the entries written with that trace id; the existing event-type filter still applies. In `/admin/logs`, the detail of an entry with a `traceId` SHALL link to `/admin/traces/<traceId>`, and the page SHALL apply a `traceId` filter given in its URL.
+Each entry returned by the administrator log query SHALL include the `traceId` written on its log line, or `null` when the line has none. The query SHALL accept an optional `traceId` filter that returns only the entries written with that trace id; the existing event-type filter still applies. In `/admin/logs`, the detail of an entry with a `traceId` SHALL link to `/admin/traces?trace=<traceId>`, which opens that trace, and the page SHALL apply a trace filter given in its URL (`?trace=<traceId>`).
 
 #### Scenario: From an entry to its trace
 
@@ -16,5 +16,5 @@ Each entry returned by the administrator log query SHALL include the `traceId` w
 
 #### Scenario: From a trace to its entries
 
-- **WHEN** an administrator opens `/admin/logs?traceId=<id>`
+- **WHEN** an administrator opens `/admin/logs?trace=<id>`
 - **THEN** the list SHALL show only the activity entries carrying that trace id

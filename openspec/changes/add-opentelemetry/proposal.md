@@ -21,7 +21,7 @@ We don't want to run a separate observability UI (Grafana) with its own login an
 - **Trace storage:** a Grafana Tempo service (OTLP receiver plus query API), internal only, in `compose.dev.yml`, `compose.yml` and `compose.prod.yml`. Native dev gets `tempo-native` with `bun run tempo:start`/`tempo:stop`, like `loki:start`. **No Grafana.**
 - **In-app trace viewer:**
   - New admin-only `v1.traces.search` (recent traces filtered by service, errors only, minimum duration, root-span name and time range) and `v1.traces.get` (one trace's spans, already arranged as a tree with offsets for a waterfall). Both read Tempo's HTTP API at `TEMPO_URL`, like `v1.logs.query` reads Loki.
-  - A new admin page `/admin/traces` lists search results. `/admin/traces/<traceId>` shows the waterfall, with each span's attributes and events.
+  - A new admin page `/admin/traces` lists search results. Opening one shows its waterfall in a panel beside the list (`?trace=<traceId>`), with each span's attributes and events.
 - **Activity log:**
   - Each entry exposes its `traceId`, and its detail links to the trace.
   - `v1.logs.query` takes a `traceId` filter, so a trace links back to its log entries.
@@ -56,7 +56,7 @@ We don't want to run a separate observability UI (Grafana) with its own login an
   - `packages/cron/src/scheduler.ts`.
   - `packages/logger/src/factory.ts`.
   - `packages/env/src/server.ts`.
-  - `apps/frontend`: `src/middleware.ts`, `src/lib/telemetry.ts`, the `astro:env` schema, a new `features/admin/traces` feature, two pages under `src/pages/admin/traces/`, two `app-surfaces` entries, and the trace link and filter in `features/admin/logs`.
+  - `apps/frontend`: `src/middleware.ts`, `src/lib/telemetry.ts`, the `astro:env` schema, a new `features/admin/traces` feature, the page `src/pages/admin/traces/index.astro`, an `app-surfaces` entry, and the trace link and filter in `features/admin/logs`.
 - **Dependencies:** `@opentelemetry/api`, `sdk-trace-base`, `resources`, `core`, `context-async-hooks`, `exporter-trace-otlp-http`, `instrumentation`, `semantic-conventions`; `@orpc/opentelemetry@2.0.0-beta.42`. All go through the root catalog.
 - **Infrastructure:** a Tempo service and the `tempo_data` volume in the three compose files, configured there like Loki (no config file in the repo), and a header-stripping rule in `apps/gateway/routes.caddy`.
 - **Docs:**
