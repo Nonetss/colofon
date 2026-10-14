@@ -51,11 +51,13 @@ function isTraceViewer(c: Context): boolean {
  * `QUERY /rpc/v1/cron/list`), continuing the caller's `traceparent`.
  * Registered first, so request logging, session resolution and oRPC's own
  * spans run inside it. Left out: the compose healthcheck's `GET /` every
- * 10 s, and the trace viewer, run with tracing switched off so neither its
- * request nor the oRPC and query spans inside it are recorded.
+ * 10 s and the trace viewer, both run with tracing switched off so neither
+ * the request nor the spans inside it are recorded (the healthcheck still
+ * goes through `sessionMiddleware`, whose Better Auth `getSession` span would
+ * otherwise become a root trace of its own every 10 s).
  */
 export const requestTracing = createMiddleware(async (c, next) => {
-  if (isHealthcheck(c)) return next()
+  if (isHealthcheck(c)) return withoutTracing(() => next())
   if (isTraceViewer(c)) return withoutTracing(() => next())
   return traceHttp(c, next)
 })
