@@ -2,16 +2,46 @@ import { z } from "zod"
 
 import { paginationLimit } from "#shared/pagination"
 
+export const LOG_TYPES = ["page_view", "api_call"] as const
+
+export const LOG_METHODS = [
+  "GET",
+  "QUERY",
+  "POST",
+  "PUT",
+  "PATCH",
+  "DELETE",
+] as const
+
+/** HTTP status classes an entry can be filtered by. */
+export const LOG_STATUS_CLASSES = ["2xx", "3xx", "4xx", "5xx"] as const
+
 export const logsInput = {
   query: z.object({
-    userId: z.string().optional(),
-    type: z.enum(["page_view", "api_call"]).optional(),
+    userIds: z
+      .array(z.string().min(1))
+      .optional()
+      .describe("Keep only these users' entries; omitted or empty keeps all"),
+    types: z
+      .array(z.enum(LOG_TYPES))
+      .optional()
+      .describe(
+        "Keep only page views, API calls or both; omitted or empty keeps all"
+      ),
     /** Substring match against the logged path. */
     path: z.string().optional(),
-    /** HTTP verb — only meaningful for `api_call` entries. */
-    method: z
-      .enum(["GET", "QUERY", "POST", "PUT", "PATCH", "DELETE"])
-      .optional(),
+    methods: z
+      .array(z.enum(LOG_METHODS))
+      .optional()
+      .describe(
+        "Keep only entries with these HTTP verbs; omitted or empty keeps all"
+      ),
+    statuses: z
+      .array(z.enum(LOG_STATUS_CLASSES))
+      .optional()
+      .describe(
+        "Keep only entries whose response status is in these classes (2xx, 3xx, 4xx, 5xx); omitted or empty keeps all"
+      ),
     /** ISO timestamp lower bound. Defaults to 7 days ago. */
     from: z.string().optional(),
     /** ISO timestamp upper bound, exclusive. Defaults to now. */

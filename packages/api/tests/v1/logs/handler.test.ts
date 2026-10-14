@@ -55,19 +55,33 @@ describe("logs.query", () => {
 
     await logsHandler.query({
       input: input({
-        type: "api_call",
-        userId: 'u"1\\x',
-        method: "POST",
+        types: ["api_call"],
+        userIds: ['u"1', "u.2"],
+        methods: ["POST", "PUT"],
+        statuses: ["4xx", "5xx"],
         path: "/api/v1/a.b",
       }),
     })
 
     const query = requestedUrl().searchParams.get("query")
-    expect(query).toContain('| type="api_call"')
-    expect(query).toContain('| userId="u\\"1\\\\x"')
-    expect(query).toContain('| method="POST"')
-    expect(query).toContain('| path=~".*/api/v1/a\\.b.*"')
+    expect(query).toContain('| type=~"api_call"')
+    expect(query).toContain('| userId=~"u\\"1|u\\\\.2"')
+    expect(query).toContain('| method=~"POST|PUT"')
+    expect(query).toContain('| status=~"4..|5.."')
+    expect(query).toContain('| path=~".*/api/v1/a\\\\.b.*"')
     expect(requestedUrl().searchParams.get("limit")).toBe("51")
+  })
+
+  test("leaves out empty filters", async () => {
+    fetchSpy.mockResolvedValue(lokiResponse([]))
+
+    await logsHandler.query({
+      input: input({ types: [], userIds: [], methods: [], statuses: [] }),
+    })
+
+    expect(requestedUrl().searchParams.get("query")).toBe(
+      '{service=~"stack-backend|stack-frontend"} | json | type=~"page_view|api_call"'
+    )
   })
 
   test("fails with BAD_GATEWAY when Loki can't be reached", async () => {

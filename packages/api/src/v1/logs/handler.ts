@@ -44,13 +44,34 @@ function escapeRegex(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
 }
 
+/** A label filter keeping any of `patterns` (regexes; Loki anchors label
+ *  regexes to the whole value), or nothing when there are none. */
+function anyOf(field: string, patterns: readonly string[] | undefined): string {
+  if (!patterns || patterns.length === 0) return ""
+  return ` | ${field}=~"${escapeLogQLString(patterns.join("|"))}"`
+}
+
+function exactly(values: readonly string[] | undefined): string[] | undefined {
+  return values?.map(escapeRegex)
+}
+
+/** `4xx` → `4..`: any three-digit status in that class. */
+function statusPatterns(
+  classes: LogsQueryInput["statuses"]
+): string[] | undefined {
+  return classes?.map((statusClass) => `${statusClass[0]}..`)
+}
+
 function buildLogQL(input: LogsQueryInput): string {
   let query =
     '{service=~"stack-backend|stack-frontend"} | json | type=~"page_view|api_call"'
-  if (input.type) query += ` | type="${escapeLogQLString(input.type)}"`
-  if (input.userId) query += ` | userId="${escapeLogQLString(input.userId)}"`
-  if (input.method) query += ` | method="${escapeLogQLString(input.method)}"`
-  if (input.path) query += ` | path=~".*${escapeRegex(input.path)}.*"`
+  query += anyOf("type", exactly(input.types))
+  query += anyOf("userId", exactly(input.userIds))
+  query += anyOf("method", exactly(input.methods))
+  query += anyOf("status", statusPatterns(input.statuses))
+  if (input.path) {
+    query += ` | path=~"${escapeLogQLString(`.*${escapeRegex(input.path)}.*`)}"`
+  }
   return query
 }
 

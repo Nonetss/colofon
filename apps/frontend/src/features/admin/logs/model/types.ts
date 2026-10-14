@@ -4,21 +4,20 @@ export type ActivityLogEntry = Awaited<
   ReturnType<typeof client.v1.logs.query>
 >["entries"][number]
 
-export type ActivityTypeFilter = "all" | "page_view" | "api_call"
+type LogsQueryInput = NonNullable<Parameters<typeof client.v1.logs.query>[0]>
 
-export type HttpMethodFilter =
-  | "all"
-  | "GET"
-  | "QUERY"
-  | "POST"
-  | "PUT"
-  | "PATCH"
-  | "DELETE"
+export type LogType = NonNullable<LogsQueryInput["types"]>[number]
+
+export type LogMethod = NonNullable<LogsQueryInput["methods"]>[number]
+
+export type LogStatusClass = NonNullable<LogsQueryInput["statuses"]>[number]
 
 export interface ActivityLogFilters {
-  userId: string
-  type: ActivityTypeFilter
-  method: HttpMethodFilter
+  userIds: readonly string[]
+  types: readonly LogType[]
+  methods: readonly LogMethod[]
+  statuses: readonly LogStatusClass[]
+  /** Substring of the path, already debounced. */
   path: string
   /** Calendar day lower bound, interpreted as 00:00 local. */
   from: Date | undefined

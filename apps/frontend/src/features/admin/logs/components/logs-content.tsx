@@ -4,53 +4,94 @@ const OctagonX = getIcon("status", "error")
 const ScrollText = getIcon("admin", "logs")
 const RotateCw = getIcon("actions", "refresh")
 
-import { useCallback, useMemo, useState } from "react"
+import { useMemo, useState } from "react"
 import { textVariants } from "@/components/shared/brand/typography"
+import type { DataTableFilter } from "@/components/shared/data-display/data-table-column-filter"
 import { DataTableView } from "@/components/shared/data-display/data-table-view"
+import { FilteredEmpty } from "@/components/shared/data-display/filtered-empty"
 import { InfiniteScrollSentinel } from "@/components/shared/data-display/infinite-scroll-sentinel"
 import { JsonView } from "@/components/shared/data-display/json-view"
-import { FilterChips } from "@/components/shared/resource/filter-chips"
-import {
-  chipsFor,
-  type ResourceFilterChip,
-  type ResourceFilterDescriptor,
-  ResourceFilters,
-} from "@/components/shared/resource/resource-filters"
+import { SearchInput } from "@/components/shared/form/search-input"
 import { ResourceOverview } from "@/components/shared/resource/resource-overview"
 import { Button } from "@/components/ui/button"
-import { UserEmailPicker } from "@/features/admin/logs/components/user-email-picker"
+import { DatePicker } from "@/components/ui/date-picker"
 import {
   type ActivityLogRow,
   LOG_DEFAULT_SORT,
+  LOG_METHOD_OPTIONS,
   LOG_SORT_KEYS,
+  LOG_STATUS_OPTIONS,
+  LOG_TYPE_OPTIONS,
   LogUser,
   logColumnLayout,
   logColumns,
   logDateTime,
+  logMethodsOf,
+  logStatusClassesOf,
+  logTypesOf,
 } from "@/features/admin/logs/definitions/log-columns.definition"
 import { useActivityLog } from "@/features/admin/logs/hooks/use-activity-log"
-import type {
-  ActivityTypeFilter,
-  HttpMethodFilter,
-} from "@/features/admin/logs/model/types"
-import { useAdminUser } from "@/hooks/use-admin-user"
+import type { ActivityLogEntry } from "@/features/admin/logs/model/types"
+import { type FilterUser, useUserFilterOptions } from "@/features/admin/shared"
+import { useAdminUserSearch } from "@/hooks/use-admin-user-search"
 import { useColumnPreferences } from "@/hooks/use-column-preferences"
 import { columnPreferenceProps, useDataTable } from "@/hooks/use-data-table"
+import { useDebouncedValue } from "@/hooks/use-debounced-value"
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll"
+import {
+  NO_VALUES,
+  useQueryParam,
+  valueListCodec,
+} from "@/hooks/use-query-param"
 import { useSortQueryParam } from "@/hooks/use-sort-query-param"
 import { cn } from "@/lib/utils"
+
+/** The users named on the loaded entries. Entries carry the email logged
+ *  with them but no name, so the email names them in the filter. */
+function usersOf(entries: readonly ActivityLogEntry[]): FilterUser[] {
+  const users: FilterUser[] = []
+  for (const entry of entries) {
+    if (!entry.userId || !entry.email) continue
+    users.push({ id: entry.userId, name: entry.email, email: "" })
+  }
+  return users
+}
 
 export function LogsContent() {
   const [sorting, setSorting, ordering] = useSortQueryParam(
     LOG_SORT_KEYS,
     LOG_DEFAULT_SORT
   )
+  const [userParam, setUserParam] = useQueryParam(
+    "user",
+    NO_VALUES,
+    valueListCodec
+  )
+  const [typeParam, setTypeParam] = useQueryParam(
+    "type",
+    NO_VALUES,
+    valueListCodec
+  )
+  const [methodParam, setMethodParam] = useQueryParam(
+    "method",
+    NO_VALUES,
+    valueListCodec
+  )
+  const [statusParam, setStatusParam] = useQueryParam(
+    "status",
+    NO_VALUES,
+    valueListCodec
+  )
+  const [path, setPath] = useState("")
+  const [from, setFrom] = useState<Date | undefined>(undefined)
+  const [to, setTo] = useState<Date | undefined>(undefined)
+  const debouncedPath = useDebouncedValue(path)
+  // Unknown values in the URL are dropped instead of emptying the list.
+  const types = logTypesOf(typeParam)
+  const methods = logMethodsOf(methodParam)
+  const statuses = logStatusClassesOf(statusParam)
   const {
     entries,
-    filters,
-    setFilters,
-    clearFilters,
-    activeCount,
     hasNextPage,
     isFetchingNextPage,
     fetchNextPage,
@@ -58,7 +99,15 @@ export function LogsContent() {
     isError,
     refetch,
     isRefetching,
-  } = useActivityLog(ordering)
+  } = useActivityLog(ordering, {
+    userIds: userParam,
+    types,
+    methods,
+    statuses,
+    path: debouncedPath,
+    from,
+    to,
+  })
   const rows = useMemo<ActivityLogRow[]>(
     () =>
       entries.map((entry, index) => ({
@@ -86,101 +135,70 @@ export function LogsContent() {
     hasNextPage && !isFetchingNextPage
   )
 
-  const filterDescriptors: ResourceFilterDescriptor[] = [
-    {
-      kind: "custom",
-      key: "log-filter-user",
-      label: "Usuario",
-      isActive: !!filters.userId,
-      render: () => (
-        <UserEmailPicker
-          userId={filters.userId || null}
-          onChange={(userId) =>
-            setFilters((f) => ({ ...f, userId: userId ?? "" }))
-          }
-        />
-      ),
-    },
-    {
-      kind: "select",
-      key: "log-filter-type",
-      label: "Tipo",
-      value: filters.type,
-      onChange: (value) =>
-        setFilters((f) => ({ ...f, type: value as ActivityTypeFilter })),
-      placeholder: "Todos los tipos",
-      options: [
-        { value: "all", label: "Todos los tipos" },
-        { value: "page_view", label: "Frontend" },
-        { value: "api_call", label: "Backend" },
-      ],
-      defaultValue: "all",
-      isActive: (value) => value !== "all",
-    },
-    {
-      kind: "select",
-      key: "log-filter-method",
-      label: "Método",
-      value: filters.method,
-      onChange: (value) =>
-        setFilters((f) => ({ ...f, method: value as HttpMethodFilter })),
-      placeholder: "Todos los métodos",
-      options: [
-        { value: "all", label: "Todos los métodos" },
-        { value: "GET", label: "GET" },
-        { value: "QUERY", label: "QUERY" },
-        { value: "POST", label: "POST" },
-        { value: "PUT", label: "PUT" },
-        { value: "PATCH", label: "PATCH" },
-        { value: "DELETE", label: "DELETE" },
-      ],
-      defaultValue: "all",
-      isActive: (value) => value !== "all",
-    },
-    {
-      kind: "search",
-      key: "log-filter-path",
-      label: "Ruta",
-      value: filters.path,
-      onChange: (value) => setFilters((f) => ({ ...f, path: value })),
-      placeholder: "/admin/...",
-    },
-    {
-      kind: "date",
-      key: "log-filter-from",
-      label: "Desde",
-      value: filters.from,
-      onChange: (date) => setFilters((f) => ({ ...f, from: date })),
-      placeholder: "Fecha inicial",
-    },
-    {
-      kind: "date",
-      key: "log-filter-to",
-      label: "Hasta",
-      value: filters.to,
-      onChange: (date) => setFilters((f) => ({ ...f, to: date })),
-      placeholder: "Fecha final",
-    },
-  ]
+  const [userQuery, setUserQuery] = useState("")
+  const userSearch = useAdminUserSearch(userQuery)
+  const entryUsers = useMemo(() => usersOf(entries), [entries])
+  const userOptions = useUserFilterOptions({
+    selected: userParam,
+    seen: entryUsers,
+    results: userSearch.results,
+  })
 
-  // Every filter applies live, so the sheet's draft total is the loaded
-  // count — but only once it is the real total; while more pages exist the
-  // list only knows a lower bound, so the sheet keeps its "Cargando…" label.
-  const loadedTotal = useCallback(() => entries.length, [entries.length])
-  const fetchDraftTotal = hasNextPage ? undefined : loadedTotal
-
-  // `chipsFor` skips `custom` descriptors, so the user picker's chip is
-  // appended by hand.
-  const { data: filteredUser } = useAdminUser(filters.userId || null)
-  const userChips: ResourceFilterChip[] = filters.userId
-    ? [
-        {
-          key: "log-filter-user",
-          label: `Usuario: ${filteredUser?.name ?? filters.userId}`,
-          onRemove: () => setFilters((f) => ({ ...f, userId: "" })),
-        },
-      ]
-    : []
+  const filtered =
+    userParam.length > 0 ||
+    types.length > 0 ||
+    methods.length > 0 ||
+    statuses.length > 0 ||
+    debouncedPath.trim() !== "" ||
+    from !== undefined ||
+    to !== undefined
+  const clearFilters = () => {
+    setUserParam(NO_VALUES)
+    setTypeParam(NO_VALUES)
+    setMethodParam(NO_VALUES)
+    setStatusParam(NO_VALUES)
+    setPath("")
+    setFrom(undefined)
+    setTo(undefined)
+  }
+  // An empty list is "every value": store the shared constant so the param
+  // drops out of the URL.
+  const valuesSetter =
+    (set: (values: readonly string[]) => void) => (next: string[]) => {
+      if (next.length === 0) {
+        set(NO_VALUES)
+        return
+      }
+      set(next)
+    }
+  const filters: Partial<Record<string, DataTableFilter>> = {
+    user: {
+      options: userOptions,
+      selected: userParam,
+      onChange: valuesSetter(setUserParam),
+      search: {
+        query: userQuery,
+        onQueryChange: setUserQuery,
+        isLoading: userSearch.isFetching,
+        hint: "Escribe al menos 2 letras del nombre o el email",
+      },
+    },
+    method: {
+      options: LOG_METHOD_OPTIONS,
+      selected: methods,
+      onChange: valuesSetter(setMethodParam),
+    },
+    type: {
+      options: LOG_TYPE_OPTIONS,
+      selected: types,
+      onChange: valuesSetter(setTypeParam),
+    },
+    statusCode: {
+      options: LOG_STATUS_OPTIONS,
+      selected: statuses,
+      onChange: valuesSetter(setStatusParam),
+    },
+  }
 
   return (
     <ResourceOverview
@@ -201,26 +219,27 @@ export function LogsContent() {
         </Button>
       }
       filters={
-        <div className="space-y-3">
-          <ResourceFilters
-            columns={3}
-            filters={filterDescriptors}
-            onClear={clearFilters}
-            fetchDraftTotal={fetchDraftTotal}
-            count={
-              isPending || isError
-                ? undefined
-                : entries.length === 0
-                  ? undefined
-                  : hasNextPage
-                    ? `${entries.length}+ entradas`
-                    : `${entries.length} ${entries.length === 1 ? "entrada" : "entradas"}`
-            }
-          />
-          <FilterChips
-            chips={[...userChips, ...chipsFor(filterDescriptors)]}
-            onClear={clearFilters}
-          />
+        <div className="@container">
+          <div className="grid gap-2 @xl:grid-cols-[minmax(0,1fr)_auto_auto]">
+            <SearchInput
+              value={path}
+              onValueChange={setPath}
+              placeholder="Filtrar por ruta: /admin/..."
+              label="Filtrar por ruta"
+            />
+            <DatePicker
+              value={from}
+              onChange={setFrom}
+              placeholder="Desde"
+              aria-label="Desde"
+            />
+            <DatePicker
+              value={to}
+              onChange={setTo}
+              placeholder="Hasta"
+              aria-label="Hasta"
+            />
+          </div>
         </div>
       }
       query={{ data: entries, isPending, isError, refetch }}
@@ -231,19 +250,12 @@ export function LogsContent() {
         description:
           "Comprueba tu conexión y que tu sesión tenga permisos de administración.",
       }}
-      isEmpty={(data) => data.length === 0}
+      isEmpty={(data) => data.length === 0 && !filtered}
       empty={{
         icon: <ScrollText className="size-6" />,
         title: "No hay actividad registrada",
         description:
           "Puede que Loki no esté configurado (LOKI_URL) o que aún no haya navegaciones ni llamadas registradas.",
-      }}
-      hasActiveFilters={activeCount > 0}
-      filteredEmpty={{
-        icon: <ScrollText className="size-6" />,
-        title: "Ningún resultado para este filtro",
-        description: "Prueba a limpiar o ajustar los filtros.",
-        onClear: clearFilters,
       }}
     >
       {() => (
@@ -253,6 +265,13 @@ export function LogsContent() {
           idPrefix="admin-logs"
           onResetColumns={preferences.reset}
           scrollRef={setScrollContainer}
+          filters={filters}
+          emptyMessage={
+            <FilteredEmpty
+              message="Ninguna entrada coincide con los filtros."
+              onClear={clearFilters}
+            />
+          }
           renderDetail={(entry) => (
             <div className="grid gap-3">
               <dl
