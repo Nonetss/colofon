@@ -219,6 +219,16 @@ export function TracePanel({
         ]}
       />
 
+      {trace.streaming ? (
+        <Text variant="compact" tone="muted">
+          Stream: la traza dura lo que estuvo abierta la suscripción (
+          {formatDurationMs(trace.durationMs)}), así que la cascada se ajusta a
+          la petición ({formatDurationMs(trace.scaleMs)}) y marca con una flecha
+          lo que sigue después. Mientras la suscripción siga abierta pueden ir
+          llegando spans.
+        </Text>
+      ) : null}
+
       {trace.truncated ? (
         <Text variant="compact" tone="muted">
           La traza tiene {trace.spanCount} spans; se muestran los primeros{" "}
@@ -228,7 +238,7 @@ export function TracePanel({
 
       <TraceWaterfall
         spans={trace.spans}
-        durationMs={trace.durationMs}
+        scaleMs={trace.scaleMs}
         selectedSpanId={selected?.spanId ?? null}
         onSelect={setSelectedSpanId}
       />

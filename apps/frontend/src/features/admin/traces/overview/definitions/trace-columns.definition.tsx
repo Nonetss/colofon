@@ -2,6 +2,7 @@ import { createColumnHelper } from "@tanstack/react-table"
 import { Text } from "@/components/shared/brand/typography"
 import { DataTableStatusCell } from "@/components/shared/data-display/data-table-cell-content"
 import type { DataTableFilterOption } from "@/components/shared/data-display/data-table-column-filter"
+import { StatusTag } from "@/components/shared/data-display/status-dot"
 import {
   type TraceSummary,
   traceServicesLabel,
@@ -40,6 +41,23 @@ export const TRACE_NAME_COLUMN = "rootName"
 export function rootNameOf(trace: TraceSummary): string {
   if (trace.rootName === "") return "(span raíz pendiente)"
   return trace.rootName
+}
+
+/** The duration, tagged when the trace is an event stream: then it is how
+ *  long the subscription stayed open, not how long a request took. */
+function TraceDuration({ trace }: { trace: TraceSummary }) {
+  const duration = (
+    <Text variant="data">{formatDurationMs(trace.durationMs)}</Text>
+  )
+  if (!trace.streaming) return duration
+  return (
+    <span className="inline-flex items-center gap-2">
+      <StatusTag title="Suscripción a eventos: dura lo que estuvo abierta">
+        Stream
+      </StatusTag>
+      {duration}
+    </span>
+  )
 }
 
 function TraceErrors({ trace }: { trace: TraceSummary }) {
@@ -98,7 +116,7 @@ export const traceColumns = helper.columns([
   helper.accessor((trace) => trace.durationMs, {
     id: "duration",
     header: "Duración",
-    size: 110,
+    size: 170,
     enableSorting: true,
     meta: {
       label: "Duración",
@@ -106,9 +124,7 @@ export const traceColumns = helper.columns([
       cellClassName: "text-right tabular-nums",
       headerClassName: "text-right",
     },
-    cell: (info) => (
-      <Text variant="data">{formatDurationMs(info.getValue())}</Text>
-    ),
+    cell: (info) => <TraceDuration trace={info.row.original} />,
   }),
   helper.accessor((trace) => trace.errorCount, {
     id: "errors",

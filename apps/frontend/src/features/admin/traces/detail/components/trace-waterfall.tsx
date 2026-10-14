@@ -1,3 +1,7 @@
+import { getIcon } from "@/lib/icon-registry"
+
+const ChevronRight = getIcon("controls", "next")
+
 import { Text } from "@/components/shared/brand/typography"
 import { StatusDot } from "@/components/shared/data-display/status-dot"
 import { spanBar } from "@/features/admin/traces/detail/model/trace-layout"
@@ -24,18 +28,19 @@ function barClassOf(span: TraceSpan): string {
 
 /**
  * The trace as a waterfall: one row per span in the order `traces.get`
- * returns (depth-first), the name indented by depth and a bar placed and
- * sized against the whole trace. Rows are buttons that select the span
+ * returns (depth-first), the name indented by depth and its `bar` placed
+ * and sized against `scaleMs` (the request, for a stream), with a mark when
+ * the span runs on past the edge. Rows are buttons that select the span
  * whose attributes the page shows below.
  */
 export function TraceWaterfall({
   spans,
-  durationMs,
+  scaleMs,
   selectedSpanId,
   onSelect,
 }: {
   spans: readonly TraceSpan[]
-  durationMs: number
+  scaleMs: number
   selectedSpanId: string | null
   onSelect: (spanId: string) => void
 }) {
@@ -47,13 +52,13 @@ export function TraceWaterfall({
         </Text>
         <Text variant="label" tone="muted" className="flex justify-between">
           <span>0 ms</span>
-          <span>{formatDurationMs(durationMs)}</span>
+          <span>{formatDurationMs(scaleMs)}</span>
         </Text>
       </div>
       <ul className="divide-y divide-border/60 overflow-hidden rounded-md border">
         {spans.map((span) => {
           const selected = span.spanId === selectedSpanId
-          const bar = spanBar(span, durationMs)
+          const bar = spanBar(span.bar, scaleMs)
           return (
             <li key={span.spanId}>
               <button
@@ -86,6 +91,12 @@ export function TraceWaterfall({
                       )}
                       style={{ left: bar.left, width: bar.width }}
                     />
+                    {span.bar.continues ? (
+                      <ChevronRight
+                        aria-hidden
+                        className="absolute top-1/2 -right-1 size-3 -translate-y-1/2 text-muted-foreground"
+                      />
+                    ) : null}
                   </span>
                   <Text
                     variant="data"
@@ -93,6 +104,9 @@ export function TraceWaterfall({
                     className="w-16 shrink-0 text-right"
                   >
                     {formatDurationMs(span.durationMs)}
+                    {span.bar.continues ? (
+                      <span className="sr-only">, continúa después</span>
+                    ) : null}
                   </Text>
                 </span>
               </button>

@@ -11,14 +11,15 @@ export function traceErrorKind(error: unknown): TraceErrorKind {
   return "failed"
 }
 
-/** Left offset and width of a span's bar, as percentages of the trace. A
- *  span too short to see keeps a sliver, so it is never invisible. */
+/** Left offset and width of a span's bar, as percentages of the scale the
+ *  waterfall is drawn to. The API already keeps every bar inside its
+ *  parent's and inside the scale; a bar too short to see keeps a sliver. */
 export function spanBar(
-  span: Pick<TraceSpan, "offsetMs" | "durationMs">,
-  traceDurationMs: number
+  bar: TraceSpan["bar"],
+  scaleMs: number
 ): { left: string; width: string } {
-  if (traceDurationMs <= 0) return { left: "0%", width: "100%" }
-  const left = Math.min((span.offsetMs / traceDurationMs) * 100, 100)
-  const width = Math.max((span.durationMs / traceDurationMs) * 100, 0.4)
+  if (scaleMs <= 0) return { left: "0%", width: "100%" }
+  const left = Math.min((bar.offsetMs / scaleMs) * 100, 100)
+  const width = Math.max((bar.durationMs / scaleMs) * 100, 0.4)
   return { left: `${left}%`, width: `${Math.min(width, 100 - left)}%` }
 }
