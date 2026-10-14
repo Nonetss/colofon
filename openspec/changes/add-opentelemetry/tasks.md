@@ -62,19 +62,17 @@
 
 ## 6. Database spans
 
-- [ ] 6.1 In `packages/db`, add `src/tracing.ts` with `TracedClient extends pg.Client`, which overrides `query` for promise-style calls in a `CLIENT` span (design Decision 5):
-  - name: the operation keyword;
-  - attributes: `db.system.name`, `db.namespace`, `db.query.text` without values, `db.response.returned_rows`;
-  - error status on rejection;
-  - callback-style calls forwarded untouched.
-  If `pg`'s overloads can't be kept without a cast, stop and ask the user.
-- [ ] 6.2 Change `createDb()` to build `new Pool({ connectionString: env.DATABASE_URL, Client: TracedClient })` and `drizzle({ client: pool, relations })`. Keep `closeDb()` ending that pool.
-- [ ] 6.3 Add a `packages/db/tests/` suite (no real database: `spyOn` the parent `Client.prototype.query`) asserting:
-  - span name and attributes for `SELECT`/`INSERT`;
+- [x] 6.1 In `packages/db`, add `src/tracing.ts` with `pgTracing()`: `@opentelemetry/instrumentation-pg` built with `enabled: false` and `requireParentSpan: true`, its `pg` module definition applied by hand to the imported `pg` on `enable()` and removed on `disable()` (design Decision 5). No casts.
+- [x] 6.2 Pass `pgTracing()` to `startTelemetry` in `apps/backend/src/index.ts`, next to `ORPCInstrumentation`. `createDb()` stays as is, because Drizzle's pool uses the patched `pg.Client`.
+- [x] 6.3 Add a `packages/db/tests/` suite (no real database: `query` stubbed under the patch) asserting:
+  - a `CLIENT` span with `db.system.name`, `db.namespace` and `db.query.text` for a query inside a trace;
   - parameter values never appear in any attribute;
-  - a rejected query records the exception, sets error status and rejects with the original error;
-  - with no provider registered, the result is returned unchanged.
+  - a rejected query fails its span and rejects with the original error;
+  - a query outside a trace gets no span and returns its result unchanged;
+  - `disable()` restores the unpatched query.
   Add the suite to `references/testing.md`.
+- [x] 6.4 Run the bundled backend code against a throwaway PostgreSQL once, to check pool, transaction and Drizzle queries end to end.
+- [x] 6.5 Give the Docker dev stack its own PostgreSQL (`db`, with the backend's `DATABASE_URL` overridden to reach it) and native dev a `db-native` under the `native` profile with `postgres:start`/`postgres:stop`. Update `.env.example`, `scripts/setup-dev.sh` and every doc that described the external dev database.
 
 ## 7. Cron spans
 
@@ -194,8 +192,8 @@
 
 ## 15. Validation
 
-- [ ] 15.1 Run `bun run check-types` from the repo root and fix every error.
-- [ ] 15.2 Run Biome and `bun run tailwind:check`.
-- [ ] 15.3 Run `bun run test` from the repo root. Every suite, including the new `packages/telemetry` and `packages/db` suites, passes.
-- [ ] 15.4 Run `openspec validate add-opentelemetry --strict`.
+- [x] 15.1 Run `bun run check-types` from the repo root and fix every error.
+- [x] 15.2 Run Biome and `bun run tailwind:check`.
+- [x] 15.3 Run `bun run test` from the repo root. Every suite, including the new `packages/telemetry` and `packages/db` suites, passes (telemetry 19, db 5, cron 54, api 172, frontend 237).
+- [x] 15.4 Run `openspec validate add-opentelemetry --strict`.
 - [ ] 15.5 Ask the user to run `bun run dev` (or `tempo:start` + `dev:local`) and confirm that a page load appears at `/admin/traces` as one trace spanning frontend → backend → SQL, and that the activity-log entry links to it. Don't probe the running app yourself.

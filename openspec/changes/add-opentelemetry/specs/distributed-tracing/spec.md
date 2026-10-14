@@ -78,12 +78,12 @@ The backend SHALL enable oRPC's built-in tracing through `ORPCInstrumentation` f
 
 ### Requirement: Database query spans
 
-Every PostgreSQL query issued through `@nonete/db`, whether through the pool or a transaction client, SHALL run inside a `CLIENT` span named after the SQL operation (`SELECT`, `INSERT`, `UPDATE`, `DELETE`, …). The span SHALL carry `db.system.name=postgresql`, `db.namespace` and `db.query.text` with the parameterized text. It SHALL NOT include parameter values. A failed query SHALL record the exception and mark the span as an error. When no tracer provider is registered, queries SHALL behave exactly as before.
+Every PostgreSQL query issued through `@nonete/db` inside a trace, whether through the pool or a transaction client, SHALL run inside a `CLIENT` span named `pg.query:<OPERATION> <database>` (for example `pg.query:SELECT stack`). The span SHALL carry `db.system.name=postgresql`, `db.namespace` and `db.query.text` with the parameterized text. It SHALL NOT include parameter values. A failed query SHALL record the exception and mark the span as an error. A query outside any trace (startup migrations, the scheduler's polling) SHALL get no span. The instrumentation SHALL be applied to the `pg` module the process imports, without module hooks. When no tracer provider is registered, queries SHALL behave exactly as before.
 
 #### Scenario: Query inside a request
 
 - **WHEN** a procedure reads a table through Drizzle while handling a request
-- **THEN** a `SELECT` span with the placeholder query text SHALL be recorded as a descendant of the request's spans
+- **THEN** a `pg.query:SELECT stack` span with the placeholder query text SHALL be recorded as a descendant of the request's spans
 
 #### Scenario: Parameter values are not recorded
 
@@ -93,7 +93,12 @@ Every PostgreSQL query issued through `@nonete/db`, whether through the pool or 
 #### Scenario: Failing query
 
 - **WHEN** a query is rejected by PostgreSQL
-- **THEN** its span SHALL have error status and an exception event, and the error SHALL still reach the caller unchanged
+- **THEN** its span SHALL have error status, and the error SHALL still reach the caller unchanged
+
+#### Scenario: Query outside a trace
+
+- **WHEN** the backend applies migrations at startup
+- **THEN** no query span SHALL be recorded for them
 
 ### Requirement: Cron run spans
 

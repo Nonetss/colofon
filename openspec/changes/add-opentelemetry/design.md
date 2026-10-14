@@ -82,23 +82,20 @@ The health route (`GET /`, hit every 10 s by the compose healthcheck) is not tra
 
 The gateway's shared `routes.caddy` removes `traceparent`, `tracestate` and `baggage` from every public request (`request_header -…`). The backend therefore continues a trace only when called directly over the private network: the frontend SSR's `BACKEND_URL` lookups, which never go through the gateway. This mirrors the existing rule that callers can't choose their `requestId`, and it stops a public client from pinning traces to ids of its choosing or skipping sampling with a forged `sampled` flag.
 
-### 5. PostgreSQL spans from a traced `pg` client
+### 5. PostgreSQL spans from OpenTelemetry's `pg` instrumentation, applied by hand
 
-`@nonete/db` builds the pool explicitly (`new Pool({ connectionString, Client: TracedClient })`) and passes it to `drizzle({ client: pool, relations })`. `TracedClient` extends `pg.Client` and wraps `query` in a `CLIENT` span:
-- name `<OPERATION>` (the first SQL keyword: `SELECT`, `INSERT`, …);
-- `db.system.name = "postgresql"`, `db.namespace` = database name, `db.query.text` = the parameterized text (placeholders only, no values), and `db.response.returned_rows` on success;
-- exception and error status on failure.
+`@nonete/db` exports `pgTracing()`, which the backend passes to `startTelemetry` next to oRPC's instrumentation. It wraps `@opentelemetry/instrumentation-pg`:
+- The instrumentation is built with `enabled: false`, so it never installs its module hooks (which neither Bun nor a bundle run).
+- Its `pg` module definition (`getModuleDefinitions()`, public API) is then applied by hand to the `pg` module this process imports. That patches `pg.Client.prototype.query`, the client Drizzle's pool uses, so pool queries and transaction clients are both covered, and `createDb()` doesn't change.
+- `requireParentSpan: true`: only queries inside a trace get a span, so startup migrations and the scheduler's polling don't become one tiny trace each.
+- `enhancedDatabaseReporting` stays off, so spans carry the query text with its `$n` placeholders and never the values. Attributes follow the stable semantic conventions (`db.system.name`, `db.namespace`, `db.query.text`); span names are `pg.query:<OPERATION> <database>`.
 
-Pool-level `query()` and transaction clients (`pool.connect()`) both end in `Client.query`, so one override covers both. Callback-style calls (not used by Drizzle) are forwarded untouched.
-
-The override must keep `pg`'s overloaded `query` signature without a cast (code-style rule). If that can't be done with a typed rest-args override plus a guard, apply stops and asks rather than casting.
+This replaced the first plan, a `pg.Client` subclass overriding `query`. That needed a cast or an `any`, because `pg`'s `query` has six overloads with `any` generics. Applying the official patch keeps our code fully typed and reuses a maintained instrumentation. Checked during apply against a real PostgreSQL from inside a tsdown bundle: pool queries, a transaction and a Drizzle query get spans, a failing query is marked as an error, and a query outside a trace gets none.
 
 **Alternatives:**
-- `@opentelemetry/instrumentation-pg`: module patching, ruled out.
+- Registering `@opentelemetry/instrumentation-pg` the usual way: module patching, which doesn't work on Bun or in the bundle.
 - Drizzle's `logger` option: called before the query with no end hook, so it gives no duration.
-- Wrapping `db` with a Proxy: fragile across Drizzle's query builders.
-
-`closeDb()` keeps ending the same pool.
+- Wrapping `db` with a Proxy: fragile across Drizzle's query builders, and just as untyped.
 
 ### 6. Cron: a root span per run
 
@@ -146,9 +143,11 @@ There is no shutdown hook in Astro's standalone server, so the frontend relies o
 
 **API** (`packages/api/src/v1/traces/`, admin-only, following `v1.logs`):
 - `traces.search` (`GET`):
-  - Input: `service?` (`stack-backend` | `stack-frontend`), `errorsOnly?`, `minDurationMs?`, `name?` (substring of the root span name), `from?`/`to?` (ISO, default last 24 h), `limit` (default 50, max 200).
+  - Input: `services?` (any of `stack-frontend`, `stack-backend`, `postgresql`: traces touching any of them), `errorsOnly?`, `minDurationMs?`, `name?` (substring of the root span name), `from?`/`to?` (ISO, default last 24 h), `limit` (default 50, max 200).
   - The handler builds a TraceQL query (`{ resource.service.name = "…" && status = error && duration > 500ms && name =~ ".*…*" }`, values escaped by hand like the LogQL builder) and calls `GET <TEMPO_URL>/api/search?q=…&start=…&end=…&limit=…`.
-  - Returns `{ traces: [{ traceId, rootService, rootName, startTime, durationMs }] }`, newest first.
+  - Returns `{ traces: [{ traceId, rootService, services, rootName, startTime, durationMs, errorCount }], limitReached }`, newest first.
+  - Each filter is its own spanset, ANDed (`{ resource.service.name = "stack-backend" || span.db.system.name = "postgresql" } && { status = error }`): conditions inside one `{ }` must hold on the same span.
+  - `services` comes from Tempo's `serviceStats` (the services that emitted spans) plus `postgresql` for the traces a second search names by id (`{ span.db.system.name = "postgresql" } && { trace:id = … || … }`). Tempo's search returns the first matches it finds, not the newest, so re-running the filters with a database spanset could answer about other traces; naming the ids can't.
   - **No cursor:** Tempo's search API has no pagination, so the list is capped by `limit` and narrowed with the time range. This is the one admin list that doesn't use keyset pagination, and the reason is documented in the router's `description`.
 - `traces.get` (`GET`):
   - Input: `traceId` (32 hex chars). The handler calls `GET <TEMPO_URL>/api/v2/traces/<traceId>`.
@@ -208,7 +207,7 @@ The standard `OTEL_*` names are used on purpose: anyone who knows OpenTelemetry 
 - **Tempo's API shape** (`/api/v2/traces`, base64 ids, `/api/search` fields) may differ between Tempo versions. → Pin the Tempo image, validate responses with zod, and cover the normalization with fixtures in the handler tests. A response that fails validation answers `BAD_GATEWAY`.
 - **Search without pagination** returns at most `limit` traces. → Acceptable for an admin tool. The time range and filters narrow it, and the page says when the limit was hit.
 - **Very large traces** (a cron run with thousands of queries). → The 2000-span cap with a `truncated` flag keeps the response and the DOM bounded.
-- **Typing `TracedClient.query` without a cast** may not be possible with `pg`'s overloads. → Apply stops and asks before any cast (Decision 5).
+- **The hand-applied `pg` patch relies on `instrumentation-pg`'s module definition shape** (the `pg` definition and its `patch`). → Covered by `packages/db/tests/tracing.test.ts`, which fails if the patch stops applying. Bump the package deliberately.
 - **`ParentBasedSampler` trusts the frontend's sampling decision on the backend.** → Intended: both read the same ratio, and public requests can't set it (Decision 4).
 
 ## Migration Plan

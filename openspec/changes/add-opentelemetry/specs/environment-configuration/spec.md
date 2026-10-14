@@ -1,5 +1,20 @@
 ## MODIFIED Requirements
 
+### Requirement: One example documents every variable
+
+The repo SHALL ship a single `.env.example` at the root that lists every variable any workspace, compose file or script reads, grouped by concern; the code that reads a variable is the source of truth for whether it belongs there. Each entry SHALL say whether it is required and what it defaults to. Uncommented lines SHALL be what local dev needs: the required values, with `DATABASE_URL` set to the dev stack's PostgreSQL as native dev reaches it (`postgresql://postgres:postgres@localhost:5432/stack`), and the optional values local dev relies on, such as `LOKI_URL` set to the dev stack's Loki (`http://localhost:3100`) and `OTEL_EXPORTER_OTLP_ENDPOINT` and `TEMPO_URL` set to its Tempo (`http://localhost:4318`, `http://localhost:3200`). Every other optional variable SHALL be commented out, showing its default. No `apps/*/.env.example` SHALL exist.
+
+#### Scenario: Example covers the code
+
+- **WHEN** a variable is read by `packages/env/src/server.ts`, `packages/env/src/web.ts`, the `astro:env` schema, the Caddyfile, a compose file or a script
+- **THEN** the root `.env.example` SHALL list it
+
+#### Scenario: Fresh checkout
+
+- **WHEN** a developer copies `.env.example` to `.env` and fills in the required values
+- **THEN** `bun run dev:local` SHALL have every value it needs from that one file
+
+
 ### Requirement: Validated server environment
 
 `@nonete/env/server` SHALL validate the server variables with t3-env and zod and export them as a typed `env` object:

@@ -2,8 +2,8 @@
 
 ### Requirement: Administrator trace search
 
-The API SHALL expose an administrator-only `v1.traces.search` procedure (HTTP `GET`). It SHALL return the most recent traces stored in Tempo, newest first, each with its trace id, root service, root span name, start time and duration in milliseconds. It SHALL accept these optional filters, all combined with AND:
-- `service`: `stack-backend` or `stack-frontend`;
+The API SHALL expose an administrator-only `v1.traces.search` procedure (HTTP `GET`). It SHALL return the most recent traces stored in Tempo, newest first, each with its trace id, root service, the services it touched (the services with spans in it, plus `postgresql` when it queried the database), root span name, start time and duration in milliseconds. It SHALL accept these optional filters, all combined with AND:
+- `services`: any of `stack-frontend`, `stack-backend` and `postgresql`, keeping the traces that touch at least one of them;
 - `errorsOnly`: only traces with at least one span in error status;
 - `minDurationMs`;
 - `name`: a substring of the root span name;
@@ -13,8 +13,13 @@ It SHALL return at most `limit` traces (default 50, maximum 200) and SHALL NOT p
 
 #### Scenario: Errors in the backend
 
-- **WHEN** an administrator searches with `service: "stack-backend"` and `errorsOnly: true`
-- **THEN** the response SHALL contain only backend traces that have a span in error status, newest first
+- **WHEN** an administrator searches with `services: ["stack-backend"]` and `errorsOnly: true`
+- **THEN** the response SHALL contain only traces with a backend span that have a span in error status (not necessarily the same one), newest first
+
+#### Scenario: Traces that queried the database
+
+- **WHEN** an administrator searches with `services: ["postgresql"]`
+- **THEN** every returned trace SHALL list `postgresql` among its services
 
 #### Scenario: Slow requests
 
@@ -38,12 +43,17 @@ The API SHALL expose an administrator-only `v1.traces.get` procedure (HTTP `GET`
 - its spans in depth-first order, with siblings ordered by start time;
 - for each span: hex span id, parent span id (or `null`), name, service, kind, `depth`, offset from the trace start in ms, duration in ms, status (`unset`, `ok` or `error`), status message, attributes, and events with their offsets and attributes.
 
-A span whose parent is not in the trace SHALL be placed as a root. The response SHALL contain at most 2000 spans and SHALL flag when spans were left out.
+A span's service SHALL be the database system it names in `db.system.name` (`postgresql` for a query), else the `service.name` of the process that emitted it. A span whose parent is not in the trace SHALL be placed as a root. The response SHALL contain at most 2000 spans and SHALL flag when spans were left out.
 
 #### Scenario: Request trace as a tree
 
 - **WHEN** an administrator opens a trace whose server span has an oRPC child with two query spans
 - **THEN** the server span SHALL come first at depth `0`, the oRPC span at depth `1` and the two query spans at depth `2` in start order, each with an offset relative to the trace start
+
+#### Scenario: Query span under the database
+
+- **WHEN** a trace contains a backend query span with `db.system.name=postgresql`
+- **THEN** that span's service SHALL be `postgresql`, and the viewer SHALL label it "PostgreSQL" with its own bar color
 
 #### Scenario: Missing parent
 
@@ -85,7 +95,7 @@ Both trace procedures SHALL reject callers without the administrator role, and t
 
 ### Requirement: Trace list screen
 
-`/admin/traces` SHALL list the search results in a data table with the columns start time, root span, service, duration and error state, newest first by default, sortable in the browser with the sort kept in the URL. Its filters SHALL map to the search inputs. Opening a row SHALL show that trace beside the list on the same page and keep it in the URL as `?trace=<traceId>`, marking the open row; a URL carrying `?trace=` SHALL open that trace on load, even when it isn't in the current list. Without `?trace=`, the page SHALL show the newest trace of the list beside it, without writing it to the URL, until the administrator closes the panel. Closing the trace SHALL drop the parameter and stop showing the newest trace. The page SHALL be declared in `app-surfaces` and shown in the admin navigation, and there SHALL be no separate route per trace.
+`/admin/traces` SHALL list the search results in a data table with the columns start time, root span, services touched (Frontend, Backend, PostgreSQL), duration and error state, newest first by default, sortable in the browser with the sort kept in the URL. Its filters SHALL map to the search inputs. Opening a row SHALL show that trace beside the list on the same page and keep it in the URL as `?trace=<traceId>`, marking the open row; a URL carrying `?trace=` SHALL open that trace on load, even when it isn't in the current list. Without `?trace=`, the page SHALL show the newest trace of the list beside it, without writing it to the URL, until the administrator closes the panel. Closing the trace SHALL drop the parameter and stop showing the newest trace. The page SHALL be declared in `app-surfaces` and shown in the admin navigation, and there SHALL be no separate route per trace.
 
 #### Scenario: Opening a trace from the list
 
