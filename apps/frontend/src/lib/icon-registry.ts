@@ -35,6 +35,7 @@ const adminIcons = {
   teams: Lucide.UsersRound,
   sessions: Lucide.History,
   logs: Lucide.ScrollText,
+  traces: Lucide.ChartGantt,
 } as const
 
 const entityIcons = {

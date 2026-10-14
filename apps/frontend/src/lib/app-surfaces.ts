@@ -13,6 +13,8 @@ export type SurfaceId =
   | "admin-users"
   | "admin-sessions"
   | "admin-logs"
+  | "admin-traces"
+  | "admin-trace"
   | "admin-organizations"
   | "admin-teams"
   | "admin-api-keys"
@@ -203,6 +205,15 @@ const appSurfaceDefinitions: Partial<Record<SurfaceId, SurfaceDefinition>> = {
         icon: iconRef("admin", "logs"),
         adminOnly: true,
       },
+      "admin-traces": {
+        path: "/admin/traces",
+        title: "Admin · Trazas",
+        label: "Trazas",
+        description:
+          "Sigue cada petición por el frontend, el backend y la base de datos.",
+        icon: iconRef("admin", "traces"),
+        adminOnly: true,
+      },
       "admin-organizations": {
         path: "/admin/organizations",
         title: "Admin · Organizaciones",
@@ -236,6 +247,17 @@ const appSurfaceDefinitions: Partial<Record<SurfaceId, SurfaceDefinition>> = {
         adminOnly: true,
       },
     },
+  },
+  // Top level, not an `admin` child: a dynamic route has no place in the
+  // admin navbar dropdown or sidebar. `/admin/...` is admin-gated anyway.
+  "admin-trace": {
+    id: "admin-trace",
+    path: "/admin/traces/[traceId]",
+    title: "Admin · Traza",
+    label: "Traza",
+    description: "Cascada de spans de una petición o ejecución.",
+    icon: iconRef("admin", "traces"),
+    adminOnly: true,
   },
   profile: {
     id: "profile",

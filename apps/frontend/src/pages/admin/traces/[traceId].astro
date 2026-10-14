@@ -1,0 +1,17 @@
+---
+import { TracePage } from "@/features/admin/traces/detail"
+import Detail from "@/layouts/Detail.astro"
+import { appSurfaces } from "@/lib/app-surfaces"
+
+const { traceId } = Astro.params as { traceId: string }
+---
+
+<Detail
+  title={appSurfaces["admin-trace"].title}
+  backHref={appSurfaces["admin-traces"].path}
+  backLabel={appSurfaces["admin-traces"].label}
+  maxWidth="80%"
+  scrollToTop
+>
+  <TracePage traceId={traceId} client:only="react" />
+</Detail>
