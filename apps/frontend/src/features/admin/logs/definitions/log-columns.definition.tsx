@@ -50,13 +50,25 @@ function userLabel(
   return userId
 }
 
-/** The user an entry is attributed to, by email once it loads. */
-export function LogUser({ userId }: { userId: string | null }) {
-  const { data: user } = useAdminUser(userId)
-  if (!userId) {
+/** The id to look up only when the entry carries no email of its own. */
+function lookupIdOf(entry: Pick<ActivityLogEntry, "userId" | "email">) {
+  if (entry.email) return null
+  return entry.userId
+}
+
+/** The user an entry is attributed to, by the email logged with it, or by
+ *  looking the user up for older lines that carry only the id. */
+export function LogUser({
+  entry,
+}: {
+  entry: Pick<ActivityLogEntry, "userId" | "email">
+}) {
+  const { data: user } = useAdminUser(lookupIdOf(entry))
+  if (entry.email) return <span className="truncate">{entry.email}</span>
+  if (!entry.userId) {
     return <span className="text-muted-foreground italic">Anónimo</span>
   }
-  return <span className="truncate">{userLabel(user, userId)}</span>
+  return <span className="truncate">{userLabel(user, entry.userId)}</span>
 }
 
 function LogRequest({ entry }: { entry: ActivityLogEntry }) {
@@ -103,7 +115,7 @@ export const logColumns = helper.columns([
     meta: { label: "Usuario", reorderable: true },
     cell: (info) => (
       <Text variant="compact" tone="muted" className="block truncate">
-        <LogUser userId={info.row.original.userId} />
+        <LogUser entry={info.row.original} />
       </Text>
     ),
   }),

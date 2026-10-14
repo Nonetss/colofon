@@ -132,6 +132,7 @@ function parseLogEntry(ts: bigint, line: string): LogEntry | undefined {
     type: parsed.type as "page_view" | "api_call",
     message: typeof parsed.msg === "string" ? parsed.msg : "",
     userId: typeof parsed.userId === "string" ? parsed.userId : null,
+    email: typeof parsed.email === "string" ? parsed.email : null,
     path: typeof parsed.path === "string" ? parsed.path : null,
     method: typeof parsed.method === "string" ? parsed.method : null,
     statusCode: typeof parsed.status === "number" ? parsed.status : null,

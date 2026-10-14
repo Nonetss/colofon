@@ -264,7 +264,7 @@ export function LogsContent() {
                 <div>
                   <dt className="text-muted-foreground">Usuario</dt>
                   <dd className="mt-0.5 truncate">
-                    <LogUser userId={entry.userId} />
+                    <LogUser entry={entry} />
                   </dd>
                 </div>
                 <div>

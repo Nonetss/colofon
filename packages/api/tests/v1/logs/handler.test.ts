@@ -101,6 +101,8 @@ describe("logs.query", () => {
             msg: "new",
             method: "GET",
             status: 500,
+            userId: "u1",
+            email: "ana@example.com",
           }),
         ],
       ])
@@ -117,7 +119,10 @@ describe("logs.query", () => {
       method: "GET",
       statusCode: 500,
       path: null,
+      userId: "u1",
+      email: "ana@example.com",
     })
+    expect(entries[1]).toMatchObject({ userId: null, email: null })
     expect(nextCursor).toBeNull()
   })
 

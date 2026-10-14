@@ -7,6 +7,9 @@ const logEntry = z.object({
   type: z.enum(["page_view", "api_call"]),
   message: z.string(),
   userId: z.string().nullable(),
+  /** The user's email when the line was logged, so entries stay readable
+   * after that user is deleted. */
+  email: z.string().nullable(),
   path: z.string().nullable(),
   method: z.string().nullable(),
   statusCode: z.number().nullable(),
