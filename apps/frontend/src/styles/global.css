@@ -677,25 +677,6 @@ html.theme-transitioning::view-transition-new(root) {
   }
 }
 
-/* Flat dot-grid texture for guest auth screens (login/signup) — the card
-   otherwise floats on a blank body with no brand presence. A masked solid
-   fill (not a color gradient) keeps it inside the "flat colors, no
-   gradients" rule and stays theme-aware for free via the --border token. */
-@utility bg-dot-grid {
-  position: relative;
-  &::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background-color: var(--border);
-    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22'%3E%3Ccircle cx='2' cy='2' r='1.2' fill='black'/%3E%3C/svg%3E");
-    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22'%3E%3Ccircle cx='2' cy='2' r='1.2' fill='black'/%3E%3C/svg%3E");
-    -webkit-mask-repeat: repeat;
-    mask-repeat: repeat;
-    pointer-events: none;
-  }
-}
-
 /* Fade effect at the bottom of a scrolling container, used in chat message
    lists to give visual cue that there's more content below. Only shown when
    @shadcn/react's message-scroller marks the element as actually scrollable
