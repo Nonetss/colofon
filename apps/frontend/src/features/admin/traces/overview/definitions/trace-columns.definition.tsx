@@ -8,24 +8,7 @@ import {
   traceServicesLabel,
 } from "@/features/admin/traces/shared"
 import { columnLayoutOf, type DataTableFeatures } from "@/hooks/use-data-table"
-import type { SortOrdering } from "@/hooks/use-sort-query-param"
 import { formatDateTime, formatDurationMs } from "@/lib/format"
-import type { SortValue } from "@/lib/sort-rows"
-
-export const TRACE_SORT_KEYS = [
-  "startTime",
-  "rootName",
-  "services",
-  "duration",
-  "errors",
-] as const
-
-export type TraceSortKey = (typeof TRACE_SORT_KEYS)[number]
-
-export const TRACE_DEFAULT_SORT: SortOrdering<TraceSortKey> = {
-  sort: "startTime",
-  order: "desc",
-}
 
 /** The `errors` column's filter: one value, sent as `errorsOnly`. */
 export const TRACE_ERROR_FILTER_VALUE = "error"
@@ -81,7 +64,6 @@ export const traceColumns = helper.columns([
     header: "Traza",
     size: 280,
     minSize: 200,
-    enableSorting: true,
     meta: {
       label: "Traza",
       reorderable: false,
@@ -93,7 +75,6 @@ export const traceColumns = helper.columns([
     id: "services",
     header: "Servicios",
     size: 180,
-    enableSorting: true,
     meta: { label: "Servicios", reorderable: true },
     cell: (info) => (
       <Text variant="status" tone="muted">
@@ -105,7 +86,6 @@ export const traceColumns = helper.columns([
     id: "startTime",
     header: "Inicio",
     size: 170,
-    enableSorting: true,
     meta: { label: "Inicio", reorderable: true },
     cell: (info) => (
       <Text variant="data" tone="muted">
@@ -117,7 +97,6 @@ export const traceColumns = helper.columns([
     id: "duration",
     header: "Duración",
     size: 150,
-    enableSorting: true,
     meta: {
       label: "Duración",
       reorderable: true,
@@ -130,20 +109,9 @@ export const traceColumns = helper.columns([
     id: "errors",
     header: "Errores",
     size: 110,
-    enableSorting: true,
     meta: { label: "Errores", reorderable: true, compact: "status" },
     cell: (info) => <TraceErrors trace={info.row.original} />,
   }),
 ])
 
 export const traceColumnLayout = columnLayoutOf(traceColumns)
-
-export const traceSortValues: Partial<
-  Record<TraceSortKey, SortValue<TraceSummary>>
-> = {
-  startTime: (trace) => trace.startTime,
-  rootName: rootNameOf,
-  services: (trace) => traceServicesLabel(trace.services),
-  duration: (trace) => trace.durationMs,
-  errors: (trace) => trace.errorCount,
-}

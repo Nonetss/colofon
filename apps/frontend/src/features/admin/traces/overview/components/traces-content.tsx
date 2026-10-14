@@ -4,11 +4,13 @@ const OctagonX = getIcon("status", "error")
 const ChartGantt = getIcon("admin", "traces")
 const RotateCw = getIcon("actions", "refresh")
 
-import { useMemo, useState } from "react"
+import type { OnChangeFn, SortingState } from "@tanstack/react-table"
+import { useState } from "react"
 import { DataTableIdentityCell } from "@/components/shared/data-display/data-table-cell-content"
 import type { DataTableFilter } from "@/components/shared/data-display/data-table-column-filter"
 import { DataTableView } from "@/components/shared/data-display/data-table-view"
 import { FilteredEmpty } from "@/components/shared/data-display/filtered-empty"
+import { InfiniteScrollSentinel } from "@/components/shared/data-display/infinite-scroll-sentinel"
 import { StatusDot } from "@/components/shared/data-display/status-dot"
 import { SearchInput } from "@/components/shared/form/search-input"
 import { ResourceOverview } from "@/components/shared/resource/resource-overview"
@@ -18,17 +20,13 @@ import { Input } from "@/components/ui/input"
 import { TracePanel } from "@/features/admin/traces/detail"
 import {
   rootNameOf,
-  TRACE_DEFAULT_SORT,
   TRACE_ERROR_FILTER_VALUE,
   TRACE_ERROR_OPTIONS,
   TRACE_NAME_COLUMN,
-  TRACE_SORT_KEYS,
   traceColumnLayout,
   traceColumns,
-  traceSortValues,
 } from "@/features/admin/traces/overview/definitions/trace-columns.definition"
 import { useTraceSearch } from "@/features/admin/traces/overview/hooks/use-trace-search"
-import { tracesNamed } from "@/features/admin/traces/overview/model/trace-name-filter"
 import {
   TRACE_SERVICE_OPTIONS,
   type TraceSummary,
@@ -37,16 +35,21 @@ import {
 import { useColumnPreferences } from "@/hooks/use-column-preferences"
 import { columnPreferenceProps, useDataTable } from "@/hooks/use-data-table"
 import { useDebouncedValue } from "@/hooks/use-debounced-value"
+import { useInfiniteScroll } from "@/hooks/use-infinite-scroll"
 import {
   NO_VALUES,
   useQueryParam,
   valueListCodec,
 } from "@/hooks/use-query-param"
-import { useSortQueryParam } from "@/hooks/use-sort-query-param"
-import { sortRows } from "@/lib/sort-rows"
 import { cn } from "@/lib/utils"
 
 const TRACE_ID_PATTERN = /^[0-9a-f]{32}$/
+
+/** Tempo only answers newest first, and every page continues that order,
+ *  so the table has no sort to change. */
+const NO_SORTING: SortingState = []
+
+const keepNoSorting: OnChangeFn<SortingState> = () => {}
 
 /** The open trace from `?trace=` (links from the activity log land here);
  *  anything that isn't a trace id opens nothing. */
@@ -57,7 +60,7 @@ function traceIdOf(param: string): string {
 
 /**
  * The trace the panel shows: the one in the URL, else the newest of the
- * list (the API answers newest first, whatever the table's sort). The
+ * list (the first of its first page). The
  * newest one stays out of the URL, so a refresh keeps following the latest
  * request.
  */
@@ -102,10 +105,6 @@ function minDurationOf(value: string): number | undefined {
 }
 
 export function TracesContent() {
-  const [sorting, setSorting] = useSortQueryParam(
-    TRACE_SORT_KEYS,
-    TRACE_DEFAULT_SORT
-  )
   const [serviceParam, setServiceParam] = useQueryParam(
     "services",
     NO_VALUES,
@@ -130,31 +129,42 @@ export function TracesContent() {
   const errorsOnly = errorsParam.includes(TRACE_ERROR_FILTER_VALUE)
   const minDurationMs = minDurationOf(debouncedMinDuration)
 
-  const { data, isPending, isError, refetch, isRefetching } = useTraceSearch({
+  const {
+    traces,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+    isPending,
+    isError,
+    refetch,
+    isRefetching,
+  } = useTraceSearch({
     services,
     errorsOnly,
     minDurationMs,
+    name: debouncedName,
     from,
     to,
   })
-  const traces = useMemo(
-    () => tracesNamed(data?.traces ?? [], debouncedName),
-    [data, debouncedName]
-  )
   const openTraceId = openTraceOf(chosenTraceId, traces)
-  const rows = useMemo(
-    () => sortRows(traces, sorting, traceSortValues),
-    [traces, sorting]
-  )
   const preferences = useColumnPreferences("admin-traces", traceColumnLayout)
   const table = useDataTable({
-    data: rows,
+    data: traces,
     columns: traceColumns,
     getRowId: (trace) => trace.traceId,
-    sorting,
-    onSortingChange: setSorting,
+    sorting: NO_SORTING,
+    onSortingChange: keepNoSorting,
     ...columnPreferenceProps(preferences),
   })
+
+  const [scrollContainer, setScrollContainer] = useState<HTMLDivElement | null>(
+    null
+  )
+  const sentinelRef = useInfiniteScroll(
+    scrollContainer,
+    fetchNextPage,
+    hasNextPage && !isFetchingNextPage
+  )
 
   const filtered =
     services.length > 0 ||
@@ -284,6 +294,7 @@ export function TracesContent() {
                 label="Trazas"
                 idPrefix="admin-traces"
                 onResetColumns={preferences.reset}
+                scrollRef={setScrollContainer}
                 filters={filters}
                 renderControl={(trace, columnId) => {
                   if (columnId !== TRACE_NAME_COLUMN) return null
@@ -299,6 +310,13 @@ export function TracesContent() {
                   <FilteredEmpty
                     message="Ninguna traza coincide con los filtros."
                     onClear={clearFilters}
+                  />
+                }
+                footer={
+                  <InfiniteScrollSentinel
+                    sentinelRef={sentinelRef}
+                    hasNextPage={hasNextPage}
+                    isFetchingNextPage={isFetchingNextPage}
                   />
                 }
               />
