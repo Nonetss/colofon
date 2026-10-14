@@ -11,8 +11,6 @@ export interface TraceSearchFilters {
   errorsOnly: boolean
   /** Already debounced; `undefined` for any duration. */
   minDurationMs: number | undefined
-  /** Substring of the root span name, already debounced. */
-  name: string
   /** Calendar day lower bound, interpreted as 00:00 local. */
   from: Date | undefined
   /** Calendar day upper bound, interpreted as 23:59:59.999 local. */
@@ -25,12 +23,6 @@ function servicesInput(
 ): TraceService[] | undefined {
   if (services.length === 0) return undefined
   return [...services]
-}
-
-function textInput(value: string): string | undefined {
-  const trimmed = value.trim()
-  if (!trimmed) return undefined
-  return trimmed
 }
 
 function dayStart(date: Date | undefined): string | undefined {
@@ -57,7 +49,6 @@ export function useTraceSearch(filters: TraceSearchFilters) {
         services: servicesInput(filters.services),
         errorsOnly: errorsOnlyInput(filters.errorsOnly),
         minDurationMs: filters.minDurationMs,
-        name: textInput(filters.name),
         from: dayStart(filters.from),
         to: dayEnd(filters.to),
         limit: TRACE_SEARCH_LIMIT,

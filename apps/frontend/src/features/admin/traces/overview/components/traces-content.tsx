@@ -32,6 +32,7 @@ import {
   TRACE_SEARCH_LIMIT,
   useTraceSearch,
 } from "@/features/admin/traces/overview/hooks/use-trace-search"
+import { tracesNamed } from "@/features/admin/traces/overview/model/trace-name-filter"
 import {
   TRACE_SERVICE_OPTIONS,
   type TraceSummary,
@@ -143,11 +144,13 @@ export function TracesContent() {
     services,
     errorsOnly,
     minDurationMs,
-    name: debouncedName,
     from,
     to,
   })
-  const traces = data?.traces ?? []
+  const traces = useMemo(
+    () => tracesNamed(data?.traces ?? [], debouncedName),
+    [data, debouncedName]
+  )
   const openTraceId = openTraceOf(chosenTraceId, followNewest, traces)
   const rows = useMemo(
     () => sortRows(traces, sorting, traceSortValues),
