@@ -1,5 +1,4 @@
-import { DynamicIcon, type IconName, iconNames } from "lucide-react/dynamic"
-import type { ComponentType } from "react"
+import { type ComponentType, lazy, type ReactElement, Suspense } from "react"
 import { useEntityIcons } from "@/features/entity-icons/picker/hooks/use-entity-icons"
 import {
   DEFAULT_ICON_COLOR,
@@ -12,11 +11,37 @@ import type {
 } from "@/features/entity-icons/picker/model/types"
 import { cn } from "@/lib/utils"
 
-const knownIcons = new Set<string>(iconNames)
-
-function isIconName(name: string): name is IconName {
-  return knownIcons.has(name)
+interface LucideGlyphProps {
+  name: string
+  className: string
+  fallback: () => ReactElement
 }
+
+/**
+ * `lucide-react/dynamic` carries a loader for every Lucide icon (~250 kB of
+ * import map), so it is fetched only when an icon is actually drawn, never
+ * on the critical path of the island that renders it.
+ */
+const LucideGlyph = lazy(async () => {
+  const { DynamicIcon, iconNames } = await import("lucide-react/dynamic")
+  const knownIcons: ReadonlySet<string> = new Set(iconNames)
+  const isIconName = (name: string): name is (typeof iconNames)[number] =>
+    knownIcons.has(name)
+
+  function Glyph({ name, className, fallback }: LucideGlyphProps) {
+    if (!isIconName(name)) return fallback()
+    return (
+      <DynamicIcon
+        name={name}
+        aria-hidden
+        className={className}
+        fallback={fallback}
+      />
+    )
+  }
+
+  return { default: Glyph }
+})
 
 type FallbackIcon = ComponentType<{ className?: string }>
 
@@ -46,15 +71,16 @@ export function IconGlyph({
     />
   )
 
-  if (!value || !isIconName(value.icon)) return renderFallback()
+  if (!value) return renderFallback()
 
   return (
-    <DynamicIcon
-      name={value.icon}
-      aria-hidden
-      className={cn(ICON_PALETTE[value.color].text, className)}
-      fallback={renderFallback}
-    />
+    <Suspense fallback={renderFallback()}>
+      <LucideGlyph
+        name={value.icon}
+        className={cn(ICON_PALETTE[value.color].text, className)}
+        fallback={renderFallback}
+      />
+    </Suspense>
   )
 }
 
