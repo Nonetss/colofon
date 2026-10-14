@@ -30,8 +30,9 @@ const DEFAULT_SEARCH_WINDOW_MS = 24 * 60 * 60 * 1000
 //
 // Tempo only takes queries as TraceQL text, and there is no TraceQL builder
 // for JS, so the queries are assembled here, from fixed fragments only: every
-// value that reaches them is a closed enum, a validated integer or a trace id
-// normalized to hex, never free text, so nothing needs escaping.
+// value that reaches them is a closed enum, a validated integer, a trace id
+// normalized to hex or the name filter, which `nameMatcher` escapes, so no
+// input can change a query's structure.
 
 type TraceService = (typeof TRACE_SERVICES)[number]
 
@@ -50,6 +51,23 @@ const STREAM_SPAN_NAME = "consume_async_iterator_object_output"
 
 const STREAM_SPANSET = `{ name = "${STREAM_SPAN_NAME}" }`
 
+/** RE2's metacharacters, escaped so the name filter matches as plain text. */
+const REGEX_META = /[\\.+*?()|[\]{}^$]/g
+
+/** What a TraceQL string literal escapes (Go's quoting rules). */
+const STRING_META = /[\\"]/g
+
+/**
+ * The name filter as a TraceQL string holding a case-insensitive regex for
+ * "contains": the text's regex metacharacters are escaped first, so it
+ * matches literally, then the string's own `\` and `"`, so nothing can close
+ * the literal. Control characters never get here (the input refuses them).
+ */
+export function nameMatcher(text: string): string {
+  const pattern = text.replace(REGEX_META, "\\$&")
+  return `"(?i).*${pattern.replace(STRING_META, "\\$&")}.*"`
+}
+
 /**
  * The search's spansets, ANDed: each spanset may match a different span of
  * the trace (a backend span, an error somewhere else), whereas conditions
@@ -64,6 +82,9 @@ function searchSpansets(input: SearchInput): string[] {
   if (input.errorsOnly) spansets.push("{ status = error }")
   if (input.minDurationMs !== undefined) {
     spansets.push(`{ trace:duration >= ${input.minDurationMs}ms }`)
+  }
+  if (input.name !== undefined) {
+    spansets.push(`{ trace:rootName =~ ${nameMatcher(input.name)} }`)
   }
   return spansets
 }
@@ -93,15 +114,113 @@ export function buildByIdTraceQL(
   return joinSpansets([spanset, `{ ${ids.join(" || ")} }`])
 }
 
-/** Tempo takes the search window as Unix seconds. */
-function searchWindow(input: SearchInput): { start: number; end: number } {
+// ── Paging ───────────────────────────────────────────────────────────────────
+//
+// Tempo's search has no cursor or offset, but it answers newest first, so a
+// page is the same search over a window that ends at the previous page's
+// oldest trace. The window is whole seconds, so it ends on the second after
+// that trace, and the traces of that second already shown are dropped here.
+
+const NANOS_PER_SECOND = 1_000_000_000n
+
+/** Fetched past `limit` on a later page: room for the traces of the
+ *  cursor's second that came back and are dropped. */
+const CURSOR_SECOND_SLACK = 50
+
+/** Where the previous page ended: the start and hex id of its oldest trace. */
+interface SearchCursor {
+  startNs: bigint
+  traceId: string
+}
+
+/** The input's cursor, whose `<startNs>-<traceId>` shape it validated. */
+function cursorOf(cursor: string | null | undefined): SearchCursor | undefined {
+  if (!cursor) return undefined
+  const separator = cursor.indexOf("-")
+  return {
+    startNs: BigInt(cursor.slice(0, separator)),
+    traceId: cursor.slice(separator + 1),
+  }
+}
+
+function encodeCursor(cursor: SearchCursor): string {
+  return `${cursor.startNs}-${cursor.traceId}`
+}
+
+/** Tempo takes the search window as Unix seconds; a cursor ends it on the
+ *  second after the previous page's oldest trace. */
+function searchWindow(
+  input: SearchInput,
+  cursor: SearchCursor | undefined
+): { start: number; end: number } {
   const now = Date.now()
   const end = input.to === undefined ? now : Date.parse(input.to)
   const start =
     input.from === undefined
       ? now - DEFAULT_SEARCH_WINDOW_MS
       : Date.parse(input.from)
-  return { start: Math.floor(start / 1000), end: Math.ceil(end / 1000) }
+  const window = { start: Math.floor(start / 1000), end: Math.ceil(end / 1000) }
+  if (cursor === undefined) return window
+  const cursorEnd = Number(cursor.startNs / NANOS_PER_SECOND + 1n)
+  return { start: window.start, end: Math.min(window.end, cursorEnd) }
+}
+
+/** One more than the page, to know whether another follows, plus the
+ *  slack for the cursor's second on a later page. */
+function fetchLimitOf(limit: number, cursor: SearchCursor | undefined) {
+  if (cursor === undefined) return limit + 1
+  return limit + 1 + CURSOR_SECOND_SLACK
+}
+
+/** A found trace with what the page order needs: its hex id and start. */
+interface FoundTrace {
+  trace: TempoSearchTrace
+  traceId: string
+  startNs: bigint
+}
+
+function foundTraceOf(trace: TempoSearchTrace): FoundTrace {
+  return {
+    trace,
+    traceId: toHexId(trace.traceID, 16),
+    startNs: nanos(trace.startTimeUnixNano),
+  }
+}
+
+/** Newest first, and by id (descending) between traces that start
+ *  together, so the order is total and a cursor can resume it. */
+function newestFirst(a: FoundTrace, b: FoundTrace): number {
+  if (a.startNs > b.startNs) return -1
+  if (a.startNs < b.startNs) return 1
+  if (a.traceId > b.traceId) return -1
+  if (a.traceId < b.traceId) return 1
+  return 0
+}
+
+/** Whether the trace comes after the cursor, newest first. */
+function isPastCursor(found: FoundTrace, cursor: SearchCursor | undefined) {
+  if (cursor === undefined) return true
+  if (found.startNs !== cursor.startNs) return found.startNs < cursor.startNs
+  return found.traceId < cursor.traceId
+}
+
+/**
+ * The cursor after `page`, or `null` when nothing follows. A page left
+ * empty by a cut-off fetch means more traces share the cursor's second than
+ * a fetch brings back: the rest of that second is skipped, so the next
+ * page moves on instead of asking the same again.
+ */
+function nextCursorOf(
+  page: FoundTrace[],
+  hasMore: boolean,
+  cursor: SearchCursor | undefined
+): string | null {
+  if (!hasMore) return null
+  const last = page.at(-1)
+  if (last !== undefined) return encodeCursor(last)
+  if (cursor === undefined) return null
+  const secondStart = (cursor.startNs / NANOS_PER_SECOND) * NANOS_PER_SECOND
+  return encodeCursor({ startNs: secondStart - 1n, traceId: "f".repeat(32) })
 }
 
 // ── Mapping ──────────────────────────────────────────────────────────────────
@@ -214,26 +333,17 @@ interface TraceMarks {
   stream: Set<string>
 }
 
-function toSummary(trace: TempoSearchTrace, marks: TraceMarks) {
-  const traceId = toHexId(trace.traceID, 16)
+function toSummary({ trace, traceId, startNs }: FoundTrace, marks: TraceMarks) {
   return {
     traceId,
     rootService: trace.rootServiceName ?? "",
     services: servicesOf(trace, marks.database.has(traceId)),
     streaming: marks.stream.has(traceId),
     rootName: trace.rootTraceName ?? "",
-    startTime: nanosToIso(nanos(trace.startTimeUnixNano)),
+    startTime: nanosToIso(startNs),
     durationMs: trace.durationMs ?? 0,
     errorCount: errorCountOf(trace),
   }
-}
-
-function newestFirst(a: TempoSearchTrace, b: TempoSearchTrace): number {
-  const aStart = nanos(a.startTimeUnixNano)
-  const bStart = nanos(b.startTimeUnixNano)
-  if (aStart > bStart) return -1
-  if (aStart < bStart) return 1
-  return 0
 }
 
 // ── Waterfall layout ─────────────────────────────────────────────────────────
@@ -426,7 +536,7 @@ function traceBounds(entries: ServiceSpan[]): { start: bigint; end: bigint } {
 async function searchMatchingIds(
   tempoUrl: string,
   window: { start: number; end: number },
-  traces: TempoSearchTrace[],
+  traces: FoundTrace[],
   spanset: string
 ): Promise<Set<string>> {
   if (traces.length === 0) return new Set()
@@ -434,7 +544,7 @@ async function searchMatchingIds(
     // Normalized hex: whatever Tempo sent, only [0-9a-f] reaches the query.
     query: buildByIdTraceQL(
       spanset,
-      traces.map((trace) => toHexId(trace.traceID, 16))
+      traces.map((trace) => trace.traceId)
     ),
     ...window,
     limit: traces.length,
@@ -455,26 +565,35 @@ export const tracesHandler = {
   search: async ({ input }: { input: SearchInput }): Promise<SearchOutput> => {
     // Unset TEMPO_URL is a supported configuration: the viewer just has
     // nothing to show, like the activity log without LOKI_URL.
-    if (env.TEMPO_URL === undefined) {
-      return { traces: [], limitReached: false }
-    }
+    if (env.TEMPO_URL === undefined) return { traces: [], nextCursor: null }
 
-    const window = searchWindow(input)
-    const traces = await searchTempo(env.TEMPO_URL, {
+    const cursor = cursorOf(input.cursor)
+    const window = searchWindow(input, cursor)
+    // The cursor is past the range's start: every page has been read.
+    if (window.end <= window.start) return { traces: [], nextCursor: null }
+
+    const fetchLimit = fetchLimitOf(input.limit, cursor)
+    const found = await searchTempo(env.TEMPO_URL, {
       query: buildTraceQL(input),
       ...window,
-      limit: input.limit,
+      limit: fetchLimit,
     })
+    const older = found
+      .map(foundTraceOf)
+      .filter((trace) => isPastCursor(trace, cursor))
+      .sort(newestFirst)
+    const page = older.slice(0, input.limit)
+    // A full fetch may have left older traces out, even when the drop of
+    // the cursor's second leaves this page short.
+    const hasMore = older.length > input.limit || found.length >= fetchLimit
     const [database, stream] = await Promise.all([
-      searchMatchingIds(env.TEMPO_URL, window, traces, DATABASE_SPANSET),
-      searchMatchingIds(env.TEMPO_URL, window, traces, STREAM_SPANSET),
+      searchMatchingIds(env.TEMPO_URL, window, page, DATABASE_SPANSET),
+      searchMatchingIds(env.TEMPO_URL, window, page, STREAM_SPANSET),
     ])
 
     return {
-      traces: [...traces]
-        .sort(newestFirst)
-        .map((trace) => toSummary(trace, { database, stream })),
-      limitReached: traces.length >= input.limit,
+      traces: page.map((trace) => toSummary(trace, { database, stream })),
+      nextCursor: nextCursorOf(page, hasMore, cursor),
     }
   },
 

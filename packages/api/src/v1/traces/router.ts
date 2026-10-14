@@ -11,7 +11,7 @@ export const tracesRouter = {
       openapi({
         summary: "Search traces",
         description:
-          "Returns an administrator-only list of the most recent traces stored in Tempo, newest first, filtered by root service, error status, minimum duration, root span name and time range (default: the last 24 hours). Tempo's search can't paginate, so the list is capped by `limit` and `limitReached` says when older matches may be left out; narrow the time range or filters to see them. Empty when the trace store isn't configured.",
+          "Returns an administrator-only page of the traces stored in Tempo, newest first, filtered by the services they touch, error status, minimum duration, text in the root span name and time range (default: the last 24 hours). Pass the previous response's nextCursor as `cursor` to fetch the next, older page. Empty when the trace store isn't configured.",
         tags: ["Admin - Traces", "Admin"],
         method: "GET",
       })

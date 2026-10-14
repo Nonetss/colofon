@@ -80,11 +80,9 @@ const traceSpan = z.object({
 export const tracesOutput = {
   search: z.object({
     traces: z.array(traceSummary).describe("Newest first"),
-    limitReached: z
-      .boolean()
-      .describe(
-        "True when `limit` traces were returned, so older matches may be left out"
-      ),
+    /** Opaque cursor (the last trace's start in nanoseconds and its id)
+     *  for the next page's `cursor` input; `null` when no traces follow. */
+    nextCursor: z.string().nullable(),
   }),
   get: z.object({
     traceId: z.string(),

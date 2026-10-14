@@ -1,7 +1,7 @@
 import { afterAll, beforeEach, describe, expect, spyOn, test } from "bun:test"
 import { resetEnv, testEnv } from "#tests/fixtures/env"
 import { expectErrorCode } from "#tests/fixtures/errors"
-import { MAX_TRACE_SPANS, tracesHandler } from "#v1/traces/handler"
+import { MAX_TRACE_SPANS, nameMatcher, tracesHandler } from "#v1/traces/handler"
 
 const TEMPO_URL = "http://tempo.test:3200"
 const TRACE_ID = "25942dac5ae1610f0c180b4d39613cfc"
@@ -126,7 +126,7 @@ describe("traces.search", () => {
 
     expect(await tracesHandler.search({ input: searchInput() })).toEqual({
       traces: [],
-      limitReached: false,
+      nextCursor: null,
     })
     expect(fetchSpy).not.toHaveBeenCalled()
   })
@@ -140,7 +140,8 @@ describe("traces.search", () => {
     const url = requestedUrl()
     expect(url.origin + url.pathname).toBe(`${TEMPO_URL}/api/search`)
     expect(url.searchParams.get("q")).toBe(`{ } ${NEWEST}`)
-    expect(url.searchParams.get("limit")).toBe("20")
+    // One past the page, to know whether another follows.
+    expect(url.searchParams.get("limit")).toBe("21")
     const start = Number(url.searchParams.get("start"))
     const end = Number(url.searchParams.get("end"))
     expect(end - start).toBeGreaterThanOrEqual(24 * 60 * 60)
@@ -155,6 +156,7 @@ describe("traces.search", () => {
         services: ["stack-backend", "postgresql"],
         errorsOnly: true,
         minDurationMs: 500,
+        name: "POST /rpc",
         from: "2026-10-14T00:00:00Z",
         to: "2026-10-14T01:00:00Z",
       }),
@@ -162,7 +164,7 @@ describe("traces.search", () => {
 
     const url = requestedUrl()
     expect(url.searchParams.get("q")).toBe(
-      `{ resource.service.name = "stack-backend" || span.db.system.name = "postgresql" } && { status = error } && { trace:duration >= 500ms } ${NEWEST}`
+      `{ resource.service.name = "stack-backend" || span.db.system.name = "postgresql" } && { status = error } && { trace:duration >= 500ms } && { trace:rootName =~ "(?i).*POST /rpc.*" } ${NEWEST}`
     )
     expect(url.searchParams.get("start")).toBe(
       String(Date.parse("2026-10-14T00:00:00Z") / 1000)
@@ -190,7 +192,7 @@ describe("traces.search", () => {
     expect(requestedUrl(1).searchParams.get("q")).toContain(
       'trace:id = "00942dac5ae1610f0c180b4d39613cfc"'
     )
-    expect(result.limitReached).toBe(false)
+    expect(result.nextCursor).toBeNull()
     expect(result.traces).toEqual([
       {
         traceId: TRACE_ID,
@@ -274,10 +276,18 @@ describe("traces.search", () => {
     expect(fetchSpy).toHaveBeenCalledTimes(1)
   })
 
-  test("flags when the limit was reached", async () => {
-    const traces = [searchTrace(TRACE_ID, 0), searchTrace(TRACE_ID, 1)]
+  test("returns a page and a cursor at its oldest trace when more were found", async () => {
+    const newest = "3".repeat(32)
+    const middle = "2".repeat(32)
+    const oldest = "1".repeat(32)
     fetchSpy
-      .mockResolvedValueOnce(searchResponse(traces))
+      .mockResolvedValueOnce(
+        searchResponse([
+          searchTrace(oldest, 0),
+          searchTrace(newest, 2000),
+          searchTrace(middle, 1000),
+        ])
+      )
       .mockResolvedValueOnce(searchResponse([]))
       .mockResolvedValueOnce(searchResponse([]))
 
@@ -285,7 +295,96 @@ describe("traces.search", () => {
       input: searchInput({ limit: 2 }),
     })
 
-    expect(result.limitReached).toBe(true)
+    expect(result.traces.map((trace) => trace.traceId)).toEqual([
+      newest,
+      middle,
+    ])
+    expect(result.nextCursor).toBe(`${ns(1000)}-${middle}`)
+    // The by-id searches only ask about the page.
+    expect(requestedUrl(1).searchParams.get("q")).not.toContain(oldest)
+  })
+
+  test("a cursor ends the window on the second after it and drops what was shown", async () => {
+    const cursorId = "5".repeat(32)
+    const sameStartNewer = "6".repeat(32)
+    const sameStartOlder = "4".repeat(32)
+    const older = "1".repeat(32)
+    fetchSpy
+      .mockResolvedValueOnce(
+        searchResponse([
+          searchTrace("9".repeat(32), 1000.5),
+          searchTrace(cursorId, 1000),
+          searchTrace(sameStartNewer, 1000),
+          searchTrace(older, 0),
+          searchTrace(sameStartOlder, 1000),
+        ])
+      )
+      .mockResolvedValueOnce(searchResponse([]))
+      .mockResolvedValueOnce(searchResponse([]))
+
+    const result = await tracesHandler.search({
+      input: searchInput({ limit: 10, cursor: `${ns(1000)}-${cursorId}` }),
+    })
+
+    const url = requestedUrl()
+    expect(url.searchParams.get("end")).toBe(
+      String(BigInt(ns(1000)) / 1_000_000_000n + 1n)
+    )
+    // Room for the cursor's second, which comes back and is dropped.
+    expect(url.searchParams.get("limit")).toBe("61")
+    expect(result.traces.map((trace) => trace.traceId)).toEqual([
+      sameStartOlder,
+      older,
+    ])
+    expect(result.nextCursor).toBeNull()
+  })
+
+  test("keeps the cursor when the drop of its second leaves a cut-off page short", async () => {
+    const cursorId = "5".repeat(32)
+    const older = "1".repeat(32)
+    const shown = Array.from({ length: 60 }, () => searchTrace(cursorId, 1000))
+    fetchSpy
+      .mockResolvedValueOnce(searchResponse([...shown, searchTrace(older, 0)]))
+      .mockResolvedValueOnce(searchResponse([]))
+      .mockResolvedValueOnce(searchResponse([]))
+
+    const result = await tracesHandler.search({
+      input: searchInput({ limit: 10, cursor: `${ns(1000)}-${cursorId}` }),
+    })
+
+    expect(result.traces.map((trace) => trace.traceId)).toEqual([older])
+    expect(result.nextCursor).toBe(`${ns(0)}-${older}`)
+  })
+
+  test("skips the rest of a second holding more traces than a fetch brings", async () => {
+    const cursorId = "5".repeat(32)
+    const crowded = Array.from({ length: 52 }, () =>
+      searchTrace("6".repeat(32), 1000)
+    )
+    fetchSpy.mockResolvedValueOnce(searchResponse(crowded))
+
+    const result = await tracesHandler.search({
+      input: searchInput({ limit: 1, cursor: `${ns(1000)}-${cursorId}` }),
+    })
+
+    const second = BigInt(ns(1000)) / 1_000_000_000n
+    expect(result.traces).toEqual([])
+    expect(result.nextCursor).toBe(
+      `${second * 1_000_000_000n - 1n}-${"f".repeat(32)}`
+    )
+    expect(fetchSpy).toHaveBeenCalledTimes(1)
+  })
+
+  test("returns nothing without calling Tempo once the cursor passes the range", async () => {
+    const result = await tracesHandler.search({
+      input: searchInput({
+        from: "2026-10-14T10:45:00Z",
+        cursor: `${ns(0)}-${TRACE_ID}`,
+      }),
+    })
+
+    expect(result).toEqual({ traces: [], nextCursor: null })
+    expect(fetchSpy).not.toHaveBeenCalled()
   })
 
   test("is BAD_GATEWAY when Tempo is unreachable", async () => {
@@ -312,6 +411,14 @@ describe("traces.search", () => {
     await expectErrorCode(
       tracesHandler.search({ input: searchInput() }),
       "BAD_GATEWAY"
+    )
+  })
+})
+
+describe("nameMatcher", () => {
+  test("matches the text literally, whatever regex or quote it holds", () => {
+    expect(nameMatcher(String.raw`a.b"c\(d)*`)).toBe(
+      String.raw`"(?i).*a\\.b\"c\\\\\\(d\\)\\*.*"`
     )
   })
 })
