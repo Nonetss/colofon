@@ -79,7 +79,7 @@ export const traceColumns = helper.columns([
   helper.accessor(rootNameOf, {
     id: TRACE_NAME_COLUMN,
     header: "Traza",
-    size: 340,
+    size: 280,
     minSize: 200,
     enableSorting: true,
     meta: {
@@ -92,7 +92,7 @@ export const traceColumns = helper.columns([
   helper.accessor((trace) => traceServicesLabel(trace.services), {
     id: "services",
     header: "Servicios",
-    size: 230,
+    size: 180,
     enableSorting: true,
     meta: { label: "Servicios", reorderable: true },
     cell: (info) => (
@@ -116,7 +116,7 @@ export const traceColumns = helper.columns([
   helper.accessor((trace) => trace.durationMs, {
     id: "duration",
     header: "Duración",
-    size: 170,
+    size: 150,
     enableSorting: true,
     meta: {
       label: "Duración",
@@ -129,7 +129,7 @@ export const traceColumns = helper.columns([
   helper.accessor((trace) => trace.errorCount, {
     id: "errors",
     header: "Errores",
-    size: 130,
+    size: 110,
     enableSorting: true,
     meta: { label: "Errores", reorderable: true, compact: "status" },
     cell: (info) => <TraceErrors trace={info.row.original} />,

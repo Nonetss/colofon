@@ -278,6 +278,8 @@ export function TracesContent() {
     >
       {() => (
         <div className="@container/traces flex min-h-0 flex-1 flex-col">
+          {/* The panel sits beside the list; the list keeps the table
+              layout at that width, scrolling sideways when it doesn't fit. */}
           <div
             className={cn(
               "grid min-h-0 flex-1 gap-6",
@@ -288,6 +290,7 @@ export function TracesContent() {
             <div className="flex min-h-0 flex-col">
               <DataTableView
                 table={table}
+                layout="table"
                 label="Trazas"
                 idPrefix="admin-traces"
                 onResetColumns={preferences.reset}
