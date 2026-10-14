@@ -5,7 +5,6 @@ const ChartGantt = getIcon("admin", "traces")
 const RotateCw = getIcon("actions", "refresh")
 
 import { useMemo, useState } from "react"
-import { Text } from "@/components/shared/brand/typography"
 import { DataTableIdentityCell } from "@/components/shared/data-display/data-table-cell-content"
 import type { DataTableFilter } from "@/components/shared/data-display/data-table-column-filter"
 import { DataTableView } from "@/components/shared/data-display/data-table-view"
@@ -28,10 +27,7 @@ import {
   traceColumns,
   traceSortValues,
 } from "@/features/admin/traces/overview/definitions/trace-columns.definition"
-import {
-  TRACE_SEARCH_LIMIT,
-  useTraceSearch,
-} from "@/features/admin/traces/overview/hooks/use-trace-search"
+import { useTraceSearch } from "@/features/admin/traces/overview/hooks/use-trace-search"
 import { tracesNamed } from "@/features/admin/traces/overview/model/trace-name-filter"
 import {
   TRACE_SERVICE_OPTIONS,
@@ -250,12 +246,6 @@ export function TracesContent() {
               aria-label="Hasta"
             />
           </div>
-          {data?.limitReached ? (
-            <Text variant="compact" tone="muted" className="mt-2 block">
-              Se muestran las {TRACE_SEARCH_LIMIT} trazas más recientes que
-              coinciden. Acota las fechas o los filtros para ver las anteriores.
-            </Text>
-          ) : null}
         </div>
       }
       query={{ data: traces, isPending, isError, refetch }}

@@ -4,7 +4,7 @@ import type { TraceService } from "@/features/admin/traces/shared"
 import { orpc } from "@/lib/orpc"
 
 /** Tempo's search can't page, so one read brings the newest matches. */
-export const TRACE_SEARCH_LIMIT = 100
+const TRACE_SEARCH_LIMIT = 100
 
 export interface TraceSearchFilters {
   services: readonly TraceService[]
