@@ -10,6 +10,7 @@ import {
 import { useState } from "react"
 import {
   DATA_TABLE_EXPAND_COLUMN,
+  type DataTableMobileFilters,
   DataTableView,
 } from "@/components/shared/data-display/data-table-view"
 import { useColumnPreferences } from "@/hooks/use-column-preferences"
@@ -81,12 +82,14 @@ function PlainTable({
   rows = jobs,
   nameFilter = NONE,
   onNameFilter = () => {},
+  mobileFilters,
 }: {
   layout?: "responsive" | "table"
   forced?: readonly string[]
   rows?: Job[]
   nameFilter?: readonly string[]
   onNameFilter?: (next: string[]) => void
+  mobileFilters?: DataTableMobileFilters
 }) {
   const preferences = useColumnPreferences("view-plain", plainLayout)
   const [sorting, setSorting] = useState<SortingState>([])
@@ -117,9 +120,23 @@ function PlainTable({
           onChange: onNameFilter,
         },
       }}
+      mobileFilters={mobileFilters}
       emptyMessage="Ningún trabajo coincide"
     />
   )
+}
+
+const DESKTOP_WIDTH = window.innerWidth
+
+/** Sets the window's width: happy-dom matches media queries against it
+ *  live, so `useIsMobile` sees it on the next render. `innerWidth` is
+ *  read-only in the DOM types; happy-dom's setter is how it resizes. */
+function setWindowWidth(width: number) {
+  Reflect.set(window, "innerWidth", width)
+}
+
+function atPhoneWidth() {
+  setWindowWidth(390)
 }
 
 function HiddenTable() {
@@ -316,5 +333,89 @@ describe("DataTableView", () => {
     expect(scroller.contains(tableEl())).toBe(true)
     const header = screen.getByRole("columnheader", { name: /Nombre/ })
     expect(header.className).toContain("sticky")
+  })
+
+  describe("mobileFilters", () => {
+    afterEach(() => {
+      setWindowWidth(DESKTOP_WIDTH)
+    })
+
+    test("on a phone moves the column filters into the bottom bar's sheet", () => {
+      atPhoneWidth()
+      const onClear = mock(() => {})
+      render(
+        <PlainTable
+          nameFilter={["Backup"]}
+          mobileFilters={{
+            fields: <input aria-label="Filtrar por ruta" />,
+            activeCount: 1,
+            onClear,
+          }}
+        />
+      )
+
+      // The ordering moved to "Ordenar" beside "Filtros".
+      expect(screen.queryByRole("combobox", { name: "Ordenar por" })).toBeNull()
+      expect(screen.getByRole("button", { name: "Ordenar" })).toBeDefined()
+      // Only the header's filter is left; the one above the compact rows moved.
+      expect(
+        screen.getAllByRole("button", { name: /^Filtrar Nombre/ })
+      ).toHaveLength(1)
+      fireEvent.click(screen.getByRole("button", { name: "Filtros · 2" }))
+
+      expect(
+        screen.getByRole("textbox", { name: "Filtrar por ruta" })
+      ).toBeDefined()
+      const sheet = screen.getByRole("dialog")
+      expect(
+        within(sheet).getByRole("button", { name: /^Filtrar Nombre/ })
+      ).toBeDefined()
+      fireEvent.click(within(sheet).getByRole("button", { name: "Limpiar" }))
+      expect(onClear).toHaveBeenCalledTimes(1)
+    })
+
+    test("keeps the filters above the compact rows without it", () => {
+      atPhoneWidth()
+      render(<PlainTable />)
+
+      expect(screen.queryByRole("button", { name: /^Filtros/ })).toBeNull()
+      expect(
+        screen.getAllByRole("button", { name: /^Filtrar Nombre/ })
+      ).toHaveLength(2)
+      expect(
+        screen
+          .getAllByRole("combobox", { name: "Ordenar por" })
+          .map((select) => select.id)
+      ).toEqual(["jobs-compact"])
+    })
+
+    test("leaves wider screens with the filters above the rows", () => {
+      render(<PlainTable mobileFilters={{}} />)
+
+      expect(screen.queryByRole("button", { name: /^Filtros/ })).toBeNull()
+    })
+
+    test("on a phone picks the column and direction from the Ordenar sheet", () => {
+      atPhoneWidth()
+      render(<PlainTable mobileFilters={{}} />)
+
+      fireEvent.click(screen.getByRole("button", { name: "Ordenar" }))
+      const sheet = screen.getByRole("dialog")
+      const descending = within(sheet).getByRole("button", {
+        name: "Descendente",
+      })
+      // No column yet: the rows keep their order, so no direction applies.
+      expect(descending.hasAttribute("disabled")).toBe(true)
+
+      fireEvent.click(within(sheet).getByRole("button", { name: "Nombre" }))
+      fireEvent.click(descending)
+
+      expect(
+        within(sheet)
+          .getByRole("button", { name: "Nombre" })
+          .getAttribute("aria-pressed")
+      ).toBe("true")
+      expect(descending.getAttribute("aria-pressed")).toBe("true")
+    })
   })
 })

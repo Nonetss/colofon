@@ -1,6 +1,10 @@
 import { getIcon } from "@/lib/icon-registry"
 
 const ChevronDown = getIcon("controls", "expand")
+const CheckIcon = getIcon("controls", "check")
+const SortIcon = getIcon("views", "sortable")
+const SortAscendingIcon = getIcon("views", "sortAscending")
+const SortDescendingIcon = getIcon("views", "sortDescending")
 
 import type { Cell, Row, RowData } from "@tanstack/react-table"
 import { type ReactNode, type Ref, useState } from "react"
@@ -16,14 +20,24 @@ import {
   DataTableHeader,
 } from "@/components/shared/data-display/data-table-header"
 import { MetadataCell } from "@/components/shared/data-display/metadata-cell"
+import { ListActionBar } from "@/components/shared/layout/list-action-bar"
+import { FilterSheet } from "@/components/shared/resource/filter-sheet"
 import {
   SortControls,
   type SortOption,
   type SortOrder,
 } from "@/components/shared/resource/sort-controls"
 import { Button } from "@/components/ui/button"
+import {
+  Sheet,
+  SheetContent,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet"
 import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table"
 import type { DataTable, DataTableFeatures } from "@/hooks/use-data-table"
+import { useIsMobile } from "@/hooks/use-mobile"
 import { cn } from "@/lib/utils"
 
 /** The id of the display column that holds a row's expand toggle. Declare
@@ -56,6 +70,19 @@ export interface DataTableRowState {
 export interface DataTableGroup {
   key: string
   heading: ReactNode
+}
+
+/** The bottom action bar and filter sheet a list takes its filters to on
+ *  phones (`DataTableView`'s `mobileFilters`). */
+export interface DataTableMobileFilters {
+  /** The page's own filters (a search, a day range), shown in the sheet
+   *  before the column filters; the page leaves them out of its inline
+   *  filters on phones. */
+  fields?: ReactNode
+  /** How many of `fields` are active, for the bar's "Filtros · N". */
+  activeCount?: number
+  /** Clears every filter, the column ones included. */
+  onClear?: () => void
 }
 
 export interface DataTableViewProps<TData extends RowData> {
@@ -106,6 +133,12 @@ export interface DataTableViewProps<TData extends RowData> {
    *  in the table layout, a button per column above the rows in the compact
    *  one. The caller filters the rows it passes in. */
   filters?: Partial<Record<string, DataTableFilter>>
+  /** Below the `md` breakpoint (`responsive` layout only), moves the column
+   *  filters, plus the page's own `fields`, out from above the compact rows
+   *  into a fixed bottom "Filtros" bar and the sheet it opens, like the
+   *  lists filtered through `ResourceFilters`. Every change still applies
+   *  as it is made. */
+  mobileFilters?: DataTableMobileFilters
   /** Shown in place of the rows when there are none (filters that match
    *  nothing), so the table and its filters stay on screen. */
   emptyMessage?: ReactNode
@@ -218,11 +251,13 @@ export function DataTableView<TData extends RowData>({
   groupOf,
   footer,
   filters,
+  mobileFilters,
   emptyMessage,
   scrollRef,
   scrollClassName,
   className,
 }: DataTableViewProps<TData>) {
+  const isMobile = useIsMobile()
   const [expanded, setExpanded] = useState<ReadonlySet<string>>(new Set())
   const rows = table.getRowModel().rows
   const visibleCount = table.getVisibleLeafColumns().length
@@ -234,6 +269,7 @@ export function DataTableView<TData extends RowData>({
         !hiddenColumnIds.includes(column.id)
     )
   const responsive = layout === "responsive"
+  const filterBar = mobileFilterBarOf(mobileFilters, responsive && isMobile)
 
   const toggle = (rowId: string) =>
     setExpanded((previous) => {
@@ -304,9 +340,27 @@ export function DataTableView<TData extends RowData>({
         className
       )}
     >
+      {filterBar ? (
+        <MobileFilterBar
+          table={table}
+          filters={filters}
+          hiddenColumnIds={hiddenColumnIds}
+          sortSlot={
+            sortable ? (
+              <SortSheetButton
+                options={sortOptions}
+                value={sortValue}
+                order={sortOrder}
+                onChange={onCompactSort}
+              />
+            ) : null
+          }
+          {...filterBar}
+        />
+      ) : null}
       {responsive ? (
         <div className="@4xl/table:hidden">
-          {sortable ? (
+          {sortable && filterBar === undefined ? (
             <SortControls
               idPrefix={idPrefix}
               idSuffix="compact"
@@ -318,7 +372,7 @@ export function DataTableView<TData extends RowData>({
               selectClassName="min-w-0 flex-1"
             />
           ) : null}
-          {filters ? (
+          {filters && filterBar === undefined ? (
             <CompactFilters
               table={table}
               filters={filters}
@@ -469,6 +523,37 @@ function DataTableRowGroup({
   )
 }
 
+/** The filtered columns in their order, leaving out the hidden ones. */
+function columnFiltersOf<TData extends RowData>(
+  table: DataTable<TData>,
+  filters: Partial<Record<string, DataTableFilter>> | undefined,
+  hiddenColumnIds: readonly string[]
+): { id: string; label: string; filter: DataTableFilter }[] {
+  if (filters === undefined) return []
+  const columnFilters: {
+    id: string
+    label: string
+    filter: DataTableFilter
+  }[] = []
+  for (const column of table.getAllLeafColumns()) {
+    if (hiddenColumnIds.includes(column.id)) continue
+    const filter = filters[column.id]
+    if (!filter) continue
+    columnFilters.push({ id: column.id, label: columnLabel(column), filter })
+  }
+  return columnFilters
+}
+
+/** The bottom bar's settings while it applies: asked for, and on a phone
+ *  in the `responsive` layout. */
+function mobileFilterBarOf(
+  mobileFilters: DataTableMobileFilters | undefined,
+  applies: boolean
+): DataTableMobileFilters | undefined {
+  if (!applies) return undefined
+  return mobileFilters
+}
+
 function CompactFilters<TData extends RowData>({
   table,
   filters,
@@ -478,27 +563,192 @@ function CompactFilters<TData extends RowData>({
   filters: Partial<Record<string, DataTableFilter>>
   hiddenColumnIds: readonly string[]
 }) {
-  const columns = table
-    .getAllLeafColumns()
-    .filter((column) => !hiddenColumnIds.includes(column.id))
   return (
     <div className="@container mb-3">
       <div className="grid gap-2 @md:grid-cols-2 @xl:grid-cols-3">
-        {columns.map((column) => {
-          const filter = filters[column.id]
-          if (!filter) return null
-          return (
-            <DataTableColumnFilter
-              key={column.id}
-              label={columnLabel(column)}
-              filter={filter}
-              placement="compact"
-            />
-          )
-        })}
+        {columnFiltersOf(table, filters, hiddenColumnIds).map((column) => (
+          <DataTableColumnFilter
+            key={column.id}
+            label={column.label}
+            filter={column.filter}
+            placement="compact"
+          />
+        ))}
       </div>
     </div>
   )
+}
+
+/** On phones: the "Filtros" bar at the bottom, with "Ordenar" beside it, and its sheet, holding the page's `fields` and a button per
+ *  filtered column. Changes apply as they are made, so confirming only
+ *  closes the sheet. */
+function MobileFilterBar<TData extends RowData>({
+  table,
+  filters,
+  hiddenColumnIds,
+  fields,
+  activeCount = 0,
+  onClear,
+  sortSlot,
+}: DataTableMobileFilters & {
+  /** The ordering, beside "Filtros" (the compact rows then leave it out). */
+  sortSlot: ReactNode
+  table: DataTable<TData>
+  filters: Partial<Record<string, DataTableFilter>> | undefined
+  hiddenColumnIds: readonly string[]
+}) {
+  const [open, setOpen] = useState(false)
+  const columnFilters = columnFiltersOf(table, filters, hiddenColumnIds)
+  const filterCount =
+    activeCount +
+    columnFilters.filter((column) => column.filter.selected.length > 0).length
+  const clear = clearAndClose(onClear, () => setOpen(false))
+
+  return (
+    <>
+      <ListActionBar
+        filterCount={filterCount}
+        onOpenFilters={() => setOpen(true)}
+        sortSlot={sortSlot}
+      />
+      <FilterSheet
+        open={open}
+        onOpenChange={setOpen}
+        resultCount={null}
+        onApply={() => {}}
+        onClear={clear}
+      >
+        <div className="grid gap-3">
+          {fields}
+          {columnFilters.map((column) => (
+            <DataTableColumnFilter
+              key={column.id}
+              label={column.label}
+              filter={column.filter}
+              placement="compact"
+            />
+          ))}
+        </div>
+      </FilterSheet>
+    </>
+  )
+}
+
+/** "Ordenar" in the phone's bottom bar: a sheet listing the columns to
+ *  order by and the two directions. Each pick applies at once; the
+ *  direction waits for a column while the rows keep their original order. */
+function SortSheetButton({
+  options,
+  value,
+  order,
+  onChange,
+}: {
+  options: readonly SortOption<string>[]
+  value: string
+  order: SortOrder
+  onChange: (next: { sort: string; order: SortOrder }) => void
+}) {
+  const [open, setOpen] = useState(false)
+  const columns = options.filter((option) => option.value !== UNSORTED)
+  const unsorted = value === UNSORTED
+  const directions = [
+    { order: "asc", label: "Ascendente", Icon: SortAscendingIcon },
+    { order: "desc", label: "Descendente", Icon: SortDescendingIcon },
+  ] satisfies { order: SortOrder; label: string; Icon: typeof SortIcon }[]
+
+  return (
+    <>
+      <Button
+        type="button"
+        variant="outline"
+        className="h-11 flex-1"
+        onClick={() => setOpen(true)}
+      >
+        <SortIcon className="size-4" />
+        Ordenar
+      </Button>
+      <Sheet open={open} onOpenChange={setOpen}>
+        <SheetContent
+          side="bottom"
+          showCloseButton={false}
+          className="flex max-h-[85dvh] flex-col gap-0 rounded-t-xl p-0"
+        >
+          <SheetHeader className="border-b pb-3">
+            <SheetTitle>Ordenar</SheetTitle>
+          </SheetHeader>
+          <div className="flex-1 overflow-y-auto p-4">
+            <ul aria-label="Ordenar por" className="grid gap-0.5">
+              {columns.map((option) => (
+                <li key={option.value}>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    aria-pressed={option.value === value}
+                    className={cn(
+                      "h-11 w-full justify-between",
+                      option.value === value && "bg-accent"
+                    )}
+                    onClick={() => onChange({ sort: option.value, order })}
+                  >
+                    {option.label}
+                    {option.value === value ? (
+                      <CheckIcon className="size-4" />
+                    ) : null}
+                  </Button>
+                </li>
+              ))}
+            </ul>
+            <fieldset className="mt-4">
+              <legend className="sr-only">Dirección</legend>
+              <div className="grid grid-cols-2 gap-2">
+                {directions.map((direction) => (
+                  <Button
+                    key={direction.order}
+                    type="button"
+                    variant="outline"
+                    disabled={unsorted}
+                    aria-pressed={!unsorted && direction.order === order}
+                    className={cn(
+                      "h-11",
+                      !unsorted &&
+                        direction.order === order &&
+                        "border-primary/40 bg-primary/10 text-primary"
+                    )}
+                    onClick={() =>
+                      onChange({ sort: value, order: direction.order })
+                    }
+                  >
+                    <direction.Icon className="size-4" />
+                    {direction.label}
+                  </Button>
+                ))}
+              </div>
+            </fieldset>
+          </div>
+          <SheetFooter className="border-t bg-background pb-[calc(1rem+env(safe-area-inset-bottom))]">
+            <Button
+              type="button"
+              className="h-11 w-full"
+              onClick={() => setOpen(false)}
+            >
+              Ver resultados
+            </Button>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
+    </>
+  )
+}
+
+function clearAndClose(
+  onClear: (() => void) | undefined,
+  close: () => void
+): (() => void) | undefined {
+  if (onClear === undefined) return undefined
+  return () => {
+    onClear()
+    close()
+  }
 }
 
 function CompactRow<TData extends RowData>({
