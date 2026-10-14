@@ -19,13 +19,12 @@ export interface TraceSearchFilters {
   to: Date | undefined
 }
 
-/** The procedure filters by one root service: a single choice narrows the
- *  search, none or both keep every service. */
-function serviceInput(
+/** Traces touching any of the chosen services; none chosen keeps all. */
+function servicesInput(
   services: readonly TraceService[]
-): TraceService | undefined {
-  if (services.length !== 1) return undefined
-  return services[0]
+): TraceService[] | undefined {
+  if (services.length === 0) return undefined
+  return [...services]
 }
 
 function textInput(value: string): string | undefined {
@@ -55,7 +54,7 @@ export function useTraceSearch(filters: TraceSearchFilters) {
   return useQuery(
     orpc.v1.traces.search.queryOptions({
       input: {
-        service: serviceInput(filters.services),
+        services: servicesInput(filters.services),
         errorsOnly: errorsOnlyInput(filters.errorsOnly),
         minDurationMs: filters.minDurationMs,
         name: textInput(filters.name),

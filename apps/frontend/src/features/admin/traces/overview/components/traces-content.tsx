@@ -115,7 +115,7 @@ export function TracesContent() {
     TRACE_DEFAULT_SORT
   )
   const [serviceParam, setServiceParam] = useQueryParam(
-    "service",
+    "services",
     NO_VALUES,
     valueListCodec
   )
@@ -189,7 +189,7 @@ export function TracesContent() {
       set(next)
     }
   const filters: Partial<Record<string, DataTableFilter>> = {
-    service: {
+    services: {
       options: TRACE_SERVICE_OPTIONS,
       selected: services,
       onChange: valuesSetter(setServiceParam),

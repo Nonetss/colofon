@@ -4,7 +4,7 @@ import { DataTableStatusCell } from "@/components/shared/data-display/data-table
 import type { DataTableFilterOption } from "@/components/shared/data-display/data-table-column-filter"
 import {
   type TraceSummary,
-  traceServiceLabel,
+  traceServicesLabel,
 } from "@/features/admin/traces/shared"
 import { columnLayoutOf, type DataTableFeatures } from "@/hooks/use-data-table"
 import type { SortOrdering } from "@/hooks/use-sort-query-param"
@@ -14,7 +14,7 @@ import type { SortValue } from "@/lib/sort-rows"
 export const TRACE_SORT_KEYS = [
   "startTime",
   "rootName",
-  "service",
+  "services",
   "duration",
   "errors",
 ] as const
@@ -71,12 +71,12 @@ export const traceColumns = helper.columns([
       rowRendered: true,
     },
   }),
-  helper.accessor((trace) => traceServiceLabel(trace.rootService), {
-    id: "service",
-    header: "Servicio",
-    size: 130,
+  helper.accessor((trace) => traceServicesLabel(trace.services), {
+    id: "services",
+    header: "Servicios",
+    size: 230,
     enableSorting: true,
-    meta: { label: "Servicio", reorderable: true },
+    meta: { label: "Servicios", reorderable: true },
     cell: (info) => (
       <Text variant="status" tone="muted">
         {info.getValue()}
@@ -127,7 +127,7 @@ export const traceSortValues: Partial<
 > = {
   startTime: (trace) => trace.startTime,
   rootName: rootNameOf,
-  service: (trace) => traceServiceLabel(trace.rootService),
+  services: (trace) => traceServicesLabel(trace.services),
   duration: (trace) => trace.durationMs,
   errors: (trace) => trace.errorCount,
 }

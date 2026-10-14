@@ -10,4 +10,5 @@ export type TraceDetail = Awaited<ReturnType<typeof client.v1.traces.get>>
 
 export type TraceSpan = TraceDetail["spans"][number]
 
-export type TraceService = NonNullable<SearchInput["service"]>
+/** What a trace can touch: our two services and the database. */
+export type TraceService = NonNullable<SearchInput["services"]>[number]
