@@ -85,9 +85,20 @@ export const tracesOutput = {
     nextCursor: z.string().nullable(),
   }),
   rootNames: z.object({
-    names: z
-      .array(z.string())
-      .describe("Distinct root span names in the window, alphabetical"),
+    groups: z
+      .array(
+        z.object({
+          service: z
+            .string()
+            .describe("The service that emitted these traces' root span"),
+          names: z
+            .array(z.string())
+            .describe("Distinct root span names, alphabetical"),
+        })
+      )
+      .describe(
+        "Root span names in the window by root service, in the order a request crosses the services"
+      ),
   }),
   get: z.object({
     traceId: z.string(),

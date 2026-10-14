@@ -2,7 +2,7 @@ import { env } from "@nonete/env/server"
 import type { z } from "zod"
 
 import { errors } from "#errors"
-import type { tracesInput } from "#v1/traces/input"
+import { TRACE_SERVICES, type tracesInput } from "#v1/traces/input"
 import type { SPAN_KINDS, SPAN_STATUSES, tracesOutput } from "#v1/traces/output"
 import {
   fetchTagValues,
@@ -17,6 +17,8 @@ import {
 import {
   markedTracesQuery,
   ROOT_NAME_TAG,
+  ROOT_SERVICE_TAG,
+  rootServiceQuery,
   STREAM_SPAN_NAME,
   type TraceMark,
   traceSearchQuery,
@@ -251,12 +253,22 @@ function errorCountOf(trace: TempoSearchTrace): number {
   return count
 }
 
+/** Where a service sits in `TRACE_SERVICES` (the path a request takes), or
+ * after all of them for a service the list doesn't know. */
+function serviceRank(service: string): number {
+  const rank = TRACE_SERVICES.findIndex((known) => known === service)
+  if (rank === -1) return TRACE_SERVICES.length
+  return rank
+}
+
+function byServiceRank(a: string, b: string): number {
+  return serviceRank(a) - serviceRank(b) || a.localeCompare(b)
+}
+
 /** The services with spans in the trace, frontend first, then the
  *  database when the trace queried it. */
 function servicesOf(trace: TempoSearchTrace, queriedDatabase: boolean) {
-  const services = Object.keys(trace.serviceStats ?? {})
-    .sort()
-    .reverse()
+  const services = Object.keys(trace.serviceStats ?? {}).sort(byServiceRank)
   if (queriedDatabase) services.push("postgresql")
   return services
 }
@@ -486,6 +498,11 @@ async function searchMatchingIds(
   return new Set(matches.map((trace) => toHexId(trace.traceID, 16)))
 }
 
+/** The non-empty values, once each. */
+function distinct(values: readonly string[]): string[] {
+  return [...new Set(values.filter((value) => value !== ""))]
+}
+
 function byName(a: string, b: string): number {
   return a.localeCompare(b)
 }
@@ -540,15 +557,30 @@ export const tracesHandler = {
   }: {
     input: RootNamesInput
   }): Promise<RootNamesOutput> => {
-    if (env.TEMPO_URL === undefined) return { names: [] }
+    if (env.TEMPO_URL === undefined) return { groups: [] }
+    const tempoUrl = env.TEMPO_URL
 
-    const values = await fetchTagValues(env.TEMPO_URL, ROOT_NAME_TAG, {
-      ...timeWindow(input),
-      limit: MAX_ROOT_NAMES,
-    })
-    // A trace whose root span hasn't arrived yet has no name to pick.
-    const names = new Set(values.filter((name) => name !== ""))
-    return { names: [...names].sort(byName) }
+    // Tempo lists a tag's values without the trace they came from, so the
+    // root services are listed first, then each one's root names. A trace
+    // whose root span hasn't arrived yet has neither, so nothing to pick.
+    const window = timeWindow(input)
+    const services = distinct(
+      await fetchTagValues(tempoUrl, ROOT_SERVICE_TAG, {
+        ...window,
+        limit: MAX_ROOT_NAMES,
+      })
+    ).sort(byServiceRank)
+    const groups = await Promise.all(
+      services.map(async (service) => {
+        const names = await fetchTagValues(tempoUrl, ROOT_NAME_TAG, {
+          ...window,
+          limit: MAX_ROOT_NAMES,
+          query: rootServiceQuery(service),
+        })
+        return { service, names: distinct(names).sort(byName) }
+      })
+    )
+    return { groups: groups.filter((group) => group.names.length > 0) }
   },
 
   get: async ({ input }: { input: GetInput }): Promise<GetOutput> => {

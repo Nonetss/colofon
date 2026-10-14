@@ -105,10 +105,15 @@ const searchResponse = z.object({
     .optional(),
 })
 
+// Tempo serializes like protobuf's JSON mapping, which leaves empty fields
+// out: the empty value of a trace whose root span hasn't arrived comes as
+// `{ "type": "string" }`, and no values at all may come as `null`.
 const tagValuesResponse = z.object({
   tagValues: z
-    .array(z.object({ type: z.string(), value: z.string() }))
-    .optional(),
+    .array(
+      z.object({ type: z.string().optional(), value: z.string().default("") })
+    )
+    .nullish(),
 })
 
 export type TempoSearchTrace = NonNullable<
@@ -166,16 +171,18 @@ export async function searchTempo(
   return body.traces ?? []
 }
 
-/** The distinct values `tag` (a TraceQL identifier) took in the window. */
+/** The distinct values `tag` (a TraceQL identifier) took in the window,
+ *  in the traces matching `query` (TraceQL) when it is given. */
 export async function fetchTagValues(
   tempoUrl: string,
   tag: string,
-  params: { start: number; end: number; limit: number }
+  params: { start: number; end: number; limit: number; query?: string }
 ): Promise<string[]> {
   const url = new URL(`/api/v2/search/tag/${tag}/values`, tempoUrl)
   url.searchParams.set("start", String(params.start))
   url.searchParams.set("end", String(params.end))
   url.searchParams.set("limit", String(params.limit))
+  if (params.query !== undefined) url.searchParams.set("q", params.query)
 
   const response = await fetchTempo(tempoUrl, url)
   assertOk(response)

@@ -427,37 +427,65 @@ describe("traces.rootNames", () => {
     })
   }
 
+  /** Tempo's answers: the root services, then each service's root names
+   *  (by the `q` the request scopes them with). */
+  function mockTagValues(namesByService: Record<string, string[]>) {
+    const answer = async (input: string | URL | Request) => {
+      if (!(input instanceof URL)) throw new Error("expected a URL")
+      if (input.pathname.endsWith("/trace:rootService/values")) {
+        return tagValuesResponse(["", ...Object.keys(namesByService)])
+      }
+      const service = /trace:rootService = "(.*)" }$/.exec(
+        input.searchParams.get("q") ?? ""
+      )?.[1]
+      return tagValuesResponse(namesByService[service ?? ""] ?? [])
+    }
+    // `typeof fetch` also carries `preconnect`, which no test calls.
+    fetchSpy.mockImplementation(
+      Object.assign(answer, { preconnect: fetch.preconnect })
+    )
+  }
+
   test("returns nothing without calling Tempo when TEMPO_URL is unset", async () => {
     testEnv.TEMPO_URL = undefined
 
     expect(await tracesHandler.rootNames({ input: {} })).toEqual({
-      names: [],
+      groups: [],
     })
     expect(fetchSpy).not.toHaveBeenCalled()
   })
 
-  test("asks Tempo for the root names of the window", async () => {
-    fetchSpy.mockResolvedValue(tagValuesResponse([]))
+  test("asks Tempo for the root services, then each one's root names, in the window", async () => {
+    mockTagValues({ backend: [] })
 
     await tracesHandler.rootNames({
       input: { from: "2026-10-14T00:00:00Z", to: "2026-10-14T01:00:00Z" },
     })
 
-    const url = requestedUrl()
-    expect(url.origin + url.pathname).toBe(
+    const services = requestedUrl(0)
+    const names = requestedUrl(1)
+    expect(services.origin + services.pathname).toBe(
+      `${TEMPO_URL}/api/v2/search/tag/trace:rootService/values`
+    )
+    expect(names.origin + names.pathname).toBe(
       `${TEMPO_URL}/api/v2/search/tag/trace:rootName/values`
     )
-    expect(url.searchParams.get("start")).toBe(
-      String(Date.parse("2026-10-14T00:00:00Z") / 1000)
+    expect(names.searchParams.get("q")).toBe(
+      '{ trace:rootService = "backend" }'
     )
-    expect(url.searchParams.get("end")).toBe(
-      String(Date.parse("2026-10-14T01:00:00Z") / 1000)
-    )
-    expect(url.searchParams.get("limit")).toBe(String(MAX_ROOT_NAMES))
+    for (const url of [services, names]) {
+      expect(url.searchParams.get("start")).toBe(
+        String(Date.parse("2026-10-14T00:00:00Z") / 1000)
+      )
+      expect(url.searchParams.get("end")).toBe(
+        String(Date.parse("2026-10-14T01:00:00Z") / 1000)
+      )
+      expect(url.searchParams.get("limit")).toBe(String(MAX_ROOT_NAMES))
+    }
   })
 
   test("defaults to the last 24 hours", async () => {
-    fetchSpy.mockResolvedValue(tagValuesResponse([]))
+    mockTagValues({})
 
     await tracesHandler.rootNames({ input: {} })
 
@@ -467,14 +495,48 @@ describe("traces.rootNames", () => {
     expect(end - start).toBeGreaterThanOrEqual(24 * 60 * 60)
   })
 
-  test("lists the names once each, alphabetical, without the empty one", async () => {
-    fetchSpy.mockResolvedValue(
-      tagValuesResponse(["cron.run", "", "GET /crons", "cron.run"])
-    )
+  test("groups the names by root service, in request order, each name once and alphabetical", async () => {
+    mockTagValues({
+      unknown: ["job"],
+      backend: ["cron.run", "", "POST /rpc/v1/cron/list", "cron.run"],
+      empty: [],
+      frontend: ["GET /crons", "GET /admin/traces"],
+    })
 
     expect(await tracesHandler.rootNames({ input: {} })).toEqual({
-      names: ["cron.run", "GET /crons"],
+      groups: [
+        { service: "frontend", names: ["GET /admin/traces", "GET /crons"] },
+        { service: "backend", names: ["cron.run", "POST /rpc/v1/cron/list"] },
+        { service: "unknown", names: ["job"] },
+      ],
     })
+  })
+
+  test("quotes the service it scopes the names to", async () => {
+    mockTagValues({ 'odd"name': ["x"] })
+
+    await tracesHandler.rootNames({ input: {} })
+
+    expect(requestedUrl(1).searchParams.get("q")).toBe(
+      '{ trace:rootService = "odd\\"name" }'
+    )
+  })
+
+  test("reads values Tempo leaves out as empty, and no values as none", async () => {
+    fetchSpy
+      .mockResolvedValueOnce(
+        Response.json({
+          tagValues: [{ type: "string" }, { type: "string", value: "backend" }],
+        })
+      )
+      .mockResolvedValueOnce(Response.json({ tagValues: null }))
+
+    expect(await tracesHandler.rootNames({ input: {} })).toEqual({
+      groups: [],
+    })
+    expect(requestedUrl(1).searchParams.get("q")).toBe(
+      '{ trace:rootService = "backend" }'
+    )
   })
 
   test("is BAD_GATEWAY when Tempo's body isn't a tag-values response", async () => {

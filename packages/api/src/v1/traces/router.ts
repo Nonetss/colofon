@@ -25,7 +25,7 @@ export const tracesRouter = {
       openapi({
         summary: "List trace root span names",
         description:
-          "Returns an administrator-only, alphabetical list of the distinct root span names of the traces stored in Tempo within a time range (default: the last 24 hours), for picking `names` in traces.search. Empty when the trace store isn't configured.",
+          "Returns an administrator-only list of the distinct root span names of the traces stored in Tempo within a time range (default: the last 24 hours), grouped by the service that emitted the root span and alphabetical within each, for picking `names` in traces.search. Empty when the trace store isn't configured.",
         tags: ["Admin - Traces", "Admin"],
         method: "GET",
       })

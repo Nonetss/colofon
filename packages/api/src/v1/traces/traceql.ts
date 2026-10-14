@@ -76,6 +76,15 @@ const TOUCHES = {
 /** The trace's root span name, as Tempo's tag-values API takes it. */
 export const ROOT_NAME_TAG = "trace:rootName"
 
+/** The service that emitted the trace's root span, likewise. */
+export const ROOT_SERVICE_TAG = "trace:rootService"
+
+/** The traces whose root span `service` emitted, to scope a tag-values
+ *  request to them. */
+export function rootServiceQuery(service: string): string {
+  return spanset([`${ROOT_SERVICE_TAG} = ${stringLiteral(service)}`])
+}
+
 /** oRPC's span around a streamed output: the trace is an event stream. */
 export const STREAM_SPAN_NAME = "consume_async_iterator_object_output"
 
