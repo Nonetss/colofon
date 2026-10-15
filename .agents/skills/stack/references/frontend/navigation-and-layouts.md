@@ -11,7 +11,7 @@
 ## Layouts (`apps/frontend/src/layouts/`)
 
 - `Layout.astro` — the default: navbar (guest or authenticated) + slot + footer. Props include `guestNavbar`, `hideFooter`, `scrollToTop`.
-- `Admin.astro` — the `/admin` section with its `AdminShell` sidebar (`features/admin/shell`); gated by `role === "admin"` in `src/middleware.ts`. Takes `scrollToTop`.
+- `Admin.astro` — the `/admin` section with its `AdminShell` sidebar (`features/admin/shell`); gated by `role === "admin"` in `src/middleware.ts`. Takes `scrollToTop`. `AdminShell` already pads the page and fills the viewport's height, so every admin page uses all of the inset: `PageShell` (or `ResourceOverview`) with `maxWidth="full"` and `padding="none"`.
 - `WithSidebar.astro` — a section with sub-surfaces. Takes `section` (the section href, must declare `subItems`), plus `persistScroll` and `scrollToTop`. Reads the `sidebar_state` cookie server-side so the sidebar doesn't flash open.
   - The page scrolls inside `<main data-app-scroller>`, not the window, so Astro's own scroll restoration never applies. The persisted `WithSidebarHeader` island (`features/app-shell/sidebar`) restores that offset per path plus query string through `useElementScrollRestoration` (`hooks/use-scroll-restoration.ts`), synchronously on `astro:after-swap`.
   - The saved state includes the content height. On return it is reserved as `min-height` on the `data-app-scroll-content` wrapper, so the offset applies before the `client:only` islands render. The reservation goes when the content reaches it, on a pointer or key press in the scroller, on the next swap, or after `RESERVE_MS`. Never put the reservation on the scroller itself, and never wait for content with retries.
