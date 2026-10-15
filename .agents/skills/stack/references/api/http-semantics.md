@@ -19,7 +19,7 @@ Decide by what the handler does, not by its name:
 | The handler… | Method | Examples in this repo |
 | --- | --- | --- |
 | Only reads, and its input fits a query string (scalars, optional filters, arrays of scalars) | `GET` | `cron.list`, `organization.search`, `sessionHistory.list`, `content.entitySchema` |
-| Only reads, and its input does not fit a query string (arrays of objects, batches of entity refs) | `QUERY` | `comment.counts`, `entityIcon.getMany` |
+| Only reads, and its input does not fit a query string (arrays of objects, batches of entity refs) or carries a secret that must not land in URLs and access logs (a git URL with credentials) | `QUERY` | `comment.counts`, `entityIcon.getMany`, `content.listBranches` |
 | Creates a new resource whose id the server assigns | `POST` + `successStatus: 201` | `comment.create`, `organization.createTeam`, `cron.create` |
 | Runs an action that is neither CRUD nor idempotent | `POST` | `cron.runNow` |
 | Sets the whole state of a target the caller identifies: full replacement, or an "ensure it exists" upsert keyed by a natural key | `PUT` | `entityIcon.set` |
@@ -29,7 +29,7 @@ Decide by what the handler does, not by its name:
 Rules behind the table:
 
 - **`GET` and `QUERY` are safe.** They never write, trigger a job or call a downstream service that writes. Lazy get-or-create of the caller's own defaults belongs in the write path, never in a read.
-- **`GET` vs `QUERY`.** `GET` is the default for reads: it works from an address bar, from `curl` without a body and from Scalar's "try it". Use `QUERY` only when the input does not fit a query string. Arrays of objects are the case today: bracket notation turns 100 entity refs into a URL of about 9 KB. A batch still caps its array in the zod schema (`.min(1).max(100)`, like `comment.counts`). Never switch a read to `POST` to fit its input. A CDN or WAF placed in front of a deployment must let `QUERY` through, as Caddy, Bun and Vite's proxy already do.
+- **`GET` vs `QUERY`.** `GET` is the default for reads: it works from an address bar, from `curl` without a body and from Scalar's "try it". Use `QUERY` only when the input does not fit a query string, or when it carries a secret: a query string ends up in access logs, history and proxies. Arrays of objects are the case today: bracket notation turns 100 entity refs into a URL of about 9 KB. A batch still caps its array in the zod schema (`.min(1).max(100)`, like `comment.counts`). Never switch a read to `POST` to fit its input. A CDN or WAF placed in front of a deployment must let `QUERY` through, as Caddy, Bun and Vite's proxy already do.
 - **`PUT` vs `POST`.** If calling twice leaves the same state and returns the same row, it is `PUT`. Insert-with-`onConflictDoNothing()`/`onConflictDoUpdate()` on a natural key is a `PUT`. Return a `created` flag in the output when the caller needs to tell the outcomes apart.
 - **`PUT` vs `PATCH`.** `PUT` replaces what it targets, so an omitted optional value is cleared (`updateItem` sets `metadata ?? null`). `PATCH` never resets what it does not receive. An optional field the caller omits keeps its value. Use `...(input.x !== undefined && { x: input.x })` in the `set()`, and use `null` to clear explicitly.
 - **A `PATCH` may require fields.** A single-purpose update requires the field it exists to change (`comment.update` → `content`, `cron.setEnabled` → `enabled`). Toggles and status changes on an existing row are `PATCH`, not `POST`.

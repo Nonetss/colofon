@@ -78,12 +78,26 @@ Creating a repository, or changing its `url` or `ref`, SHALL start a sync of tha
 - **WHEN** an admin deletes the repository `homelab`
 - **THEN** its clone SHALL be removed and `GET /api/v1/content/schemas/homelab` SHALL answer `NOT_FOUND`
 
+### Requirement: Branches of a repository
+
+The backend SHALL expose to admins a procedure that lists the branches of a git repository, read from the remote without cloning it, and the branch its HEAD points at. It SHALL take either a typed `https://` or `http://` URL or the slug of a stored repository, which it reads at its stored URL with the credentials the client never sees, and SHALL refuse both or neither. Its input SHALL travel in the request body, never in the query string, since the URL may carry credentials. An unknown slug SHALL answer `NOT_FOUND`, and a remote that can't be read `BAD_GATEWAY` with the git error, without credentials.
+
+#### Scenario: Branches of a typed URL
+
+- **WHEN** an admin asks for the branches of a repository with the branches `main` and `produccion` whose HEAD points at `main`
+- **THEN** the backend SHALL answer `main` and `produccion`, with `main` as the default branch
+
+#### Scenario: Branches of a private stored repository
+
+- **WHEN** an admin asks for the branches of the stored repository `documentacion`, whose URL carries a token
+- **THEN** the backend SHALL read them with that token, and the answer SHALL NOT include it
+
 ### Requirement: Content admin screen
 
 The admin panel SHALL provide a “Contenido” screen at `/admin/content`, listed in the admin navigation and overview for admins only, that:
 - lists the repositories in a table with their name, slug, URL without credentials, ref and last sync (time, short commit, or the error);
 - shows each repository's catalog URL, ready to copy into the editor's `yaml.schemaStore.url`;
-- creates and edits repositories in a form, where the slug is only editable on creation and an empty URL field on edit keeps the stored URL;
+- creates and edits repositories in a form, where the slug is only editable on creation and an empty URL field on edit keeps the stored URL, and the ref is chosen from a select of the remote's branches once they can be read (the typed URL once complete, or the stored repository while editing with the URL left empty), preselecting the default branch on creation; while they can't be read, the ref is typed;
 - deletes a repository after a confirmation;
 - syncs a repository on demand and shows the outcome.
 
@@ -93,6 +107,11 @@ Non-admin users SHALL NOT reach the screen; the request SHALL be redirected to t
 
 - **WHEN** an admin opens `/admin/content` on a platform served at `https://docs.example.com` with the repository `documentacion`
 - **THEN** the screen SHALL show `https://docs.example.com/api/v1/content/schemas/documentacion` for that repository with a control to copy it
+
+#### Scenario: Choosing a branch
+
+- **WHEN** an admin types the complete URL of a repository with the branches `main` and `produccion` in the creation form
+- **THEN** the ref SHALL become a select offering `main` and `produccion`, with `main` selected
 
 #### Scenario: Failed sync shown
 

@@ -30,7 +30,7 @@ Cada uno tiene:
 | Nombre | Cómo se muestra en el panel. |
 | Slug | Su nombre en la URL del catálogo (`documentacion`, `homelab`…). Minúsculas, números y guiones; no se puede cambiar después de crearlo. |
 | URL | La URL `https://` del repositorio git. Para uno privado, las credenciales van en la URL (`https://usuario:token@host/org/repo.git`). La plataforma nunca las muestra ni las escribe en el log. |
-| Ref | La rama, el tag o el commit que se descarga. Por defecto `main`. |
+| Ref | La rama, el tag o el commit que se descarga. Al poner la URL completa, el formulario lee las ramas del repositorio y las ofrece en una lista, con la rama principal elegida; si no puede leerlas, se escribe a mano. |
 
 El backend guarda un clon de cada repositorio en `.content/<id>/` (en Docker,
 en el volumen `content_data`). Lo sincroniza al arrancar, cada cinco minutos
