@@ -72,7 +72,7 @@ Each of backend and frontend SHALL have an `apps/<app>/Dockerfile.dev` that inst
 
 ### Requirement: Dev stack uses the native dev configuration
 
-Each dev app container SHALL read its configuration from the root `.env` file that native dev reads. The only compose `environment` overrides for the apps SHALL be container addresses: `BACKEND_URL=http://backend:3000` for the frontend and `DATABASE_URL` (the stack's `db`) for the backend; and, for the backend, the container path of the content folder. When `.env` sets `CONTENT_DIR`, the backend container SHALL get that host folder mounted read-only and `CONTENT_DIR` overridden to the mount path; when it does not, no host folder SHALL be mounted and `CONTENT_DIR` SHALL stay unset. The backend SHALL keep a `CONTENT_REPO` clone in a named volume, so it survives recreating the container. Every other value, including `BETTER_AUTH_URL`, `CORS_ORIGIN`, `CONTENT_REPO` and `CONTENT_REF`, SHALL come from `.env` unchanged.
+Each dev app container SHALL read its configuration from the root `.env` file that native dev reads. The only compose `environment` overrides for the apps SHALL be container addresses: `BACKEND_URL=http://backend:3000` for the frontend and `DATABASE_URL` (the stack's `db`) for the backend. No host content folder SHALL be mounted in the backend container. The backend SHALL keep its content repository clones in a named volume, so they survive recreating the container. Every other value, including `BETTER_AUTH_URL` and `CORS_ORIGIN`, SHALL come from `.env` unchanged.
 
 #### Scenario: Shared data with native dev
 
@@ -81,13 +81,18 @@ Each dev app container SHALL read its configuration from the root `.env` file th
 
 #### Scenario: Editing content with the Docker dev stack
 
-- **WHEN** `.env` sets `CONTENT_DIR=../documentacion` and a writer saves a new entity there while the Docker dev stack runs
-- **THEN** the backend container SHALL see the new file on its next read, without a rebuild, a restart or a sync rule
+- **WHEN** a writer pushes a new entity to a stored repository and an admin syncs it from `/admin/content` while the Docker dev stack runs
+- **THEN** the backend container SHALL serve the new entity in that repository's schemas, without a rebuild or a restart
 
 #### Scenario: Content folder is read-only in the container
 
-- **WHEN** the backend container tries to write under its content mount
-- **THEN** the write SHALL fail, leaving the host folder untouched
+- **WHEN** the backend dev container starts, whatever `.env` holds
+- **THEN** no host content folder SHALL be mounted in it, so it cannot write to one
+
+#### Scenario: Clones survive recreating the backend
+
+- **WHEN** the backend dev container is recreated after it cloned a content repository
+- **THEN** the new container SHALL find the clone in the named volume and fetch it instead of cloning from scratch
 
 ### Requirement: Configurable Astro dev proxy target
 

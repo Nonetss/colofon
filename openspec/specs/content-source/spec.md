@@ -8,35 +8,26 @@ Defines where the backend gets the content repository from, a local folder or a 
 
 ### Requirement: Content source configuration
 
-The backend SHALL read the content from `CONTENT_DIR`, a local folder, or from `CONTENT_REPO`, a git repository URL, checked out at `CONTENT_REF` (a branch, tag or commit, default `main`). A relative `CONTENT_DIR` SHALL be resolved against the repo root. Setting both `CONTENT_DIR` and `CONTENT_REPO` SHALL fail environment validation. With neither set, the backend SHALL start without content and log that no content source is configured.
-
-#### Scenario: Both sources set
-
-- **WHEN** the backend starts with `CONTENT_DIR` and `CONTENT_REPO` both set
-- **THEN** environment validation SHALL fail and the backend SHALL NOT start
+The backend SHALL read the content from the content repositories stored in the database (`content-repository-management`), each a git repository checked out at its `ref`. It SHALL NOT read the content's location from environment variables, and SHALL NOT read content from a local folder other than its own clones. With no repository stored, the backend SHALL start and work without content.
 
 #### Scenario: No source
 
-- **WHEN** the backend starts with neither variable set
-- **THEN** it SHALL start, every other feature SHALL work, and the content features SHALL behave as for an empty content repository
+- **WHEN** the backend starts with no content repository stored
+- **THEN** it SHALL start, every other feature SHALL work, and every schema endpoint SHALL answer `NOT_FOUND`
 
-### Requirement: Local folder is read in place
+#### Scenario: Both sources set
 
-With `CONTENT_DIR`, the backend SHALL read the folder in place on each request that needs the content, so a saved change is visible on the next request without restarting the backend or running any command.
-
-#### Scenario: New entity while editing
-
-- **WHEN** a writer adds `catalogo/maquinas/nas-02.yaml` under `CONTENT_DIR`
-- **THEN** the next request for the machines' schema SHALL list `nas-02` among the ids its references accept
+- **WHEN** the backend starts with the retired `CONTENT_DIR` and `CONTENT_REPO` both still set in `.env`
+- **THEN** it SHALL start normally and read no content from them
 
 ### Requirement: Git repository is cloned and refreshed
 
-With `CONTENT_REPO`, the backend SHALL keep a clone in a dedicated folder (`.content/` at the repo root in native dev, a named volume in Docker). On boot it SHALL clone the repository when the folder holds no clone of that URL, and otherwise fetch it; then it SHALL check out `CONTENT_REF` exactly as the remote has it, discarding any local change in the clone. A failed clone or fetch SHALL NOT stop the backend: it SHALL log the failure and keep using the last checkout, if any. Credentials SHALL travel only in the URL (for example a token for HTTPS), and the backend SHALL never log them.
+The backend SHALL keep one clone per content repository, in its own folder under a dedicated clone root (`.content/` at the repo root in native dev, a named volume in Docker), named by the repository's id. A sync SHALL clone the repository when its folder holds no clone of the repository's current URL, and otherwise fetch it; then it SHALL check out the repository's `ref` exactly as the remote has it, discarding any local change in the clone. A failed clone or fetch SHALL NOT stop the backend or affect other repositories: it SHALL record and log the failure and keep using the last checkout, if any. Credentials SHALL travel only in the URL (for example a token for HTTPS), and the backend SHALL never log them. Folders under the clone root that belong to no stored repository SHALL be removed on the next sync of all repositories.
 
 #### Scenario: First boot
 
-- **WHEN** the backend boots with `CONTENT_REPO` set and an empty clone folder
-- **THEN** it SHALL clone the repository and check out `CONTENT_REF`
+- **WHEN** the backend boots with a stored repository and an empty clone root
+- **THEN** the backend SHALL clone it into its own folder and check out its `ref`
 
 #### Scenario: Unreachable remote
 
@@ -45,23 +36,33 @@ With `CONTENT_REPO`, the backend SHALL keep a clone in a dedicated folder (`.con
 
 #### Scenario: Another repository
 
-- **WHEN** `CONTENT_REPO` changes to a different URL and the backend restarts
-- **THEN** it SHALL replace the clone with one of the new repository
+- **WHEN** an admin changes a repository's URL to a different repository
+- **THEN** the next sync SHALL replace its clone with one of the new repository
+
+#### Scenario: Leftover clone
+
+- **WHEN** the clone root holds a folder that matches no stored repository, such as a clone left by a former configuration
+- **THEN** the next sync of all repositories SHALL remove it
 
 ### Requirement: Periodic refresh
 
-With `CONTENT_REPO`, the backend SHALL refresh the clone every five minutes through a code-declared cron job, in addition to the refresh on boot. The job SHALL NOT be reachable over HTTP. With `CONTENT_DIR` or no source, the job SHALL do nothing.
+The backend SHALL sync every stored content repository on boot, without delaying startup, and every five minutes through a code-declared cron job. The job SHALL NOT be reachable over HTTP. A repository that fails to sync SHALL NOT prevent the others from syncing. With no repository stored, the job SHALL do nothing.
 
 #### Scenario: A push reaches the backend
 
-- **WHEN** a writer pushes a new entity to `CONTENT_REF` of `CONTENT_REPO`
+- **WHEN** a writer pushes a new entity to the `ref` of a stored repository
 - **THEN** the backend SHALL serve it at the latest after the next five-minute refresh
+
+#### Scenario: One repository fails
+
+- **WHEN** the periodic job runs with two repositories and the first one's remote is unreachable
+- **THEN** the second SHALL still be synced
 
 ### Requirement: Last valid content is kept
 
-When the content's declarations (`doc.config.yaml` or a `_tipo.yaml`) are invalid, the backend SHALL keep using the last valid declarations it read and SHALL log each problem with its file and message. When it has never read valid declarations, it SHALL behave as without content.
+For each repository, when the content's declarations (`doc.config.yaml` or a `_tipo.yaml`) are invalid, the backend SHALL keep using the last valid declarations it read for that repository and SHALL log each problem with the repository's slug, the file and the message. When it has never read valid declarations for a repository, it SHALL behave as for that repository without content.
 
 #### Scenario: A broken push
 
 - **WHEN** a commit breaks `catalogo/maquinas/_tipo.yaml` after the backend had read a valid version
-- **THEN** the backend SHALL keep serving the previous declarations and log the problem on `catalogo/maquinas/_tipo.yaml`
+- **THEN** the backend SHALL keep serving the previous declarations of that repository and log the problem on `catalogo/maquinas/_tipo.yaml`

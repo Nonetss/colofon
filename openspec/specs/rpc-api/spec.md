@@ -220,7 +220,7 @@ The system SHALL serve all procedures through an RPC handler mounted under `/rpc
 The API handlers SHALL resist CSRF attacks based on the session cookie without relying on a client-side plugin:
 
 - The RPC handler under `/rpc` SHALL accept the `POST`, `PUT`, `PATCH` and `DELETE` methods for every procedure, SHALL accept `QUERY` only for procedures whose declared HTTP method is `GET` or `QUERY`, and SHALL reject `GET`.
-- The OpenAPI handler under `/api` SHALL reject `GET` requests that a browser makes as a top-level navigation from another site (`Sec-Fetch-Site` `cross-site` or `none` with `Sec-Fetch-Mode: navigate` and `Sec-Fetch-Dest: document`), and SHALL let through requests without Fetch Metadata headers (server-to-server clients).
+- The OpenAPI handler under `/api` SHALL reject `GET` requests that a browser makes as a top-level navigation from another site (`Sec-Fetch-Site` `cross-site` or `none` with `Sec-Fetch-Mode: navigate` and `Sec-Fetch-Dest: document`), and SHALL let through requests without Fetch Metadata headers (server-to-server clients). The public content schema endpoints (`/api/v1/content/schemas/{repository}` and below) SHALL be exempt: they are read-only, never use the session, and are opened from editors and from the address bar.
 - Authentication cookies SHALL be marked `SameSite=Lax` or stricter, so browsers do not send them on cross-site unsafe methods. `QUERY` is not a CORS-safelisted method, so a cross-site `QUERY` needs a preflight that only the configured origin passes.
 
 #### Scenario: GET to the RPC handler
@@ -252,6 +252,11 @@ The API handlers SHALL resist CSRF attacks based on the session cookie without r
 
 - **WHEN** the frontend calls a procedure over `/rpc` with `POST` from its own origin
 - **THEN** the procedure SHALL run with the session's context
+
+#### Scenario: Catalog URL opened from the address bar
+
+- **WHEN** a user pastes `https://<host>/api/v1/content/schemas/documentacion` in the browser's address bar (`Sec-Fetch-Site: none`, `Sec-Fetch-Mode: navigate`, `Sec-Fetch-Dest: document`)
+- **THEN** the system SHALL answer the repository's schema catalog
 
 ### Requirement: RPC client method selection
 

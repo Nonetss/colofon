@@ -34,10 +34,10 @@ The repo SHALL be configured from one `.env` file at the repo root. Every worksp
 
 `@nonete/env/server` SHALL validate the server variables with t3-env and zod and export them as a typed `env` object:
 - required: `DATABASE_URL`, `BETTER_AUTH_SECRET` (at least 32 characters), `BETTER_AUTH_URL` (URL) and `CORS_ORIGIN` (URL);
-- with defaults: `NODE_ENV` (`development` | `production` | `test`, default `development`), `LOG_LEVEL` (`fatal` | `error` | `warn` | `info` | `debug` | `trace`, default `info`) and `CONTENT_REF` (default `main`);
-- optional: `ADMIN_EMAIL`, `ADMIN_PASSWORD` (at least 8 characters), `ADMIN_NAME`, `OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET`, `OIDC_DISCOVERY_URL`, `CONTENT_DIR` (a folder path) and `CONTENT_REPO` (a git repository URL), where `CONTENT_DIR` and `CONTENT_REPO` SHALL NOT both be set.
+- with defaults: `NODE_ENV` (`development` | `production` | `test`, default `development`), `LOG_LEVEL` (`fatal` | `error` | `warn` | `info` | `debug` | `trace`, default `info`);
+- optional: `ADMIN_EMAIL`, `ADMIN_PASSWORD` (at least 8 characters), `ADMIN_NAME`, `OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET` and `OIDC_DISCOVERY_URL`.
 
-Empty strings SHALL be treated as unset. Validation SHALL be skipped when `SKIP_ENV_VALIDATION` is set. `@nonete/env/web` SHALL validate the client variable `PUBLIC_SERVER_URL`.
+The content repositories are not configured through the environment: `CONTENT_DIR`, `CONTENT_REPO` and `CONTENT_REF` SHALL NOT be declared or read. Empty strings SHALL be treated as unset. Validation SHALL be skipped when `SKIP_ENV_VALIDATION` is set. `@nonete/env/web` SHALL validate the client variable `PUBLIC_SERVER_URL`.
 
 #### Scenario: Missing required variable
 
@@ -46,13 +46,18 @@ Empty strings SHALL be treated as unset. Validation SHALL be skipped when `SKIP_
 
 #### Scenario: Defaults apply
 
-- **WHEN** neither `NODE_ENV`, `LOG_LEVEL` nor `CONTENT_REF` is set
-- **THEN** `env.NODE_ENV` SHALL be `development`, `env.LOG_LEVEL` SHALL be `info` and `env.CONTENT_REF` SHALL be `main`
+- **WHEN** neither `NODE_ENV` nor `LOG_LEVEL` is set
+- **THEN** `env.NODE_ENV` SHALL be `development` and `env.LOG_LEVEL` SHALL be `info`
+
+#### Scenario: Retired content variables
+
+- **WHEN** the repo (excluding archived OpenSpec changes) is searched for `CONTENT_DIR`, `CONTENT_REPO` and `CONTENT_REF`
+- **THEN** no env schema, `.env.example`, compose file, script or current document SHALL reference them
 
 #### Scenario: Two content sources
 
-- **WHEN** the backend starts with both `CONTENT_DIR` and `CONTENT_REPO` set
-- **THEN** environment validation SHALL fail and the backend SHALL NOT start
+- **WHEN** the backend starts with the retired `CONTENT_DIR` and `CONTENT_REPO` both still set
+- **THEN** environment validation SHALL NOT fail on them and the backend SHALL start, reading no content from them
 
 #### Scenario: Build without secrets
 
@@ -97,7 +102,6 @@ The names `SERVER_URL`, `ENVIRONMENT` and `BACKEND_PROXY_TARGET` SHALL NOT be re
 
 Every compose file (`compose.yml`, `compose.dev.yml`, `compose.prod.yml`) SHALL load the root `.env` for the app services and SHALL override only:
 - container-network addresses (service hostnames, `BACKEND_URL`);
-- container paths of host folders the compose file mounts (`CONTENT_DIR`, set to where the host's `CONTENT_DIR` is mounted, and only when the host value is set);
 - values fixed by the compose file itself (such as the `CORS_ORIGIN` and `BETTER_AUTH_URL` of the port it publishes, or `BETTER_AUTH_URL` taken from `CORS_ORIGIN`);
 - `NODE_ENV`.
 
@@ -111,13 +115,13 @@ It SHALL always use the unified names.
 
 #### Scenario: Content folder inside a container
 
-- **WHEN** the Docker dev stack starts with `CONTENT_DIR=../documentacion` in `.env`
-- **THEN** the backend container SHALL receive `CONTENT_DIR` set to the container path where that folder is mounted
+- **WHEN** the Docker dev stack starts with a leftover `CONTENT_DIR=../documentacion` in `.env`
+- **THEN** the backend container SHALL get no host content folder mounted and no `CONTENT_DIR` override
 
 #### Scenario: Content repository inside a container
 
-- **WHEN** a compose file starts the backend with `CONTENT_REPO` set and `CONTENT_DIR` unset in `.env`
-- **THEN** the backend container SHALL receive `CONTENT_REPO` and `CONTENT_REF` unchanged and no `CONTENT_DIR`
+- **WHEN** any compose file starts the backend
+- **THEN** it SHALL set no content variable, and the backend SHALL read its content repositories from the database
 
 ### Requirement: Scripts generate the unified file
 

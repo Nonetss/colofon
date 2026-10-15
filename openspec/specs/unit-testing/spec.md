@@ -46,8 +46,8 @@ Unit tests SHALL NOT open a database connection, make a network call, or depend 
 
 #### Scenario: An integration a test turns on does not leak
 
-- **WHEN** a test sets `testEnv.CONTENT_DIR` and the next test starts after `resetEnv()` in `beforeEach`
-- **THEN** the next test SHALL read `CONTENT_DIR` as unset
+- **WHEN** a test sets `testEnv.OIDC_CLIENT_ID` and the next test starts after `resetEnv()` in `beforeEach`
+- **THEN** the next test SHALL read `OIDC_CLIENT_ID` as unset
 
 #### Scenario: Results do not depend on the machine's timezone
 
