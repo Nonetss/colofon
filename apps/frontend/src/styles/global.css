@@ -1841,6 +1841,12 @@ html.theme-transitioning::view-transition-new(root) {
   padding: 1rem;
 }
 
+/* An enlarged diagram is already open: no zoom-in cursor over it, so its
+   boxes and arrows read as things to hover. Zoomed, it can be dragged. */
+.doc-lightbox-stage:not([data-zoomed]) .doc-lightbox-drawing {
+  cursor: default;
+}
+
 /* The copy keeps the size the lightbox gives it, not the column's width. */
 .doc-lightbox-drawing .doc-diagram-svg {
   width: auto;
