@@ -114,9 +114,13 @@ de las apps (`apps/backend/Dockerfile`, `apps/frontend/Dockerfile` y sus
    `packages/` o los manifiestos de la raíz; el gateway si cambió
    `apps/gateway/`. Si cambia el propio workflow o `.dockerignore`, se
    reconstruyen las tres.
-2. Construye solo esas y las sube al GitHub Container Registry con las
-   etiquetas `latest`, el nombre de la rama y `<rama>-<sha>`, usando una caché
-   de capas en el propio registry.
+2. Construye solo esas, para `amd64` y `arm64`, cada arquitectura de forma
+   nativa en su propio runner (`ubuntu-26.04` y `ubuntu-26.04-arm`, sin
+   emulación) y con una caché de capas en el propio registry.
+3. Junta las dos arquitecturas en una imagen multi-arquitectura y la sube al
+   GitHub Container Registry con las etiquetas `latest`, el nombre de la rama
+   y `<rama>-<sha>`. Así el mismo `compose.prod.yml` vale para un servidor x86
+   y para uno ARM (una Raspberry Pi, por ejemplo).
 
 Se autentica con el `GITHUB_TOKEN` del workflow, así que no hay que configurar
 ningún secreto. El CI **no** ejecuta lint, tipos ni tests: eso se valida en

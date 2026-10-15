@@ -347,7 +347,7 @@ overridden in the compose file.
 ### Docker Compose (production, prebuilt images)
 
 - Config: `compose.prod.yml` pulls the prebuilt `frontend`, `backend` and `gateway` images, plus `db` (Postgres)
-- Images are built by `.github/workflows/docker-build.yml` on pushes to `main`, which rebuilds only the images whose code changed and pushes them to the GitHub Container Registry. On the Gitea remote, `.gitea/workflows/docker-build.yml` does the same against the Gitea container registry (needs a `TOKEN` repo secret with `write:package`)
+- Images are built by `.github/workflows/docker-build.yml` on pushes to `main`, which rebuilds only the images whose code changed, natively for `amd64` and `arm64`, and pushes them to the GitHub Container Registry as multi-arch images. On the Gitea remote, `.gitea/workflows/docker-build.yml` does the same against the Gitea container registry (needs a `TOKEN` repo secret with `write:package`)
 - Only the gateway publishes a port (`FRONTEND_PORT`, default `4444`): it serves the site, the backend API and the hosted git repositories on one origin. A reverse proxy in front of the stack targets that port
 - One `.env` next to `compose.prod.yml` supplies every service's configuration. It belongs to the deployment directory, not to a dev checkout
 - Volumes: `db_data` (PostgreSQL), `content_data` (disposable clones, rebuilt by the next sync) and `hosted_data` (the hosted repositories: back it up)

@@ -116,12 +116,17 @@ The root `.dockerignore` SHALL exclude every `.env` and `.env.*` file (except `.
 
 ### Requirement: CI builds only the changed images
 
-`.github/workflows/docker-build.yml` SHALL, on push to the configured branches (including `main`), determine which of the `backend`, `frontend` and `gateway` images are affected by the pushed changes and build and push only those, as a matrix. The backend and frontend SHALL be affected by changes under their app directory, `packages/`, `package.json`, `bun.lock` or `bunfig.toml`; the gateway by changes under `apps/gateway/`; and every image by changes to the workflow itself or `.dockerignore`. A new branch, a force push or a missing base commit SHALL build every image. The jobs SHALL run on GitHub-hosted `ubuntu-26.04` runners. Each image SHALL be pushed to the GitHub Container Registry, authenticated with the workflow's `GITHUB_TOKEN` (`packages: write`), as `ghcr.io/<owner>/<repo>-<app>` in lowercase (for this repo `ghcr.io/nonetss/doc-<app>`) with the tags `latest`, the branch name and `<branch>-<short sha>`, using a registry layer cache per branch that falls back to `main`'s. A newer push to the same branch SHALL cancel a running build.
+`.github/workflows/docker-build.yml` SHALL, on push to the configured branches (including `main`), determine which of the `backend`, `frontend` and `gateway` images are affected by the pushed changes and build and push only those, as a matrix. The backend and frontend SHALL be affected by changes under their app directory, `packages/`, `package.json`, `bun.lock` or `bunfig.toml`; the gateway by changes under `apps/gateway/`; and every image by changes to the workflow itself or `.dockerignore`. A new branch, a force push or a missing base commit SHALL build every image. Each image SHALL be built for `linux/amd64` and `linux/arm64`, each architecture natively on its own GitHub-hosted runner (`ubuntu-26.04` and `ubuntu-26.04-arm`, without emulation), and pushed under an architecture tag `<branch>-<short sha>-<arch>`; a merge job SHALL then join both into one multi-arch manifest. Images SHALL be pushed to the GitHub Container Registry, authenticated with the workflow's `GITHUB_TOKEN` (`packages: write`), as `ghcr.io/<owner>/<repo>-<app>` in lowercase (for this repo `ghcr.io/nonetss/doc-<app>`), the manifest with the tags `latest`, the branch name and `<branch>-<short sha>`, using a registry layer cache per branch and architecture that falls back to `main`'s. A newer push to the same branch SHALL cancel a running build.
 
 #### Scenario: Frontend-only change
 
 - **WHEN** a push to `main` changes only files under `apps/frontend/`
-- **THEN** CI SHALL build and push only the `doc-frontend` image, tagged `latest`, `main` and `main-<short sha>`
+- **THEN** CI SHALL build and push only the `doc-frontend` image, for amd64 and arm64, under a manifest tagged `latest`, `main` and `main-<short sha>`
+
+#### Scenario: Pulling on an arm64 server
+
+- **WHEN** an arm64 host pulls `ghcr.io/nonetss/doc-backend:main`
+- **THEN** the manifest SHALL resolve to the image built for `linux/arm64`
 
 #### Scenario: Shared package change
 
