@@ -39,7 +39,7 @@ lerna-debug.log*
 # Turbo
 .turbo
 
-# Clone of CONTENT_REPO kept by the backend
+# Clones of the content repositories kept by the backend
 .content/
 .nx
 

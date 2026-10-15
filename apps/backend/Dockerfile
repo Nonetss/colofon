@@ -35,7 +35,7 @@ RUN cd apps/backend && bun run build
 FROM oven/bun:${BUN_VERSION}-slim AS runtime
 ENV NODE_ENV=production
 
-# git clones and fetches CONTENT_REPO (the backend's content sync); the CA
+# git clones and fetches the content repositories (the backend's content sync); the CA
 # certificates let it reach HTTPS remotes.
 RUN apt-get update \
   && apt-get install -y --no-install-recommends git ca-certificates \
