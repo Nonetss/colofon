@@ -13,19 +13,24 @@ procedimiento puede convertirse en una.
 | Descubrimiento | `packages/api/src/v1/cron/discovery.ts` | Recorre el router de v1 y encuentra qué procedimientos se pueden programar y cuáles traen su horario declarado. |
 | API de crons | `packages/api/src/v1/cron/` | Crear, editar, pausar, borrar y ejecutar jobs, y consultar su historial. |
 | Cableado | `apps/backend/src/cron/` | Une el planificador con la API al arrancar el backend. |
-| Interfaz | `apps/frontend/src/features/crons/` | `/crons` (lista) y `/crons/[id]` (detalle e historial en vivo). |
 
 En la base de datos, `cron_job` guarda la definición de cada job y `cron_run`
 una fila por cada ejecución.
+
+**No hay interfaz web.** Los jobs se gestionan a través de la API (`v1.cron`):
+un admin puede probar sus endpoints desde `/scalar`, o llamarlos con
+`/api/v1/...` desde un script con una API key. La sincronización del
+contenido, un job declarado en código, muestra su resultado por repositorio
+en `/admin/content`.
 
 ## Dos tipos de jobs
 
 ### Jobs manuales
 
-Un admin los crea desde `/crons`: elige un **handler** (un procedimiento
-marcado como programable), rellena un formulario generado a partir del esquema
-de entrada de ese procedimiento y le pone una expresión cron. Se pueden
-editar, pausar, borrar y ejecutar al momento.
+Un admin los crea con `cron.create`: elige un **handler** (un procedimiento
+marcado como programable), le pasa un payload que cumpla el esquema de entrada
+de ese procedimiento y le pone una expresión cron. Se pueden editar, pausar,
+borrar y ejecutar al momento, también por la API.
 
 Para que un procedimiento aparezca como handler disponible, se marca en sus
 metadatos:
@@ -55,8 +60,8 @@ Estos jobs:
   entrada obligatoria;
 - se ejecutan como el **administrador del seed** (`ADMIN_EMAIL`), así que
   pueden llamar a procedimientos protegidos o de admin;
-- son **de solo lectura**: en `/crons` aparecen sin controles, y la API
-  responde `CONFLICT` si alguien intenta editarlos, pausarlos o borrarlos.
+- son **de solo lectura**: la API responde `CONFLICT` si alguien intenta
+  editarlos, pausarlos o borrarlos.
 
 Las dos formas (`eligible` y `schedule`) son excluyentes.
 
@@ -78,14 +83,13 @@ ni siquiera la de un admin.
 
 ## Historial en vivo
 
-La página de detalle no consulta periódicamente. Se suscribe a
-`cron.watchRuns`, un stream SSE que avisa cada vez que una ejecución de ese job
-cambia (empieza, termina bien, falla, se salta). Con cada aviso, la página
-vuelve a pedir el job y su historial. Si la conexión se corta, reconecta con
-espera creciente.
+`cron.watchRuns` es un stream SSE que avisa cada vez que una ejecución de un
+job cambia (empieza, termina bien, falla, se salta), para que un cliente no
+tenga que consultar periódicamente: con cada aviso vuelve a pedir el job y su
+historial.
 
 Los eventos no se guardan: al conectarse, el cliente recibe `subscribed` y
-vuelve a cargar los datos para no perderse nada.
+tiene que cargar los datos para no perderse nada.
 
 ## Cosas a tener en cuenta
 

@@ -53,7 +53,7 @@ IA vea nunca un secreto**.
 | Catálogo con esquemas | Tipos de dato declarados por el contenido, validados | ✅ |
 | Autocompletado en el editor | Catálogo de schemas servido por el backend | ✅ |
 | Repositorios en la plataforma | Alta, sincronización y estado en `/admin/content` | ✅ |
-| Web de documentación | Render de las fichas, páginas por tipo, búsqueda, `llms.txt` | ⏳ |
+| Web de documentación | Render de las fichas, páginas por tipo, búsqueda, `llms.txt` | 🟡 Render de las fichas, navegación y selector de repositorios; faltan componentes, páginas por tipo, búsqueda completa y `llms.txt` |
 | Diagramas | Declarados en YAML, con layout automático e interactivos | ⏳ |
 | Skills | Instrucciones para agentes, servidas por el sitio | ⏳ |
 | MCP de conocimiento | Buscar, leer y consultar el catálogo desde cualquier agente | ⏳ |
@@ -114,16 +114,28 @@ aparecen después de sincronizar. En desarrollo, la extensión YAML necesita
 `"http.proxyStrictSSL": false` en los ajustes de usuario para aceptar el
 certificado local.
 
-### Web de documentación (pendiente)
+### Web de documentación (en parte)
 
-- El backend convierte cada ficha MDX en un **árbol** sin ejecutar nada; el
-  frontend lo pinta y monta como islas solo los componentes interactivos.
+Ya existe el **lector**, con el aspecto de `doc-sjd`: `/` es la portada
+"Todos" con cada repositorio y sus secciones, `/<slug>` la portada de un
+repositorio y `/<slug>/<ruta>` una ficha. El backend convierte cada ficha MDX
+en un **árbol** sin ejecutar nada y el frontend lo pinta en el servidor, con
+un sidebar de secciones y fichas, un selector de repositorio ("Todos" o uno),
+migas, anterior y siguiente, y el índice "En esta página". Qué admite una
+ficha está en [`docs/human/contenido.md`](docs/human/contenido.md#cómo-se-escriben-las-fichas).
+
+Pendiente:
+
+- Montar como islas los **componentes** interactivos: hoy la plataforma no
+  ofrece ninguno y cada uno se muestra como un aviso.
 - **Componentes genéricos** que no dependen del dominio:
   `<Entidades tipo="servicios" agrupar="categoria" />` monta la portada de
   servicios de `doc-sjd` y también una lista de frutas por temporada.
 - **Páginas automáticas** por tipo y por entidad, con sus relaciones y las
   fichas que la citan.
-- **Búsqueda** y **`llms.txt`**, que es lo primero que lee un agente al llegar.
+- **Búsqueda** en el texto de las fichas (hoy el buscador del navbar solo las
+  encuentra por título, descripción y sección) y **`llms.txt`**, que es lo
+  primero que lee un agente al llegar.
 - **Si un commit rompe el contenido**, el sitio sigue sirviendo la última
   versión válida y muestra los errores a los administradores.
 
@@ -279,14 +291,17 @@ por el modelo, y regenerarlos es un comando en vez de una conversación.
 Este repositorio nació de la plantilla `stack`. Lo que el producto no
 necesitaba se ha quitado: Loki, Tempo y OpenTelemetry, junto con el registro de
 actividad y el visor de trazas. Los logs salen por la salida estándar del
-contenedor. El resto de la base (Better Auth, oRPC, crons, comentarios,
-iconos de entidad, Docker, OpenSpec) sigue disponible.
+contenedor. Con el lector salieron también del frontend la portada de
+módulos y las pantallas de los crons; el planificador sigue en el backend y
+sus jobs se gestionan por la API. El resto de la base (Better Auth, oRPC,
+crons, comentarios, iconos de entidad, Docker, OpenSpec) sigue disponible.
 
 ## Dónde está cada cosa
 
 | Qué | Dónde |
 | --- | --- |
-| Guía del contenido y del autocompletado | [`docs/human/contenido.md`](docs/human/contenido.md) |
+| Guía del contenido, de las fichas y del autocompletado | [`docs/human/contenido.md`](docs/human/contenido.md) |
+| Lector (código) | `packages/content/src/pages`, `packages/api/src/v1/docs` y `apps/frontend/src/features/docs` |
 | Contrato del contenido (código) | `packages/content` |
 | Specs | `openspec/specs/content-contract`, `content-editor-schemas` y `content-repository-management` |
 | Cambios ya hechos y su porqué | `openspec/changes/archive/` |

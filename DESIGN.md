@@ -209,7 +209,7 @@ The palette is a single neutral ramp (paper → ink → mute → border) plus on
 
 ### Primary
 
-- **Brand Terracotta** (`oklch(0.6724 0.1308 38.7559)`): warm, between vermilion and ochre, calibrated for daylight paper. Full strength on (a) the hero icon and tile icons at `size-5`, (b) the primary CTA and the floating back-to-top control, (c) the "active / running" state dot, (d) the top layer of the logo and the section sidebar's header icon, (e) links inside rendered markdown and text selection. As a 10% tint (`bg-primary/10 text-primary`) it marks the active navigation pill/menu row, the search result tile and an active header filter; as a hairline it marks a column being resized or dropped. Aliases: `--brand-orange`, `--primary`, `--ring`, `--sidebar-primary`, `--chart-1`, `--icon-orange`.
+- **Brand Terracotta** (`oklch(0.6724 0.1308 38.7559)`): warm, between vermilion and ochre, calibrated for daylight paper. Full strength on (a) the hero icon and tile icons at `size-5`, (b) the primary CTA and the floating back-to-top control, (c) the "active / running" state dot, (d) the top layer of the logo and the current page's icon in the documentation sidebar, (e) links inside rendered markdown and text selection. As a 10% tint (`bg-primary/10 text-primary`) it marks the active menu row, the search result tile and an active header filter; as a hairline it marks a column being resized or dropped. Aliases: `--brand-orange`, `--primary`, `--ring`, `--sidebar-primary`, `--chart-1`, `--icon-orange`.
 
 ### Tertiary (Destructive)
 
@@ -263,7 +263,7 @@ Every role below is a `variant` of the `Text` component (`components/shared/bran
 - **Meta-sm** (`0.6875rem`, sentence case): inline metadata inside dense rows (suggestion details).
 - **Label** (micro-caps, `0.6875rem`, `font-medium`, `uppercase`, `0.12em` tracking, `muted-foreground` at full opacity): the recurring field label in fact rows, form fields, filters, section headings and tile subaccess. This is the signature detail that ties the whole system together. Full opacity, not `/80` — the faded version fails WCAG AA contrast (3.33:1 light mode).
 - **Status** (`text-xs`, `uppercase`, `0.08em` tracking): state words ("Vigente", "En pausa"); `StatusTag` adds the dot.
-- **Stat** (`1.5rem`, `font-medium`, `tabular-nums`, `line-height: 1.1`): a single big number in an overview fact cell (admin overview counters, the cron pulse's success rate and streak).
+- **Stat** (`1.5rem`, `font-medium`, `tabular-nums`, `line-height: 1.1`): a single big number in an overview fact cell (admin overview counters).
 - **Data** (`Space Mono`, `text-xs`, `tabular-nums`, `tracking-tight`): any technical value — cron expressions, durations, ISO timestamps, IDs, keys, JSON, chart axis dates. Keycaps (`Kbd`) use the same face at the 11px label size.
 - **Compact** (`text-xs`): any other dense copy — tile and menu descriptions, a table cell's sub-line, dialog and sheet descriptions, counts beside section titles, footers.
 
@@ -277,13 +277,13 @@ Every role below is a `variant` of the `Text` component (`components/shared/bran
 
 ## Layout
 
-**The default width is 80%.** `PageShell`, `ResourceOverview` and `Detail.astro` all default to `maxWidth="80%"`: full width below `lg`, capped at `lg:max-w-[80%]` from there, centred, with `px-4 py-6 sm:px-6` padding. Every admin overview, `/crons` and the cron detail route use it. The home page goes one step wider (`maxWidth="full"` with `lg:w-4/5`). Narrower caps are deliberate exceptions: `3xl` (48rem) for `/me`, a single compact profile block with no hero. **Detail routes** (`/crons/[id]`) don't use `PageShell`: `Detail.astro` owns its own `<main>` plus the back link with the same `maxWidth` prop, and the mounted island renders `PageHero` directly inside a bare `QueryProvider`, never a second `PageShell` (that would nest a second `<main>`). Detail pages take the same width as their overview, never narrower. Whichever wrapper is in play, the inner `.astro` file never adds a second `<main class="container…">`.
+**The default width is 80%.** `PageShell`, `ResourceOverview` and `Detail.astro` all default to `maxWidth="80%"`: full width below `lg`, capped at `lg:max-w-[80%]` from there, centred, with `px-4 py-6 sm:px-6` padding. The admin pages use `full` instead, filling the inset beside the admin sidebar. Narrower caps are deliberate exceptions: `3xl` (48rem) for `/me`, a single compact profile block with no hero. The documentation reader (`Docs.astro`) doesn't use `PageShell`: it sets the page in a reading column (`max-w-4xl`, `max-w-5xl` on the "Todos" home) between the `w-64`/`lg:w-72` sidebar and the `w-56` "En esta página" table of contents (from `xl`). **Detail routes** (none today) don't use `PageShell`: `Detail.astro` owns its own `<main>` plus the back link with the same `maxWidth` prop, and the mounted island renders `PageHero` directly inside a bare `QueryProvider`, never a second `PageShell` (that would nest a second `<main>`). Detail pages take the same width as their overview, never narrower. Whichever wrapper is in play, the inner `.astro` file never adds a second `<main class="container…">`.
 
-**Columns follow the container, not the viewport.** In-page grids and tables size themselves with container queries, because the usable width changes with the section sidebar (expanded or icon-collapsed). Tile grids (`SurfaceCardGrid`) step `1 → @xl:2 → @4xl:3 → @6xl:4 → @min-[90rem]:5`; a data table switches from stacked rows to a real table at `@4xl/table`; fact grids (`MetadataCell`) and filter panels step at `@md`/`@xl`/`@3xl`. Viewport breakpoints are reserved for chrome (navbar, sidebar, bottom action bar).
+**Columns follow the container, not the viewport.** In-page grids and tables size themselves with container queries, because the usable width changes with the sidebars (the admin sidebar expanded or icon-collapsed, the documentation sidebar beside the reading column). Tile grids (`SurfaceCardGrid`) step `1 → @xl:2 → @4xl:3 → @6xl:4 → @min-[90rem]:5`; a data table switches from stacked rows to a real table at `@4xl/table`; fact grids (`MetadataCell`) and filter panels step at `@md`/`@xl`/`@3xl`. Viewport breakpoints are reserved for chrome (navbar, sidebar, bottom action bar).
 
 Vertical rhythm is `gap-4` below `sm` and `gap-6` from `sm` between the header (`PageHero`) and the content block, `gap-2.5` between the hero icon column and the title, `gap-4` between sibling sections in a dialog body, and `gap-5` (`py-5`) inside a fact row. Card grids use `gap-3`. Spacing is on the 0.25rem Tailwind unit; nothing is invented outside the existing scale.
 
-Sticky chrome is reserved for `Navbar` (fixed, `z-40`), the section sidebar (pinned below the navbar, `h-[calc(100svh-var(--navbar-height))]`) (height `--navbar-height: 3.6rem` ≈ h-14) and `Footer` (`--footer-height: 13rem` stacked on mobile, `7.6rem` single-row on `sm+`). The layout utility `min-h-main` fills the remaining vertical space without hardcoding heights.
+Sticky chrome is reserved for `Navbar` (fixed, `z-40`) (height `--navbar-height: 3.6rem` ≈ h-14), the documentation sidebar and its table of contents (pinned below the navbar, `h-[calc(100dvh-var(--navbar-height))]`) and `Footer` (`--footer-height: 13rem` stacked on mobile, `7.6rem` single-row on `sm+`). The layout utility `min-h-main` fills the remaining vertical space without hardcoding heights.
 
 **Below `md` (768px), list pages gain bottom chrome.** Filters leave the inline panel and move to a fixed bottom `ListActionBar` (`border-t`, `bg-background/95 backdrop-blur-sm`, `px-4 pt-3`, bottom padding `0.75rem + env(safe-area-inset-bottom)`). It slides away (`translate-y-full`, 200ms ease-out) on scroll down and returns on scroll up, so it never covers what is being read. While visible it publishes `--list-action-bar-offset` (4.25rem) on `:root`; the floating back-to-top control adds that offset to its `bottom` so the two never overlap, and drops back to the corner when the bar hides. Every fixed bottom element respects the safe-area insets; touch targets on this chrome are 44px (`h-11` / `size-11`). Under a coarse pointer every icon-only button (`icon-xs` … `icon-lg`) also grows an invisible 44px hit area around its unchanged visible box.
 
@@ -305,7 +305,7 @@ Depth instead comes from:
 
 ## Shapes
 
-The form language is restrained. Boxes — table scroll boxes, tiles, state cards, the pulse card — use `rounded-xl` (10px): corners visible enough to read as a "block" without screaming for attention. Inline controls (button, input, nav pill, chip, search tile) step down to `rounded-md` (4px) or `rounded-lg` (6px, the base `--radius: 0.375rem`); menu rows and icon-grid cells use `rounded-lg`. Only the floating back-to-top control, status dots and color swatches are fully round. Sheets that rise from the bottom get `rounded-t-xl`.
+The form language is restrained. Boxes — table scroll boxes, tiles, state cards — use `rounded-xl` (10px): corners visible enough to read as a "block" without screaming for attention. Inline controls (button, input, chip, search tile) step down to `rounded-md` (4px) or `rounded-lg` (6px, the base `--radius: 0.375rem`); menu rows and icon-grid cells use `rounded-lg`. Only the floating back-to-top control, status dots and color swatches are fully round. Sheets that rise from the bottom get `rounded-t-xl`.
 
 Borders are full hairline width (1px). `border-dashed` is reserved for empty/error/loading blocks. `border-solid` is reclaimed for the success/celebrate variant of `StateCard`. Accent-colored strokes are 1–2px *markers*, never frames: the active row bar in the mobile menu (`w-0.5`), a column's drop marker and resize line.
 
@@ -330,8 +330,9 @@ first belongs in `components/shared/`.
   only exists inside an already-shared list component).
 - **Feature-internal decomposition is not shared extraction.** A large file
   with several focused responsibilities but no equivalent use elsewhere (the
-  cron run timeline) gets split into feature-owned files under its semantic
-  slice, such as `features/crons/detail/components/`, and imported through
+  documentation sidebar's navigation tree) gets split into feature-owned files
+  under its semantic slice, such as `features/docs/sidebar/components/`, and
+  imported through
   `@/` — never moved
   into application `components/shared/`. Code used by two slices of one domain
   belongs in `features/<domain>/shared`; these internal components don't gain
@@ -354,7 +355,7 @@ first belongs in `components/shared/`.
 ### Feature organization
 
 Feature roots describe product use cases, not implementation layers. For
-example, the cron domain contains `overview/`, `detail/` and `shared/`; each
+example, the docs domain contains `home/`, `page/`, `sidebar/` and `shared/`; each
 use-case slice owns any `components/`, `definitions/`, `hooks/` or `model/`
 folders it actually needs. Route islands use the `*-page.tsx` suffix and Astro
 routes import them through narrow slice or domain `index.ts` entry points.
@@ -387,8 +388,7 @@ spacing, and the loading/error/empty cascade.
 - **Data Table (`DataTableView` + `useDataTable` + column definitions).**
   The row-rendering contract for every resource list: admin users,
   sessions, logs, API keys, plugins, organizations (and their member,
-  invitation, role and team sections), teams, cron jobs and the cron run
-  history. A page supplies TanStack Table column definitions (identity and
+  invitation, role and team sections) and teams. A page supplies TanStack Table column definitions (identity and
   status cells come from `DataTableIdentityCell` / `DataTableStatusCell`,
   row actions from `RowActionsMenu`), and the view owns the scroll box,
   sticky header, sorting, resizing, reordering, column visibility (saved
@@ -439,7 +439,7 @@ spacing, and the loading/error/empty cascade.
 
 - **Shape:** rounded none — it's a frame, not a container. Vertical `min-h-main` flex child of the body.
 - **Padding:** `px-4 py-6 sm:px-6` (page), `px-3 py-3 sm:px-6 sm:py-6` (compact for tables).
-- **Max-width:** `80%` (`lg:max-w-[80%]`, full width below `lg`) is the default and what every table-backed overview uses; `full` (`max-w-none`) for the home grid (narrowed with `lg:w-4/5`); `3xl` for `/me`; `4xl` and `6xl` are declared options with no current caller. Centred with `mx-auto`. Detail routes skip `PageShell` entirely (see `Detail.astro` below).
+- **Max-width:** `80%` (`lg:max-w-[80%]`, full width below `lg`) is the default; `full` (`max-w-none`) for the admin pages, which fill the inset beside the admin sidebar (`AdminShell` pads them); `3xl` for `/me`; `4xl` and `6xl` are declared options with no current caller. Centred with `mx-auto`. Detail routes skip `PageShell` entirely (see `Detail.astro` below).
 - **Wraps:** `QueryProvider` for TanStack Query. Pages with their own layout or that already sit inside another `<main>` skip it.
 
 ### Page Hero
@@ -458,7 +458,7 @@ The typographic heading one level below `PageHero`, for a section inside a page,
 - **Shape:** a `Text` label (`h2` by default, `h3` inside an already-headed block) — no border, no icon, no badge.
 - **Count:** optional `(n)` after the title in sentence-case `tabular-nums`, same muted tone, regular weight — typeset, never badged.
 - **Action:** optional right-aligned control (one small `Button`), `justify-between` on the same row.
-- **Used by:** organization detail sections (miembros, invitaciones, roles, equipos), the team members sheet and the home page's grid titles.
+- **Used by:** organization detail sections (miembros, invitaciones, roles, equipos), and the team members sheet.
 
 ### Detail Layout (`Detail.astro`)
 
@@ -470,40 +470,40 @@ The typographic heading one level below `PageHero`, for a section inside a page,
 
 Every record list in the product: a ruled table set in micro-caps, inside one quiet box.
 
-- **Box:** one `rounded-xl border bg-card/40` scroll box per table that scrolls both ways, with the toolbar above it and the footer (infinite-scroll sentinel) inside it. Pages that sit under the window scroller cap it (`max-h-[70dvh]` on the run history) so the header stays visible. Never a stack of row cards.
+- **Box:** one `rounded-xl border bg-card/40` scroll box per table that scrolls both ways, with the toolbar above it and the footer (infinite-scroll sentinel) inside it. Pages that sit under the window scroller cap it (`max-h-[70dvh]`) so the header stays visible. Never a stack of row cards.
 - **Header:** `h-9 px-3`, `label` role in `muted-foreground`, sticky at the top of the box on `bg-background` with an inset 1px bottom rule. The sort control is the header text itself: unsorted columns show a faint `size-3` sort glyph at 50% opacity; the sorted column turns **ink** (`text-foreground`) with an asc/desc glyph — sorting is not an accent state.
 - **Header filter:** a ghost `size-6` filter-glyph button beside the label, named by a `Hint` ("Filtrar …"). When the column is filtered it takes the accent tint (`bg-primary/10 text-primary`). Its `w-72` popover stacks sort options, a `SearchInput`, a checkbox list with mono details and tabular counts, and a hairline-separated "Quitar filtro".
 - **Resize & reorder:** a 12px hit strip on each column edge draws a 1px `muted-foreground/40` divider at rest, thickening to 4px `bg-primary/70` on hover and solid primary while dragging or focused (←/→ resize by 16px, double-click resets). Dragging a header shows a 2px primary drop marker and fades the dragged column to 50%.
 - **Columns menu:** an outline `h-9` "Columnas" button above the table (table layout only) opening a `w-72` checklist with drag handles; pinned columns read "Siempre visible"; a hairline-separated "Restablecer columnas" resets.
-- **Rows:** cells `px-3 py-2.5`, hairline `border-b` between rows, `hover:bg-muted/50`, **no** `translate` or shadow. A `muted` row (paused or code-declared job) drops to `text-muted-foreground`; a `disabled` row is `opacity-60` with no hover. Numbers right-align with `tabular-nums`.
+- **Rows:** cells `px-3 py-2.5`, hairline `border-b` between rows, `hover:bg-muted/50`, **no** `translate` or shadow. A `muted` row (an inactive record) drops to `text-muted-foreground`; a `disabled` row is `opacity-60` with no hover. Numbers right-align with `tabular-nums`.
 - **Cells:** identity cells pair a `title`-role name with a muted `compact` sub-line; status cells are a `StatusDot` + label. Row actions live in a trailing column as a ghost kebab (`size-10 md:size-9`) at 60% opacity, rising to full on row hover or focus.
-- **Expandable & grouped rows:** the expand toggle is a ghost chevron that rotates 180° when open, the detail row continues the cell grid (`px-3 pb-4`); day-group rows (run history while sorted by start) are `bg-muted/30` with a micro-caps date.
+- **Expandable & grouped rows:** the expand toggle is a ghost chevron that rotates 180° when open, the detail row continues the cell grid (`px-3 pb-4`); group rows (`groupOf`, such as one per day) are `bg-muted/30` with a micro-caps heading.
 - **Stacked layout (below `@4xl/table`):** the same data as a `divide-y` list of `px-4 py-4` items, each laid out as `MetadataCell` facts (`grid-cols-2 @md:3 @xl:4`), with `SortControls` and full-width outline filter buttons above (`border-primary/40 text-primary` while active).
 - **Empty:** `FilteredEmpty` as `emptyMessage` — a centred muted `message` line plus an outline "Limpiar filtros" (`clearLabel`, with `FilterX`) calling `onClear`, hidden with `clearable={false}` when no filter is active. Loading belongs to `ResourceOverview` or a `StateCard`, never to skeleton rows.
 - **Entrance:** `dash-enter` with a ~40ms `--dash-delay` step where rows animate; for long or paginated lists, drop the stagger rather than slow it down.
 
 ### Status Colors on Rows and Charts
 
-The status vocabulary is a fixed mapping shared by `StatusDot` tones, table status cells and the cron run pulse: **running** → `primary`, **success** → `foreground` (never green), **failed** → `destructive`, **paused / inactive** → `border`, **skipped** → `muted-foreground/40`.
+The status vocabulary is a fixed mapping shared by `StatusDot` tones, table status cells and charts: **running** → `primary`, **success** → `foreground` (never green), **failed** → `destructive`, **paused / inactive** → `border`, **skipped** → `muted-foreground/40`.
 
 ### Chart (`components/ui/chart.tsx`)
 
 - **Primitive:** TanStack Charts behind a themed wrapper; width follows the container, height is a fixed pixel value; type is the sans in `muted-foreground` with `tabular-nums`. Series colors come from the chart palette (see Colors → Scoped Palettes) and recolor live with the theme.
 - **Tooltip:** the `Hint` look — inverted ink bubble, `rounded-md`, `0.375rem 0.75rem`, 12px sans — reachable by keyboard.
-- **Run pulse (cron detail):** a 56px strip of thin bars (radius 1, inset 1.5) with no axes, in a `rounded-xl border bg-card/40` card whose right (or bottom, on mobile) side is a `dl` of `MetadataCell` stats in the `stat` and `data` roles. Bar height carries meaning (failed full, running half, skipped a sliver, success scaled to p95) and color follows the status mapping above, success at 30% ink. The legend is micro-caps with tiny square swatches. Mobile shows the newest 24 runs.
 
 ### Surface Card (`SurfaceCard`/`SurfaceCardGrid`)
 
-Registry-driven destination tile — the single component behind both the home
-page's top-level module grid and a section overview's per-subroute grid (see
-`app-surfaces.ts` under Icon System below). One component, two states:
+Registry-driven destination tile — the component behind a section overview's
+per-subroute grid (`SectionNavOverview`, see `app-surfaces.ts` under Icon
+System below). No screen renders one today: the home page's module grid was
+replaced by the documentation reader. One component, two states:
 
 - **Shape:** `rounded-xl border bg-card/40`, `p-4`, `gap-3`, no shadow; the whole tile is one stretched link with a `ring-[3px] ring-ring/50` focus ring.
 - **Icon:** flat, `size-5 text-primary`, no backdrop box, beside the text column (`gap-2.5`).
 - **Title:** the `title` role (14px medium, tight), single line, truncated.
 - **Description:** the muted `compact` role at relaxed leading, ≤ 2 lines (`line-clamp-2`), always reserving two lines (`min-h-[3.25em]`) so the shortcuts' hairline lands at the same height across a row of tiles.
 - **Leaf state** (a surface with no children, e.g. a section-overview card): a muted `size-4` chevron at the right of the title row that nudges `translate-x-0.5` and turns ink on hover.
-- **Parent state** (a surface with children, e.g. `/admin` on the home grid): instead of the chevron, a hairline-separated (`border-t pt-2.5`) two-column grid of child-surface shortcuts as filled `h-7 rounded-md bg-muted` pills (icon, label, `↗`), turning `bg-primary text-primary-foreground` on hover — a quick-access affordance for a section's own subroutes, not a plain link list.
+- **Parent state** (a surface with children, e.g. `/admin`): instead of the chevron, a hairline-separated (`border-t pt-2.5`) two-column grid of child-surface shortcuts as filled `h-7 rounded-md bg-muted` pills (icon, label, `↗`), turning `bg-primary text-primary-foreground` on hover — a quick-access affordance for a section's own subroutes, not a plain link list.
 - **Hover (whole tile):** `bg-muted` and a slightly firmer border (`border-foreground/15`), no lift, no shadow.
 - **Grid:** `SurfaceCardGrid` with container-query columns (see Layout), `gap-3`, each tile entering with `dash-enter`.
 
@@ -562,7 +562,7 @@ The narrow-viewport half of `ResourceFilters`. Hidden at `md+`.
 
 ### Compact Pickers (`SegmentedPicker`, `NumberStepper`)
 
-Dense, precise inputs for small finite values (currently the cron schedule builder).
+Dense, precise inputs for small finite values (currently the content repository form).
 
 - **Segmented picker:** a `radiogroup` grid of `h-8 rounded-md border text-xs` cells, `gap-1`, column count set by the caller. Unselected cells are `border-input text-muted-foreground` with `hover:bg-muted/40 hover:text-foreground`; the selected cell **inverts to ink** (`bg-foreground text-background border-foreground`) — selection is expressed in monochrome, never with the accent. `mono` switches the labels to `font-mono tabular-nums`. An abbreviated cell (`L`, `M`…) carries its full name as `aria-label` and in a `Hint`.
 - **Number stepper:** an `h-9 rounded-md border-input` dial: `w-8` chevron buttons in `muted-foreground` flanking a centered `font-mono text-sm tabular-nums` value, zero-padded to two digits. Values wrap at the bounds; arrows, PageUp/PageDown (±5), Home/End and the mouse wheel all step it. The chevrons are out of the tab order; the input carries focus.
@@ -588,17 +588,14 @@ Dense, precise inputs for small finite values (currently the cron schedule build
 - **Trigger:** `SlidersHorizontal` icon (`size-4 text-muted-foreground`) + label + an active count in muted tabular text (`3 activos`) when `activeCount > 0` — typeset, never a `Badge`.
 - **Body:** `FilterField` children (label + control) in a responsive grid (`columns` prop: 1–4, e.g. `grid-cols-1 sm:grid-cols-3`), plus an outline "Limpiar filtros" button with `FilterX` icon when a filter is active.
 - **Count:** optional `text-xs text-muted-foreground` line below the panel.
-- **Rule:** a list filters either from its **column headers** (the data table's header filters — users, sessions, cron jobs, run history) or from this **panel** (filters that aren't a column, as on logs, teams and organizations) — never a hand-rolled flat filter row. Below `md` the same descriptors render as `ListActionBar` + `FilterSheet`; both halves come from `ResourceFilters`, never wired by hand. `FilterBar` (the old always-visible search+filters+count row) is superseded and no longer used anywhere in the codebase.
+- **Rule:** a list filters either from its **column headers** (the data table's header filters, as on users) or from this **panel** (filters that aren't a column, as on logs, teams and organizations) — never a hand-rolled flat filter row. Below `md` the same descriptors render as `ListActionBar` + `FilterSheet`; both halves come from `ResourceFilters`, never wired by hand. `FilterBar` (the old always-visible search+filters+count row) is superseded and no longer used anywhere in the codebase.
 
 ### Navigation (sidebar / navbar)
 
-- **Navbar:** fixed, translucent (`bg-background/80 backdrop-blur`, `/60` where backdrop-filter is supported), height `--navbar-height: 3.6rem`. At rest the bottom hairline is faint (`border-border/40`); past a scroll threshold it firms up to `border-border` plus a hairline `shadow-sm` — the one navbar affordance allowed to leave "flat by default", used only as a scroll cue. From `lg` it is a three-column grid: logo, a short vertical separator, the pills, and the search/actions on the right.
-- **Nav pill (`NavbarPillLink` / `NavbarPillTrigger`):** `rounded-md px-3 py-1.5`, 12px medium. Active is `bg-primary/10 text-primary` with a primary `StatusDot`; resting is `text-muted-foreground`, hover `bg-muted/40 hover:text-foreground`. Lower-priority pills collapse into a "Más" menu between `lg` and `xl`.
-- **Navigation dropdown:** a `w-72` popover (`rounded-lg bg-popover`, light `shadow` + `ring-1 ring-foreground/10`, a 0.35s scale-in on an ease-out curve). The first row is the section hub, written in the accent (`text-primary`, `min-h-11`) so it reads as "go to the section"; a `bg-foreground/10` separator divides it from the sub-route rows (`min-h-10`, `text-foreground/80`, muted `size-3.5` icon). Hover and active rows share the `bg-primary/10` tint; the active row's text and icon turn primary.
+- **Navbar:** fixed, translucent (`bg-background/80 backdrop-blur`, `/60` where backdrop-filter is supported), height `--navbar-height: 3.6rem`. At rest the bottom hairline is faint (`border-border/40`); past a scroll threshold it firms up to `border-border` plus a hairline `shadow-sm` — the one navbar affordance allowed to leave "flat by default", used only as a scroll cue. The logo and app name sit on the left and the search, theme toggle and account menu on the right; there are no section links (admins reach `/admin` from "Administración" in the account menu).
 - **Navbar actions (`NavbarAction`):** square icon buttons, `size-11` below `lg` and `size-9` from it, `rounded-lg border bg-background/60 text-muted-foreground`; hover or open firms the border to `primary/30` over `bg-accent`. Each carries a `Hint` below it.
-- **Mobile menu:** below `lg`, a right `Sheet` on `bg-popover` (`sm:max-w-xs`). Rows are `rounded-lg px-3 py-2.5` 14px medium; the active row gets the `bg-primary/10 text-primary` tint plus a 2px primary bar on its left edge; sub-items indent behind a `border-l` hairline and only turn primary when active. Rows enter with `dash-enter` at a 45ms step.
-- **Sidebar (`SectionSidebar`):** pinned below the navbar, collapsible to icons. The header names the section with its icon in Brand Terracotta and a semibold label; items are shadcn `SidebarMenuButton`s (`h-8 rounded-md text-sm`) whose hover and active states use the neutral `--sidebar-accent` tokens — the active item is medium weight on a tonal fill, **not** orange. The footer holds a full-width muted "Contraer menú / Extender menú" button (`md+`) plus the rail; there is no top bar. No badge clusters.
-- **Rich menu rows (`MenuItemText`):** navigation-menu links and dropdown items that pair an icon with a name and a short explanation render their text column through `MenuItemText` — a compact medium label (inherits the row color, so active rows turn `text-primary`) over a muted description clamped to two lines. The row itself owns padding, icon and hover/active styling.
+- **Documentation sidebar (`DocsSidebar`):** a `w-64`/`lg:w-72` column on `bg-sidebar` with a right hairline, pinned below the navbar. At the top, a repository select ("Todos" plus each repository, only when there are two or more); then "Inicio" and the sections, whose title links and whose chevron folds them, with their pages and icons. Rows are shadcn `SidebarMenuButton`s whose hover and active fill use the neutral `--sidebar-accent` tokens; only the current page's icon turns Brand Terracotta. Below `md` it is a sheet opened from a menu button at the left of the navbar. No badge clusters. The admin sidebar (`features/admin/shell`) collapses to icons and ends with "Volver a la documentación".
+- **Rich menu rows (`MenuItemText`):** dropdown items that pair an icon with a name and a short explanation render their text column through `MenuItemText` — a compact medium label (inherits the row color, so active rows turn `text-primary`) over a muted description clamped to two lines. The row itself owns padding, icon and hover/active styling.
 - **Theme toggle:** circular `clip-path` reveal animation through the View Transitions API (see `hooks/use-theme-mode.ts`), never abrupt flicker; persisted chrome (navbar, sidebar) is excluded from page-navigation cross-fades.
 
 ### Surface Search (⌘K)
@@ -607,7 +604,7 @@ The navbar's jump-to-anything dialog.
 
 - **Trigger:** from `lg`, a `h-9 w-52` field-shaped button (`rounded-lg border bg-background/60`, muted "Buscar…" + `Kbd` `⌘K` / `Ctrl K`), with the same hover as navbar actions; below `lg`, a `NavbarAction` with a search glyph.
 - **Dialog:** a `sm:max-w-xl` command palette anchored near the top (`top-[12vh]`) so it doesn't jump while results filter. The input row is `h-14` with a `size-5` primary search glyph and an `esc` keycap as its close control.
-- **Results:** each row leads with a `size-8 rounded-md bg-primary/10` icon tile holding a primary `size-4` glyph; on the selected row the tile **fills solid primary** with a white glyph and a `↵` keycap appears at the end. Labels show their section trail before the name, separated by muted `size-3` chevrons; the current page carries a primary `StatusDot`. Group headings are micro-caps `label` text pinned to the top of the list while scrolling. "Recientes" leads when the query is empty; record groups (crons) appear only once there's a query.
+- **Results:** each row leads with a `size-8 rounded-md bg-primary/10` icon tile holding a primary `size-4` glyph; on the selected row the tile **fills solid primary** with a white glyph and a `↵` keycap appears at the end. Labels show their section trail before the name, separated by muted `size-3` chevrons; the current page carries a primary `StatusDot`. Group headings are micro-caps `label` text pinned to the top of the list while scrolling. "Recientes" leads when the query is empty; record groups (documentation pages) appear only once there's a query.
 - **Empty:** a centred search glyph, "Sin resultados para «…»" in the `title` role and a muted `meta` hint.
 - **Footer legend:** from `sm`, a `border-t bg-muted/40` strip of keycaps — ↑↓ navegar, ↵ abrir, esc cerrar. Arrow navigation wraps from the first result to the last.
 
@@ -646,7 +643,7 @@ All icons are sourced from **Lucide React** (`lucide-react`). To ensure visual c
 
 ### Icon Registry
 
-The file `apps/frontend/src/lib/icon-registry.ts` is the single source of truth for all icons, grouped by semantic domain rather than a flat feature list: `navigation`, `auth`, `admin`, `entities`, `identity`, `security`, `actions`, `controls`, `status`, `views`, `communication`, `scheduling`, `theme`, `config`. Within a group, keys name the concept (`navigationIcons.crons`, `statusIcons.loading`), and the same Lucide icon can legitimately appear under two keys when it serves two concepts — the invariant is one canonical icon per *concept*, not one key per file.
+The file `apps/frontend/src/lib/icon-registry.ts` is the single source of truth for all icons, grouped by semantic domain rather than a flat feature list: `navigation`, `auth`, `admin`, `entities`, `identity`, `security`, `actions`, `controls`, `status`, `views`, `communication`, `scheduling`, `theme`, `config`. Within a group, keys name the concept (`navigationIcons.docs`, `statusIcons.loading`), and the same Lucide icon can legitimately appear under two keys when it serves two concepts — the invariant is one canonical icon per *concept*, not one key per file.
 
 ### Usage
 
@@ -655,19 +652,18 @@ Always resolve through the two-argument helper — there is no flat `iconRegistr
 ```typescript
 import { getIcon } from "@/lib/icon-registry"
 
-const CronsIcon = getIcon("navigation", "crons")   // Type-safe, returns the Lucide component
+const UsersIcon = getIcon("admin", "users")   // Type-safe, returns the Lucide component
 const LoadingIcon = getIcon("status", "loading")
 ```
 
 ### Rules
 
-**The One Icon Rule.** If crons use the `Clock` icon, that icon **must** appear in:
+**The One Icon Rule.** If users use the `Users` icon, that icon **must** appear in:
 
-- The `/crons` page hero
-- The `/crons/[id]` detail page
-- Navigation (navbar, sidebar)
-- Any breadcrumb, list row, or dialog that references crons
-- Admin or dashboard tiles that link to crons
+- The `/admin/users` page hero
+- Navigation (the admin sidebar)
+- Any breadcrumb, list row, or dialog that references users
+- Admin or dashboard tiles that link to users
 
 If an icon needs to change, update it in `icon-registry.ts` — all references propagate automatically.
 

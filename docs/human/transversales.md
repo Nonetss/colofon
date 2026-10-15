@@ -27,7 +27,7 @@ Hilos de comentarios con respuestas sobre cualquier entidad.
   (para mostrar contadores en una lista); `create`, `update` y `delete` (lógico).
   Solo el autor puede editar o borrar sus comentarios.
 - **Frontend** (`features/comments`): `CommentsButton` muestra el contador y
-  abre el hilo en un panel lateral. Hoy se usa en las ejecuciones de los crons.
+  abre el hilo en un panel lateral. Hoy ninguna pantalla lo usa.
 
 Para usarlo en otra entidad basta con renderizar `CommentsButton` con su
 `entityType` y `entityId`.

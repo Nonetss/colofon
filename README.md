@@ -48,6 +48,10 @@ in Spanish.
   (`doc.config.yaml`, MDX pages, a YAML catalog with per-type schemas), validated with
   Spanish errors per file, line and field; several repositories per platform,
   stored in the database and managed at `/admin/content`
+- **Documentation reader**: every signed-in user reads the repositories'
+  pages at `/<slug>/<path>`, rendered on the server from the MDX without
+  executing anything, with a sidebar of sections and pages, a repository
+  select ("Todos" or one repository) and an "En esta página" table of contents
 - **Git hosting**: a content repository can live on the platform itself, at
   `/git/<slug>.git`, with a read-only browser at `/admin/git`
 - **Editor autocompletion**: a JSON schema catalog per repository at
@@ -56,16 +60,16 @@ in Spanish.
 - **Hono + oRPC**: type-safe RPC and OpenAPI endpoints (`/rpc/v1`, `/api/v1`), versioned routing, CSRF protection, admin-only API docs at `/scalar`
 - **Better Auth**: email/password (plus optional OIDC), sessions, global admin role, organizations and teams with access control, API keys
 - **Drizzle + PostgreSQL**: schema per domain; committed migrations applied automatically when the backend starts
-- **Cron scheduler**: persistent jobs that run cron-eligible API procedures, managed at `/crons` (content sync runs every five minutes)
+- **Cron scheduler**: persistent jobs that run cron-eligible API procedures, managed through the API (`/scalar` for admins); the content sync runs every five minutes
 - **Comments and entity icons**: threaded comments and custom icons over any resource
 - **PWA**: installable, with a web manifest and a service worker
 - **Bun + Turborepo**: package manager and monorepo task runner
 - **Biome**: linting and formatting
 - **OpenSpec** (`openspec/`): spec-driven documentation of every capability
 
-Still to come (see [VISION.md](VISION.md)): the documentation site that
-renders the pages, diagrams, skills for agents, the knowledge MCP, the
-secrets vault and broker, and importers.
+Still to come (see [VISION.md](VISION.md)): the reader's platform components,
+per-type pages, full-text search and `llms.txt`, diagrams, skills for agents,
+the knowledge MCP, the secrets vault and broker, and importers.
 
 ## What's in the app
 
@@ -73,17 +77,19 @@ Every page except login and signup requires a session.
 
 | Route | What it is |
 |---|---|
-| `/` | Home |
+| `/` | The "Todos" home: every content repository with its description and top-level sections; redirects to `/<slug>` when the selected scope is one repository or there is only one |
+| `/<slug>` | A repository's home (its `docs/index.mdx`) |
+| `/<slug>/<path>` | A documentation page, with breadcrumbs, previous/next and its table of contents; admins also see the page's problems |
 | `/login`, `/signup` | Sign in and create an account (email/password, plus OIDC when configured) |
 | `/me` | The signed-in user's account: name, email, role, changing the name and password |
-| `/crons`, `/crons/[id]` | Cron jobs: list, create and edit, run history with live updates, comments on runs |
 | `/admin/users`, `/admin/api-keys` | Admin only: users and API keys |
 | `/admin/content` | Admin only: content repositories as cards, with their sync state, sync button and editor catalog URL |
 | `/admin/git`, `/admin/git/[repo]` | Admin only: the hosted repositories, and a code screen to browse each one's branches, folders and files |
 | `/scalar` | Interactive API docs (admin session) |
 
 The navbar search (`⌘K` / `Ctrl+K`) jumps to any page and, once you type, to
-individual records such as cron jobs.
+the documentation pages of the selected repository (of every one under
+"Todos"). Admins reach `/admin` from "Administración" in the account menu.
 
 ## Content
 
@@ -139,12 +145,14 @@ The full guide (in Spanish) is [`docs/human/contenido.md`](docs/human/contenido.
   `POST`.
 - **`/api/v1/...`**: the same procedures as plain HTTP (OpenAPI), for scripts
   and other services. The document is at `/openapi.json` and the docs at
-  `/scalar`.
+  `/scalar`. The reader's images are served from
+  `/api/v1/docs/<slug>/files/<path>` (a path under the repository's `docs/`).
 
 Each feature lives in `packages/api/src/v1/<feature>/` split into `input.ts`,
 `output.ts`, `handler.ts` and `router.ts`. The v1 features are `health`,
 `private`, `authConfig`, `apiKey`, `organization`, `plugins`,
-`sessionHistory`, `adminUser`, `cron`, `comment`, `entityIcon` and `content`.
+`sessionHistory`, `adminUser`, `cron`, `comment`, `entityIcon`, `content` and
+`docs`.
 
 Every procedure is built from one of five builders, which decide who may call
 it: `publicProcedure`, `protectedProcedure` (any signed-in user),
@@ -174,11 +182,13 @@ expression, impersonating the user who owns it.
 
 - **Code-declared jobs**: a procedure can declare its own schedule in its
   `cronMeta`. They are synced on startup, run as the seeded admin and are
-  read-only in the UI. The content sync (`Sincronizar contenido`) is one.
-- **Manual jobs**: created by admins at `/crons`, choosing a handler and
-  filling in a form generated from its input schema.
-- Each run is stored with its result or error, and the detail page follows
-  runs live over SSE.
+  read-only (the API refuses to edit them). The content sync (`Sincronizar
+  contenido`) is one; its outcome shows per repository in `/admin/content`.
+- **Manual jobs**: created by admins through the `v1.cron` endpoints (try them
+  at `/scalar`), choosing a handler and a payload that matches its input
+  schema. There is no web interface for jobs.
+- Each run is stored with its result or error, and `cron.watchRuns` streams
+  run changes over SSE.
 
 The scheduler is single-instance by design: run one backend replica.
 

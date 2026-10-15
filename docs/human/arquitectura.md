@@ -40,9 +40,9 @@ Así se evitan pasos intermedios y cualquier cambio se ve al momento.
 
 ## El camino de una petición
 
-Ejemplo: abres `/crons` en el navegador.
+Ejemplo: abres `/admin/users` en el navegador.
 
-1. **El gateway** recibe `GET /crons`. Como no empieza por `/rpc`, `/api`,
+1. **El gateway** recibe `GET /admin/users`. Como no empieza por `/rpc`, `/api`,
    `/scalar` ni `/openapi.json`, lo envía al frontend.
 2. **El middleware del frontend** (`apps/frontend/src/middleware.ts`) pregunta
    al backend por la sesión usando la cookie. Si no hay sesión, redirige a
@@ -50,11 +50,16 @@ Ejemplo: abres `/crons` en el navegador.
    `/`.
 3. **Astro renderiza** la página. La parte interactiva es una isla React que
    se monta solo en el navegador (`client:only="react"`).
-4. **La isla pide los datos** con `orpc.v1.cron.list`, que sale como
-   `QUERY /rpc/v1/cron/list` hacia el mismo origen.
+4. **La isla pide los datos** con `orpc.v1.adminUser.list`, que sale como
+   `QUERY /rpc/v1/adminUser/list` hacia el mismo origen.
 5. **El gateway** ve `/rpc/...` y lo pasa al backend.
 6. **El backend** identifica al usuario por la cookie, le asigna un id de
    petición, ejecuta el procedimiento y devuelve el resultado.
+
+Las fichas de documentación (`/`, `/<slug>` y `/<slug>/<ruta>`) se saltan
+los pasos 3 y 4: Astro pide la navegación y la ficha al backend (`v1.docs`) en
+el propio servidor, reenviando la cookie de sesión, y envía el texto ya
+renderizado (ver [Contenido](contenido.md#cómo-se-leen-las-fichas)).
 
 En desarrollo pasa lo mismo: el gateway de desarrollo sirve
 `https://localhost:4321` (HTTPS con HTTP/2 y un certificado local) con las

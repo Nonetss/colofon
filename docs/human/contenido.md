@@ -2,8 +2,8 @@
 
 La documentación no vive en este repositorio: vive en un **repositorio de
 contenido** aparte, con fichas MDX y un catálogo de datos en YAML. La
-plataforma lo lee, lo valida y le da al editor lo que necesita para
-autocompletar. Las reglas de qué puede declarar un repositorio de contenido
+plataforma lo lee, lo valida, lo muestra en su lector y le da al editor lo
+que necesita para autocompletar. Las reglas de qué puede declarar un repositorio de contenido
 están en la spec `content-contract` y en `packages/content`.
 
 ## Forma del repositorio de contenido
@@ -28,15 +28,17 @@ Cada uno tiene:
 | Campo | Qué es |
 | --- | --- |
 | Nombre | Cómo se muestra en el panel. |
-| Slug | Su nombre en la URL del catálogo (`documentacion`, `homelab`…). Minúsculas, números y guiones; no se puede cambiar después de crearlo. |
+| Slug | Su nombre en las URL del lector y del catálogo (`documentacion`, `homelab`…). Minúsculas, números y guiones; no se puede cambiar después de crearlo. No puede ser un nombre reservado por la plataforma: `admin`, `api`, `rpc`, `git`, `login`, `signup`, `me`, `scalar`, `health`, `pwa` ni `404`. |
 | Origen | **URL externa** (el repositorio vive en GitHub, Gitea…) o **Alojado en la plataforma** (ver abajo). |
 | URL | Solo con origen URL externa: la URL `https://` del repositorio git. Para uno privado, las credenciales van en la URL (`https://usuario:token@host/org/repo.git`). La plataforma nunca las muestra ni las escribe en el log. |
 | Ref | La rama, el tag o el commit que se descarga. Al poner la URL completa, el formulario lee las ramas del repositorio y las ofrece en una lista, con la rama principal elegida; si no puede leerlas, se escribe a mano. |
 
 El backend guarda un clon de cada repositorio en `.content/<id>/` (en Docker,
 en el volumen `content_data`). Lo sincroniza al arrancar, cada cinco minutos
-(job `Sincronizar contenido` en `/crons`), al crearlo o al cambiarle la URL o
-el ref, y cuando pulsas **Sincronizar** en su fila. Cada sincronización deja
+(el job `Sincronizar contenido`, declarado en código; no tiene pantalla y el
+resultado de cada sincronización se ve en la fila del repositorio en
+`/admin/content`), al crearlo o al cambiarle la URL o el ref, y cuando pulsas
+**Sincronizar** en su fila. Cada sincronización deja
 el clon exactamente como el remoto: los cambios hechos a mano en el clon se
 pierden. Si el remoto no responde, sigue con lo último que bajó, y la tabla
 muestra el error. Si un commit deja el contenido inválido, sigue sirviendo la
@@ -78,6 +80,93 @@ git push origen main
 - Al borrar un repositorio alojado se borra su historial. Si le pones una URL
   externa, la plataforma deja de leerlo pero conserva su repositorio bare
   hasta que lo borres.
+
+## Cómo se escriben las fichas
+
+Cada fichero `docs/**/*.mdx` es una ficha. Cada carpeta de `docs/` es una
+sección, con el título de su `index.mdx` (o el nombre de la carpeta si no lo
+tiene); el `docs/index.mdx` de la raíz es la portada del repositorio. La
+plataforma lee las fichas **sin ejecutar nada**: lo que no sabe leer lo
+avisa como un problema.
+
+### Cabecera
+
+Cada ficha empieza con una cabecera YAML:
+
+```mdx
+---
+titulo: DNS
+descripcion: Cómo se resuelven los nombres de la red de casa.
+icono: globe
+orden: 2
+actualizado: 2026-09-30
+---
+```
+
+| Campo | Qué es |
+| --- | --- |
+| `titulo` | Obligatorio. El título de la ficha. |
+| `descripcion` | Obligatorio. Una frase que se muestra bajo el título. |
+| `icono` | Opcional. Un nombre de icono de Lucide en minúsculas y con guiones (`hard-drive`, `git-branch`). |
+| `orden` | Opcional. Un número que ordena la ficha dentro de su sección; las que no lo tienen van al final, y a igualdad, por título. |
+| `actualizado` | Opcional. Fecha `AAAA-MM-DD` de la última revisión. Si tiene más de seis meses, la ficha se marca con "Revisar". |
+
+Además admite los campos que declare `cabecera` en `doc.config.yaml`, y
+ningún otro.
+
+### Cuerpo
+
+- **Markdown al estilo de GitHub**: tablas, listas de tareas, tachado,
+  enlaces automáticos y notas al pie.
+- **Avisos**: una cita que empieza por `[!NOTE]`, `[!TIP]`, `[!IMPORTANT]`,
+  `[!WARNING]` o `[!CAUTION]` se muestra como un aviso titulado Nota,
+  Consejo, Importante, Aviso o Precaución:
+
+  ```mdx
+  > [!WARNING]
+  > Este cambio reinicia el router.
+  ```
+
+- **Comentarios**: `{/* … */}` se descarta sin avisar.
+- **Encabezados**: el título es `titulo`, así que el cuerpo empieza en `##`.
+  Un `#` de primer nivel se avisa como problema.
+- **Enlaces entre fichas**: con la ruta relativa al `.mdx` (`dns.mdx`,
+  `../red/index.mdx#zonas`). Se convierten en rutas del lector y conservan el
+  `#ancla`. Un enlace a una ficha que no existe se avisa y se muestra como
+  texto.
+- **Imágenes**: con la ruta relativa a un fichero dentro de `docs/` (png,
+  jpg, jpeg, gif, webp, avif o svg, de 10 MiB como mucho). Las sirve la
+  plataforma. Un enlace a cualquier otro tipo de fichero se avisa.
+
+No se admiten `import`/`export`, las `{expresiones}` ni los componentes JSX:
+se avisan como problemas. La plataforma todavía no ofrece ningún componente,
+así que uno como `<Entidades />` se muestra como un aviso "El componente
+<Entidades> no existe en la plataforma".
+
+### Problemas
+
+Los problemas de una ficha (cabecera inválida, componentes, enlaces rotos…)
+se ven **solo los administradores**, en la propia ficha, y se escriben en el
+log una vez por cada commit sincronizado. La ficha se muestra igualmente con
+lo que se pudo leer.
+
+## Cómo se leen las fichas
+
+Cualquier usuario con sesión lee todos los repositorios:
+
+| Ruta | Qué es |
+| --- | --- |
+| `/` | La portada "Todos": cada repositorio con su descripción y sus secciones. Si solo hay uno, o el selector está en uno, lleva directamente a `/<slug>`. |
+| `/<slug>` | La portada del repositorio (su `docs/index.mdx`). |
+| `/<slug>/<ruta>` | Una ficha: `docs/red/dns.mdx` es `/<slug>/red/dns`. |
+
+El sidebar tiene arriba un **selector de repositorio**: "Todos" muestra cada
+repositorio como un grupo con sus secciones, y uno solo muestra sus
+secciones. La elección se recuerda en la cookie `docs_scope`, sigue a la
+ficha que abres y acota también la búsqueda del navbar. En el móvil, el
+sidebar se abre desde el navbar. Cada ficha lleva sus migas, los campos de la
+cabecera, la anterior y la siguiente, y en pantallas anchas el índice "En
+esta página".
 
 ## Autocompletado en el editor
 

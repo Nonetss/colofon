@@ -8,7 +8,7 @@ web
 
 ## Users
 
-stack es la plantilla personal del usuario, reconstruida sobre la base del `stack` original. Por ahora el único visitante es el propio usuario operando su scaffold: revisando crons, gestionando organizaciones / usuarios / API keys y comentarios, y leyendo logs y docs. Cuando el producto tenga usuarios externos, este fichero se actualiza para describirlos.
+stack es la plantilla personal del usuario, reconstruida sobre la base del `stack` original. Por ahora el único visitante es el propio usuario operando su scaffold: leyendo la documentación de sus repositorios de contenido en el lector, gestionando usuarios / API keys / repositorios de contenido desde `/admin`, y leyendo logs y docs. Cuando el producto tenga usuarios externos, este fichero se actualiza para describirlos.
 
 ## Product Purpose
 
@@ -16,7 +16,7 @@ stack arranca con todo ya cableado (Astro + Hono/oRPC + Better Auth + Drizzle/Po
 
 ## Operating Context
 
-stack se opera como **consola técnica** corriendo en local o en un servidor propio vía Docker Compose. Quien la usa vive en la CLI (`bun run dev`, `bun run dev:local`, `bun run db:generate`, `bun run docker:up`, `openspec validate --strict`) y en el navegador en `localhost:4321` (dev) o en el puerto del gateway (producción). Los artefactos vivos son: páginas Astro en `apps/frontend/src/pages` (404, inicio, admin, config, crons, login, me, signup), la documentación de capacidades en `openspec/specs/` y la guía de estilo visual en `DESIGN.md` (raíz). `BETTER_AUTH_SECRET` y el admin inicial se generan con `scripts/setup-dev.sh`.
+stack se opera como **consola técnica** corriendo en local o en un servidor propio vía Docker Compose. Quien la usa vive en la CLI (`bun run dev`, `bun run dev:local`, `bun run db:generate`, `bun run docker:up`, `openspec validate --strict`) y en el navegador en `localhost:4321` (dev) o en el puerto del gateway (producción). Los artefactos vivos son: páginas Astro en `apps/frontend/src/pages` (inicio "Todos", las páginas de documentación `/<slug>/…`, admin, login, me, signup, 404), la documentación de capacidades en `openspec/specs/` y la guía de estilo visual en `DESIGN.md` (raíz). `BETTER_AUTH_SECRET` y el admin inicial se generan con `scripts/setup-dev.sh`.
 
 ## Capabilities and Constraints
 
@@ -25,7 +25,8 @@ Capacidades confirmadas (todas con spec en `openspec/specs/`):
 - **Autenticación** con email/password (y OIDC opcional) vía Better Auth, sesiones, roles (admin) y protección por rol en `/admin`.
 - **Organizaciones, equipos, miembros e invitaciones** vía el plugin `organization` de Better Auth, con control de acceso dinámico.
 - **API keys** como método de autenticación machine-to-machine (`@better-auth/api-key`).
-- **Cron scheduling y management** (`/crons`, `/crons/[id]`) con un scheduler en el propio backend que ejecuta procedimientos de la API marcados como elegibles.
+- **Lector de documentación** (`/`, `/<slug>`, `/<slug>/<ruta>`): las fichas MDX de los repositorios de contenido renderizadas en el servidor sin ejecutar nada, con sidebar de secciones, selector de repositorio ("Todos" o uno) e índice "En esta página"; los problemas de cada ficha solo los ven los admins.
+- **Cron scheduling** con un scheduler en el propio backend que ejecuta procedimientos de la API marcados como elegibles; los jobs se gestionan por la API (`/scalar` para admins), sin interfaz web.
 - **RPC tipado** vía oRPC en `packages/api`, versionado (`src/<version>/`) por feature.
 - **Comentarios** sobre cualquier recurso; **iconos de entidad** personalizables.
 - **Documentación HTTP** en `/scalar` y `/openapi.json`, protegida por sesión admin.

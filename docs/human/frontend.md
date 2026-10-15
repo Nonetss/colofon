@@ -27,10 +27,12 @@ todo el estado de la isla vive en un solo sitio.
 ### Features: dominios y slices
 
 El código de la interfaz se agrupa por **dominio** en
-`src/features/<dominio>/` (`crons`, `admin`, `config`, `profile`…). Dentro de
-cada dominio, cada carpeta es un **caso de uso** (slice), no una capa técnica:
-
-![El dominio crons: slices shared, overview y detail](../img/slices-crons.svg)
+`src/features/<dominio>/` (`docs`, `admin`, `profile`…). Dentro de cada
+dominio, cada carpeta es un **caso de uso** (slice), no una capa técnica. Por
+ejemplo, `features/docs` tiene `home` (la portada "Todos"), `page` (una ficha),
+`sidebar` (el sidebar con el selector de repositorios) y `shared` (lo que usan
+varios de ellos); `features/admin` tiene un slice por pantalla (`users`,
+`api-keys`, `content`, `git`…) más `shell` y `shared`.
 
 Reglas:
 
@@ -54,7 +56,7 @@ Una página de React se parte en dos ficheros:
 - **`*-content.tsx`** tiene todo lo demás: consultas, estado, diálogos y
   marcado.
 
-Por ejemplo, `crons-page.tsx` y `crons-content.tsx`. Así se ve de un vistazo
+Por ejemplo, `users-page.tsx` y `users-content.tsx` en `features/admin/users`. Así se ve de un vistazo
 dónde está la frontera de providers y el contenido se puede reutilizar.
 
 ### `components/ui` y `components/shared`
@@ -88,8 +90,11 @@ vez** en `src/lib/app-surfaces.ts`: ruta, título, etiqueta, descripción,
 icono, si aparece en la navegación y si es solo para admins. Las secciones
 anidan a sus subpáginas.
 
-Todo lo demás se deriva de ahí, en `src/lib/site-nav.ts`: el navbar, el
-sidebar de cada sección, las tarjetas de las páginas resumen y la búsqueda.
+Todo lo demás se deriva de ahí, en `src/lib/site-nav.ts`: el sidebar de
+`/admin` y la búsqueda. El navbar no lleva enlaces de sección: los admins
+llegan a `/admin` desde "Administración" en el menú de la cuenta, y el sidebar
+de `/admin` acaba en "Volver a la documentación". La navegación de las fichas
+la da el sidebar del lector (ver [Contenido](contenido.md#cómo-se-leen-las-fichas)).
 Nunca se escribe a mano una etiqueta o un icono en un componente de
 navegación.
 
@@ -102,9 +107,9 @@ específica (en `/admin/users` se marca Usuarios, no Admin).
 - Lista todas las superficies con ruta fija, salvo las de admin para quien no
   lo es. Una superficie nueva aparece sola; las que no son un destino (login,
   signup, 404) llevan `search: false`.
-- Las rutas con parámetro (`/crons/[id]`) no aparecen como tales, pero pueden
-  declarar una **fuente de búsqueda** (`searchSource`) que lista sus registros.
-  Hoy la única es la de cron jobs.
+- Las rutas con parámetro (`/[repo]/[...path]`) no aparecen como tales, pero
+  pueden declarar una **fuente de búsqueda** (`searchSource`) que lista sus
+  registros. Hoy la única es la de las fichas de documentación.
 - Cada palabra de la búsqueda tiene que aparecer en algún texto del resultado,
   sin importar mayúsculas ni acentos: "configuracion tema" encuentra
   Apariencia.
@@ -119,10 +124,10 @@ escribir (ver [Backend y API](backend-api.md#búsquedas-de-texto-libre)).
 
 | Layout | Para qué |
 | --- | --- |
-| `Layout.astro` | El de por defecto: navbar, contenido y pie. |
+| `Layout.astro` | El de por defecto: navbar, contenido y pie. Lo usan `/me`, login, signup y 404. |
+| `Docs.astro` | El lector de documentación (`/`, `/<slug>` y sus fichas): navbar, sidebar con las secciones y las fichas, la ficha en una columna de lectura y el índice "En esta página" en pantallas anchas. En el móvil el sidebar se abre como panel desde el navbar. |
 | `Admin.astro` | La sección `/admin`, con su propio sidebar. |
-| `WithSidebar.astro` | Secciones con subpáginas (`/config`), con el sidebar de la sección. Lee el estado del sidebar de una cookie para que no parpadee al cargar. |
-| `Detail.astro` | Páginas de detalle cuyo padre no tiene sidebar (`/crons/[id]`). Pone el enlace de volver y el `<main>`. |
+| `Detail.astro` | Páginas de detalle cuyo padre no tiene sidebar. Pone el enlace de volver y el `<main>`. Hoy no lo usa ninguna ruta. |
 
 Cada ruta tiene exactamente un `<main>`. Todos los layouts aceptan
 `scrollToTop`, que muestra el botón flotante "Volver arriba" en páginas
@@ -179,8 +184,8 @@ botón conserva su `aria-label` para los lectores de pantalla:
 
 ### Responsive: container queries
 
-El ancho que tiene una página no es el de la ventana: el sidebar de la
-sección ocupa espacio y un mismo componente puede aparecer a pantalla
+El ancho que tiene una página no es el de la ventana: un sidebar ocupa
+espacio y un mismo componente puede aparecer a pantalla
 completa o en un panel estrecho. Por eso:
 
 - **El contenido de la página** (rejillas, filas de lista, formularios) se

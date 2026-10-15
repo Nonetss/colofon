@@ -22,7 +22,7 @@ contexto y menos jerga. Si alguna vez no coinciden, mandan las specs de
 8. [Funcionalidades transversales](transversales.md): comentarios e iconos de entidad.
 9. [Docker y despliegue](docker-despliegue.md): los cuatro compose, las imágenes, el CI y el instalador.
 10. [Convenciones](convenciones.md): estilo de código, idiomas, commits, migraciones y el flujo de OpenSpec.
-11. [Contenido](contenido.md): el repositorio de contenido, de dónde lo lee el backend y el autocompletado en el editor.
+11. [Contenido](contenido.md): el repositorio de contenido, de dónde lo lee el backend, cómo se escriben y se leen las fichas y el autocompletado en el editor.
 
 ## Diagramas
 
@@ -54,7 +54,7 @@ cambia una, hay que cambiar la otra.
 | **Workspace** | Cada carpeta de `apps/*` y `packages/*` con su propio `package.json`. Bun las enlaza entre sí. |
 | **Procedimiento** | Una operación de la API (por ejemplo `cron.list`). Se define una vez y se puede llamar por RPC o por HTTP. |
 | **Feature (API)** | Un grupo de procedimientos relacionados (`cron`, `comment`…), en su carpeta `packages/api/src/v1/<feature>/`. |
-| **Feature (frontend)** | Un dominio de la interfaz (`crons`, `admin`…) en `apps/frontend/src/features/<dominio>/`. |
+| **Feature (frontend)** | Un dominio de la interfaz (`docs`, `admin`…) en `apps/frontend/src/features/<dominio>/`. |
 | **Slice** | Un caso de uso dentro de un dominio del frontend (`overview`, `detail`…). |
 | **Superficie** | Cualquier página con identidad propia (título, etiqueta, icono). Se declaran en `app-surfaces.ts`. |
 | **Isla** | Un componente React montado dentro de una página Astro. |
