@@ -36,9 +36,10 @@ const PanelIcon = getIcon("views", "sidebar")
 /**
  * One hosted repository's code as a file tree with its branch on top, the
  * file the URL names and the trail back to its root. An open file keeps the
- * tree beside it, as GitHub and Gitea do, unless it is hidden or there is no
- * room; the branch then moves next to the trail. Every file opened and
- * every crumb followed is a history entry.
+ * tree beside it, as GitHub and Gitea do; the tree collapses to a narrow
+ * rail like the admin sidebar, and with it collapsed or without room for it
+ * the branch moves next to the trail. Every file opened and every crumb
+ * followed is a history entry.
  */
 export function GitBrowser({ repository }: { repository: HostedRepository }) {
   const { location, navigate, replace } = useGitLocation()
@@ -67,6 +68,7 @@ export function GitBrowser({ repository }: { repository: HostedRepository }) {
   const at = (path: string, file: string) =>
     navigate({ branch: shownBranchName, path, file })
   const fileOpen = location.file !== ""
+  const collapsed = fileOpen && !treeShown
 
   if (branches.isPending) return <Status>Cargando ramas…</Status>
   if (listing === undefined || branch === undefined) {
@@ -95,55 +97,50 @@ export function GitBrowser({ repository }: { repository: HostedRepository }) {
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-4">
       <div className="@container flex flex-col gap-3 @xl:flex-row @xl:items-center @xl:justify-between">
-        <div className="flex min-w-0 items-center gap-2">
-          {fileOpen && !treeShown && (
-            <TreeToggle
-              label="Mostrar el árbol de ficheros"
-              className="hidden @3xl:inline-flex"
-              onClick={() => setTreeShown(true)}
-            />
-          )}
-          <GitBreadcrumb
-            repositoryName={repository.name}
-            folder={shownFolderOf(location)}
-            fileName={fileNameOf(location.file)}
-            onOpenFolder={(path) => at(path, "")}
-          />
-        </div>
+        <GitBreadcrumb
+          repositoryName={repository.name}
+          folder={shownFolderOf(location)}
+          fileName={fileNameOf(location.file)}
+          onOpenFolder={(path) => at(path, "")}
+        />
         {fileOpen && branchSelect(headerBranchClass(treeShown))}
       </div>
 
       <div className="@container flex min-h-0 flex-1 flex-col">
         <div className="flex min-h-0 flex-1 gap-4">
-          {(!fileOpen || treeShown) && (
-            <section
-              aria-label="Árbol de ficheros"
+          <section
+            aria-label="Árbol de ficheros"
+            className={cn(
+              "min-h-0 flex-col overflow-hidden rounded-md border transition-[width] duration-200 ease-linear",
+              treePanelClass(fileOpen, collapsed)
+            )}
+          >
+            <div className="flex h-12 shrink-0 items-center justify-center gap-1 border-b bg-muted/40 p-1.5">
+              {!collapsed && branchSelect("min-w-0 flex-1")}
+              {fileOpen && (
+                <TreeToggle
+                  collapsed={collapsed}
+                  onClick={() => setTreeShown(collapsed)}
+                />
+              )}
+            </div>
+            {/* Collapsed, the tree stays mounted so it keeps what was unfolded. */}
+            <div
               className={cn(
-                "min-h-0 flex-col overflow-hidden rounded-md border",
-                treePanelClass(fileOpen)
+                "min-h-0 flex-1 overflow-y-auto p-1",
+                collapsed && "hidden"
               )}
             >
-              <div className="flex items-center gap-1 border-b bg-muted/40 p-1.5">
-                {branchSelect("min-w-0 flex-1")}
-                {fileOpen && (
-                  <TreeToggle
-                    label="Ocultar el árbol de ficheros"
-                    onClick={() => setTreeShown(false)}
-                  />
-                )}
-              </div>
-              <div className="min-h-0 flex-1 overflow-y-auto p-1">
-                <GitFileTree
-                  slug={repository.slug}
-                  branch={branch}
-                  folder={location.path}
-                  openFile={location.file}
-                  showSizes={!fileOpen}
-                  onOpenFile={(path) => at(parentFolder(path), path)}
-                />
-              </div>
-            </section>
-          )}
+              <GitFileTree
+                slug={repository.slug}
+                branch={branch}
+                folder={location.path}
+                openFile={location.file}
+                showSizes={!fileOpen}
+                onOpenFile={(path) => at(parentFolder(path), path)}
+              />
+            </div>
+          </section>
           {fileOpen && (
             <div className="flex min-h-0 min-w-0 flex-1 flex-col">
               {file.isPending && <Status>Cargando fichero…</Status>}
@@ -160,17 +157,18 @@ export function GitBrowser({ repository }: { repository: HostedRepository }) {
 }
 
 /**
- * The tree's panel: the whole screen for a folder, a column beside an open
- * file where there is room for both.
+ * The tree's panel: the whole screen for a folder; beside an open file,
+ * where there is room for both, a column or, collapsed, a rail.
  */
-function treePanelClass(fileOpen: boolean): string {
-  if (fileOpen) return "hidden w-72 shrink-0 @3xl:flex"
-  return "flex flex-1"
+function treePanelClass(fileOpen: boolean, collapsed: boolean): string {
+  if (!fileOpen) return "flex flex-1"
+  if (collapsed) return "hidden w-12 shrink-0 @3xl:flex"
+  return "hidden w-72 shrink-0 @3xl:flex"
 }
 
 /**
  * The branch next to the trail, shown when an open file's tree (which
- * carries the branch) is hidden or has no room.
+ * carries the branch) is collapsed or has no room.
  */
 function headerBranchClass(treeShown: boolean): string {
   if (treeShown) return "w-full @xl:w-64 @3xl:hidden"
@@ -188,29 +186,40 @@ function fileNameOf(file: string): string | undefined {
   return file.slice(file.lastIndexOf("/") + 1)
 }
 
+function treeToggleLabel(collapsed: boolean): string {
+  if (collapsed) return "Expandir el árbol de ficheros"
+  return "Contraer el árbol de ficheros"
+}
+
 function TreeToggle({
-  label,
-  className,
+  collapsed,
   onClick,
 }: {
-  label: string
-  className?: string
+  collapsed: boolean
   onClick: () => void
 }) {
+  const label = treeToggleLabel(collapsed)
   return (
-    <Hint label={label}>
+    <Hint label={label} side={hintSide(collapsed)}>
       <Button
         type="button"
         variant="ghost"
         size="icon-sm"
         aria-label={label}
-        className={cn("shrink-0 text-muted-foreground", className)}
+        aria-expanded={!collapsed}
+        className="shrink-0 text-muted-foreground"
         onClick={onClick}
       >
         <PanelIcon className="size-4" />
       </Button>
     </Hint>
   )
+}
+
+/** The rail is too narrow for a bubble above it to read well. */
+function hintSide(collapsed: boolean): "top" | "right" {
+  if (collapsed) return "right"
+  return "top"
 }
 
 function Status({ children }: { children: ReactNode }) {
