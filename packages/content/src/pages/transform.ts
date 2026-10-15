@@ -227,7 +227,7 @@ const BLOCK_COMPONENTS: ReadonlySet<string> = new Set([
 
 /** What a ```diagram block is told: diagrams live in their own files. */
 const DIAGRAM_FENCE_MESSAGE =
-  'Los diagramas van en diagramas/<id>.yaml y se muestran con <Diagram id="…" />'
+  'Los diagramas van en diagramas/<id>.json y se muestran con <Diagram id="…" />'
 
 /** A block that renders as the platform's notice, holding `message`. */
 function noticeBlock(message: string, node: Code): Blockquote {
@@ -293,7 +293,7 @@ function diagramElement(
   }
   const found = context.diagrams.get(id)
   if (found === undefined || found.diagram === null) {
-    const message = `<${DIAGRAM} id="${id}">: no hay ningún diagramas/${id}.yaml que se pueda leer (hay: ${known})`
+    const message = `<${DIAGRAM} id="${id}">: no hay ningún diagramas/${id}.json que se pueda leer (hay: ${known})`
     const fileProblems = (found?.problems ?? []).map(
       (problem) => `${problem.file}: ${problem.message}`
     )

@@ -11,13 +11,13 @@ import {
 } from "#load"
 import { createMetaSchemas } from "#meta-schema"
 import { catalogTypePath } from "#pages/catalog-paths"
-import { diagramSchemas } from "#pages/diagrams"
+import { diagramSchemas } from "#pages/diagram-schema"
 
 // JSON Schemas for the editor: the YAML language server (Red Hat's YAML
 // extension) completes, validates and documents a file once a schema is
 // associated with it. The meta-schema covers doc.config.yaml, menu.yaml
-// (with the paths an entry can name) and each _tipo.yaml; diagrams get one
-// schema with the entities a node can be; each catalog type gets its own
+// (with the paths an entry can name) and each _tipo.yaml; diagrams (JSON)
+// get one schema with the entities and pages a box can link to; each catalog type gets its own
 // schema, generated from its _tipo.yaml, with the ids its `ref` fields can
 // take. Every `icono` lists the Lucide names. The editor finds them
 // through a catalog in SchemaStore's format (`schemaCatalog`), set once as
@@ -53,7 +53,10 @@ export function editorSchemas(
     typeIds,
     menuPaths: menuPathsOf(declarations),
   })
-  const diagram = diagramSchemas(entityKeysOf(declarations))
+  const diagram = diagramSchemas({
+    entityKeys: entityKeysOf(declarations),
+    pagePaths: pagePathsOf(declarations),
+  })
   const schemas: EditorSchema[] = [
     {
       name: CONFIG_SCHEMA,
@@ -73,7 +76,7 @@ export function editorSchemas(
       name: DIAGRAM_SCHEMA,
       title: "Diagrama",
       description: `Cada diagrama de ${DIAGRAMS_DIR}/`,
-      patterns: [`${DIAGRAMS_DIR}/*.yaml`],
+      patterns: [`${DIAGRAMS_DIR}/*.json`],
       schema: toJsonSchema(diagram.file, "Diagrama"),
     },
     {
@@ -108,7 +111,12 @@ function menuPathsOf(declarations: ContentDeclarations): string[] {
   ].sort()
 }
 
-/** Every entity of the catalog as `<type>/<id>`, for a diagram node. */
+/** Every page path of the repository, for a diagram box's `page`. */
+function pagePathsOf(declarations: ContentDeclarations): string[] {
+  return [...declarations.index.pagePaths].sort()
+}
+
+/** Every entity of the catalog as `<type>/<id>`, for a diagram box. */
 function entityKeysOf(declarations: ContentDeclarations): string[] {
   const keys: string[] = []
   for (const [typeId, ids] of declarations.index.entityIds)

@@ -93,17 +93,23 @@ describe("editorSchemas", () => {
     )
   })
 
-  test("a diagram node's entidad lists every entity as <type>/<id>", async () => {
+  test("a diagram box's entity lists every entity as <type>/<id>, its page the pages, its hue the ten hues", async () => {
     const diagram = schemaNamed(editorSchemas(await loadSite()), "diagram")
-    expect(diagram.patterns).toEqual(["diagramas/*.yaml"])
-    expect(JSON.stringify(diagram.schema)).toContain(
+    expect(diagram.patterns).toEqual(["diagramas/*.json"])
+    const text = JSON.stringify(diagram.schema)
+    expect(text).toContain(
       '"enum":["maquinas/nas","maquinas/pve-01","ubicaciones/casa"]'
     )
+    expect(text).toContain('"enum":["red","red/dns"]')
+    expect(text).toContain(
+      '"enum":["rose","blue","cyan","violet","green","indigo","fuchsia","slate","teal","lime"]'
+    )
+    expect(text).toContain('"$schema"')
   })
 
   test("every icono lists the Lucide names, so a wrong one is marked", async () => {
     const schemas = editorSchemas(await loadSite())
-    for (const name of ["type", "menu", "diagram"]) {
+    for (const name of ["type", "menu"]) {
       const text = JSON.stringify(schemaNamed(schemas, name).schema)
       expect(text).toContain('"server"')
       expect(text).not.toContain('"servr"')
@@ -132,6 +138,7 @@ describe("schemaCatalog", () => {
       "https://doc.example/api/v1/content/schemas/entities/maquinas",
       "https://doc.example/api/v1/content/schemas/entities/ubicaciones",
     ])
+    expect(catalog.schemas[2]?.fileMatch).toEqual(["diagramas/*.json"])
     expect(catalog.schemas[3]).toMatchObject({
       name: "Tipo del catálogo",
       fileMatch: ["catalogo/*/_tipo.yaml"],

@@ -121,7 +121,10 @@ export async function readSite(
   })
   siteProblems.push(...resolved.problems)
 
-  const diagramRead = await readDiagrams(root, catalog)
+  const diagramRead = await readDiagrams(root, {
+    catalog,
+    pages: pagePaths,
+  })
   siteProblems.push(...diagramRead.problems)
   const { diagrams } = diagramRead
 

@@ -1,66 +1,58 @@
 import type { Element, ElementContent, Properties } from "hast"
-import { type IconNode, icons } from "lucide"
+import { badgeWidth, tagWidth, textWidth } from "#pages/diagram-measure"
 import {
-  type Box,
-  DIAGRAM_FONTS,
-  DIAGRAM_SPACING,
-  type DiagramLayout,
-  type EdgeLayout,
-  type NodeLayout,
-  nameWidth,
-  type Point,
-  shapeTop,
-  type ZoneLayout,
-} from "#pages/diagram-layout"
-import type { Diagram, DiagramNode } from "#pages/diagrams"
+  type Anchor,
+  EDGE_KINDS,
+  type EdgeKind,
+  type Hue,
+  NODE_KINDS,
+  type NodeKind,
+  type Shape,
+} from "#pages/diagram-schema"
+import type {
+  Diagram,
+  DiagramBox,
+  DiagramEdge,
+  DiagramRow,
+  DiagramZone,
+  Point,
+} from "#pages/diagrams"
 
-// A laid-out diagram drawn as an inline SVG, in hast so it goes through the
-// same sanitizer as every page. Colours and fonts come from the reader's CSS
-// on the classes (`doc-diagram-*`), so the drawing follows the theme. No ids
-// and no markers: arrowheads are their own paths. Content text (names,
-// labels) only ever lands in text nodes.
+// A diagram drawn as an inline SVG with the look of the reference site's
+// scheme drawer (`lib.mjs`): tagged boxes, right-angle arrows with a label
+// over them, one accent piece, hued zones, badges and a legend strip under
+// the drawing. It is hast, so it goes through the same sanitizer as every
+// page: no ids, styles or markers (arrowheads are their own paths), and the
+// colours and fonts come from the reader's CSS on the `doc-diagram-*`
+// classes, so the drawing follows the theme. The `data-*` attributes are
+// what the reader's highlighting reads. Content text only ever lands in
+// text nodes and attribute values.
 
-const ARROW = { length: 8, half: 3.5 }
-const CORNER = 6
+const P = "doc-diagram-"
 
-/** The name of each kind of node in the legend; `pieza` is a plain node. */
-const KIND_NAMES = { pieza: "Pieza", entrada: "Origen", almacen: "Datos" }
-
-type KindKey = keyof typeof KIND_NAMES
-
-const KIND_ORDER: KindKey[] = ["pieza", "entrada", "almacen"]
-
-const LEGEND = {
-  /** Space between the drawing and the legend's rule, and the rule and row. */
-  gap: 20,
-  rowGap: 24,
-  row: 22,
-  /** Where the items start, after "LEYENDA". */
-  indent: 88,
-  /** A legend item's text: sans 12px, like the page's small text. */
-  itemSize: 11,
-  itemGlyph: 0.56,
-  /** The sample box before a kind's name, and the arrow before "Conexión". */
-  swatch: 20,
-  arrow: 30,
-  between: 20,
+/** What the legend calls each kind of box and arrow, unless told otherwise. */
+const KIND_NAMES: Record<NodeKind, string> = {
+  focal: "Pieza central",
+  service: "Servicio",
+  store: "Datos / destino",
+  input: "Usuario / origen",
+  external: "Externo",
+  optional: "Sin uso",
 }
 
-/** The Lucide icons by their component name (`GitBranch`). */
-const ICONS = new Map<string, IconNode>(Object.entries(icons))
-
-/** `git-branch` → `GitBranch`, the key Lucide exports an icon under. */
-function pascal(name: string): string {
-  return name
-    .split("-")
-    .map((part) => `${part.charAt(0).toUpperCase()}${part.slice(1)}`)
-    .join("")
+const EDGE_NAMES: Record<EdgeKind, string> = {
+  default: "Conexión",
+  accent: "Camino principal",
+  dash: "Opcional / aviso",
 }
 
-/** The elements of the Lucide icon `name`, `undefined` for an unknown one. */
-export function iconNode(name: string): IconNode | undefined {
-  return ICONS.get(pascal(name))
-}
+const BADGE_NAME = "Conexión con una pieza lejana"
+
+/** A marker 8×6 at refX 7 on a 1.2 stroke, as `lib.mjs` draws its heads. */
+const HEAD = { length: 9.6, half: 3.6, past: 1.2 }
+
+/** The drawings this wide or wider keep 640px on narrow screens. */
+const WIDE = 640
 
 function element(
   tagName: string,
@@ -79,31 +71,75 @@ function n(value: number): string {
   return String(Math.round(value * 10) / 10)
 }
 
-/** The drawing of `diagram` from its `layout`, with its legend when useful. */
+/** The classes of something tinted by `hue`, none without one. */
+function hued(hue: Hue | null): string[] {
+  if (hue === null) return []
+  return [`${P}hued`, `${P}hue-${hue}`]
+}
+
+function cls(...names: string[]): string[] {
+  return names.map((name) => `${P}${name}`)
+}
+
+/** The drawing of `diagram`, `size` wide and high plus its legend. */
 export function diagramSvg(
   diagram: Diagram,
-  layout: DiagramLayout,
-  hrefOf: (node: DiagramNode) => string | null
+  size: { width: number; height: number },
+  routeOf: (pagePath: string) => string
 ): Element {
-  const legend = legendOf(diagram, layout)
-  const width = layout.width
-  const height = layout.height + legend.height
+  const byId = new Map<string, DiagramBox>()
+  for (const box of diagram.nodes) if (box.id !== null) byId.set(box.id, box)
+  const legend = legendOf(diagram, size)
+  const parts: ElementContent[] = [
+    element("title", {}, [text(diagram.title)]),
+    rect(cls("paper"), 0, 0, size.width, legend.height, 0),
+  ]
+  const titles: Element[] = []
+  for (const zone of diagram.zones) {
+    parts.push(zoneFrame(zone))
+    titles.push(zoneTitle(zone))
+  }
+  const lines: Element[] = []
+  const hits: Element[] = []
+  const labels: Element[] = []
+  for (const edge of diagram.edges) {
+    if (edge.points === null) continue
+    lines.push(...edgeLine(edge, edge.points))
+    const ends = endsOf(edge)
+    if (ends !== null) hits.push(hitOf(edge, edge.points, ends))
+    if (edge.label !== null && edge.at !== null)
+      labels.push(edgeLabel(edge, edge.label, edge.at, ends))
+  }
+  parts.push(...lines, ...hits, ...titles, ...labels)
+  for (const note of diagram.notes)
+    parts.push(
+      element(
+        "text",
+        {
+          className: cls("note"),
+          x: n(note.x),
+          y: n(note.y),
+          textAnchor: note.anchor,
+        },
+        [text(note.text)]
+      )
+    )
+  for (const box of diagram.nodes) parts.push(boxOf(box, routeOf))
+  for (const box of diagram.nodes)
+    parts.push(...badgesOf(box, diagram.edges, byId))
+  parts.push(...legend.parts)
+  const className = [`${P}svg`]
+  if (size.width >= WIDE) className.push(`${P}svg-wide`)
   return element(
     "svg",
     {
-      className: ["doc-diagram-svg"],
-      viewBox: `0 0 ${n(width)} ${n(height)}`,
+      className,
+      viewBox: `0 0 ${n(size.width)} ${n(legend.height)}`,
+      width: n(size.width),
       role: "img",
       ariaLabel: altText(diagram),
     },
-    [
-      element("title", {}, [text(diagram.title)]),
-      ...layout.zones.map((zone) => zoneOf(zone, diagram)),
-      ...layout.edges.map(edgeOf),
-      ...layout.edges.flatMap(labelOf),
-      ...layout.nodes.map((box) => nodeOf(box, diagram, hrefOf)),
-      ...legend.parts,
-    ]
+    parts
   )
 }
 
@@ -112,368 +148,529 @@ function altText(diagram: Diagram): string {
   return `${diagram.title}. ${diagram.description}`
 }
 
-function rect(box: Box, radius: number, className: string): Element {
+function rect(
+  className: string[],
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  radius: number,
+  data: Properties = {}
+): Element {
   return element("rect", {
-    className: [className],
-    x: n(box.x),
-    y: n(box.y),
-    width: n(box.width),
-    height: n(box.height),
+    className,
+    ...data,
+    x: n(x),
+    y: n(y),
+    width: n(width),
+    height: n(height),
     rx: n(radius),
   })
 }
 
-function zoneOf(zone: ZoneLayout, diagram: Diagram): Element {
-  const written = diagram.zones.find((declared) => declared.id === zone.id)
-  const s = DIAGRAM_SPACING
-  return element("g", { className: ["doc-diagram-zone"] }, [
-    rect(zone, 8, "doc-diagram-zone-box"),
-    element(
-      "text",
-      {
-        className: ["doc-diagram-zone-title"],
-        x: n(zone.x + s.zone),
-        y: n(zone.y + s.zone + DIAGRAM_FONTS.zone.size),
-      },
-      [text(written?.title ?? "")]
-    ),
+function textAt(
+  className: string[],
+  x: number,
+  y: number,
+  value: string,
+  anchor: Anchor = "start"
+): Element {
+  return element("text", { className, x: n(x), y: n(y), textAnchor: anchor }, [
+    text(value),
   ])
 }
 
-/** A node's outline: a rounded box, or a cylinder for `almacen`. */
-function outline(node: DiagramNode, box: Box): Element[] {
-  if (node.kind !== "almacen") return [rect(box, 6, "doc-diagram-node-box")]
-  const r = DIAGRAM_SPACING.cylinder
-  const rx = box.width / 2
-  const { x, y, width, height } = box
-  return [
-    element("path", {
-      className: ["doc-diagram-node-box"],
-      d: `M${n(x)} ${n(y + r)} A${n(rx)} ${n(r)} 0 0 1 ${n(x + width)} ${n(y + r)} V${n(y + height - r)} A${n(rx)} ${n(r)} 0 0 1 ${n(x)} ${n(y + height - r)} Z`,
-    }),
-    element("path", {
-      className: ["doc-diagram-node-rim"],
-      d: `M${n(x)} ${n(y + r)} A${n(rx)} ${n(r)} 0 0 0 ${n(x + width)} ${n(y + r)}`,
-    }),
-  ]
+/** A hairline from (x1, y) to (x2, y). */
+function hair(x1: number, x2: number, y: number): Element {
+  return element("path", {
+    className: cls("hair"),
+    d: `M${n(x1)} ${n(y)} H${n(x2)}`,
+  })
 }
 
-/**
- * Where a node's name sits: its baseline, with the name and `sub` lines
- * centred in the box under the shape's top.
- */
-function nameBaseline(node: DiagramNode, box: NodeLayout): number {
-  const top = box.y + shapeTop(node)
-  const block =
-    DIAGRAM_FONTS.name.line + box.sub.length * DIAGRAM_FONTS.sub.line
-  const room = box.height - shapeTop(node)
-  return top + (room - block) / 2 + DIAGRAM_FONTS.name.size * 0.95
+// ── Zones ─────────────────────────────────────────────────────────────────
+
+function zoneData(zone: DiagramZone): Properties {
+  if (zone.id === null) return {}
+  return { dataZone: zone.id }
 }
 
-function nodeOf(
-  box: NodeLayout,
-  diagram: Diagram,
-  hrefOf: (node: DiagramNode) => string | null
-): Element {
-  const node = diagram.nodes.get(box.id)
-  if (node === undefined) return element("g", {})
-  const centre = box.x + box.width / 2
-  const baseline = nameBaseline(node, box)
-  const parts: ElementContent[] = [
-    ...outline(node, box),
-    ...nameOf(node, centre, baseline),
-    ...box.sub.map((line, index) =>
-      element(
-        "text",
-        {
-          className: ["doc-diagram-sub"],
-          x: n(centre),
-          y: n(baseline + DIAGRAM_FONTS.sub.line * (index + 1)),
-          textAnchor: "middle",
-        },
-        [text(line)]
-      )
-    ),
-  ]
-  const group = element("g", nodeProperties(node.kind), parts)
-  const href = hrefOf(node)
-  if (href === null) return group
-  return element("a", { href }, [group])
-}
-
-/** The name line, centred: the icon first when the node has one. */
-function nameOf(
-  node: DiagramNode,
-  centre: number,
-  baseline: number
-): Element[] {
-  const name = (x: number, anchor: "start" | "middle") =>
-    element(
-      "text",
-      {
-        className: ["doc-diagram-name"],
-        x: n(x),
-        y: n(baseline),
-        textAnchor: anchor,
-      },
-      [text(node.name)]
-    )
-  const start = centre - nameWidth(node) / 2
-  const icon = iconOf(node, start, baseline)
-  if (icon === null) return [name(centre, "middle")]
-  const s = DIAGRAM_SPACING
-  return [icon, name(start + s.icon + s.iconGap, "start")]
-}
-
-function nodeProperties(
-  kind: DiagramNode["kind"],
-  className = "doc-diagram-node"
-): Properties {
-  if (kind === null) return { className: [className] }
-  return { className: [className], dataKind: kind }
-}
-
-/** The node's icon before its name, Lucide's 24px box scaled to the line. */
-function iconOf(
-  node: DiagramNode,
-  x: number,
-  baseline: number
-): Element | null {
-  if (node.icon === null) return null
-  const drawn = iconNode(node.icon)
-  if (drawn === undefined) return null
-  const size = DIAGRAM_SPACING.icon
-  const y = baseline - size + 2
-  return element(
-    "g",
-    {
-      className: ["doc-diagram-icon"],
-      transform: `translate(${n(x)} ${n(y)}) scale(${n(size / 24)})`,
-    },
-    drawn.map(([tagName, attributes]) =>
-      element(tagName, iconProperties(attributes))
-    )
+function zoneFrame(zone: DiagramZone): Element {
+  return rect(
+    [...cls("zone"), ...hued(zone.hue)],
+    zone.x,
+    zone.y,
+    zone.w,
+    zone.h,
+    8,
+    zoneData(zone)
   )
 }
 
-function iconProperties(attributes: Record<string, unknown>): Properties {
-  const properties: Properties = {}
-  for (const [name, value] of Object.entries(attributes)) {
-    if (typeof value === "string") properties[camel(name)] = value
-    if (typeof value === "number") properties[camel(name)] = n(value)
-  }
-  return properties
-}
-
-function camel(name: string): string {
-  return name.replace(/-([a-z])/g, (_, letter: string) => letter.toUpperCase())
-}
-
-function edgeOf(edge: EdgeLayout): Element {
-  return arrowLine(edge.points)
-}
-
-/** A route with its corners rounded, ending in an arrowhead. */
-function arrowLine(
-  points: readonly Point[],
-  className = "doc-diagram-edge"
-): Element {
-  if (points.length < 2) return element("g", { className: [className] })
-  return element("g", { className: [className] }, [
-    element("path", {
-      className: ["doc-diagram-line"],
-      d: roundedPath(shortened(points)),
-    }),
-    element("path", { className: ["doc-diagram-arrow"], d: arrowHead(points) }),
+/** Its title on a mask, drawn over the arrows so no line crosses it. */
+function zoneTitle(zone: DiagramZone): Element {
+  const width = Math.ceil(textWidth(zone.label, 8, "mono", 0.14) + 8)
+  return element("g", { className: cls("zone-title"), ...zoneData(zone) }, [
+    rect(
+      [...cls("mask"), ...hued(zone.hue)],
+      zone.x + 8,
+      zone.y + 9,
+      width,
+      12,
+      2
+    ),
+    textAt(
+      [...cls("legend"), ...hued(zone.hue)],
+      zone.x + 12,
+      zone.y + 18,
+      zone.label
+    ),
   ])
 }
 
-/** The route without its last few pixels, where the arrowhead goes. */
-function shortened(points: readonly Point[]): Point[] {
-  const tip = points.at(-1)
-  const before = points.at(-2)
-  if (tip === undefined || before === undefined) return [...points]
-  const along = unit(before, tip)
+// ── Arrows ────────────────────────────────────────────────────────────────
+
+/** The attributes that tie an arrow's parts to its ends, `null` unlinked. */
+function endsOf(edge: DiagramEdge): Properties | null {
+  if (edge.from === null && edge.to === null && edge.toZone === null)
+    return null
+  const ends: Properties = { dataEdge: String(edge.index) }
+  if (edge.from !== null) ends.dataFrom = edge.from
+  if (edge.to !== null) ends.dataTo = edge.to
+  if (edge.toZone !== null) ends.dataToZone = edge.toZone
+  return ends
+}
+
+function edgeClasses(
+  edge: Pick<DiagramEdge, "kind" | "hue">,
+  base: string
+): string[] {
+  if (edge.kind !== "default") return cls(base, `${base}-${edge.kind}`)
+  return [...cls(base), ...hued(edge.hue)]
+}
+
+/** The line along its points with rounded corners, then its head. */
+function edgeLine(edge: DiagramEdge, points: readonly Point[]): Element[] {
+  const ends = endsOf(edge) ?? {}
+  const line = element("path", {
+    className: edgeClasses(edge, "edge"),
+    ...ends,
+    d: roundedPath(points),
+  })
+  if (edge.noHead) return [line]
+  const head = arrowHead(points)
+  if (head === null) return [line]
   return [
-    ...points.slice(0, -1),
-    { x: tip.x - along.x * ARROW.length, y: tip.y - along.y * ARROW.length },
+    line,
+    element("path", { className: edgeClasses(edge, "head"), ...ends, d: head }),
   ]
 }
 
-function unit(from: Point, to: Point): Point {
-  const length = Math.hypot(to.x - from.x, to.y - from.y)
-  if (length === 0) return { x: 0, y: 0 }
-  return { x: (to.x - from.x) / length, y: (to.y - from.y) / length }
+/** A wider invisible line along the arrow, where the pointer catches it. */
+function hitOf(
+  edge: DiagramEdge,
+  points: readonly Point[],
+  ends: Properties
+): Element {
+  const data: Properties = { ...ends }
+  if (edge.label !== null) data.dataLabel = edge.label
+  if (edge.info !== null) data.dataInfo = edge.info
+  return element("path", {
+    className: cls("hit"),
+    ...data,
+    d: roundedPath(points),
+  })
 }
 
-/** An orthogonal route with its corners rounded. */
+/** A label centred on `at` (its baseline) with an opaque mask behind. */
+function edgeLabel(
+  edge: DiagramEdge,
+  label: string,
+  at: Point,
+  ends: Properties | null
+): Element {
+  const [x, y] = at
+  const width = Math.ceil(textWidth(label, 8, "mono", 0.06) + 8)
+  const left = labelLeft(x, width, edge.anchor)
+  const textClass = cls("label")
+  if (edge.kind === "accent") textClass.push(`${P}label-accent`)
+  textClass.push(...hued(edge.hue))
+  const parts = [
+    rect(cls("mask"), left, y - 9, width, 12, 2),
+    textAt(textClass, x, y, label, edge.anchor),
+  ]
+  return element("g", { className: cls("edge-label"), ...(ends ?? {}) }, parts)
+}
+
+function labelLeft(x: number, width: number, anchor: Anchor): number {
+  if (anchor === "middle") return x - width / 2
+  if (anchor === "start") return x - 4
+  return x - width + 4
+}
+
+/** `M a L b …` with the corners rounded by 8, for right-angle routes. */
 function roundedPath(points: readonly Point[]): string {
   const [first] = points
   if (first === undefined) return ""
-  const parts = [`M${n(first.x)} ${n(first.y)}`]
-  points.forEach((corner, index) => {
-    const before = points[index - 1]
-    const after = points[index + 1]
-    if (before === undefined || after === undefined) return
-    const radius = Math.min(
-      CORNER,
-      Math.hypot(corner.x - before.x, corner.y - before.y) / 2,
-      Math.hypot(after.x - corner.x, after.y - corner.y) / 2
+  const parts = [`M${n(first[0])} ${n(first[1])}`]
+  for (let i = 1; i < points.length - 1; i++) {
+    const before = points[i - 1]
+    const corner = points[i]
+    const after = points[i + 1]
+    if (before === undefined || corner === undefined || after === undefined)
+      continue
+    const [px, py] = before
+    const [x, y] = corner
+    const [nx, ny] = after
+    const k = Math.min(
+      8,
+      Math.hypot(x - px, y - py) / 2,
+      Math.hypot(nx - x, ny - y) / 2
     )
-    const into = unit(before, corner)
-    const out = unit(corner, after)
-    parts.push(
-      `L${n(corner.x - into.x * radius)} ${n(corner.y - into.y * radius)}`,
-      `Q${n(corner.x)} ${n(corner.y)} ${n(corner.x + out.x * radius)} ${n(corner.y + out.y * radius)}`
-    )
-  })
+    const ax = x - Math.sign(x - px) * k
+    const ay = y - Math.sign(y - py) * k
+    const bx = x + Math.sign(nx - x) * k
+    const by = y + Math.sign(ny - y) * k
+    parts.push(`L${n(ax)} ${n(ay)}`, `Q${n(x)} ${n(y)} ${n(bx)} ${n(by)}`)
+  }
   const last = points.at(-1)
   if (last !== undefined && points.length > 1)
-    parts.push(`L${n(last.x)} ${n(last.y)}`)
+    parts.push(`L${n(last[0])} ${n(last[1])}`)
   return parts.join(" ")
 }
 
-/** A filled triangle whose tip is the route's last point. */
-function arrowHead(points: readonly Point[]): string {
-  const tip = points.at(-1)
+/** A filled triangle at the route's end, pointing along its last segment. */
+function arrowHead(points: readonly Point[]): string | null {
+  const end = points.at(-1)
   const before = points.at(-2)
-  if (tip === undefined || before === undefined) return ""
-  const along = unit(before, tip)
-  const base: Point = {
-    x: tip.x - along.x * ARROW.length,
-    y: tip.y - along.y * ARROW.length,
-  }
-  const side: Point = { x: -along.y * ARROW.half, y: along.x * ARROW.half }
+  if (end === undefined || before === undefined) return null
+  const length = Math.hypot(end[0] - before[0], end[1] - before[1])
+  if (length === 0) return null
+  const dx = (end[0] - before[0]) / length
+  const dy = (end[1] - before[1]) / length
+  const tipX = end[0] + dx * HEAD.past
+  const tipY = end[1] + dy * HEAD.past
+  const baseX = tipX - dx * HEAD.length
+  const baseY = tipY - dy * HEAD.length
+  const sideX = -dy * HEAD.half
+  const sideY = dx * HEAD.half
   return [
-    `M${n(tip.x)} ${n(tip.y)}`,
-    `L${n(base.x + side.x)} ${n(base.y + side.y)}`,
-    `L${n(base.x - side.x)} ${n(base.y - side.y)}`,
+    `M${n(tipX)} ${n(tipY)}`,
+    `L${n(baseX + sideX)} ${n(baseY + sideY)}`,
+    `L${n(baseX - sideX)} ${n(baseY - sideY)}`,
     "Z",
   ].join(" ")
 }
 
-/** A label over its route, on a mask the colour of the drawing's paper. */
-function labelOf(edge: EdgeLayout): Element[] {
-  if (edge.label === null || edge.lines.length === 0) return []
-  const box = edge.label
-  const font = DIAGRAM_FONTS.label
-  const centre = box.x + box.width / 2
+// ── Boxes ─────────────────────────────────────────────────────────────────
+
+/**
+ * A box, wrapped with what the reader's highlighting reads: its id, zone,
+ * `trace`, `needs` and `info`; a link to its page when it has one.
+ */
+function boxOf(
+  box: DiagramBox,
+  routeOf: (pagePath: string) => string
+): Element {
+  const body = box.rows === null ? plainBox(box) : tableBox(box, box.rows)
+  const data: Properties = {}
+  if (box.id !== null) data.dataNode = box.id
+  if (box.zone !== null) data.dataZone = box.zone
+  if (box.trace) data.dataTrace = "true"
+  if (box.needs.length > 0) data.dataNeeds = box.needs.join(" ")
+  if (box.info !== null) data.dataInfo = box.info
+  if (box.link === null)
+    return element(
+      "g",
+      { className: [`${P}box`, ...hued(box.hue)], ...data },
+      body
+    )
+  return element(
+    "a",
+    {
+      className: [`${P}box`, `${P}link`, ...hued(box.hue)],
+      href: routeOf(box.link),
+      ...data,
+    },
+    body
+  )
+}
+
+/** A rounded box, or a pill or a cylinder by its shape. */
+function outline(
+  className: string[],
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  shape: Shape | null,
+  rim: boolean
+): Element[] {
+  if (shape === "pill") return [rect(className, x, y, w, h, h / 2)]
+  if (shape === "cylinder") {
+    const r = Math.min(7, h / 4)
+    const rx = w / 2
+    const body = element("path", {
+      className,
+      d: `M${n(x)} ${n(y + r)} A${n(rx)} ${n(r)} 0 0 1 ${n(x + w)} ${n(y + r)} V${n(y + h - r)} A${n(rx)} ${n(r)} 0 0 1 ${n(x)} ${n(y + h - r)} Z`,
+    })
+    if (!rim) return [body]
+    return [
+      body,
+      element("path", {
+        className: [...className, `${P}rim`],
+        d: `M${n(x)} ${n(y + r)} A${n(rx)} ${n(r)} 0 0 0 ${n(x + w)} ${n(y + r)}`,
+      }),
+    ]
+  }
+  return [rect(className, x, y, w, h, 6)]
+}
+
+function nodeClasses(kind: NodeKind): string[] {
+  return cls("node", kind)
+}
+
+/** A framed tag: its box and its text, in capitals. */
+function tagOf(tag: string, kind: NodeKind, x: number, y: number): Element[] {
+  const width = tagWidth(tag)
+  const focal = kind === "focal"
+  const box = cls("tagbox")
+  const label = cls("tag")
+  if (focal) {
+    box.push(`${P}tagbox-focal`)
+    label.push(`${P}tag-focal`)
+  }
   return [
-    element("g", { className: ["doc-diagram-edge-label"] }, [
-      rect(box, 2, "doc-diagram-label-box"),
-      ...edge.lines.map((line, index) =>
-        element(
-          "text",
-          {
-            className: ["doc-diagram-label"],
-            x: n(centre),
-            y: n(
-              box.y + DIAGRAM_SPACING.label / 2 + font.line * index + font.size
-            ),
-            textAnchor: "middle",
-          },
-          [text(line)]
-        )
-      ),
-    ]),
+    rect(box, x, y, width, 12, 2),
+    textAt(label, x + width / 2, y + 9, tag.toUpperCase(), "middle"),
   ]
 }
+
+function plainBox(box: DiagramBox): Element[] {
+  const { x, y, w, h, shape } = box
+  const cx = x + w / 2
+  const cylinder = shape === "cylinder"
+  const tagRow = box.tag === null ? 0 : 18
+  const cylinderTop = cylinder ? 8 : 0
+  const top = tagRow + cylinderTop
+  const block = 12 + 15 * box.sub.length
+  const nameY = y + top + (h - top - block) / 2 + 10
+  const parts: Element[] = [
+    ...outline(cls("paper"), x, y, w, h, shape, false),
+    ...outline(nodeClasses(box.kind), x, y, w, h, shape, true),
+  ]
+  if (box.tag !== null) {
+    // Centred on a pill or a cylinder, at the left on a box.
+    const tx = shape === null ? x + 8 : cx - tagWidth(box.tag) / 2
+    const ty = cylinder ? y + 16 : y + 6
+    parts.push(...tagOf(box.tag, box.kind, tx, ty))
+  }
+  parts.push(textAt(cls("name"), cx, nameY, box.name, "middle"))
+  box.sub.forEach((line, index) => {
+    parts.push(textAt(cls("sub"), cx, nameY + 15 * (index + 1), line, "middle"))
+  })
+  return parts
+}
+
+/**
+ * A database table: name on top, a hairline, then one row per column with
+ * its key, name and type, and its "more" line.
+ */
+function tableBox(box: DiagramBox, rows: readonly DiagramRow[]): Element[] {
+  const { x, y, w, h } = box
+  const parts: Element[] = [
+    rect(cls("paper"), x, y, w, h, 6),
+    rect(nodeClasses(box.kind), x, y, w, h, 6),
+    textAt(cls("table-name"), x + 12, y + 20, box.name),
+    hair(x, x + w, y + 30),
+  ]
+  if (box.tag !== null)
+    parts.push(
+      ...tagOf(box.tag, box.kind, x + w - 8 - tagWidth(box.tag), y + 9)
+    )
+  rows.forEach((row, index) => {
+    const ry = y + 46 + 14 * index
+    if (row.key !== null) {
+      const key = cls("key")
+      if (row.key === "PK") key.push(`${P}key-pk`)
+      parts.push(textAt(key, x + 12, ry, row.key))
+    }
+    parts.push(textAt(cls("col"), x + 40, ry, row.name))
+    if (row.type !== null)
+      parts.push(textAt(cls("type"), x + w - 12, ry, row.type, "end"))
+  })
+  if (box.more !== null)
+    parts.push(textAt(cls("more"), x + 12, y + 46 + 14 * rows.length, box.more))
+  return parts
+}
+
+/**
+ * The chips of the badge arrows that leave `box`: a pill each, in the hue
+ * of the box they go to, from its top right corner leftwards.
+ */
+function badgesOf(
+  box: DiagramBox,
+  edges: readonly DiagramEdge[],
+  byId: ReadonlyMap<string, DiagramBox>
+): Element[] {
+  if (box.id === null) return []
+  let right = box.x + box.w - 8
+  const chips: Element[] = []
+  for (const edge of edges) {
+    if (edge.badge === null || edge.from !== box.id || edge.to === null)
+      continue
+    const width = badgeWidth(edge.badge)
+    const left = right - width
+    const hue = byId.get(edge.to)?.hue ?? null
+    const data: Properties = {
+      dataEdge: String(edge.index),
+      dataFrom: edge.from,
+      dataTo: edge.to,
+      dataLabel: chipLabel(edge, edge.badge),
+    }
+    if (edge.info !== null) data.dataInfo = edge.info
+    chips.push(
+      element("g", { className: [`${P}badge`, ...hued(hue)], ...data }, [
+        rect([`${P}badge-box`, ...hued(hue)], left, box.y + 6, width, 12, 6),
+        textAt(
+          [`${P}badge-t`, ...hued(hue)],
+          left + width / 2,
+          box.y + 15,
+          edge.badge,
+          "middle"
+        ),
+      ])
+    )
+    right = left - 3
+  }
+  return chips
+}
+
+function chipLabel(edge: DiagramEdge, badge: string): string {
+  if (edge.label !== null) return edge.label
+  return badge
+}
+
+// ── Legend ────────────────────────────────────────────────────────────────
 
 type LegendItem = {
   name: string
   mark: number
-  draw: (x: number, y: number) => Element
+  draw: (x: number, y: number) => Element[]
 }
 
-function kindKey(node: DiagramNode): KindKey {
-  if (node.kind === null) return "pieza"
-  return node.kind
+function legendSample(
+  kind: NodeKind,
+  shape: Shape | undefined
+): LegendItem["draw"] {
+  if (shape === undefined)
+    return (x, y) => [rect(nodeClasses(kind), x, y - 6, 20, 12, 3)]
+  return (x, y) => outline(nodeClasses(kind), x, y - 7, 20, 14, shape, true)
 }
 
-function swatch(kind: KindKey): LegendItem {
-  const nodeKind = kind === "pieza" ? null : kind
-  return {
-    name: KIND_NAMES[kind],
-    mark: LEGEND.swatch + 8,
-    draw: (x, y) =>
-      element("g", nodeProperties(nodeKind, "doc-diagram-swatch"), [
-        rect(
-          { x, y: y - 6, width: LEGEND.swatch, height: 12 },
-          3,
-          "doc-diagram-node-box"
-        ),
-      ]),
+function edgeSample(kind: EdgeKind): LegendItem["draw"] {
+  return (x, y) => {
+    const edge: DiagramEdge = {
+      index: -1,
+      points: null,
+      from: null,
+      to: null,
+      toZone: null,
+      kind,
+      label: null,
+      at: null,
+      anchor: "middle",
+      hue: null,
+      info: null,
+      noHead: false,
+      badge: null,
+    }
+    return edgeLine(edge, [
+      [x, y],
+      [x + 30, y],
+    ])
   }
 }
 
-const CONNECTION: LegendItem = {
-  name: "Conexión",
-  mark: LEGEND.arrow + 8,
-  draw: (x, y) =>
-    arrowLine(
-      [
-        { x, y },
-        { x: x + LEGEND.arrow, y },
-      ],
-      "doc-diagram-swatch"
-    ),
+function badgeSample(x: number, y: number): Element[] {
+  const width = badgeWidth("SSO")
+  return [
+    rect([`${P}badge-box`], x, y - 6, width, 12, 6),
+    textAt([`${P}badge-t`], x + width / 2, y + 3, "SSO", "middle"),
+  ]
 }
 
 /**
- * The legend under the drawing, when its nodes are of more than one kind:
- * a rule, "Leyenda" and one sample per kind used, then the arrow, in rows
- * that fit the drawing's width.
+ * The legend strip under the drawing: a hairline, "LEYENDA" and only the
+ * kinds of box and arrow the diagram uses, plus the badges, wrapping onto
+ * more rows when they do not fit the width.
  */
 function legendOf(
   diagram: Diagram,
-  layout: DiagramLayout
+  size: { width: number; height: number }
 ): { height: number; parts: Element[] } {
-  const kinds = new Set([...diagram.nodes.values()].map(kindKey))
-  if (kinds.size < 2) return { height: 0, parts: [] }
-  const items = [
-    ...KIND_ORDER.filter((kind) => kinds.has(kind)).map(swatch),
-    CONNECTION,
-  ]
+  const kinds = new Set(diagram.nodes.map((box) => box.kind))
+  const lines = diagram.edges.filter((edge) => edge.badge === null)
+  const edgeKinds = new Set(lines.map((edge) => edge.kind))
+  const items: LegendItem[] = []
+  for (const kind of NODE_KINDS) {
+    if (!kinds.has(kind)) continue
+    items.push({
+      name: kindName(diagram, kind),
+      mark: 28,
+      draw: legendSample(kind, diagram.shapes[kind]),
+    })
+  }
+  for (const kind of EDGE_KINDS) {
+    if (!edgeKinds.has(kind)) continue
+    items.push({
+      name: edgeName(diagram, kind),
+      mark: 40,
+      draw: edgeSample(kind),
+    })
+  }
+  if (diagram.edges.some((edge) => edge.badge !== null))
+    items.push({
+      name: badgeName(diagram.badgeName),
+      mark: badgeWidth("SSO") + 8,
+      draw: badgeSample,
+    })
 
-  const top = layout.height + LEGEND.gap
+  const legendY = size.height + 28
   const parts: Element[] = [
-    element("path", {
-      className: ["doc-diagram-rule"],
-      d: `M0 ${n(top)} H${n(layout.width)}`,
-    }),
-    element(
-      "text",
-      {
-        className: ["doc-diagram-legend"],
-        x: "0",
-        y: n(top + LEGEND.rowGap + 4),
-      },
-      [text("Leyenda")]
-    ),
+    hair(24, size.width - 24, legendY - 16),
+    textAt(cls("legend"), 24, legendY + 4, "LEYENDA"),
   ]
-  let x = LEGEND.indent
-  let y = top + LEGEND.rowGap
+  let x = 96
+  let y = legendY
   for (const item of items) {
-    const width =
-      item.mark +
-      Math.ceil(item.name.length * LEGEND.itemSize * LEGEND.itemGlyph)
-    if (x > LEGEND.indent && x + width > layout.width) {
-      x = LEGEND.indent
-      y += LEGEND.row
+    const width = item.mark + Math.ceil(textWidth(item.name, 11, "sans", -0.06))
+    if (x > 96 && x + width > size.width - 24) {
+      x = 96
+      y += 22
     }
     parts.push(
-      item.draw(x, y),
-      element(
-        "text",
-        {
-          className: ["doc-diagram-legend-item"],
-          x: n(x + item.mark),
-          y: n(y + 4),
-        },
-        [text(item.name)]
-      )
+      ...item.draw(x, y),
+      textAt(cls("legend-item"), x + item.mark, y + 4, item.name)
     )
-    x += width + LEGEND.between
+    x += width + 20
   }
-  return { height: y - layout.height + LEGEND.row / 2, parts }
+  return { height: y + 32, parts }
+}
+
+function kindName(diagram: Diagram, kind: NodeKind): string {
+  const own = diagram.kindNames[kind]
+  if (own !== undefined) return own
+  return KIND_NAMES[kind]
+}
+
+function edgeName(diagram: Diagram, kind: EdgeKind): string {
+  const own = diagram.edgeNames[kind]
+  if (own !== undefined) return own
+  return EDGE_NAMES[kind]
+}
+
+function badgeName(own: string | null): string {
+  if (own !== null) return own
+  return BADGE_NAME
 }

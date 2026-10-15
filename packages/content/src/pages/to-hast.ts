@@ -52,8 +52,27 @@ const handlers = {
 const DIAGRAM_CLASS = /^doc-diagram-[a-z-]+$/
 
 /**
+ * What ties a drawing's parts together for the reader's highlighting: the
+ * box, zone and arrow ids, a box's `trace` and `needs`, and the texts its
+ * card shows. Their values are content text, never markup.
+ */
+const DIAGRAM_DATA = [
+  "dataNode",
+  "dataZone",
+  "dataTrace",
+  "dataNeeds",
+  "dataEdge",
+  "dataFrom",
+  "dataTo",
+  "dataToZone",
+  "dataLabel",
+  "dataInfo",
+]
+
+/**
  * The SVG a drawn diagram is made of: shapes, text and links, with geometry
- * attributes only. No ids, styles, `use`, `foreignObject` or event handlers.
+ * and its `data-*` attributes only. No styles, `use`, `foreignObject`,
+ * markers or event handlers.
  */
 const DIAGRAM_SVG_ATTRIBUTES = {
   svg: [
@@ -64,27 +83,35 @@ const DIAGRAM_SVG_ATTRIBUTES = {
     "role",
     "ariaLabel",
   ],
-  g: [
+  g: [["className", DIAGRAM_CLASS], ...DIAGRAM_DATA],
+  rect: [
     ["className", DIAGRAM_CLASS],
-    ["dataKind", "entrada", "almacen"],
-    "transform",
+    "x",
+    "y",
+    "width",
+    "height",
+    "rx",
+    "ry",
+    "dataZone",
   ],
-  rect: [["className", DIAGRAM_CLASS], "x", "y", "width", "height", "rx", "ry"],
-  path: [["className", DIAGRAM_CLASS], "d"],
-  circle: ["cx", "cy", "r"],
-  ellipse: ["cx", "cy", "rx", "ry"],
-  line: ["x1", "y1", "x2", "y2"],
-  polyline: ["points"],
-  polygon: ["points"],
+  path: [["className", DIAGRAM_CLASS], "d", ...DIAGRAM_DATA],
   text: [
     ["className", DIAGRAM_CLASS],
     "x",
     "y",
-    ["textAnchor", "middle", "start"],
+    ["textAnchor", "middle", "start", "end"],
   ],
-  tspan: ["x", "dy"],
   title: [],
 } satisfies NonNullable<Schema["attributes"]>
+
+/** A link: GitHub's attributes, plus a diagram box's classes and data. */
+const LINK_ATTRIBUTES: NonNullable<Schema["attributes"]>[string] = [
+  ...(defaultSchema.attributes?.a ?? []).filter(
+    (attribute) => !Array.isArray(attribute) || attribute[0] !== "className"
+  ),
+  ["className", "data-footnote-backref", DIAGRAM_CLASS],
+  ...DIAGRAM_DATA,
+]
 
 /** What the reader may render: GitHub's schema plus the platform's marks. */
 export const SANITIZE_SCHEMA: Schema = {
@@ -101,6 +128,7 @@ export const SANITIZE_SCHEMA: Schema = {
   attributes: {
     ...defaultSchema.attributes,
     ...DIAGRAM_SVG_ATTRIBUTES,
+    a: LINK_ATTRIBUTES,
     figure: [["className", "doc-diagram"], "dataDiagram", "dataDrawn"],
     ul: [
       "ariaDescribedBy",

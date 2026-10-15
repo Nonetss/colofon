@@ -67,7 +67,7 @@ export const contentRouter = {
       openapi({
         summary: "Schema of a diagram",
         description:
-          "JSON Schema of every diagramas/<id>.yaml of a content repository, listing the entities a node can stand for as <type>/<id> and the Lucide icon names.",
+          "JSON Schema of every diagramas/<id>.json of a content repository, listing the entities a box can stand for as <type>/<id> and the pages it can link to.",
         tags,
         method: "GET",
         path: "/v1/content/schemas/{repository}/diagram",
