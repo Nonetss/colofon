@@ -208,6 +208,28 @@ sidebar se abre desde el navbar. Cada ficha lleva sus migas, los campos de la
 cabecera, la anterior y la siguiente, y en pantallas anchas el índice "En
 esta página".
 
+### Que una IA lea la documentación
+
+Cada ficha se lee también en Markdown, sin el HTML, añadiendo `/llm.txt` a su
+dirección (`/<slug>/red/dns/llm.txt`, o `/<slug>/llm.txt` para la portada). Es
+el mismo texto que copia "Copiar en Markdown", con los enlaces como
+direcciones completas. Para que una IA encuentre las fichas hay dos índices,
+según [llmstxt.org](https://llmstxt.org):
+
+| Ruta | Qué es |
+| --- | --- |
+| `/llms.txt` | Todos los repositorios con contenido, uno por sección, cada ficha enlazada a su `llm.txt` con su descripción. |
+| `/<slug>/llms.txt` | Lo mismo para un solo repositorio. |
+
+Piden la misma credencial que el lector: la sesión del navegador o, para un
+agente, una API key (se crea en `/admin/api-keys`) en la cabecera
+`x-api-key`. Sin credencial responden `401` con una línea que lo explica, en
+lugar de mandar al login. Las direcciones completas salen de `CORS_ORIGIN`.
+
+Las API keys se crean sin límite de peticiones; las creadas antes de este
+cambio conservan el límite del plugin (10 al día, y cada `llm.txt` gasta dos),
+así que la que use un agente hay que volver a crearla.
+
 ## Autocompletado en el editor
 
 El backend sirve, sin login, un **catálogo de schemas** por repositorio, con
