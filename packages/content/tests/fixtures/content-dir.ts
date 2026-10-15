@@ -39,7 +39,7 @@ export const VALID_SITE: Record<string, string> = {
     "nombre: Máquina",
     "plural: Máquinas",
     "campos:",
-    "  ip: { tipo: ip }",
+    "  ip: { tipo: ip, etiqueta: Dirección IP }",
     "  ubicacion: { tipo: ref, a: ubicaciones }",
     "  ficha: { tipo: ficha, opcional: true }",
   ].join("\n"),

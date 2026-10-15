@@ -24,7 +24,7 @@ const FILES: Record<string, string> = {
     "etiqueta: name",
     "campos:",
     "  name: { tipo: texto, opcional: true }",
-    "  ip: { tipo: ip }",
+    "  ip: { tipo: ip, etiqueta: Dirección IP }",
     "  kind: { tipo: enum, valores: [physical, vm] }",
     "  location: { tipo: ref, a: locations }",
     "  virtual: { tipo: booleano, opcional: true }",
@@ -120,7 +120,7 @@ describe("entitiesTable", () => {
     const { html, problems } = render({ type: "machines" })
     expect(problems).toEqual([])
     expect(html).toContain(
-      "<thead><tr><th>name</th><th>ip</th><th>location</th></tr></thead>"
+      "<thead><tr><th>name</th><th>Dirección IP</th><th>location</th></tr></thead>"
     )
     expect(rowsOf(html)).toEqual([
       ["docker-01", "192.168.1.20", "Home"],
@@ -132,6 +132,13 @@ describe("entitiesTable", () => {
     const { html } = render({ type: "services" })
     expect(html).toContain(
       "<tr><th>name</th><th>category</th><th>url</th><th>machine</th><th>page</th></tr>"
+    )
+  })
+
+  test("a column is headed by its field's etiqueta, its name without one, and id keeps its name", () => {
+    const { html } = render({ type: "machines", columns: "id,ip,kind" })
+    expect(html).toContain(
+      "<tr><th>id</th><th>Dirección IP</th><th>kind</th></tr>"
     )
   })
 

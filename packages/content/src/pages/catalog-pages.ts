@@ -7,6 +7,7 @@ import { catalogTypePath, entityPath } from "#pages/catalog-paths"
 import {
   type EntitiesContext,
   entityName,
+  fieldLabel,
   shownValue,
   typeTable,
 } from "#pages/entities"
@@ -16,7 +17,7 @@ import type { Page, PageHeader, PageHeading, PageProblem } from "#pages/types"
 
 // The reader pages the platform makes for the catalog, with no MDX behind
 // them: `catalogo` (every type), `catalogo/<type>` (its table) and
-// `catalogo/<type>/<id>` (one entity: its fields, the pages that cite it,
+// `catalogo/<type>/<id>` (one entity: its fields and source, the pages that cite it,
 // the entities that point at it and the diagrams it is in). They are plain
 // `Page`s, so the reader serves them like any page of docs/. Their headers
 // come first, so the navigation can list them; their bodies need the
@@ -230,6 +231,13 @@ function entityBody(
 ): ElementContent[] {
   const pagePath = entityPath(type.id, entity.id)
   const body: ElementContent[] = [fieldsTable(type, entity, context)]
+  const source = entity.values.fuente
+  if (typeof source === "string")
+    body.push(
+      element("p", { className: ["doc-entity-source"] }, [
+        text(`Fuente: ${source}`),
+      ])
+    )
   if (entity.page !== null) {
     body.push(
       element("p", {}, [
@@ -273,7 +281,10 @@ function entityBody(
   return body
 }
 
-/** One row per field the entity sets, in declaration order, then `fuente`. */
+/**
+ * One row per declared field the entity sets, in declaration order, named by
+ * its label. `fuente` goes in a note under it and `actualizado` in the header.
+ */
 function fieldsTable(
   type: CatalogType,
   entity: Entity,
@@ -282,10 +293,8 @@ function fieldsTable(
   const rows: ElementContent[][][] = []
   for (const [name, field] of Object.entries(type.definition.campos)) {
     const shown = shownValue(entity.values[name], field, context)
-    if (shown.length > 0) rows.push([[text(name)], shown])
+    if (shown.length > 0) rows.push([[text(fieldLabel(name, field))], shown])
   }
-  const source = entity.values.fuente
-  if (typeof source === "string") rows.push([[text("fuente")], [text(source)]])
   if (rows.length === 0) rows.push([[text("id")], entityName(entity, context)])
   return tableOf(["", ""], rows)
 }

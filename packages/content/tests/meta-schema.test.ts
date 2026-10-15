@@ -38,6 +38,27 @@ describe("fieldDefinition", () => {
     ).toBe(false)
   })
 
+  test("any field, nested ones included, may name itself with etiqueta", () => {
+    const field = {
+      tipo: "objeto",
+      etiqueta: "Red",
+      campos: { ip: { tipo: "ip", etiqueta: "Dirección IP" } },
+    }
+    expect(meta.fieldDefinition.safeParse(field).success).toBe(true)
+  })
+
+  test("an empty etiqueta is refused with its path", () => {
+    const result = meta.siteConfig.safeParse({
+      nombre: "Homelab",
+      plataforma: "1",
+      cabecera: { files: { tipo: "texto", etiqueta: "" } },
+    })
+    expect(result.success).toBe(false)
+    expect(result.error?.issues.map((issue) => issue.path.join("."))).toEqual([
+      "cabecera.files.etiqueta",
+    ])
+  })
+
   test("an enum needs at least one value", () => {
     expect(
       meta.fieldDefinition.safeParse({ tipo: "enum", valores: [] }).success

@@ -21,7 +21,7 @@ const FILES: Record<string, string> = {
     "etiqueta: name",
     "campos:",
     "  name: { tipo: texto, opcional: true }",
-    "  ip: { tipo: ip }",
+    "  ip: { tipo: ip, etiqueta: Dirección IP }",
     "  host: { tipo: ref, a: machines, opcional: true }",
     "  page: { tipo: ficha, opcional: true }",
     "vista:",
@@ -76,7 +76,7 @@ describe("generated catalog pages", () => {
       icono: "server",
     })
     const html = htmlOf(machines.tree)
-    expect(html).toContain("<th>name</th><th>ip</th>")
+    expect(html).toContain("<th>name</th><th>Dirección IP</th>")
     expect(html).toContain(
       '<td><a href="/casa/catalogo/machines/docker-01">docker-01</a></td>'
     )
@@ -111,7 +111,14 @@ describe("generated catalog pages", () => {
     expect(html).toContain(
       '<tr><td>host</td><td><a href="/casa/red/dns">PVE-01</a></td></tr>'
     )
-    expect(html).toContain("<tr><td>fuente</td><td>komodo</td></tr>")
+    expect(html).toContain(
+      "<tr><td>Dirección IP</td><td>192.168.1.20</td></tr>"
+    )
+    expect(html).not.toContain("<td>fuente</td>")
+    expect(html).not.toContain("<td>actualizado</td>")
+    expect(html).toContain(
+      '</table><p class="doc-entity-source">Fuente: komodo</p>'
+    )
     expect(html).toContain(
       '<h2 id="páginas-que-la-citan">Páginas que la citan</h2><ul><li><a href="/casa/copias">Copias</a></li><li><a href="/casa/red/dns">DNS</a></li></ul>'
     )

@@ -44,6 +44,8 @@ export type ScalarFieldKind = (typeof SCALAR_FIELD_KINDS)[number]
 type FieldModifiers = {
   opcional?: boolean | undefined
   descripcion?: string | undefined
+  /** How the reader names the field; its name when unset. */
+  etiqueta?: string | undefined
 }
 
 /** One field of a catalog type, of an object field or of the page header. */
@@ -118,6 +120,10 @@ export function createMetaSchemas(options: MetaSchemaOptions = {}) {
     descripcion: z.string().min(1).optional().meta({
       description:
         "Para qué sirve el campo. Sale como ayuda en el editor y la lee la IA",
+    }),
+    etiqueta: z.string().min(1).optional().meta({
+      description:
+        "Cómo se llama el campo en el lector (fichas, tablas y cabecera). Sin ella se muestra su nombre",
     }),
   }
 

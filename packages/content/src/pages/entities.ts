@@ -217,7 +217,9 @@ function table(
     element(
       "tr",
       {},
-      columns.map((name) => element("th", {}, [text(name)]))
+      columns.map((name) =>
+        element("th", {}, [text(columnLabel(name, shown.fields))])
+      )
     ),
   ])
   const body = element(
@@ -232,6 +234,22 @@ function table(
     )
   )
   return element("table", {}, [head, body])
+}
+
+/** A column's header: its field's label, or its name (`id`, `fuente`…). */
+function columnLabel(
+  name: string,
+  fields: Readonly<Record<string, FieldDefinition>>
+): string {
+  const field = fields[name]
+  if (field === undefined) return name
+  return fieldLabel(name, field)
+}
+
+/** How the reader names a field: its `etiqueta`, or its name without one. */
+export function fieldLabel(name: string, field: FieldDefinition): string {
+  if (field.etiqueta !== undefined) return field.etiqueta
+  return name
 }
 
 function cellOf(

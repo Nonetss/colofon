@@ -49,6 +49,28 @@ describe("readSite", () => {
     expect(titles(varios.children)).toEqual(["Alfa", "Zeta"])
   })
 
+  test("a folder holding only its index is a page with no children, keeping its order, breadcrumbs and reading order", async () => {
+    const site = await siteOf({
+      ...SITE,
+      "docs/red/solo/index.mdx": page("Solo", "", "orden: 3\n"),
+    })
+    const solo = section(site.nav, "Red").children.find(
+      (node) => node.title === "Solo"
+    )
+    expect(solo?.kind).toBe("page")
+    expect(titles(section(site.nav, "Red").children)).toEqual([
+      "VPN",
+      "DNS",
+      "Solo",
+      "Anexo",
+    ])
+    const found = pageAt(site, "red/solo")
+    expect(found.children).toEqual([])
+    expect(found.breadcrumbs).toEqual([{ path: "red", title: "Red" }])
+    expect(found.previous?.path).toBe("red/dns")
+    expect(found.next?.path).toBe("red/anexo")
+  })
+
   test("a folder holding only images is not a section", async () => {
     const site = await siteOf(SITE)
     expect(site.pages.has("varios/img")).toBe(false)
@@ -319,6 +341,29 @@ describe("readSite with menu.yaml", () => {
     expect(pageAt(site, "varios/zeta").header.icono).toBe("globe")
     expect(pageAt(site, "varios/zeta").problems).toEqual([])
     expect(pageAt(site, "catalogo").header.titulo).toBe("Datos")
+  })
+
+  test("a folder entry holding only its index is a page with the menu's title and icon", async () => {
+    const site = await siteOf({
+      ...SITE,
+      "docs/diagramas/index.mdx": page("Diagramas"),
+      "menu.yaml": menuOf([
+        "Todo",
+        [
+          "red",
+          "{ ruta: diagramas, titulo: Dibujos, icono: workflow }",
+          "varios",
+          "suelta",
+          "catalogo",
+        ],
+      ]),
+    })
+    const node = group(site.nav, "Todo").children.find(
+      (child) => child.title === "Dibujos"
+    )
+    expect(node?.kind).toBe("page")
+    expect(node?.icon).toBe("workflow")
+    expect(pageAt(site, "diagramas").children).toEqual([])
   })
 
   test("a folder without index takes the menu's title and icon", async () => {

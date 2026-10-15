@@ -6,7 +6,8 @@ import { pagePathOf } from "#pages/transform"
 import type { Page, PageProblem } from "#pages/types"
 
 // The navigation of a repository. Without `menu.yaml` it is the folders of
-// docs/ (each folder a section, ordered by `orden` then by title) followed by
+// docs/ (each folder a section, or a page when it holds only its index,
+// ordered by `orden` then by title) followed by
 // the catalog. With a menu, the top level is its groups, each holding the
 // pages, folders and catalog pages its entries name, in the order written;
 // whatever no entry shows goes to a last "Otros" group. Entries naming
@@ -226,11 +227,12 @@ function entryNode(entry: ResolvedEntry, source: NavSource): NavNode {
     case "catalog":
       return catalogSection(source, source.typeIds)
     case "folder":
-      return {
-        kind: "section",
-        ...entryOf(entry.path, source, path.posix.basename(entry.path)),
-        children: buildTree(entry.path, source, source.mdxFiles),
-      }
+      return folderNode(
+        entry.path,
+        path.posix.basename(entry.path),
+        source,
+        source.mdxFiles
+      )
     case "page":
     case "type":
       return { kind: "page", ...entryOf(entry.path, source, entry.path) }
@@ -315,15 +317,38 @@ function buildTree(
   for (const name of subfolders) {
     const sectionPath = joinPath(folder, name)
     nodes.push({
-      node: {
-        kind: "section",
-        ...entryOf(sectionPath, source, name),
-        children: buildTree(sectionPath, source, mdxFiles),
-      },
+      node: folderNode(sectionPath, name, source, mdxFiles),
       order: orderOf(source.read.get(sectionPath)),
     })
   }
   return nodes.sort(byOrderThenTitle).map((entry) => entry.node)
+}
+
+/**
+ * A folder of docs/: a section with its subtree, or a page when its only
+ * page is its `index.mdx`, so it never shows as a section with nothing in it.
+ */
+function folderNode(
+  folder: string,
+  fallbackTitle: string,
+  source: NavSource,
+  mdxFiles: readonly string[]
+): NavNode {
+  const entry = entryOf(folder, source, fallbackTitle)
+  if (!holdsPages(folder, mdxFiles)) return { kind: "page", ...entry }
+  return {
+    kind: "section",
+    ...entry,
+    children: buildTree(folder, source, mdxFiles),
+  }
+}
+
+/** Whether `folder` holds a page besides its own `index.mdx`. */
+function holdsPages(folder: string, mdxFiles: readonly string[]): boolean {
+  return mdxFiles.some((file) => {
+    const relative = relativeTo(folder, file)
+    return relative !== undefined && relative !== "index.mdx"
+  })
 }
 
 function relativeTo(folder: string, file: string): string | undefined {

@@ -12,14 +12,15 @@ export type CatalogIndex = {
   folderPaths: readonly string[]
 }
 
-/** The schema of one field's value, with its description attached. */
+/** The schema of one field's value, titled with its label and described. */
 export function fieldSchema(
   field: FieldDefinition,
   index: CatalogIndex
 ): z.ZodType {
   const schema = valueSchema(field, index)
-  if (field.descripcion === undefined) return schema
-  return schema.meta({ description: field.descripcion })
+  if (field.descripcion === undefined && field.etiqueta === undefined)
+    return schema
+  return schema.meta({ title: field.etiqueta, description: field.descripcion })
 }
 
 function valueSchema(field: FieldDefinition, index: CatalogIndex): z.ZodType {

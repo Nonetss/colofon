@@ -88,6 +88,7 @@ export const SANITIZE_SCHEMA: Schema = {
         "doc-alert-title",
         "doc-entities-group",
         "doc-entities-empty",
+        "doc-entity-source",
       ],
     ],
     span: [

@@ -50,6 +50,7 @@ export {
   type TypeDefinition,
 } from "#meta-schema"
 export { entityPath, isCatalogPath } from "#pages/catalog-paths"
+export { fieldLabel } from "#pages/entities"
 export { type HeaderSchema, headerSchema, readHeader } from "#pages/header"
 export {
   type Breadcrumb,

@@ -67,6 +67,17 @@ describe("editorSchemas", () => {
     })
   })
 
+  test("a field with etiqueta is titled with it, and the meta-schema accepts it", async () => {
+    const schemas = editorSchemas(await loadSite())
+    const machines = schemaNamed(schemas, "entities/maquinas")
+    expect(machines.schema).toMatchObject({
+      properties: { ip: { title: "Dirección IP" } },
+    })
+    expect(JSON.stringify(schemaNamed(schemas, "type").schema)).toContain(
+      '"etiqueta":{'
+    )
+  })
+
   test("in the meta-schema, `a` lists the types that exist", async () => {
     const type = schemaNamed(editorSchemas(await loadSite()), "type")
     expect(JSON.stringify(type.schema)).toContain(
