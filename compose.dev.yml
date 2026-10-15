@@ -19,7 +19,7 @@
 # The database is the stack's own `db` (data in the db_data volume): the
 # backend's DATABASE_URL is overridden to reach it, whatever .env says. The
 # backend applies the committed migrations and seeds the admin on boot.
-name: stack-dev
+name: doc-dev
 
 x-node-ignore: &node-ignore
   - node_modules/
@@ -53,11 +53,11 @@ x-db: &db
   environment:
     POSTGRES_USER: postgres
     POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-    POSTGRES_DB: stack
+    POSTGRES_DB: doc
   volumes:
     - db_data:/var/lib/postgresql/data
   healthcheck:
-    test: [ "CMD-SHELL", "pg_isready -U postgres -d stack" ]
+    test: [ "CMD-SHELL", "pg_isready -U postgres -d doc" ]
     interval: 10s
     timeout: 5s
     retries: 5
@@ -168,7 +168,7 @@ services:
       - path: .env
         required: false
     environment:
-      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:-postgres}@db:5432/stack
+      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:-postgres}@db:5432/doc
       LOKI_URL: http://loki:3100
       OTEL_EXPORTER_OTLP_ENDPOINT: http://tempo:4318
       TEMPO_URL: http://tempo:3200
@@ -251,7 +251,7 @@ services:
   # apps' LOKI_URL override). Nothing waits for it.
   loki:
     <<: *loki
-    container_name: stack-dev-loki
+    container_name: doc-dev-loki
     expose:
       - "3100"
 
@@ -260,7 +260,7 @@ services:
   # dev` never starts it; it shares loki_data, so run one or the other.
   loki-native:
     <<: *loki
-    container_name: stack-dev-loki-native
+    container_name: doc-dev-loki-native
     profiles:
       - native
     ports:
@@ -270,7 +270,7 @@ services:
   # DATABASE_URL override). The backend waits for it to be healthy.
   db:
     <<: *db
-    container_name: stack-dev-db
+    container_name: doc-dev-db
     expose:
       - "5432"
 
@@ -280,7 +280,7 @@ services:
   # `bun run dev` never starts it; it shares db_data, so run one or the other.
   db-native:
     <<: *db
-    container_name: stack-dev-db-native
+    container_name: doc-dev-db-native
     profiles:
       - native
     ports:
@@ -290,7 +290,7 @@ services:
   # OTEL_EXPORTER_OTLP_ENDPOINT and the backend's TEMPO_URL overrides).
   tempo:
     <<: *tempo
-    container_name: stack-dev-tempo
+    container_name: doc-dev-tempo
     expose:
       - "3200"
       - "4318"
@@ -301,7 +301,7 @@ services:
   # run dev` never starts it; it shares tempo_data, so run one or the other.
   tempo-native:
     <<: *tempo
-    container_name: stack-dev-tempo-native
+    container_name: doc-dev-tempo-native
     profiles:
       - native
     ports:

@@ -1,14 +1,14 @@
 # Production-like stack built from this checkout: `bun run docker:up`.
 # The gateway is the only published service; the app is on
 # http://localhost:${FRONTEND_PORT:-4444}.
-name: stack
+name: doc
 
 services:
   frontend:
     build:
       context: .
       dockerfile: apps/frontend/Dockerfile
-    container_name: stack-frontend
+    container_name: doc-frontend
     init: true
     # Reached only through the gateway, which publishes the site
     expose:
@@ -36,7 +36,7 @@ services:
     build:
       context: .
       dockerfile: apps/backend/Dockerfile
-    container_name: stack-backend
+    container_name: doc-backend
     init: true
     expose:
       - "3000"
@@ -45,7 +45,7 @@ services:
         required: false
     environment:
       NODE_ENV: production
-      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:-postgres}@db:5432/stack
+      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:-postgres}@db:5432/doc
       # Better Auth's base URL is the public origin: OAuth callbacks are built
       # from it, so it must be what the browser reaches through the gateway.
       BETTER_AUTH_URL: http://localhost:${FRONTEND_PORT:-4444}
@@ -71,7 +71,7 @@ services:
     build:
       context: .
       dockerfile: apps/gateway/Dockerfile
-    container_name: stack-gateway
+    container_name: doc-gateway
     ports:
       - "${FRONTEND_PORT:-4444}:80"
     depends_on:
@@ -87,15 +87,15 @@ services:
 
   db:
     image: postgres:17
-    container_name: stack-db
+    container_name: doc-db
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-      POSTGRES_DB: stack
+      POSTGRES_DB: doc
     volumes:
       - db_data:/var/lib/postgresql/data
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U postgres -d stack" ]
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d doc" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -106,7 +106,7 @@ services:
   # set, but neither depends on it at startup — the app works without it.
   loki:
     image: grafana/loki:3.7.7
-    container_name: stack-loki
+    container_name: doc-loki
     expose:
       - "3100"
     volumes:
@@ -132,7 +132,7 @@ services:
   # no shell, so no healthcheck.
   tempo:
     image: grafana/tempo:3.1.0
-    container_name: stack-tempo
+    container_name: doc-tempo
     expose:
       - "3200"
       - "4318"
