@@ -121,16 +121,16 @@ sus secciones, `/<slug>` la portada de un repositorio y `/<slug>/<ruta>` una
 ficha. El backend convierte cada ficha MDX en un **árbol** sin ejecutar nada
 y el frontend lo pinta en el servidor, con un sidebar de secciones y fichas, un
 selector de repositorio ("Todos" o uno), migas, anterior y siguiente, y el
-índice "En esta página". Qué admite una
-ficha está en [`docs/human/contenido.md`](docs/human/contenido.md#cómo-se-escriben-las-fichas).
+índice "En esta página". Las fichas pueden usar dos componentes de la
+plataforma: `<Callout>` (un aviso) y `<Entities type="services"
+group="category" />` (una tabla del catálogo, servida en el HTML), y enlazar
+entidades con `catalogo:machines/docker-01`. Qué admite una ficha está en
+[`docs/human/contenido.md`](docs/human/contenido.md#cómo-se-escriben-las-fichas).
 
 Pendiente:
 
-- Montar como islas los **componentes** interactivos: hoy la plataforma no
-  ofrece ninguno y cada uno se muestra como un aviso.
-- **Componentes genéricos** que no dependen del dominio:
-  `<Entidades tipo="servicios" agrupar="categoria" />` monta una portada de
-  servicios y también una lista de frutas por temporada.
+- Montar como islas los **componentes** interactivos (ordenar y filtrar las
+  tablas de `<Entities>`, por ejemplo): hoy las tablas son estáticas.
 - **Páginas automáticas** por tipo y por entidad, con sus relaciones y las
   fichas que la citan.
 - **Búsqueda** en el texto de las fichas (hoy el buscador del navbar solo las

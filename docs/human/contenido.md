@@ -134,14 +134,54 @@ ningún otro.
   `../red/index.mdx#zonas`). Se convierten en rutas del lector y conservan el
   `#ancla`. Un enlace a una ficha que no existe se avisa y se muestra como
   texto.
+- **Enlaces a entidades**: `[docker-01](catalogo:machines/docker-01)` lleva
+  a la página de la entidad, que es el valor del primer campo `ficha` que
+  declara su tipo. Si la entidad no tiene, se muestra como texto sin avisar;
+  si el tipo o la entidad no existen, se avisa como enlace roto.
 - **Imágenes**: con la ruta relativa a un fichero dentro de `docs/` (png,
   jpg, jpeg, gif, webp, avif o svg, de 10 MiB como mucho). Las sirve la
   plataforma. Un enlace a cualquier otro tipo de fichero se avisa.
 
-No se admiten `import`/`export`, las `{expresiones}` ni los componentes JSX:
-se avisan como problemas. La plataforma todavía no ofrece ningún componente,
-así que uno como `<Entidades />` se muestra como un aviso "El componente
-<Entidades> no existe en la plataforma".
+### Componentes
+
+La plataforma ofrece dos componentes. Cada uno va en su propio bloque, con una
+línea en blanco antes y después; dentro de un párrafo se avisa y se muestra
+como un aviso.
+
+- **`<Callout>`**: un aviso con Markdown dentro. `type` es `note` (por
+  defecto), `info`, `tip`, `important`, `warning`, `caution` o `danger`, y
+  `title` cambia su título:
+
+  ```mdx
+  <Callout type="info" title="Antes de empezar">
+  Las claves están en el vault, nunca en la documentación.
+  </Callout>
+  ```
+
+- **`<Entities>`**: una tabla con las entidades válidas de un tipo del
+  catálogo, ordenadas por su `etiqueta` (o su id):
+
+  ```mdx
+  <Entities type="services" group="category" columns="name,status,summary" />
+  ```
+
+  | Atributo | Qué hace |
+  | --- | --- |
+  | `type` | Obligatorio. El tipo, el nombre de su carpeta en `catalogo/`. |
+  | `columns` | Opcional. Los campos que se muestran, separados por comas (`id` vale). Sin él, los de `vista.columnas` del tipo; sin estos, la etiqueta y todos los campos. |
+  | `group` | Opcional. Un campo por el que se parte la tabla en bloques, en el orden de `valores` si es un `enum`, con las entidades sin valor al final. |
+
+  La columna de la etiqueta enlaza a la página de cada entidad (su primer
+  campo `ficha`). Las referencias muestran la etiqueta de la entidad a la que
+  apuntan, los campos `ficha` el título de su página y los `url` son enlaces.
+  Un tipo, columna o atributo que no existen y las entidades que no cumplen
+  su tipo se avisan como problemas de la ficha; el resto de la tabla se
+  muestra igual.
+
+No se admiten `import`/`export`, las `{expresiones}` ni otros componentes
+JSX: se avisan como problemas, y un componente que la plataforma no tiene,
+como `<Entidades />`, se muestra como un aviso "El componente <Entidades> no
+existe en la plataforma".
 
 ### Problemas
 
