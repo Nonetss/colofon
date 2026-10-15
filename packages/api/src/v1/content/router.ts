@@ -119,6 +119,20 @@ export const contentRouter = {
     .output(contentOutput.updateRepository)
     .handler(({ input }) => contentHandler.updateRepository({ input })),
 
+  listBranches: adminProcedure
+    .meta(
+      openapi({
+        summary: "List a git repository's branches",
+        description:
+          "Branches of the git repository at `url`, or of the stored repository `slug`, and the one its HEAD points at, read from the remote without cloning. QUERY rather than GET: the URL may carry credentials, which must not travel in a query string. BAD_GATEWAY with the git error, without credentials, when the remote can't be read.",
+        tags,
+        method: "QUERY",
+      })
+    )
+    .input(contentInput.listBranches)
+    .output(contentOutput.listBranches)
+    .handler(({ input }) => contentHandler.listBranches({ input })),
+
   deleteRepository: adminProcedure
     .meta(
       openapi({

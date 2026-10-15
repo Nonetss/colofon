@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, mock, test } from "bun:test"
 import type { SyncResult } from "@nonete/content"
 import { contentRepositoryRow, NOW, stepArgs } from "@nonete/db/testing"
 import { call } from "@orpc/server"
+import { createContentRemote } from "#tests/fixtures/content"
 import { anonymousContext, userContext } from "#tests/fixtures/context"
 import { fakeDb } from "#tests/fixtures/db"
 import { resetEnv, testEnv } from "#tests/fixtures/env"
@@ -262,5 +263,72 @@ describe("content.syncRepository", () => {
       lastCommit: "abc123",
       lastSyncedAt: NOW.toISOString(),
     })
+  })
+})
+
+describe("content input: listBranches", () => {
+  test("takes either a URL or a slug, never both or neither", () => {
+    const url = "https://git.example/docs.git"
+    expect(contentInput.listBranches.safeParse({ url }).success).toBe(true)
+    expect(
+      contentInput.listBranches.safeParse({ slug: "documentacion" }).success
+    ).toBe(true)
+    expect(
+      contentInput.listBranches.safeParse({ url, slug: "documentacion" })
+        .success
+    ).toBe(false)
+    expect(contentInput.listBranches.safeParse({}).success).toBe(false)
+  })
+})
+
+describe("content.listBranches", () => {
+  test("reads the branches of the URL sent, without touching the database", async () => {
+    const remote = await createContentRemote()
+    try {
+      expect(
+        await handler.listBranches({ input: { url: remote.url } })
+      ).toEqual({ branches: ["main"], defaultBranch: "main" })
+      expect(fakeDb.calls()).toEqual([])
+    } finally {
+      await remote.remove()
+    }
+  })
+
+  test("reads a stored repository at its stored URL", async () => {
+    const remote = await createContentRemote()
+    try {
+      fakeDb.queue(
+        "query.contentRepository.findFirst",
+        contentRepositoryRow({ url: remote.url })
+      )
+      expect(
+        await handler.listBranches({ input: { slug: "documentacion" } })
+      ).toEqual({ branches: ["main"], defaultBranch: "main" })
+    } finally {
+      await remote.remove()
+    }
+  })
+
+  test("an unknown stored repository is NOT_FOUND", async () => {
+    fakeDb.queue("query.contentRepository.findFirst", undefined)
+    await expectErrorCode(
+      handler.listBranches({ input: { slug: "nada" } }),
+      "NOT_FOUND"
+    )
+  })
+
+  test("an unreachable remote is BAD_GATEWAY and the error has no credentials", async () => {
+    const error = await handler
+      .listBranches({
+        input: { url: "https://user:s3cret@127.0.0.1:1/doc.git" },
+      })
+      .then(
+        () => undefined,
+        (caught: unknown) => caught
+      )
+    expect(error).toMatchObject({ code: "BAD_GATEWAY" })
+    expect(String(error instanceof Error && error.message)).not.toContain(
+      "s3cret"
+    )
   })
 })

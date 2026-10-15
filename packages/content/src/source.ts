@@ -1,4 +1,5 @@
 import { mkdir, readdir, rm } from "node:fs/promises"
+import { tmpdir } from "node:os"
 import path from "node:path"
 
 // Where the content comes from: git repositories, each kept in its own clone
@@ -154,24 +155,36 @@ function gitRunner(options: RepoSyncOptions): Git {
     GIT_WORK_TREE: options.root,
     GIT_TERMINAL_PROMPT: "0",
   }
-  return async (args) => {
-    const child = Bun.spawn(["git", ...args], {
-      cwd: options.root,
-      env,
-      stdout: "pipe",
-      stderr: "pipe",
-      signal: AbortSignal.timeout(timeoutMs),
-    })
-    const [stdout, stderr, exitCode] = await Promise.all([
-      new Response(child.stdout).text(),
-      new Response(child.stderr).text(),
-      child.exited,
-    ])
-    if (exitCode !== 0) {
-      throw new Error(`git ${args[0]} failed: ${stderr.trim()}`)
-    }
-    return stdout
+  return (args) => spawnGit(args, { cwd: options.root, env, timeoutMs })
+}
+
+type SpawnGitOptions = {
+  cwd: string
+  env: Record<string, string | undefined>
+  timeoutMs: number
+}
+
+/** Runs git and returns its stdout, throwing with its stderr on failure. */
+async function spawnGit(
+  args: string[],
+  options: SpawnGitOptions
+): Promise<string> {
+  const child = Bun.spawn(["git", ...args], {
+    cwd: options.cwd,
+    env: options.env,
+    stdout: "pipe",
+    stderr: "pipe",
+    signal: AbortSignal.timeout(options.timeoutMs),
+  })
+  const [stdout, stderr, exitCode] = await Promise.all([
+    new Response(child.stdout).text(),
+    new Response(child.stderr).text(),
+    child.exited,
+  ])
+  if (exitCode !== 0) {
+    throw new Error(`git ${args[0]} failed: ${stderr.trim()}`)
   }
+  return stdout
 }
 
 async function originOf(git: Git): Promise<string | undefined> {
@@ -186,4 +199,52 @@ async function emptyFolder(root: string) {
   for (const entry of await readdir(root)) {
     await rm(path.join(root, entry), { recursive: true, force: true })
   }
+}
+
+export type RemoteBranches =
+  | { ok: true; branches: string[]; defaultBranch: string | null }
+  | { ok: false; error: string }
+
+const BRANCH_PREFIX = "refs/heads/"
+const SYMREF_PREFIX = `ref: ${BRANCH_PREFIX}`
+
+/**
+ * The branches of the git repository at `url`, sorted by name, and the one
+ * its HEAD points at, read with `git ls-remote` and nothing cloned. Errors
+ * come back without the URL's credentials.
+ */
+export async function listRemoteBranches(
+  url: string,
+  timeoutMs: number = GIT_TIMEOUT_MS
+): Promise<RemoteBranches> {
+  try {
+    // Outside any checkout, so git never reads this platform's own repo.
+    const output = await spawnGit(
+      ["ls-remote", "--symref", url, "HEAD", `${BRANCH_PREFIX}*`],
+      {
+        cwd: tmpdir(),
+        env: { ...process.env, GIT_TERMINAL_PROMPT: "0" },
+        timeoutMs,
+      }
+    )
+    return { ok: true, ...parseLsRemote(output) }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error)
+    return { ok: false, error: redactCredentials(message, url) }
+  }
+}
+
+function parseLsRemote(output: string) {
+  const branches: string[] = []
+  let defaultBranch: string | null = null
+  for (const line of output.split("\n")) {
+    const [left, ref] = line.split("\t")
+    if (left === undefined || ref === undefined) continue
+    if (left.startsWith(SYMREF_PREFIX) && ref === "HEAD") {
+      defaultBranch = left.slice(SYMREF_PREFIX.length)
+    } else if (ref.startsWith(BRANCH_PREFIX)) {
+      branches.push(ref.slice(BRANCH_PREFIX.length))
+    }
+  }
+  return { branches: branches.toSorted(), defaultBranch }
 }

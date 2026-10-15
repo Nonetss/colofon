@@ -9,6 +9,8 @@ export type GitRemote = {
   commit: (files: Record<string, string>) => Promise<void>
   /** Tags main's current commit and pushes the tag. */
   tag: (name: string) => Promise<void>
+  /** Pushes main's current commit as a new branch. */
+  branch: (name: string) => Promise<void>
   remove: () => Promise<void>
 }
 
@@ -35,6 +37,9 @@ export async function createGitRemote(): Promise<GitRemote> {
     tag: async (name) => {
       await git(work, ["tag", name])
       await git(work, ["push", "--quiet", "origin", name])
+    },
+    branch: async (name) => {
+      await git(work, ["push", "--quiet", "origin", `main:refs/heads/${name}`])
     },
     remove: () => rm(base, { recursive: true, force: true }),
   }

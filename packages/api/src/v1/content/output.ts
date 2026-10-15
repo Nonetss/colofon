@@ -61,6 +61,13 @@ export const contentOutput = {
   listRepositories: z.array(repository),
   createRepository: repository,
   updateRepository: repository,
+  listBranches: z.object({
+    branches: z.array(z.string()).describe("Branch names, sorted"),
+    defaultBranch: z
+      .string()
+      .nullable()
+      .describe("The branch the remote's HEAD points at, when it has one"),
+  }),
   deleteRepository: z.object({ id: z.uuid(), success: z.boolean() }),
   syncRepository: repository,
   sync: z.object({

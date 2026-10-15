@@ -8,6 +8,7 @@ import {
   cloneFolder,
   createRepoSync,
   describeRepository,
+  listRemoteBranches,
   pruneClones,
   publicUrl,
   redactCredentials,
@@ -203,5 +204,29 @@ describe("createRepoSync", () => {
     const first = sync()
     expect(sync()).toBe(first)
     commitOf(await first)
+  })
+})
+
+describe("listRemoteBranches", () => {
+  test("lists the branches by name and the one HEAD points at, without tags", async () => {
+    const origin = await remote()
+    await origin.commit({ "a.yaml": "x: 1\n" })
+    await origin.branch("produccion")
+    await origin.branch("borrador")
+    await origin.tag("v1")
+
+    expect(await listRemoteBranches(origin.url)).toEqual({
+      ok: true,
+      branches: ["borrador", "main", "produccion"],
+      defaultBranch: "main",
+    })
+  })
+
+  test("an unreachable remote fails without its credentials", async () => {
+    const result = await listRemoteBranches(
+      "https://user:s3cret@127.0.0.1:1/doc.git"
+    )
+    if (result.ok) throw new Error("expected the listing to fail")
+    expect(result.error).not.toContain("s3cret")
   })
 })

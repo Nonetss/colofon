@@ -4,6 +4,7 @@ import {
   CONFIG_SCHEMA,
   ENTITY_SCHEMA_PREFIX,
   editorSchemas,
+  listRemoteBranches,
   publicUrl,
   type SyncResult,
   schemaCatalog,
@@ -63,6 +64,20 @@ function toRepository(row: ContentRepository): ContentRepositoryOutput {
 
 function findRow(slug: string) {
   return db.query.contentRepository.findFirst({ where: { slug } })
+}
+
+/**
+ * The URL whose branches `listBranches` reads: the one sent, or a stored
+ * repository's, credentials included, which the client never sees.
+ */
+async function branchesUrlOf(
+  input: z.infer<typeof contentInput.listBranches>
+): Promise<string> {
+  if (input.url !== undefined) return input.url
+  if (input.slug === undefined) {
+    throw errors.BAD_REQUEST({ message: "Send either url or slug" })
+  }
+  return assertFound(await findRow(input.slug), NOT_FOUND_MESSAGE).url
 }
 
 /** The content handler over `reader`; tests build one with fakes. */
@@ -179,6 +194,16 @@ export function createContentHandler(reader: ContentReader) {
         reader.syncInBackground(saved)
       }
       return toRepository(saved)
+    },
+
+    async listBranches({
+      input,
+    }: {
+      input: z.infer<typeof contentInput.listBranches>
+    }): Promise<z.infer<typeof contentOutput.listBranches>> {
+      const result = await listRemoteBranches(await branchesUrlOf(input))
+      if (!result.ok) throw errors.BAD_GATEWAY({ message: result.error })
+      return { branches: result.branches, defaultBranch: result.defaultBranch }
     },
 
     async deleteRepository({

@@ -47,6 +47,23 @@ export const contentInput = {
     url: url.optional(),
     ref: ref.optional(),
   }),
+  listBranches: z
+    .object({
+      url: url
+        .optional()
+        .describe(
+          "URL of a git repository to read; with credentials if private"
+        ),
+      slug: repository
+        .optional()
+        .describe("A stored repository, read at its stored URL"),
+    })
+    .refine(
+      (input) => (input.url === undefined) !== (input.slug === undefined),
+      {
+        message: "Send either url or slug",
+      }
+    ),
   deleteRepository: z.object({ slug: repository }),
   syncRepository: z.object({ slug: repository }),
 }
