@@ -3,6 +3,7 @@ import type { APIContext, MiddlewareNext } from "astro"
 import { splitSetCookieHeader } from "better-auth/cookies"
 import { authServer } from "@/lib/auth-server"
 import { logger } from "@/lib/logger"
+import { isMarkdownTextPath } from "@/lib/markdown-text-path"
 
 const publicPaths = ["/login", "/signup"]
 const publicExactPaths = new Set(["/logo.svg"])
@@ -24,6 +25,23 @@ function appendRefreshedCookies(
     response.headers.append("set-cookie", cookie)
   }
   return response
+}
+
+function isRefusedCredential(status: number): boolean {
+  return status === 401 || status === 403
+}
+
+function unauthorizedText(): Response {
+  return new Response(
+    "Inicia sesión o envía una API key en la cabecera x-api-key.\n",
+    {
+      status: 401,
+      headers: {
+        "content-type": "text/plain; charset=utf-8",
+        "cache-control": "no-store",
+      },
+    }
+  )
 }
 
 export const onRequest = defineMiddleware((context, next) => {
@@ -57,7 +75,9 @@ async function handleProtectedRequest(
     },
   })
 
-  if (sessionResult.error) {
+  // A refused credential (an unknown or disabled `x-api-key`) is a visitor
+  // without a session, not an auth outage.
+  if (sessionResult.error && !isRefusedCredential(sessionResult.error.status)) {
     logger.error(
       {
         type: "auth_service_error",
@@ -77,6 +97,9 @@ async function handleProtectedRequest(
   }
 
   if (sessionResult.data === null) {
+    // An agent reading the Markdown routes gets told why, not a login page.
+    if (isMarkdownTextPath(path))
+      return appendRefreshedCookies(unauthorizedText(), refreshedCookies)
     return appendRefreshedCookies(context.redirect("/login"), refreshedCookies)
   }
 

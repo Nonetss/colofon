@@ -28,6 +28,24 @@ describe("forwardedHeaders", () => {
   test("sends no cookie header when the visitor has none", () => {
     expect(forwardedHeaders(incoming({})).has("cookie")).toBe(false)
   })
+
+  test("forwards an API key along with the cookies", () => {
+    const request = incoming({
+      cookie: "session=abc",
+      "x-api-key": "key-1",
+      authorization: "Bearer x",
+    })
+    expect([...forwardedHeaders(request).entries()]).toEqual([
+      ["cookie", "session=abc"],
+      ["x-api-key", "key-1"],
+    ])
+  })
+
+  test("forwards an API key alone when there are no cookies", () => {
+    expect([
+      ...forwardedHeaders(incoming({ "x-api-key": "key-1" })).entries(),
+    ]).toEqual([["x-api-key", "key-1"]])
+  })
 })
 
 describe("createServerClientFor", () => {

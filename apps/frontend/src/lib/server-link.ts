@@ -4,15 +4,20 @@ import { RPCLink } from "@orpc/client/fetch"
 
 // The oRPC client Astro frontmatter uses to render content on the server
 // (the documentation reader). It calls the backend directly, not through the
-// gateway, and carries the visitor's cookies so the backend sees the session
-// the middleware already checked. Islands never use it: they read through
+// gateway, and carries the visitor's cookies or API key so the backend sees
+// the session the middleware already checked. Islands never use it: they read through
 // TanStack Query in the browser (`lib/orpc.ts`).
 
-/** The request headers the backend needs: only the visitor's cookies. */
+/** The visitor's credentials: session cookies and an `x-api-key`. */
+const CREDENTIAL_HEADERS = ["cookie", "x-api-key"]
+
+/** The request headers the backend needs: only the visitor's credentials. */
 export function forwardedHeaders(request: Pick<Request, "headers">): Headers {
   const headers = new Headers()
-  const cookie = request.headers.get("cookie")
-  if (cookie !== null) headers.set("cookie", cookie)
+  for (const name of CREDENTIAL_HEADERS) {
+    const value = request.headers.get(name)
+    if (value !== null) headers.set(name, value)
+  }
   return headers
 }
 
