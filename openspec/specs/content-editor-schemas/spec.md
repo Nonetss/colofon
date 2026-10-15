@@ -2,13 +2,13 @@
 
 ## Purpose
 
-Lets an editor complete, validate and document a content repository's YAML files from schemas the backend serves, always matching the current content, with one fixed editor setting and no generated files.
+Lets an editor complete, validate and document a content repository's YAML files and JSON diagrams from schemas the backend serves, always matching the current content, with one fixed editor setting and no generated files.
 
 ## Requirements
 
 ### Requirement: Public schema catalog
 
-The backend SHALL serve at `GET /api/v1/content/schemas/{repository}`, where `{repository}` is a stored content repository's slug, without authentication, a schema catalog in the SchemaStore catalog format (`version` 1 and a `schemas` list of `name`, `description`, `url` and `fileMatch`). It SHALL list one entry for `doc.config.yaml`, one for `menu.yaml`, one for `diagramas/*.yaml`, one for `catalogo/*/_tipo.yaml` and one per catalog type matching `catalogo/<type>/*.yaml` and excluding `catalogo/<type>/_*.yaml`. Each `url` SHALL be absolute, built from the public origin in `CORS_ORIGIN` and SHALL point at that same repository's schemas. A repository without valid content yet SHALL get a catalog with no schemas. An unknown slug SHALL answer `NOT_FOUND`. `GET /api/v1/content/schemas`, without a slug, SHALL NOT exist.
+The backend SHALL serve at `GET /api/v1/content/schemas/{repository}`, where `{repository}` is a stored content repository's slug, without authentication, a schema catalog in the SchemaStore catalog format (`version` 1 and a `schemas` list of `name`, `description`, `url` and `fileMatch`). It SHALL list one entry for `doc.config.yaml`, one for `menu.yaml`, one for `diagramas/*.json`, one for `catalogo/*/_tipo.yaml` and one per catalog type matching `catalogo/<type>/*.yaml` and excluding `catalogo/<type>/_*.yaml`. Each `url` SHALL be absolute, built from the public origin in `CORS_ORIGIN` and SHALL point at that same repository's schemas. A repository without valid content yet SHALL get a catalog with no schemas. An unknown slug SHALL answer `NOT_FOUND`. `GET /api/v1/content/schemas`, without a slug, SHALL NOT exist.
 
 #### Scenario: Catalog of a site with two types
 
@@ -25,12 +25,17 @@ The backend SHALL serve at `GET /api/v1/content/schemas/{repository}`, where `{r
 - **WHEN** a client requests the catalog of a repository created a moment ago whose first sync has not finished
 - **THEN** the backend SHALL answer a catalog with no schemas
 
+#### Scenario: Diagram entry
+
+- **WHEN** a client requests the catalog of `documentacion`
+- **THEN** its diagram entry SHALL match `diagramas/*.json` and SHALL NOT match `diagramas/*.yaml`
+
 ### Requirement: Schemas of the content's files
 
 The backend SHALL serve, without authentication, as JSON Schema draft-07, for the repository named by `{repository}`:
 - `GET /api/v1/content/schemas/{repository}/config`: the schema of `doc.config.yaml`;
 - `GET /api/v1/content/schemas/{repository}/menu`: the schema of `menu.yaml`, where a path lists the repository's page paths, section folders, `catalogo` and `catalogo/<type>` for each type;
-- `GET /api/v1/content/schemas/{repository}/diagram`: the schema of a diagram file, where `entidad` lists `<type>/<id>` for every entity of the catalog;
+- `GET /api/v1/content/schemas/{repository}/diagram`: the schema of a diagram file (`content-diagrams`) in either of its forms, accepting `$schema`, where a box's `entity` lists `<type>/<id>` for every entity of the catalog, its `page` lists the repository's page paths, and `kind`, `shape`, `hue` and an edge's `kind` and `anchor` list their values;
 - `GET /api/v1/content/schemas/{repository}/type`: the schema of a `_tipo.yaml`, where a reference's `a` lists the catalog types that exist and every field declaration accepts `etiqueta`;
 - `GET /api/v1/content/schemas/{repository}/entities/{type}`: the schema of an entity of `{type}`, titled with the type's `nombre`, where each declared field is titled with its `etiqueta` when it has one and carries its `descripcion`, a `ref` field lists the ids of the referenced type, a `ficha` field lists the page paths, an `enum` field lists its values, the fields without `opcional: true` are required and undeclared fields are refused.
 
@@ -65,6 +70,11 @@ Every `icono` in these schemas SHALL list the Lucide icon names the platform acc
 
 - **WHEN** `documentacion` has a `maquinas` type and `homelab` does not
 - **THEN** `GET /api/v1/content/schemas/homelab/entities/maquinas` SHALL answer `NOT_FOUND`
+
+#### Scenario: Diagram suggestions
+
+- **WHEN** the editor requests the diagram schema of `documentacion`, whose `services` type has `komodo` and whose pages are `index` and `containers/komodo`
+- **THEN** a box's `entity` SHALL accept only `services/komodo`, its `page` only `index` and `containers/komodo`, and its `hue` only the ten hue names
 
 ### Requirement: Schemas follow the content without regeneration
 

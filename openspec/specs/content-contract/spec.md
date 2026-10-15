@@ -108,9 +108,10 @@ Reading a content repository SHALL report every problem it finds, not only the f
 
 - **WHEN** `catalogo/ubicaciones/_tipo.yaml` is missing and `catalogo/maquinas/_tipo.yaml` declares a reference to `ubicaciones`
 - **THEN** the platform SHALL report only the missing `_tipo.yaml`
+
 ### Requirement: Icon names
 
-Every `icono` the contract accepts (in `_tipo.yaml`, `menu.yaml`, page headers and diagram nodes) SHALL be the name of an icon of the Lucide version the web draws, in lowercase kebab-case as Lucide names it (`server`, `map-pin`). The platform SHALL hold that list of names, matching the Lucide version the web uses, and SHALL report any other value as not being a Lucide icon name.
+Every `icono` the contract accepts (in `_tipo.yaml`, `menu.yaml` and page headers; diagram boxes take no icon) SHALL be the name of an icon of the Lucide version the web draws, in lowercase kebab-case as Lucide names it (`server`, `map-pin`). The platform SHALL hold that list of names, matching the Lucide version the web uses, and SHALL report any other value as not being a Lucide icon name.
 
 #### Scenario: Valid icon
 
