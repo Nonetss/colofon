@@ -27,7 +27,7 @@ function diagramProblems(
 }
 
 describe("diagram files", () => {
-  test("a valid diagram reports nothing and renders as text in every page that shows it", async () => {
+  test("a valid diagram reports nothing and renders, with its caption and text, in every page that shows it", async () => {
     const site = await siteOf({
       "diagramas/komodo.yaml": KOMODO,
       "docs/index.mdx": page("Casa", '<Diagram id="komodo" />'),
@@ -37,7 +37,7 @@ describe("diagram files", () => {
     expect(pageAt(site, "komodo").problems).toEqual([])
     const html = htmlOf(pageAt(site, "komodo").tree)
     expect(html).toContain(
-      '<figure class="doc-diagram" data-diagram="komodo"><figcaption><strong>Cómo despliega Komodo</strong>. Komodo manda a Periphery, que levanta los stacks</figcaption>'
+      '<figure class="doc-diagram" data-diagram="komodo" data-drawn=""><figcaption><strong>Cómo despliega Komodo</strong>. Komodo manda a Periphery, que levanta los stacks</figcaption>'
     )
     expect(html).toContain(
       '<ul class="doc-diagram-zones"><li>Casa: <a href="/casa/catalogo/maquinas/nas">nas</a>, Periphery</li></ul>'
@@ -47,6 +47,56 @@ describe("diagram files", () => {
     )
     expect(html).toContain("<li>Periphery → Stacks</li>")
     expect(htmlOf(pageAt(site, "").tree)).toContain("<figure")
+  })
+
+  test("a diagram is drawn: a box per node, an arrow per connection with its label, a frame per zone, and its text kept off screen", async () => {
+    const site = await siteOf({
+      "diagramas/komodo.yaml": KOMODO,
+      "docs/index.mdx": page("Casa", '<Diagram id="komodo" />'),
+    })
+    const html = htmlOf(pageAt(site, "").tree)
+    expect(html).toContain(
+      '<div class="doc-diagram-canvas"><svg class="doc-diagram-svg" viewBox="0 0 '
+    )
+    expect(html).toContain(
+      'role="img" aria-label="Cómo despliega Komodo. Komodo manda a Periphery, que levanta los stacks"><title>Cómo despliega Komodo</title>'
+    )
+    expect(html.match(/<g class="doc-diagram-node"/g)).toHaveLength(3)
+    expect(html.match(/<g class="doc-diagram-edge">/g)).toHaveLength(2)
+    expect(html.match(/<g class="doc-diagram-zone">/g)).toHaveLength(1)
+    expect(html).toContain('class="doc-diagram-label"')
+    expect(html).toContain(">deploy</text>")
+    expect(html).toContain(">Casa</text>")
+    expect(html).toContain('<g class="doc-diagram-node" data-kind="entrada">')
+    expect(html).toContain('<text class="doc-diagram-sub" x="')
+    expect(html).toContain(">agente</text>")
+    expect(html).toContain('<text class="doc-diagram-legend" x="0"')
+    expect(html).toContain(">Origen</text>")
+    expect(html).toContain(">Conexión</text>")
+    expect(html).toContain('<g class="doc-diagram-icon" transform="translate(')
+    expect(html).toContain(
+      '<figure class="doc-diagram" data-diagram="komodo" data-drawn="">'
+    )
+    expect(html).toContain(
+      '<div class="doc-diagram-text"><ul class="doc-diagram-zones">'
+    )
+    expect(html).not.toContain("Ver como texto")
+  })
+
+  test("an entity node links to the entity's page and content text stays text", async () => {
+    const site = await siteOf({
+      "diagramas/komodo.yaml": KOMODO.replace(
+        "stacks: Stacks",
+        'stacks: "<script>alert(1)</script>"'
+      ),
+      "docs/index.mdx": page("Casa", '<Diagram id="komodo" />'),
+    })
+    const html = htmlOf(pageAt(site, "").tree)
+    expect(html).toContain(
+      '<a href="/casa/catalogo/maquinas/nas"><g class="doc-diagram-node">'
+    )
+    expect(html).not.toContain("<script>")
+    expect(html).toContain("&#x3C;script>alert(1)&#x3C;/script>")
   })
 
   test("a missing description and an unknown key are reported with their paths", async () => {

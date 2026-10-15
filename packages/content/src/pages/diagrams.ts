@@ -8,6 +8,13 @@ import { enumOf } from "#enum-of"
 import { iconName } from "#icon-name"
 import { DIAGRAMS_DIR, describeIssue, parseYaml, spanishErrors } from "#load"
 import { entityPath } from "#pages/catalog-paths"
+import {
+  createLayoutEngine,
+  type DiagramLayout,
+  type LayoutEngine,
+  layoutDiagram,
+} from "#pages/diagram-layout"
+import { diagramSvg } from "#pages/diagram-svg"
 import { entityPagePath } from "#pages/entities"
 import type { PageProblem } from "#pages/types"
 
@@ -16,8 +23,9 @@ import type { PageProblem } from "#pages/types"
 // (an entity of the catalog, or a name), the connections between them and the
 // zones that group them. Every problem is reported on the file with its field
 // path, and whatever is valid is kept, so one bad node or connection never
-// hides the rest. Until the platform draws diagrams, one renders as a figure
-// with its caption, its zones and its connections as text.
+// hides the rest. The platform lays each diagram out when it is read
+// (`diagram-layout.ts`) and draws it as an SVG (`diagram-svg.ts`), keeping
+// its zones and connections as text for screen readers and `llm.txt`.
 
 const ID_PATTERN = /^[a-z0-9]+(-[a-z0-9]+)*$/
 
@@ -63,6 +71,8 @@ export type Diagram = {
   nodes: ReadonlyMap<string, DiagramNode>
   connections: DiagramConnection[]
   zones: DiagramZone[]
+  /** Where its boxes go, `null` until laid out or when the layout failed. */
+  layout: DiagramLayout | null
 }
 
 /** A diagram file read: what could be kept of it, and what went wrong. */
@@ -75,10 +85,14 @@ export type DiagramFile = {
   problems: PageProblem[]
 }
 
-/** Every diagram of the repository at `root`, by id, in id order. */
+/**
+ * Every diagram of the repository at `root`, by id, in id order, each laid
+ * out by `engine` (ELK in this process unless a test passes another).
+ */
 export async function readDiagrams(
   root: string,
-  catalog: Catalog
+  catalog: Catalog,
+  engine: LayoutEngine = createLayoutEngine()
 ): Promise<{ diagrams: Map<string, DiagramFile>; problems: PageProblem[] }> {
   const diagrams = new Map<string, DiagramFile>()
   const problems: PageProblem[] = []
@@ -105,11 +119,36 @@ export async function readDiagrams(
       continue
     }
     const text = await readFile(path.join(root, file), "utf8")
-    const read = readDiagram(id, file, text, catalog)
+    const read = await laidOut(readDiagram(id, file, text, catalog), engine)
     diagrams.set(id, read)
     problems.push(...read.problems)
   }
   return { diagrams, problems }
+}
+
+/** The diagram read with its layout; a failed layout is reported on its file. */
+async function laidOut(
+  read: DiagramFile,
+  engine: LayoutEngine
+): Promise<DiagramFile> {
+  if (read.diagram === null) return read
+  try {
+    const layout = await layoutDiagram(read.diagram, engine)
+    return { ...read, diagram: { ...read.diagram, layout } }
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : String(error)
+    return {
+      ...read,
+      problems: [
+        ...read.problems,
+        {
+          file: read.file,
+          line: null,
+          message: `No se pudo colocar el diagrama, se muestra como texto: ${reason}`,
+        },
+      ],
+    }
+  }
 }
 
 /** Reads one diagram file's text. */
@@ -148,7 +187,16 @@ export function readDiagram(
   return {
     id,
     file,
-    diagram: { id, title, description, direction, nodes, connections, zones },
+    diagram: {
+      id,
+      title,
+      description,
+      direction,
+      nodes,
+      connections,
+      zones,
+      layout: null,
+    },
     problems,
   }
 }
@@ -480,31 +528,29 @@ function text(value: string): ElementContent {
 }
 
 /**
- * A diagram as text, until the platform draws it: a figure captioned with
- * its title and description, its zones and one line per connection.
+ * A diagram as a figure. Drawn, only the drawing shows: its caption and its
+ * zones and connections as text stay in the tree, hidden from sight, for
+ * screen readers and for the page's Markdown (`llm.txt`). Without a drawing
+ * (its layout failed), the caption and the text are what shows.
  */
 export function diagramFigure(
   diagram: Diagram,
   routeOf: (pagePath: string) => string
 ): Element {
+  const hrefOf = (node: DiagramNode): string | null => {
+    if (node.entity === null) return null
+    return routeOf(entityPagePath(node.entity))
+  }
   const name = (id: string): ElementContent[] => {
     const node = diagram.nodes.get(id)
     if (node === undefined) return [text(id)]
-    if (node.entity === null) return [text(node.name)]
-    return [
-      element("a", { href: routeOf(entityPagePath(node.entity)) }, [
-        text(node.name),
-      ]),
-    ]
+    const href = hrefOf(node)
+    if (href === null) return [text(node.name)]
+    return [element("a", { href }, [text(node.name)])]
   }
-  const children: ElementContent[] = [
-    element("figcaption", {}, [
-      element("strong", {}, [text(diagram.title)]),
-      text(captionTail(diagram.description)),
-    ]),
-  ]
+  const textVersion: ElementContent[] = []
   if (diagram.zones.length > 0) {
-    children.push(
+    textVersion.push(
       element(
         "ul",
         { className: ["doc-diagram-zones"] },
@@ -518,7 +564,7 @@ export function diagramFigure(
     )
   }
   if (diagram.connections.length > 0) {
-    children.push(
+    textVersion.push(
       element(
         "ul",
         { className: ["doc-diagram-connections"] },
@@ -533,11 +579,20 @@ export function diagramFigure(
       )
     )
   }
-  return element(
-    "figure",
-    { className: ["doc-diagram"], dataDiagram: diagram.id },
-    children
-  )
+  const caption = element("figcaption", {}, [
+    element("strong", {}, [text(diagram.title)]),
+    text(captionTail(diagram.description)),
+  ])
+  const properties = { className: ["doc-diagram"], dataDiagram: diagram.id }
+  if (diagram.layout === null)
+    return element("figure", properties, [caption, ...textVersion])
+  return element("figure", { ...properties, dataDrawn: "" }, [
+    caption,
+    element("div", { className: ["doc-diagram-canvas"] }, [
+      diagramSvg(diagram, diagram.layout, hrefOf),
+    ]),
+    element("div", { className: ["doc-diagram-text"] }, textVersion),
+  ])
 }
 
 function captionTail(description: string): string {

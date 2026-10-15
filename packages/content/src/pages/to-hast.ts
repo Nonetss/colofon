@@ -48,16 +48,60 @@ const handlers = {
   mdxJsxTextElement: notice("span"),
 }
 
+/** Classes of a drawn diagram's parts (`doc-diagram-node`, `-edge`…). */
+const DIAGRAM_CLASS = /^doc-diagram-[a-z-]+$/
+
+/**
+ * The SVG a drawn diagram is made of: shapes, text and links, with geometry
+ * attributes only. No ids, styles, `use`, `foreignObject` or event handlers.
+ */
+const DIAGRAM_SVG_ATTRIBUTES = {
+  svg: [
+    ["className", DIAGRAM_CLASS],
+    "viewBox",
+    "width",
+    "height",
+    "role",
+    "ariaLabel",
+  ],
+  g: [
+    ["className", DIAGRAM_CLASS],
+    ["dataKind", "entrada", "almacen"],
+    "transform",
+  ],
+  rect: [["className", DIAGRAM_CLASS], "x", "y", "width", "height", "rx", "ry"],
+  path: [["className", DIAGRAM_CLASS], "d"],
+  circle: ["cx", "cy", "r"],
+  ellipse: ["cx", "cy", "rx", "ry"],
+  line: ["x1", "y1", "x2", "y2"],
+  polyline: ["points"],
+  polygon: ["points"],
+  text: [
+    ["className", DIAGRAM_CLASS],
+    "x",
+    "y",
+    ["textAnchor", "middle", "start"],
+  ],
+  tspan: ["x", "dy"],
+  title: [],
+} satisfies NonNullable<Schema["attributes"]>
+
 /** What the reader may render: GitHub's schema plus the platform's marks. */
 export const SANITIZE_SCHEMA: Schema = {
   ...defaultSchema,
   // Heading ids must match the table of contents and the links that point
   // at them; footnote ids already come prefixed by mdast-util-to-hast.
   clobber: ["name"],
-  tagNames: [...(defaultSchema.tagNames ?? []), "figure", "figcaption"],
+  tagNames: [
+    ...(defaultSchema.tagNames ?? []),
+    "figure",
+    "figcaption",
+    ...Object.keys(DIAGRAM_SVG_ATTRIBUTES),
+  ],
   attributes: {
     ...defaultSchema.attributes,
-    figure: [["className", "doc-diagram"], "dataDiagram"],
+    ...DIAGRAM_SVG_ATTRIBUTES,
+    figure: [["className", "doc-diagram"], "dataDiagram", "dataDrawn"],
     ul: [
       "ariaDescribedBy",
       "ariaLabel",
@@ -75,6 +119,8 @@ export const SANITIZE_SCHEMA: Schema = {
     div: [
       [
         "className",
+        "doc-diagram-canvas",
+        "doc-diagram-text",
         "doc-alert",
         /^doc-alert-[a-z]+$/,
         "doc-component-notice",
