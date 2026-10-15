@@ -2,7 +2,7 @@ name: doc
 
 services:
   frontend:
-    image: ghcr.io/nonetss/stack-frontend:main
+    image: ghcr.io/nonetss/doc-frontend:main
     container_name: doc-frontend
     init: true
     # Reached only through the gateway, which publishes the site
@@ -25,7 +25,7 @@ services:
       - doc
 
   backend:
-    image: ghcr.io/nonetss/stack-backend:main
+    image: ghcr.io/nonetss/doc-backend:main
     container_name: doc-backend
     init: true
     expose:
@@ -64,7 +64,7 @@ services:
   # site routes /rpc, /api, /scalar and /openapi.json to the backend and the
   # rest to the frontend.
   gateway:
-    image: ghcr.io/nonetss/stack-gateway:main
+    image: ghcr.io/nonetss/doc-gateway:main
     container_name: doc-gateway
     ports:
       # Host port comes from .env (scripts/bootstrap.sh prompts for it); the
