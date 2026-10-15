@@ -56,7 +56,7 @@ function valueSchema(field: FieldDefinition, index: CatalogIndex): z.ZodType {
   }
 }
 
-function objectShape(
+export function objectShape(
   fields: Record<string, FieldDefinition>,
   index: CatalogIndex
 ): Record<string, z.ZodType> {

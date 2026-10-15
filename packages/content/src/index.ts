@@ -28,6 +28,7 @@ export {
 export {
   type ContentDeclarations,
   type ContentProblem,
+  DOCS_DIR,
   type LoadResult,
   loadContent,
 } from "#load"
@@ -38,6 +39,25 @@ export {
   type SiteConfig,
   type TypeDefinition,
 } from "#meta-schema"
+export { type HeaderSchema, headerSchema, readHeader } from "#pages/header"
+export {
+  type NavEntry,
+  type NavNode,
+  type PageLink,
+  readSite,
+  type Site,
+  type SitePage,
+  type SiteRoutes,
+} from "#pages/site"
+export { SANITIZE_SCHEMA } from "#pages/to-hast"
+export { IMAGE_EXTENSIONS, isImageFile } from "#pages/transform"
+export type {
+  Page,
+  PageHeader,
+  PageHeading,
+  PageProblem,
+} from "#pages/types"
+export { isReservedSlug, RESERVED_SLUGS } from "#reserved-slugs"
 export {
   CLONE_DIR,
   cloneFolder,

@@ -149,7 +149,7 @@ function yamlErrorMessage(error: YAMLParseError): string {
   return `YAML no válido en la línea ${position.line}, columna ${position.col}: ${reason}`
 }
 
-function yamlErrorReason(error: YAMLParseError): string {
+export function yamlErrorReason(error: YAMLParseError): string {
   if (error.code === "BLOCK_AS_IMPLICIT_KEY") {
     return 'un texto con ": " dentro tiene que ir entre comillas'
   }
