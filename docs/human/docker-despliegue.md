@@ -58,7 +58,7 @@ crea el admin al arrancar.
 ### Instalar en un servidor nuevo
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Nonetss/stack/main/scripts/bootstrap.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Nonetss/doc/main/scripts/bootstrap.sh | bash
 ```
 
 `bootstrap.sh` trabaja en el directorio donde lo ejecutas:
