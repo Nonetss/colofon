@@ -48,7 +48,24 @@ export const env = createEnv({
     OIDC_CLIENT_ID: z.string().min(1).optional(),
     OIDC_CLIENT_SECRET: z.string().min(1).optional(),
     OIDC_DISCOVERY_URL: z.url().optional(),
+    // Content repository. Either a local folder (CONTENT_DIR, relative to
+    // the repo root) or a git URL (CONTENT_REPO, credentials in the URL)
+    // checked out at CONTENT_REF; never both. Without either the backend
+    // runs without content.
+    CONTENT_DIR: z.string().min(1).optional(),
+    CONTENT_REPO: z.string().min(1).optional(),
+    CONTENT_REF: z.string().min(1).default("main"),
   },
+  createFinalSchema: (shape) =>
+    z.object(shape).superRefine((values, ctx) => {
+      if (values.CONTENT_DIR === undefined) return
+      if (values.CONTENT_REPO === undefined) return
+      ctx.addIssue({
+        code: "custom",
+        path: ["CONTENT_REPO"],
+        message: "Set CONTENT_DIR or CONTENT_REPO, not both",
+      })
+    }),
   runtimeEnv: process.env,
   skipValidation: !!process.env.SKIP_ENV_VALIDATION,
   emptyStringAsUndefined: true,
