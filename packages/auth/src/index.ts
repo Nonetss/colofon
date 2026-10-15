@@ -38,7 +38,9 @@ export function createAuth() {
     },
     plugins: [
       admin(),
-      apiKey({ enableSessionForAPIKeys: true }),
+      // No per-key rate limit: agents read many pages (`llms.txt`, `llm.txt`)
+      // and each one validates the key twice (frontend and backend).
+      apiKey({ enableSessionForAPIKeys: true, rateLimit: { enabled: false } }),
       organization({
         teams: {
           enabled: true,
