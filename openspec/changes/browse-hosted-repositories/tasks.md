@@ -1,0 +1,32 @@
+## 1. Reading a bare repository (`packages/content`)
+
+- [x] 1.1 Add `packages/content/src/browse.ts` with `readFolder(folder, branch, path)` and `readFile(folder, branch, path)` over `git --git-dir=<folder>` run from `tmpdir()`, `refs/heads/<branch>:<path>` object names, `MAX_FILE_BYTES = 512 KiB`, `BINARY_SNIFF_BYTES = 8000`, the blob read as bytes (not through `spawnGit`'s text output) and decoded with a non-fatal UTF-8 `TextDecoder`; export them and their result types from `src/index.ts`; verify with `bun run check-types` in `packages/content`
+- [x] 1.2 Write `packages/content/tests/browse.test.ts` against a bare repository built with `#tests/fixtures/git-remote` (commit files on `main`, a second branch with an extra file): the root lists folders first then files by name, with file sizes; a nested folder gives paths from the root; another branch shows its own files; a submodule entry (`git update-index --cacheinfo 160000,…`) is a `submodule`; an unknown branch, an unknown path, a file path for `readFolder` and a folder path for `readFile` are `{ ok: false }`; a missing bare folder is `{ ok: false }`; a text file comes back with its content and size; a file with a NUL byte is `binary` with no content; a file over 512 KiB is `too-large` with no content. Verify with `bun test` in `packages/content`
+
+## 2. Procedures (`packages/api/src/v1/content`)
+
+- [x] 2.1 `input.ts`: `readFolder` (`slug`, `branch`, `path` defaulting to `""`) and `readFile` (`slug`, `branch`, non-empty `path`); `branch` refuses `:`, a leading `-` and over 255 chars; `path` refuses a leading or trailing `/`, empty, `.` and `..` segments and over 1024 chars; `output.ts`: the folder entries and the file shape (`kind`, `content` null unless text)
+- [x] 2.2 `handler.ts`: `readFolder` and `readFile` methods (unknown slug or non-hosted row → `NOT_FOUND`, same message; `{ ok: false }` from `browse.ts` → `NOT_FOUND` with a Spanish message; never `ensureHostedRepo`); `router.ts`: two `adminProcedure` routes with `openapi({ method: "GET", … })`, summaries and descriptions in English
+- [x] 2.3 Write `packages/api/tests/v1/content/browse.test.ts` (fake db, a temp hosted root with a real bare repository pushed from a work tree): access through `call(contentRouter.readFolder, …)` is `UNAUTHORIZED` without a session and `FORBIDDEN` for a non-admin; an unknown slug and an external repository are `NOT_FOUND`; a hosted repository's root and a file are read from its bare repository; an unknown branch or path is `NOT_FOUND`; a hosted repository whose bare folder is missing is `NOT_FOUND` and the folder is still missing afterwards (nothing written); the input refuses `..`, a leading `/`, a branch starting with `-` or holding `:`. Verify with `bun test` in `packages/api`
+
+## 3. Location model and screen (`apps/frontend`)
+
+- [x] 3.1 Add `apps/frontend/src/features/admin/git/model/git-location.ts`: parse/serialize `{ repo, branch, path, file }` from/to a query string (empty values dropped), `startingBranch(ref, listing)` (ref if a branch, else default, else first, else `undefined`), `breadcrumb(repositoryName, path)` (segments with the path each one opens), `parentFolder(filePath)`; write `apps/frontend/tests/unit/features/admin/git/git-location.test.ts` covering each branch of those functions. Verify with `bun test` in `apps/frontend`
+- [x] 3.2 Add the slice hook `hooks/use-git-location.ts` (reads the URL, `navigate()` with `pushState`, `replace()` with `replaceState`, resync on `popstate` and `astro:page-load`) and `hooks/use-git-browser.ts` with the `useQuery` reads (`listRepositories` filtered to hosted, `listBranches({ slug })`, `readFolder`, `readFile`, each with `skipToken` until its inputs exist)
+- [x] 3.3 Add the components: `git-page.tsx` (provider boundary), `git-content.tsx` (repository picker, branch select, breadcrumb, listing or file view, the fallbacks of design §3 and the two empty states), `definitions/git-tree-columns.definition.tsx` for the `DataTableView` listing, a file view with a line-number gutter; reuse `Select`, `CopyButton`, `Text`, `DataTableView` and the icon registry; all copy in Spanish; export `GitPage` from the slice's `index.ts`
+- [x] 3.4 Add the `admin-git` surface (path `/admin/git`, title “Admin · Git”, label “Git”, a description, an icon, `adminOnly`) to `app-surfaces.ts` (registering the icon in `icon-registry.ts` if none fits) and `pages/admin/git/index.astro` mounting `GitPage` with `client:only="react"` in the `Admin` layout; update the `app-surfaces`/`site-nav` unit tests only if a lookup they assert changes. Verify with `bun run check-types` in `apps/frontend` and `bun run tailwind:check`
+
+## 4. Docs
+
+- [x] 4.1 Mention `/admin/git` in `docs/human/contenido.md` (hosted repositories section) and the browse procedures in the stack skill's `references/workspaces.md` (`packages/content` row: `src/browse.ts`); check every cited path exists
+
+## 5. Validation
+
+- [x] 5.1 Run `bun run check-types`, `bunx biome check .` and `bun run test` from the repo root, and fix anything they report
+
+## 6. Cards and a code screen per repository (revision)
+
+- [x] 6.1 Move the browser (location model and hook, query hooks, breadcrumb, folder table and columns, file view) to a new slice `features/admin/git-repository/`, dropping `repo` from the URL location (it is the route now); move its test to `tests/unit/features/admin/git-repository/git-location.test.ts`; add `pages/admin/git/[repo]/index.astro` (`Admin` layout, `GitRepositoryPage` with `client:only="react"`) and the top-level `admin-git-repository` surface (`/admin/git/[repo]`, `adminOnly`, no `nav`); the content finds the hosted repository by slug, shows a back link, its name and git URL, and the unknown-slug and empty states
+- [x] 6.2 Rebuild `features/admin/git` as the list: `model/repository-search.ts` with `matchesSearch` (every folded word in the folded name or slug) and its test `tests/unit/features/admin/git/repository-search.test.ts`; a card per hosted repository (title link and "Ver código" button to `/admin/git/<slug>`, slug, published ref, git URL with `CopyButton`); `SearchInput` in `ResourceOverview`'s `filters` with `?q=` through `useQueryParam`; the no-match state with a clear action
+- [x] 6.3 Run `bun run check-types`, `bunx biome check .`, `bun run test` and `bun run tailwind:check`, and fix anything they report; update `docs/human/contenido.md` for the two screens
+

@@ -66,6 +66,12 @@ git push origen main
   cambian el contenido.
 - Recién creado está vacío, y su última sincronización queda en blanco hasta
   el primer push.
+- **`/admin/git`** (“Git”, solo administradores) lista los repositorios
+  alojados en tarjetas, con un buscador por nombre o slug. Al abrir uno vas a
+  `/admin/git/<slug>`, donde eliges la rama, entras en las carpetas y abres
+  los ficheros como texto. Es solo lectura; los binarios y los ficheros de más
+  de 512 KB no se muestran. La URL guarda lo que estás viendo, así que se
+  puede compartir.
 - Los repositorios bare se guardan en `.hosted/<id>/` (en Docker, en el
   volumen `hosted_data`). Puede que sea la única copia del historial:
   inclúyelo en las copias de seguridad.
