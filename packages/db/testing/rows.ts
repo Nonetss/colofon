@@ -1,6 +1,7 @@
 /** Complete rows with fixed defaults, for queueing on the fake database. */
 import type {
   comments,
+  contentRepository,
   entityIcons,
   member,
   organization,
@@ -15,6 +16,7 @@ export type CronRunRow = typeof cronRun.$inferSelect
 export type UserRow = typeof user.$inferSelect
 export type SessionRow = typeof session.$inferSelect
 export type CommentRow = typeof comments.$inferSelect
+export type ContentRepositoryRow = typeof contentRepository.$inferSelect
 export type EntityIconRow = typeof entityIcons.$inferSelect
 export type OrganizationRow = typeof organization.$inferSelect
 export type MemberRow = typeof member.$inferSelect
@@ -153,6 +155,24 @@ export function teamRow(overrides: Partial<TeamRow> = {}): TeamRow {
     name: "Platform",
     memberCount: 0,
     organizationId: "org-1",
+    createdAt: NOW,
+    updatedAt: NOW,
+    ...overrides,
+  }
+}
+
+export function contentRepositoryRow(
+  overrides: Partial<ContentRepositoryRow> = {}
+): ContentRepositoryRow {
+  return {
+    id: "00000000-0000-4000-8000-000000000001",
+    slug: "documentacion",
+    name: "Documentación",
+    url: "https://git.example/documentacion.git",
+    ref: "main",
+    lastSyncedAt: null,
+    lastCommit: null,
+    lastSyncError: null,
     createdAt: NOW,
     updatedAt: NOW,
     ...overrides,
