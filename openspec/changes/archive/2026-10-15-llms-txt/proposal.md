@@ -1,6 +1,6 @@
 ## Why
 
-doc-sjd lets an AI read the documentation without the HTML: `/llms.txt` (per [llmstxt.org](https://llmstxt.org)) lists every page with a link to its Markdown, and `<page>/llm.txt` serves that Markdown, the same text "Copiar en Markdown" copies. The reader here already writes a page back as Markdown for that button, but there is no route an agent can fetch, so pointing an AI at the documentation still means pasting pages by hand.
+The earlier documentation site lets an AI read the documentation without the HTML: `/llms.txt` (per [llmstxt.org](https://llmstxt.org)) lists every page with a link to its Markdown, and `<page>/llm.txt` serves that Markdown, the same text "Copiar en Markdown" copies. The reader here already writes a page back as Markdown for that button, but there is no route an agent can fetch, so pointing an AI at the documentation still means pasting pages by hand.
 
 ## What Changes
 

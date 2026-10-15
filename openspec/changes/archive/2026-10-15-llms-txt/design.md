@@ -1,6 +1,6 @@
 ## Context
 
-doc-sjd is a static Astro site: `site/src/pages/llms.txt.ts` builds the index from the content collection and `site/src/pages/[...slug]/llm.txt.ts` serves each page's MDX source through `pageMarkdown`. Neither applies as is here:
+The earlier documentation site is a static Astro build: its `llms.txt.ts` page builds the index from the content collection and `[...slug]/llm.txt.ts` serves each page's MDX source through `pageMarkdown`. Neither applies as is here:
 
 - The reader is server-rendered from the backend (`v1.docs.nav`, `v1.docs.page`) through the server oRPC client (`apps/frontend/src/lib/server-link.ts`), which forwards only the visitor's cookies.
 - There is no MDX source in the frontend: "Copiar en Markdown" writes the page back from its sanitized tree (`features/docs/page/model/markdown.ts`, `pageMarkdown`), embeds it as JSON in `DocToc`, and the browser turns `](/` into `](<origin>/` before copying (`page-scripts.ts`).
@@ -33,7 +33,7 @@ doc-sjd is a static Astro site: `site/src/pages/llms.txt.ts` builds the index fr
 
 `features/docs/page/model/full-links.ts` holds `withOrigin(markdown, origin)` (apart from `markdown.ts`, so the browser script doesn't bundle the hast → mdast writer) (the `](/` → `](<origin>/` rewrite); `page-scripts.ts` calls it with `window.location.origin` and the route with the public origin, so the two texts stay identical. The public origin comes from `CORS_ORIGIN`, already defined as "the public origin the browser uses": added to the `astro:env` schema as an optional server secret, and passed to the frontend service in `compose.yml` and `compose.prod.yml`. When unset, the route falls back to `Astro.url.origin`.
 
-*Alternatives:* `X-Forwarded-Proto`/`Host` from Caddy (wrong scheme in production, where TLS ends upstream of Caddy); root-relative links like doc-sjd (an agent that received the text out of context can't follow them; llmstxt.org expects absolute URLs).
+*Alternatives:* `X-Forwarded-Proto`/`Host` from Caddy (wrong scheme in production, where TLS ends upstream of Caddy); root-relative links like the earlier site (an agent that received the text out of context can't follow them; llmstxt.org expects absolute URLs).
 
 ### Index text as a pure model
 
@@ -53,7 +53,7 @@ A new `features/docs/llm-text` slice (barrel `index.ts`) with `model/llms.ts`: `
 
 ### Alternate link through a head slot
 
-`Layout.astro` gets a named `head` slot inside `<head>`; `Docs.astro` passes it through; `[repo]/[...path].astro` fills it with `<link rel="alternate" type="text/markdown" href={`${page.href}/llm.txt`}>`. An absolute path, because reader routes have no trailing slash (doc-sjd's relative `href="llm.txt"` would resolve to the parent).
+`Layout.astro` gets a named `head` slot inside `<head>`; `Docs.astro` passes it through; `[repo]/[...path].astro` fills it with `<link rel="alternate" type="text/markdown" href={`${page.href}/llm.txt`}>`. An absolute path, because reader routes have no trailing slash (the earlier site's relative `href="llm.txt"` would resolve to the parent).
 
 ### Response headers
 
