@@ -2,7 +2,10 @@
 # (Caddyfile) and the dev sites (Caddyfile.dev) import it, so dev and
 # production always route the same way.
 
-encode zstd gzip
+# Git responses under /git/* are packs, already compressed: stream them as
+# the backend sends them.
+@compressible not path /git/*
+encode @compressible zstd gzip
 
 # Security headers that cost nothing and break nothing the app does today.
 # HSTS belongs to whatever terminates TLS in front of this HTTP-only site,
@@ -26,7 +29,7 @@ handle /health {
 	respond "ok" 200
 }
 
-@backend path /rpc/* /api/* /scalar* /openapi.json
+@backend path /rpc/* /api/* /git/* /scalar* /openapi.json
 handle @backend {
 	reverse_proxy {$BACKEND_HTTP_UPSTREAM:backend:3000}
 }

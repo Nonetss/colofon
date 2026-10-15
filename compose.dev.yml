@@ -108,6 +108,9 @@ services:
       # One clone per content repository (stored in the database), kept
       # across container recreations.
       - content_data:/app/.content
+      # The bare repository of each hosted content repository: possibly the
+      # only copy of its content, so apart from the disposable clones.
+      - hosted_data:/app/.hosted
     expose:
       - "3000"
     depends_on:
@@ -205,6 +208,7 @@ services:
 
 volumes:
   content_data:
+  hosted_data:
   db_data:
   frontend_vite_cache:
   gateway_data:

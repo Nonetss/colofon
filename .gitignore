@@ -41,6 +41,8 @@ lerna-debug.log*
 
 # Clones of the content repositories kept by the backend
 .content/
+# Bare repositories of the content repositories the backend hosts
+.hosted/
 .nx
 
 .alchemy

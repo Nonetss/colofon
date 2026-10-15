@@ -21,6 +21,10 @@
 **/.vercel
 *.log
 
+# The backend's content clones and hosted repositories from native dev
+.content
+.hosted
+
 Dockerfile
 **/Dockerfile
 compose.yml
