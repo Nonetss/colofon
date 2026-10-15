@@ -55,8 +55,8 @@ export const o = os.$context<Context>().errors(errorMap)
 
 export const publicProcedure = o.meta(accessMeta("public"))
 
-// Named functions: oRPC names each middleware's span after the function
-// (`middleware.requireAuth`), so an anonymous arrow shows up as `middleware.`.
+// Named functions, so an error's stack trace names the middleware
+// (`requireAuth`) instead of an anonymous arrow.
 const requireAuth = o.middleware(async function requireAuth({ context, next }) {
   if (!context.user) {
     throw errors.UNAUTHORIZED()

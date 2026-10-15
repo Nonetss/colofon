@@ -1,21 +1,10 @@
-import {
-  afterAll,
-  afterEach,
-  beforeAll,
-  beforeEach,
-  describe,
-  expect,
-  mock,
-  test,
-} from "bun:test"
+import { afterEach, beforeEach, describe, expect, mock, test } from "bun:test"
 import {
   createFakeDb,
   cronJobRow,
   cronRunRow,
   stepArgs,
 } from "@nonete/db/testing"
-import { SpanStatusCode, withSpan } from "@nonete/telemetry/span"
-import { startTestTracing, type TestTracing } from "@nonete/telemetry/testing"
 
 import { CronNotFoundError, CronValidationError } from "#errors"
 import {
@@ -254,77 +243,6 @@ describe("scheduled fire", () => {
       errorMessage: "Previous run still in progress",
     })
     expect(resolve).not.toHaveBeenCalled()
-  })
-})
-
-describe("run spans", () => {
-  let tracing: TestTracing
-  const spanName = `cron.run ${jobA.handlerKey}`
-
-  beforeAll(() => {
-    tracing = startTestTracing()
-  })
-  afterAll(() => tracing.shutdown())
-  beforeEach(() => tracing.reset())
-
-  test("a scheduled fire is a root span with the job and run attributes", async () => {
-    const run = cronRunRow({ id: "run-ok", jobId: jobA.id })
-    fake.queue("query.cronJob.findMany", [jobA])
-    fake.queue("update", [])
-    await scheduler.start()
-
-    fake.queue("query.cronJob.findFirst", jobA)
-    fake.queue("query.cronRun.findFirst", undefined)
-    fake.queue("insert", [run])
-    fake.queue("update", [], [])
-    await bunCron.jobs[0]?.fire()
-
-    const span = await tracing.waitForSpan(spanName)
-    expect(span.parentSpanContext).toBeUndefined()
-    expect(span.attributes).toEqual({
-      "cron.trigger": "schedule",
-      "cron.job.id": jobA.id,
-      "cron.job.handler_key": jobA.handlerKey,
-      "cron.run.id": run.id,
-      "cron.run.status": "success",
-    })
-    expect(span.status.code).toBe(SpanStatusCode.UNSET)
-  })
-
-  test("a failed run fails its span", async () => {
-    resolve.mockRejectedValue(new Error("boom"))
-    fake.queue("query.cronJob.findFirst", jobA)
-    fake.queue("query.cronRun.findFirst", undefined)
-    fake.queue("insert", [cronRunRow({ id: "run-ko", jobId: jobA.id })])
-    fake.queue("update", [], [])
-
-    await scheduler.runNow(jobA.id)
-
-    const span = await tracing.waitForSpan(spanName)
-    expect(span.attributes).toMatchObject({
-      "cron.trigger": "manual",
-      "cron.run.status": "failed",
-    })
-    expect(span.status).toEqual({ code: SpanStatusCode.ERROR, message: "boom" })
-  })
-
-  test("a manual run starts its own trace linked to the triggering span", async () => {
-    fake.queue("query.cronJob.findFirst", jobA)
-    fake.queue("query.cronRun.findFirst", undefined)
-    fake.queue("insert", [cronRunRow({ id: "run-ok", jobId: jobA.id })])
-    fake.queue("update", [], [])
-
-    const request = await withSpan("test", "POST /rpc/*", {}, async (span) => {
-      await scheduler.runNow(jobA.id)
-      return span.spanContext()
-    })
-
-    const span = await tracing.waitForSpan(spanName)
-    expect(span.parentSpanContext).toBeUndefined()
-    expect(span.spanContext().traceId).not.toBe(request.traceId)
-    expect(span.links.map((link) => link.context.spanId)).toEqual([
-      request.spanId,
-    ])
   })
 })
 

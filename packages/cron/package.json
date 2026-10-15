@@ -20,7 +20,6 @@
   "dependencies": {
     "@nonete/db": "workspace:*",
     "@nonete/logger": "workspace:*",
-    "@nonete/telemetry": "workspace:*",
     "drizzle-orm": "catalog:",
     "zod": "catalog:"
   },

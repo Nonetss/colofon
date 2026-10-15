@@ -22,7 +22,6 @@
     "@nonete/auth": "workspace:*",
     "@nonete/env": "workspace:*",
     "@nonete/logger": "workspace:*",
-    "@nonete/telemetry": "workspace:*",
     "@orpc/client": "catalog:",
     "@orpc/tanstack-query": "catalog:",
     "@shadcn/react": "^0.3.1",

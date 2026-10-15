@@ -162,8 +162,8 @@ describe("access meta", () => {
 })
 
 describe("middleware names", () => {
-  // oRPC names each middleware's span `middleware.<function name>`; an
-  // anonymous arrow would show up as `middleware.` in every trace.
+  // A named function shows in an error's stack trace; an anonymous arrow
+  // leaves it unnamed.
   test("each access builder's middleware is a named function", () => {
     const names = (builder: {
       "~orpc": {

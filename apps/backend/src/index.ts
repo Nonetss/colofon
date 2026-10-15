@@ -3,18 +3,14 @@ import { startContentSync } from "@nonete/api/v1/content/handler"
 import { auth } from "@nonete/auth"
 import { closeDb } from "@nonete/db"
 import { seed } from "@nonete/db/seed"
-import { pgTracing } from "@nonete/db/tracing"
 import { env } from "@nonete/env/server"
 import { logger } from "@nonete/logger"
-import { startTelemetry, type Telemetry } from "@nonete/telemetry"
-import { ORPCInstrumentation } from "@orpc/opentelemetry"
 import { Hono } from "hono"
 import { cors } from "hono/cors"
 import { cronScheduler, startCron } from "@/cron"
 import { type AuthVariables, sessionMiddleware } from "@/middlewares/auth"
 import { noStoreContentSchemas } from "@/middlewares/no-store"
 import { requestLogger } from "@/middlewares/request-logger"
-import { requestTracing } from "@/middlewares/tracing"
 import authRouter from "@/routers/auth"
 import docsRouter from "@/routers/docs"
 import rpcRouter from "@/routers/rpc"
@@ -28,22 +24,6 @@ const HTTP_DRAIN_TIMEOUT_MS = 5_000
 /** Below Docker's default 10 s stop grace period, so we exit before a SIGKILL. */
 const SHUTDOWN_TIMEOUT_MS = 8_000
 
-/** Spans not exported by then are dropped; tracing never delays the exit. */
-const TELEMETRY_FLUSH_TIMEOUT_MS = 2_000
-
-// Before anything handles a request. `bun --hot` re-runs this module but
-// globalThis survives it, so the pipeline (and oRPC's instrumentation) is
-// registered once per process. Off, and free, without an OTLP endpoint.
-if (!globalThis.__backendTelemetry) {
-  globalThis.__backendTelemetry = startTelemetry({
-    serviceName: "backend",
-    environment: env.NODE_ENV,
-    endpoint: env.OTEL_EXPORTER_OTLP_ENDPOINT,
-    sampleRatio: env.OTEL_TRACES_SAMPLER_ARG,
-    instrumentations: () => [new ORPCInstrumentation(), pgTracing()],
-  })
-}
-
 async function bootstrap() {
   startContentSync()
   await seed(auth)
@@ -52,7 +32,6 @@ async function bootstrap() {
 
 const app = new Hono<{ Variables: AuthVariables }>()
 
-app.use(requestTracing)
 app.use(requestLogger)
 app.use(
   "/*",
@@ -81,7 +60,6 @@ app.get("/", (c) => c.text("OK"))
 // globalThis survives hot reloads (same JS realm), unlike module-level
 // bindings, so it's the only place that can guard this.
 declare global {
-  var __backendTelemetry: Telemetry | undefined
   var __backendBootstrapped: boolean | undefined
   var __backendServer: ReturnType<typeof Bun.serve> | undefined
 }
@@ -122,37 +100,6 @@ if (!globalThis.__backendBootstrapped) {
     }
   }
 
-  // Last, so the spans of the steps before it are exported too. A failure
-  // is only a warning: losing spans must not turn a clean stop into a failed
-  // one.
-  const flushTelemetry = async () => {
-    const telemetry = globalThis.__backendTelemetry
-    if (!telemetry) return
-
-    let flushTimer: ReturnType<typeof setTimeout> | undefined
-    try {
-      const flushed = await Promise.race([
-        telemetry.shutdown().then(() => true),
-        new Promise<false>((resolve) => {
-          flushTimer = setTimeout(
-            () => resolve(false),
-            TELEMETRY_FLUSH_TIMEOUT_MS
-          )
-        }),
-      ])
-      if (!flushed) {
-        logger.warn(
-          { flushTimeoutMs: TELEMETRY_FLUSH_TIMEOUT_MS },
-          "telemetry flush timed out"
-        )
-      }
-    } catch (err) {
-      logger.warn({ err }, "telemetry flush failed")
-    } finally {
-      clearTimeout(flushTimer)
-    }
-  }
-
   let shuttingDown = false
 
   const shutdown = async (signal: NodeJS.Signals) => {
@@ -190,7 +137,6 @@ if (!globalThis.__backendBootstrapped) {
     await step("database", closeDb)
 
     logger.info({ signal, failed }, "shutdown complete")
-    await flushTelemetry()
     process.exit(failed ? 1 : 0)
   }
 

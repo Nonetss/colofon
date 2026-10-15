@@ -8,7 +8,6 @@ export const logger: Logger = createLogger({
   service: "backend",
   level: env.LOG_LEVEL,
   production: env.NODE_ENV === "production",
-  lokiUrl: env.LOKI_URL,
 })
 
 export const child = (bindings: Record<string, unknown>): Logger =>
