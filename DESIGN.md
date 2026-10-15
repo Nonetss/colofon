@@ -330,10 +330,9 @@ first belongs in `components/shared/`.
   only exists inside an already-shared list component).
 - **Feature-internal decomposition is not shared extraction.** A large file
   with several focused responsibilities but no equivalent use elsewhere (the
-  cron run timeline, organization detail sections)
-  gets split into feature-owned files under its semantic slice, such as
-  `features/crons/detail/components/` or
-  `features/admin/organizations/components/`, and imported through `@/` — never moved
+  cron run timeline) gets split into feature-owned files under its semantic
+  slice, such as `features/crons/detail/components/`, and imported through
+  `@/` — never moved
   into application `components/shared/`. Code used by two slices of one domain
   belongs in `features/<domain>/shared`; these internal components don't gain
   generic props, configuration options or public stories to "future-proof"

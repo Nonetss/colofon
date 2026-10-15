@@ -19,8 +19,6 @@ configurado en `packages/auth`. El backend expone sus rutas bajo `/api/auth/*`.
 | `apiKey()` | Claves de API. Una petición con cabecera `x-api-key` se trata como una sesión del dueño de la clave. |
 | `genericOAuth` | El inicio de sesión OIDC, solo si está configurado. |
 
-`/admin/plugins` muestra los plugins instalados.
-
 ## Dos niveles de permisos
 
 1. **Rol global.** Un usuario es `admin` o no. Los admins ven `/admin` y la

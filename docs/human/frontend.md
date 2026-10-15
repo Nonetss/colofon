@@ -43,8 +43,7 @@ Reglas:
 - Un `shared/` dentro de un dominio solo existe si lo usan al menos dos slices.
 - Cuando dos slices se necesitan mutuamente, sus `index.ts` formarían un ciclo.
   En ese caso el slice publica un `public.ts` con la parte sin páginas (tipos,
-  hooks) y el otro importa desde ahí. Ejemplo:
-  `features/admin/organizations/public.ts` ↔ `features/admin/teams/public.ts`.
+  hooks) y el otro importa desde ahí.
 
 ### Página y contenido
 
