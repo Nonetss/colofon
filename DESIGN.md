@@ -298,7 +298,7 @@ Sticky chrome is reserved for `Navbar` (fixed, `z-40`) (height `--navbar-height:
 Depth instead comes from:
 
 1. **Hairlines.** Row rules inside tables, `divide-y` in stacked lists, `border-y` on fact blocks, `border-b` + `border-t` on dialog header/footer. A sticky table header draws its bottom rule as an inset shadow (`shadow-[inset_0_-1px_0_0_var(--border)]`) so the line stays put while rows scroll under it.
-2. **Tonal layering.** `bg-card/40` (40% opacity over `card`) for table boxes, tiles and state blocks — quieter than a card, more present than the page. Inside a box, `bg-muted/30` sets apart a group row and `bg-muted/40`–`/50` marks hover.
+2. **Tonal layering.** `bg-card/40` (40% opacity over `card`) for table boxes, tiles and state blocks — quieter than a card, more present than the page. The box is `surfaceVariants()` (see Surface below), never a rebuilt class string. Inside a box, `bg-muted/30` sets apart a group row and `bg-muted/40`–`/50` marks hover.
 3. **Inversion.** Tooltips (`Hint`, chart tooltips) invert to ink-on-paper (`bg-foreground text-background`), reading as a floating layer without leaning on shadow.
 4. **Dashed state.** Empty/error/loading states use `border-dashed` to read as a placeholder, not a container.
 5. **Focus ring.** `ring-2 ring-ring` (Brand Terracotta, `/50` on most controls) on keyboard focus only — never a permanent decoration.
@@ -491,6 +491,13 @@ The status vocabulary is a fixed mapping shared by `StatusDot` tones, table stat
 - **Primitive:** TanStack Charts behind a themed wrapper; width follows the container, height is a fixed pixel value; type is the sans in `muted-foreground` with `tabular-nums`. Series colors come from the chart palette (see Colors → Scoped Palettes) and recolor live with the theme.
 - **Tooltip:** the `Hint` look — inverted ink bubble, `rounded-md`, `0.375rem 0.75rem`, 12px sans — reachable by keyboard.
 
+### Surface (`surfaceVariants`)
+
+The quiet box every block sits in, as one recipe in `components/shared/brand/surface.ts` that Astro (`class:list`) and React (`className`) share: `rounded-xl border bg-card/40`, flat at rest. Layout (padding, flex, overflow) stays at the call site.
+
+- **Static** (`surfaceVariants()`): the data table's scroll box, the content and git repository cards, `StateCard` (which adds `border-dashed`, and `border-solid` again for celebrate).
+- **Interactive** (`surfaceVariants({ interactive: true })`): a box that is itself a link (`DocCard`, the documentation pager) or holds a stretched one (`SurfaceCard`). Hover or keyboard focus firm the border to `foreground/15` and fill `bg-muted/40` over 200ms; a focused link box also draws the `ring-[3px] ring-ring/50` focus ring. No lift, no shadow, no other hover fill.
+
 ### Surface Card (`SurfaceCard`/`SurfaceCardGrid`)
 
 Registry-driven destination tile — the component behind a section overview's
@@ -504,7 +511,7 @@ replaced by the documentation reader. One component, two states:
 - **Description:** the muted `compact` role at relaxed leading, ≤ 2 lines (`line-clamp-2`), always reserving two lines (`min-h-[3.25em]`) so the shortcuts' hairline lands at the same height across a row of tiles.
 - **Leaf state** (a surface with no children, e.g. a section-overview card): a muted `size-4` chevron at the right of the title row that nudges `translate-x-0.5` and turns ink on hover.
 - **Parent state** (a surface with children, e.g. `/admin`): instead of the chevron, a hairline-separated (`border-t pt-2.5`) two-column grid of child-surface shortcuts as filled `h-7 rounded-md bg-muted` pills (icon, label, `↗`), turning `bg-primary text-primary-foreground` on hover — a quick-access affordance for a section's own subroutes, not a plain link list.
-- **Hover (whole tile):** `bg-muted` and a slightly firmer border (`border-foreground/15`), no lift, no shadow.
+- **Hover (whole tile):** the interactive surface — `bg-muted/40` and a slightly firmer border (`border-foreground/15`), no lift, no shadow; the same on keyboard focus of its stretched link.
 - **Grid:** `SurfaceCardGrid` with container-query columns (see Layout), `gap-3`, each tile entering with `dash-enter`.
 
 ### State Card (`StateCard`)
@@ -568,6 +575,14 @@ Dense, precise inputs for small finite values (currently the content repository 
 - **Number stepper:** an `h-9 rounded-md border-input` dial: `w-8` chevron buttons in `muted-foreground` flanking a centered `font-mono text-sm tabular-nums` value, zero-padded to two digits. Values wrap at the bounds; arrows, PageUp/PageDown (±5), Home/End and the mouse wheel all step it. The chevrons are out of the tab order; the input carries focus.
 - **Focus:** both use `focus-visible:ring-2 ring-ring/50`.
 
+### Checklist Row (`CheckboxRow`)
+
+One ticked option in a popover checklist (`components/shared/form/checkbox-row.tsx`): the data table's column filter and columns menu, and the column toggles of a documentation table.
+
+- **Row:** `rounded-md`, `py-1.5 px-2` (`py-1 pr-1` when it carries a trailing control such as a drag grip), `hover:bg-muted/50`; a disabled row (a column that can't be hidden) keeps its place without the hover.
+- **Label:** the whole label toggles the checkbox and is its accessible name. The name in the `body` role (`title` for a row that acts on the others, "Seleccionar todo"), then an optional `detail` in the muted `data` role (a value that tells options apart) or `note` in muted `compact` ("Siempre visible"), and an optional count in muted tabular `compact` at the right.
+- **Rule:** a checklist row in a popover is a `CheckboxRow`, never a hand-built `li` + `Checkbox` + `label`. The facet filter's include/exclude rows (`ResourceFilters`, 44px touch rows with a second control) are a different control and stay their own.
+
 ### Form Dialog (`FormDialog`)
 
 - **Frame:** `DialogContent` with `p-0`, `gap-0`, `sm:max-w-lg`, scrollable up to `calc(100vh - 2rem)`.
@@ -627,6 +642,10 @@ Chooses a Lucide glyph for a user-owned entity (no entity type is registered yet
 - **Ghost:** flat, hover: `bg-muted/40`.
 - **Destructive:** the editorial ink ramp above.
 
+### Inline Link (`inlineLinkClass`)
+
+A link inside a line of product copy — "¿No tienes cuenta? Regístrate", "Consulta la API en /scalar", "Añade un repositorio en Administración · Contenido" — takes `inlineLinkClass` (`components/shared/brand/inline-link.ts`) on `AppLink`, `<a>` or an Astro `<a>`: `font-medium` ink over a `muted-foreground/40` underline at a 4px offset that firms to ink on hover or focus. It inherits the surrounding `Text` role; a path or URL adds the `data` role through `cn(inlineLinkClass, textVariants({ role: "data" }))`. It never turns Brand Terracotta: the accent stays for *here / act / alive*, and only links inside rendered Markdown are primary. Footer and navbar chrome keep their own link styles.
+
 ### Inputs / Fields (shadcn `Input`)
 
 - **Style:** `h-8` (compact) / default height on form bodies, `border-color: var(--input)`, `border-radius: var(--radius)`.
@@ -636,6 +655,10 @@ Chooses a Lucide glyph for a user-owned entity (no entity type is registered yet
 ### Code Blocks (`JsonView`)
 
 Technical payloads are set in the `data` role inside a `rounded-lg border bg-muted/50 p-3` block at `text-foreground/90` with relaxed leading, wrapping long values rather than scrolling sideways. Tokens are colored by `@tanstack/highlight` from the syntax palette (see Colors → Scoped Palettes).
+
+### Copyable URL (`CopyableUrl`, `features/admin/shared`)
+
+A URL an admin pastes elsewhere (a git remote, the editor's catalog): the `data` role in a `rounded-md bg-muted` well, truncated to one line, with a ghost `CopyButton` ("URL copiada") at its end. Its label is a micro-caps `label` above the well (`stacked`, inside a card's facts) or inside it before the URL (`inline`, for a well standing alone on a page); a card whose context already names the URL omits it. A secret shown once (a new API key) is a different control: a read-only `Input`/`Textarea` with an outline copy button inside a `FormField`.
 
 ## Icon System
 
@@ -689,6 +712,8 @@ If an icon needs to change, update it in `icon-registry.ts` — all references p
 - **Do** keep every fixed bottom element clear of `env(safe-area-inset-bottom)` and give its controls 44px touch targets.
 - **Do** express selection in compact pickers by inverting to ink (`bg-foreground text-background`), and a sorted column by turning its header ink — not with the accent.
 - **Do** show shortcut hints with `Kbd`.
+- **Do** frame blocks with `surfaceVariants()`, and a box that is a link with `surfaceVariants({ interactive: true })`; never rebuild `rounded-xl border bg-card/40` or its hover by hand.
+- **Do** set popover checklists with `CheckboxRow` and links inside product copy with `inlineLinkClass`.
 - **Do** keep `DialogHeader` `border-b` and `DialogFooter` `border-t`; long bodies separated with `border-t`.
 - **Do** reach for `AppLink` for internal routing; raw `<a>` is out.
 - **Do** format dates through `@/lib/format`; never reinvent `formatDate`.
