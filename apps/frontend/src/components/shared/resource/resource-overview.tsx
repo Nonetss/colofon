@@ -43,8 +43,10 @@ export interface ResourceOverviewProps<TData> {
   fallback?: ReactNode
   /** The typed result renderer — usually a `DataTableView`, or a feature-specific renderer. */
   children: (data: TData) => ReactNode
-  /** Overrides the default `6xl` page width. */
+  /** Overrides the default `80%` page width. */
   maxWidth?: ComponentProps<typeof PageShell>["maxWidth"]
+  /** Overrides `PageShell`'s default `page` padding. */
+  padding?: ComponentProps<typeof PageShell>["padding"]
   className?: string
 }
 
@@ -78,10 +80,11 @@ export function ResourceOverview<TData>({
   fallback,
   children,
   maxWidth = "80%",
+  padding,
   className,
 }: ResourceOverviewProps<TData>) {
   return (
-    <PageShell maxWidth={maxWidth} className={className}>
+    <PageShell maxWidth={maxWidth} padding={padding} className={className}>
       {/* Tighter on phones, where the hero's action already wraps onto its
           own row and the filters sit in the bottom bar. */}
       <div className="flex min-h-0 flex-1 flex-col gap-4 sm:gap-6">

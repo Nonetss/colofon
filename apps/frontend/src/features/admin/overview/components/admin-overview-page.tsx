@@ -5,7 +5,7 @@ import { QueryProvider } from "@/providers/query-provider"
 export function AdminOverviewPage() {
   return (
     <QueryProvider>
-      <PageShell maxWidth="80%">
+      <PageShell maxWidth="full" padding="none">
         <AdminOverviewContent />
       </PageShell>
     </QueryProvider>

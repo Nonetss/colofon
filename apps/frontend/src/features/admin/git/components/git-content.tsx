@@ -32,7 +32,8 @@ export function GitContent() {
   return (
     <>
       <ResourceOverview
-        maxWidth="80%"
+        maxWidth="full"
+        padding="none"
         surface="admin-git"
         heroMeta={
           <HeroCount

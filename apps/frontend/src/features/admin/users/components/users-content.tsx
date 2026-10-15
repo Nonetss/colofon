@@ -199,7 +199,8 @@ export function UsersContent() {
   return (
     <>
       <ResourceOverview
-        maxWidth="80%"
+        maxWidth="full"
+        padding="none"
         surface="admin-users"
         description="Gestiona las cuentas de la aplicación."
         heroMeta={<HeroCount segments={[{ count: total, label: "total" }]} />}

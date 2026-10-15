@@ -14,6 +14,8 @@ const MAX_WIDTH = {
 const PADDING = {
   page: "px-4 py-6 sm:px-6",
   compact: "px-3 py-3 sm:px-6 sm:py-6",
+  /** No padding of its own, inside chrome that already pads (`AdminShell`). */
+  none: "",
 } as const
 
 /**

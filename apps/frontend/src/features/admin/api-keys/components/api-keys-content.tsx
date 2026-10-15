@@ -81,7 +81,8 @@ export function ApiKeysContent() {
   return (
     <>
       <ResourceOverview
-        maxWidth="80%"
+        maxWidth="full"
+        padding="none"
         surface="admin-api-keys"
         description="Crea y revoca credenciales para conectar servicios con esta aplicación."
         heroMeta={

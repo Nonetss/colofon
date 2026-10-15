@@ -76,7 +76,8 @@ export function ContentContent() {
   return (
     <>
       <ResourceOverview
-        maxWidth="80%"
+        maxWidth="full"
+        padding="none"
         surface="admin-content"
         heroMeta={
           <HeroCount

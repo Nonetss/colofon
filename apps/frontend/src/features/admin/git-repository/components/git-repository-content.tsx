@@ -20,7 +20,7 @@ export function GitRepositoryContent({ slug }: { slug: string }) {
   const { data, isPending, isError, refetch } = useHostedRepositories()
 
   return (
-    <PageShell maxWidth="80%">
+    <PageShell maxWidth="full" padding="none">
       <div className="flex min-h-0 flex-1 flex-col gap-6">
         <AppLink
           href={appSurfaces["admin-git"].path}
