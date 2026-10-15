@@ -1,71 +1,71 @@
-# stack
+# doc
 
-> What this project is for, the decisions behind it and what comes next (content repositories, schema catalog, diagrams, skills, MCP and the secrets broker): [VISION.md](VISION.md), in Spanish.
+> What this project is for, the decisions behind it and what comes next (documentation site, diagrams, skills, MCP and the secrets broker): [VISION.md](VISION.md), in Spanish.
 
-**A project template.** A Turborepo monorepo with an Astro frontend and a
-Hono/oRPC backend (TypeScript, Bun) behind a Caddy gateway, on PostgreSQL,
-ready to be cloned as the starting point of a new project. It derives from
-the original `stack` template and keeps its packages (`@nonete/*`),
-conventions and visual system, so code can move between projects unchanged. It
-leaves out the original's Python services, gRPC and agent chat.
+**A platform to document systems** (work infrastructure, a homelab or
+anything else) that serves **people** and **AI agents** alike. The platform
+knows nothing about the domain: the documentation lives in separate **content
+repositories** (MDX pages plus a YAML catalog whose types and fields the
+content declares), and the platform reads, validates and serves them. Secrets
+are meant never to reach an AI.
 
-A new project starts with a working foundation (auth, admin panel, typed API,
-cron scheduler, comments, entity icons, Docker) before any
-product code exists. Those features are there because they come with the
-template, not because every product needs them: use what fits, and remove
-what doesn't on purpose.
+It is a Turborepo monorepo with an Astro frontend and a Hono/oRPC backend
+(TypeScript, Bun) behind a Caddy gateway, on PostgreSQL. It was started from
+the `stack` template and keeps its packages (`@nonete/*`), conventions and
+visual system, so code can move between both repos unchanged. What the
+product didn't need was removed: Loki, Tempo and OpenTelemetry (with the
+activity log and the trace viewer), and the admin screens for plugins,
+sessions, organizations and teams (their API procedures and Better Auth
+plugins stay). The rest of the base (auth, admin panel, typed API, cron
+scheduler, comments, entity icons, Docker, OpenSpec) is still available.
 
 The code is in English; the UI copy and the API error messages users see are
 in Spanish.
-
-## Start a new project from this template
-
-Clone the template under your project's name and detach it from the template
-repository, so the new project gets its own history from here on:
-
-```bash
-git clone https://github.com/Nonetss/stack.git my-project
-cd my-project
-git remote rm origin
-```
-
-Then point it at the new project's repository, if it already has one, and
-set it up as described in [Getting Started](#getting-started):
-
-```bash
-git remote add origin <your-repo-url>
-git push -u origin main
-```
 
 ## How it fits together
 
 ![The browser only talks to the gateway, which sends the API paths to the backend and everything else to the frontend](docs/img/architecture.svg)
 
-- **One origin.** The gateway serves the site and the API from the same host,
-  so the browser never makes cross-origin calls and session cookies just work.
-  It is the only place that maps paths to apps; a new public route goes in
+- **One origin.** The gateway serves the site, the API and the hosted git
+  repositories from the same host, so the browser never makes cross-origin
+  calls and session cookies just work. It is the only place that maps paths to
+  apps (`/rpc/*`, `/api/*`, `/git/*`, `/scalar` and `/openapi.json` go to the
+  backend, everything else to the frontend); a new public route goes in
   `apps/gateway/routes.caddy` (shared by the production `Caddyfile` and the
   dev `Caddyfile.dev`), never as a published port on another service.
 - **In dev, the gateway serves `https://localhost:4321`** over HTTP/2 with a
   local certificate, in front of `astro dev` on `:4320`, so dev routes exactly
   like production and Vite's many unbundled modules share one connection.
-- **The backend owns the database.** On startup it applies the committed
-  migrations, seeds the admin user and starts the cron scheduler.
+- **The backend owns the database and the content.** On startup it applies
+  the committed migrations, seeds the admin user, starts the cron scheduler
+  and syncs every content repository.
 - **Shared packages are raw TypeScript.** `packages/*` have no build step;
   apps import their source directly.
 
 ## Features
 
+- **Content repositories** (`packages/content`): the content contract
+  (`doc.config.yaml`, MDX pages, a YAML catalog with per-type schemas), validated with
+  Spanish errors per file, line and field; several repositories per platform,
+  stored in the database and managed at `/admin/content`
+- **Git hosting**: a content repository can live on the platform itself, at
+  `/git/<slug>.git`, with a read-only browser at `/admin/git`
+- **Editor autocompletion**: a JSON schema catalog per repository at
+  `/api/v1/content/schemas/<slug>` for the YAML extension of VS Code / Cursor
 - **Astro + TailwindCSS**: SSR frontend with React islands and shadcn/ui (`base-nova` on Base UI), light/dark/system theme
 - **Hono + oRPC**: type-safe RPC and OpenAPI endpoints (`/rpc/v1`, `/api/v1`), versioned routing, CSRF protection, admin-only API docs at `/scalar`
 - **Better Auth**: email/password (plus optional OIDC), sessions, global admin role, organizations and teams with access control, API keys
 - **Drizzle + PostgreSQL**: schema per domain; committed migrations applied automatically when the backend starts
-- **Cron scheduler**: persistent jobs that run cron-eligible API procedures, managed at `/crons`
+- **Cron scheduler**: persistent jobs that run cron-eligible API procedures, managed at `/crons` (content sync runs every five minutes)
 - **Comments and entity icons**: threaded comments and custom icons over any resource
 - **PWA**: installable, with a web manifest and a service worker
 - **Bun + Turborepo**: package manager and monorepo task runner
 - **Biome**: linting and formatting
 - **OpenSpec** (`openspec/`): spec-driven documentation of every capability
+
+Still to come (see [VISION.md](VISION.md)): the documentation site that
+renders the pages, diagrams, skills for agents, the knowledge MCP, the
+secrets vault and broker, and importers.
 
 ## What's in the app
 
@@ -78,11 +78,58 @@ Every page except login and signup requires a session.
 | `/me` | The signed-in user's account: name, email, role, changing the name and password |
 | `/config/profile`, `/config/appearance` | Profile settings and theme |
 | `/crons`, `/crons/[id]` | Cron jobs: list, create and edit, run history with live updates, comments on runs |
-| `/admin/*` | Admin only: users, sessions, organizations, teams, API keys and Better Auth plugins |
+| `/admin/users`, `/admin/api-keys` | Admin only: users and API keys |
+| `/admin/content` | Admin only: content repositories as cards, with their sync state, sync button and editor catalog URL |
+| `/admin/git`, `/admin/git/[repo]` | Admin only: the hosted repositories, and a code screen to browse each one's branches, folders and files |
 | `/scalar` | Interactive API docs (admin session) |
 
 The navbar search (`⌘K` / `Ctrl+K`) jumps to any page and, once you type, to
 individual records such as cron jobs.
+
+## Content
+
+A content repository looks like this; the platform imposes only its shape,
+the page header fields and the field types:
+
+```txt
+documentacion/
+├── doc.config.yaml        # name, platform version (plataforma: "1"), extra header fields
+├── docs/                  # MDX pages; each folder is a section with its index.mdx
+├── catalogo/
+│   └── maquinas/
+│       ├── _tipo.yaml     # the type's schema
+│       └── nas.yaml       # one entity per file; the file name is its id
+└── skills/                # this site's own agent skills
+```
+
+Each repository registered at `/admin/content` has a name, a slug (its name in
+URLs, fixed once created), a source and a ref:
+
+- **External URL**: an `https://` git URL (GitHub, Gitea…); a private one
+  carries its credentials in the URL, which the platform never shows or logs.
+  The form lists the remote's branches to pick the ref.
+- **Hosted on the platform**: the platform is the git server. Clone and push
+  to `<origin>/git/<slug>.git`; each push to the ref's branch syncs it at
+  once. **There are no credentials**: anyone who reaches the platform can
+  clone and push, `--force` included.
+
+The backend keeps a clone of each repository in `.content/<id>/` (the
+`content_data` volume in Docker) and syncs it on startup, every five minutes,
+when it is created or its URL or ref changes, and from its card. If a commit
+leaves the content invalid, it keeps serving the last valid version. Hosted
+repositories are bare repos in `.hosted/<id>/` (the `hosted_data` volume):
+that may be the only copy of their history, so back it up.
+
+For editor autocompletion, point the YAML extension at the repository's
+catalog (copy the exact URL from its card):
+
+```json
+{
+  "yaml.schemaStore.url": "https://<site>/api/v1/content/schemas/<slug>"
+}
+```
+
+The full guide (in Spanish) is [`docs/human/contenido.md`](docs/human/contenido.md).
 
 ## The API
 
@@ -117,7 +164,8 @@ HTTP). Callers authenticate with the session cookie, a Bearer token or an
   The first admin is created on backend startup from `ADMIN_EMAIL` /
   `ADMIN_PASSWORD` (idempotent by email).
 - **Organizations** carry their own roles and permissions, checked by
-  `permissionProcedure`.
+  `permissionProcedure`. They have no admin screens; they are managed through
+  the API.
 
 ## Cron jobs
 
@@ -127,7 +175,7 @@ expression, impersonating the user who owns it.
 
 - **Code-declared jobs**: a procedure can declare its own schedule in its
   `cronMeta`. They are synced on startup, run as the seeded admin and are
-  read-only in the UI.
+  read-only in the UI. The content sync (`Sincronizar contenido`) is one.
 - **Manual jobs**: created by admins at `/crons`, choosing a handler and
   filling in a form generated from its input schema.
 - Each run is stored with its result or error, and the detail page follows
@@ -145,17 +193,16 @@ tracing or observability UI.
 
 ## Project Structure
 
-![The stack monorepo: apps/ holds the frontend, backend and gateway, packages/ the shared @nonete libraries, plus docs/, openspec/ and scripts/](docs/img/project-structure.svg)
-
 ```txt
-stack/
+doc/
 ├── apps/
 │   ├── frontend/       # Astro app (TypeScript, Bun)
-│   ├── backend/        # Hono + oRPC API and cron scheduler (TypeScript, Bun)
+│   ├── backend/        # Hono + oRPC API, cron scheduler and git server (TypeScript, Bun)
 │   └── gateway/        # Caddy: public HTTP entry point (not a workspace)
 ├── packages/           # Shared TypeScript libraries (bun workspaces, @nonete/*)
 │   ├── api/            # oRPC contract + handlers, versioned per-feature
 │   ├── auth/           # Better Auth config and permissions
+│   ├── content/        # Content contract, catalog loader, editor schemas, clones and git hosting
 │   ├── cron/           # Scheduler and cron job service
 │   ├── db/             # Drizzle schema, migrations, seed
 │   ├── env/            # @t3-oss/env-core validated env access
@@ -179,20 +226,21 @@ package's `package.json` `imports`) inside a package, and `@/…` inside an app.
 
 ## Getting Started
 
-Requirements: [Bun](https://bun.sh) 1.4.2, `openssl`, Docker (for the dev
-PostgreSQL and the containerized stacks) and a PostgreSQL database for development (see
-[Database](#database)).
+Requirements: [Bun](https://bun.sh) 1.4.2, `git`, `openssl`, Docker (for the
+dev PostgreSQL and the containerized stacks) and a PostgreSQL database for
+development (see [Database](#database)).
 
 ```bash
+git clone https://github.com/Nonetss/doc.git
+cd doc
 bun install
 bun run setup:dev   # writes the root .env with real secrets and the admin seed
+bun run dev         # Docker dev stack at https://localhost:4321
 ```
 
-In Claude Code, `/inicio` (`.claude/commands/inicio.md`) turns a fresh clone
-into a new project: it asks for the app name, renames the Docker Compose
-project, containers and database and the frontend branding, runs
-`scripts/setup-dev.sh` and removes the template's `origin` remote. It starts
-nothing: `bun run dev` brings up the Docker dev stack afterwards.
+Then sign in as the admin `setup:dev` printed and register a content
+repository at `/admin/content`. The example content repository is
+`https://git.noneweb.online/nonete/documentacion`.
 
 ### Configuration
 
@@ -210,8 +258,9 @@ that matter most:
 | `ADMIN_EMAIL`, `ADMIN_PASSWORD` | The admin seeded on startup |
 | `OIDC_*` | Optional OIDC sign-in |
 
-`setup:dev` leaves an existing `.env` untouched unless you pass `--force`, and
-prints the admin credentials it generated.
+Content repositories are not configured in `.env`: they are database rows
+managed at `/admin/content`. `setup:dev` leaves an existing `.env` untouched
+unless you pass `--force`, and prints the admin credentials it generated.
 
 ### Database
 
@@ -220,8 +269,7 @@ Development runs its own PostgreSQL 17. `bun run dev` starts it as the stack's
 postgres:start` publishes the same database on `localhost:5432`, the
 `DATABASE_URL` of `.env.example`. Both keep their data in the `db_data` volume,
 so they share it; `bun run dev:down -v` deletes it. There is no manual schema
-step: on
-startup the backend applies the committed migrations from
+step: on startup the backend applies the committed migrations from
 `packages/db/src/migrations/` and creates the admin user from `ADMIN_EMAIL` /
 `ADMIN_PASSWORD`. After changing the schema in `packages/db/src/schema/`,
 generate a migration with `bun run db:generate`, review it, commit it and
@@ -235,14 +283,14 @@ bun run dev:local  # the same apps natively through Turbo; also run `bun run gat
                    # plus `bun run postgres:start`
 ```
 
-- App: [https://localhost:4321](https://localhost:4321), the dev gateway (HTTPS + HTTP/2) and the only port dev exposes. It routes `/rpc`, `/api`, `/scalar` and `/openapi.json` to the backend and everything else to `astro dev`, exactly like production.
+- App: [https://localhost:4321](https://localhost:4321), the dev gateway (HTTPS + HTTP/2) and the only port dev exposes. It routes `/rpc`, `/api`, `/git`, `/scalar` and `/openapi.json` to the backend and everything else to `astro dev`, exactly like production.
 - API docs: [https://localhost:4321/scalar](https://localhost:4321/scalar) (admin session)
 - Behind the gateway: the backend on `:3000` and `astro dev` on `:4320`. In the Docker dev stack they are only on its private network. In native dev they are host processes on those ports, but sign-in only works through `:4321`.
 
 #### Trust the local certificate (once)
 
 The dev gateway signs `https://localhost:4321` with Caddy's local certificate
-authority, kept in the `stack-dev_gateway_data` Docker volume so it survives
+authority, kept in the `doc-dev_gateway_data` Docker volume so it survives
 restarts. After the gateway has started once:
 
 ```bash
@@ -298,17 +346,18 @@ overridden in the compose file.
 
 ### Docker Compose (production, prebuilt images)
 
-- Config: `compose.prod.yml` pulls the `ghcr.io/nonetss/stack-{frontend,backend,gateway}:main` images, plus `db` (Postgres)
+- Config: `compose.prod.yml` pulls the prebuilt `frontend`, `backend` and `gateway` images, plus `db` (Postgres)
 - Images are built by `.github/workflows/docker-build.yml` on pushes to `main`, which rebuilds only the images whose code changed and pushes them to the GitHub Container Registry. On the Gitea remote, `.gitea/workflows/docker-build.yml` does the same against the Gitea container registry (needs a `TOKEN` repo secret with `write:package`)
-- Only the gateway publishes a port (`FRONTEND_PORT`, default `4444`): it serves the site and the backend API on one origin. A reverse proxy in front of the stack targets that port
+- Only the gateway publishes a port (`FRONTEND_PORT`, default `4444`): it serves the site, the backend API and the hosted git repositories on one origin. A reverse proxy in front of the stack targets that port
 - One `.env` next to `compose.prod.yml` supplies every service's configuration. It belongs to the deployment directory, not to a dev checkout
+- Volumes: `db_data` (PostgreSQL), `content_data` (disposable clones, rebuilt by the next sync) and `hosted_data` (the hosted repositories: back it up)
 
 For a fresh server, `scripts/bootstrap.sh` is a standalone installer: it
 prompts for the public URL and admin credentials, generates `.env`, downloads
 `compose.prod.yml` if missing, and can start the stack:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Nonetss/stack/main/scripts/bootstrap.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Nonetss/doc/main/scripts/bootstrap.sh | bash
 ```
 
 Session cookies are `Secure`, so outside `localhost` the stack must be served
@@ -319,7 +368,7 @@ over https for sign-in to work.
 - `bun run check`: Biome format + lint
 - `bun run format`: Biome format only
 - `bun run check-types`: TypeScript (tsc / astro check)
-- `bun run test`: the `packages/api` unit tests (`bun test`, no database or network needed)
+- `bun run test`: the unit tests of `packages/api`, `packages/content`, `packages/cron` and `apps/frontend` (`bun test`, no database or network needed)
 - `bun run tailwind:check`: Tailwind class linting (`tailwint`)
 
 There are no git hooks.
@@ -357,13 +406,14 @@ There are no git hooks.
 
 ## Documentation
 
-**Start with [`docs/human/`](docs/human/README.md).** It is the human-oriented guide to how
-the project works, written in Spanish: architecture, local development,
-configuration, the API, auth, the frontend, cron jobs, Docker and the
-conventions, with diagrams. The rest of this section lists the reference
-material it builds on.
+**Start with [`VISION.md`](VISION.md) and [`docs/human/`](docs/human/README.md).**
+The first explains what the platform is for and where it is going; the second
+is the human-oriented guide to how it works: architecture, local development,
+configuration, the API, auth, the frontend, cron jobs, Docker, the
+conventions and the content repositories. Both are in Spanish. The rest of
+this section lists the reference material they build on.
 
-Every capability (auth, admin, crons, logging, Docker, …) has a
+Every capability (auth, admin, crons, content, logging, Docker, …) has a
 spec under `openspec/specs/`; finished changes are kept in
 `openspec/changes/archive/`. Read those for the authoritative description of
 expected behavior before changing code in an area you're unfamiliar with;
