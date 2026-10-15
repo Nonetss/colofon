@@ -1,5 +1,7 @@
-import { type ReactNode, useEffect } from "react"
+import { type ReactNode, useEffect, useState } from "react"
 import { Text, textVariants } from "@/components/shared/brand/typography"
+import { Hint } from "@/components/shared/feedback/hint"
+import { Button } from "@/components/ui/button"
 import {
   Select,
   SelectContent,
@@ -8,6 +10,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { GitBreadcrumb } from "@/features/admin/git-repository/components/git-breadcrumb"
+import { GitFileTree } from "@/features/admin/git-repository/components/git-file-tree"
 import { GitFileView } from "@/features/admin/git-repository/components/git-file-view"
 import { GitFolderTable } from "@/features/admin/git-repository/components/git-folder-table"
 import {
@@ -32,13 +35,17 @@ import { getIcon } from "@/lib/icon-registry"
 import { cn } from "@/lib/utils"
 
 const BranchIcon = getIcon("entities", "gitBranch")
+const PanelIcon = getIcon("views", "sidebar")
 
 /**
  * One hosted repository's code: its branch, the folder or file the URL
- * names, and the trail back to its root. Every click is a history entry.
+ * names, and the trail back to its root. An open file keeps the
+ * repository's tree beside it, as GitHub and Gitea do, unless it is hidden
+ * or there is no room. Every click is a history entry.
  */
 export function GitBrowser({ repository }: { repository: HostedRepository }) {
   const { location, navigate, replace } = useGitLocation()
+  const [treeShown, setTreeShown] = useState(true)
   const branches = useRepositoryBranches(branchesInput(repository))
   const listing = branches.data
   const branch =
@@ -83,12 +90,21 @@ export function GitBrowser({ repository }: { repository: HostedRepository }) {
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-4">
       <div className="@container flex flex-col gap-3 @xl:flex-row @xl:items-center @xl:justify-between">
-        <GitBreadcrumb
-          repositoryName={repository.name}
-          folder={shownFolderOf(location)}
-          fileName={fileNameOf(location.file)}
-          onOpenFolder={(path) => at(path, "")}
-        />
+        <div className="flex min-w-0 items-center gap-2">
+          {location.file !== "" && !treeShown && (
+            <TreeToggle
+              label="Mostrar el árbol de ficheros"
+              className="hidden @3xl:inline-flex"
+              onClick={() => setTreeShown(true)}
+            />
+          )}
+          <GitBreadcrumb
+            repositoryName={repository.name}
+            folder={shownFolderOf(location)}
+            fileName={fileNameOf(location.file)}
+            onOpenFolder={(path) => at(path, "")}
+          />
+        </div>
         <BranchSelect
           branches={listing.branches}
           value={branch}
@@ -110,13 +126,38 @@ export function GitBrowser({ repository }: { repository: HostedRepository }) {
         </>
       )}
       {location.file !== "" && (
-        <>
-          {file.isPending && <Status>Cargando fichero…</Status>}
-          {file.isError && !isNotFound(file.error) && (
-            <Status>No se pudo leer el fichero.</Status>
-          )}
-          {file.data !== undefined && <GitFileView file={file.data} />}
-        </>
+        <div className="@container flex min-h-0 flex-1 flex-col">
+          <div className="flex min-h-0 flex-1 gap-4">
+            {treeShown && (
+              <aside className="hidden w-72 shrink-0 flex-col overflow-hidden rounded-md border @3xl:flex">
+                <div className="flex items-center justify-between gap-2 border-b bg-muted/40 py-1 pr-1 pl-3">
+                  <Text variant="label" tone="muted">
+                    Ficheros
+                  </Text>
+                  <TreeToggle
+                    label="Ocultar el árbol de ficheros"
+                    onClick={() => setTreeShown(false)}
+                  />
+                </div>
+                <div className="min-h-0 flex-1 overflow-y-auto p-1">
+                  <GitFileTree
+                    slug={repository.slug}
+                    branch={branch}
+                    openFile={location.file}
+                    onOpenFile={(path) => at(parentFolder(path), path)}
+                  />
+                </div>
+              </aside>
+            )}
+            <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+              {file.isPending && <Status>Cargando fichero…</Status>}
+              {file.isError && !isNotFound(file.error) && (
+                <Status>No se pudo leer el fichero.</Status>
+              )}
+              {file.data !== undefined && <GitFileView file={file.data} />}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )
@@ -131,6 +172,31 @@ function shownFolderOf(location: { path: string; file: string }): string {
 function fileNameOf(file: string): string | undefined {
   if (file === "") return undefined
   return file.slice(file.lastIndexOf("/") + 1)
+}
+
+function TreeToggle({
+  label,
+  className,
+  onClick,
+}: {
+  label: string
+  className?: string
+  onClick: () => void
+}) {
+  return (
+    <Hint label={label}>
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon-sm"
+        aria-label={label}
+        className={cn("shrink-0 text-muted-foreground", className)}
+        onClick={onClick}
+      >
+        <PanelIcon className="size-4" />
+      </Button>
+    </Hint>
+  )
 }
 
 function Status({ children }: { children: ReactNode }) {
