@@ -7,7 +7,7 @@ Defines how a page of a content repository (`docs/**/*.mdx`) is read without exe
 
 ### Requirement: Page header
 
-A page SHALL start with a YAML front matter block holding its header. `titulo` and `descripcion` SHALL be required text; `icono` (a Lucide icon name in kebab-case), `orden` (a number) and `actualizado` (a `YYYY-MM-DD` date) SHALL be optional; and the fields the site declares in `cabecera` of `doc.config.yaml` SHALL be accepted and validated with their field kinds, including `ref` and `ficha` values against the catalog and the pages. Any other header key SHALL be reported. A page whose header is missing or invalid SHALL still be listed and rendered, with its file name as title, and its problems reported.
+A page SHALL start with a YAML front matter block holding its header. `titulo` and `descripcion` SHALL be required text; `icono` (a Lucide icon name, `content-contract` "Icon names"), `orden` (a number) and `actualizado` (a `YYYY-MM-DD` date) SHALL be optional; and the fields the site declares in `cabecera` of `doc.config.yaml` SHALL be accepted and validated with their field kinds, including `ref` and `ficha` values against the catalog and the pages. Any other header key SHALL be reported. A page whose header is missing or invalid SHALL still be listed and rendered, with its file name as title, and its problems reported. Where `menu.yaml` gives the page a title or an icon, that SHALL be shown instead of the header's (`content-menu`).
 
 #### Scenario: Valid header
 
@@ -24,9 +24,14 @@ A page SHALL start with a YAML front matter block holding its header. `titulo` a
 - **WHEN** `docs/notas.mdx` has no front matter
 - **THEN** the page SHALL be listed and rendered with the title "notas", and problems SHALL say that `titulo` and `descripcion` are required
 
+#### Scenario: Unknown icon
+
+- **WHEN** `docs/red/index.mdx` says `icono: netwrok`
+- **THEN** the page SHALL be reported on `icono` as not being a Lucide icon name, and SHALL render without that icon
+
 ### Requirement: Accepted MDX
 
-A page body SHALL be read as MDX with GitHub-flavoured Markdown (tables, task lists, strikethrough, autolinks and footnotes) and SHALL NOT be executed. `import` and `export` statements and `{…}` expressions SHALL be refused, each reported with its line, and left out of the render tree; an expression that holds only a comment (`{/* … */}`) SHALL be dropped without a problem. The platform provides two components, `<Callout>` and `<Entities>` (see "Entities component"). `<Callout>`, written as a block (on its own lines, or alone on one line), SHALL render as an alert holding its Markdown, of the kind its `type` names (`note` by default; `info` a note titled "Información", `tip`, `important`, `warning`, `caution`, and `danger` a caution titled "Peligro"), titled by its `title` when given and by its kind otherwise. An unknown `type`, an attribute other than `type` and `title`, or an attribute value in braces SHALL be reported with its line while the alert still renders, and a `<Callout>` inside a paragraph's text SHALL be reported as needing its own block and rendered as a notice. Every other JSX element SHALL be reported as a component the platform does not provide, with its name and line, and SHALL be rendered as a visible notice naming it in place of the element. A page that cannot be parsed SHALL be reported with the parser's line and message, and SHALL have no body.
+A page body SHALL be read as MDX with GitHub-flavoured Markdown (tables, task lists, strikethrough, autolinks and footnotes) and SHALL NOT be executed. `import` and `export` statements and `{…}` expressions SHALL be refused, each reported with its line, and left out of the render tree; an expression that holds only a comment (`{/* … */}`) SHALL be dropped without a problem. The platform provides three components, `<Callout>`, `<Entities>` (see "Entities component") and `<Diagram>` (`content-diagrams`). `<Callout>`, written as a block (on its own lines, or alone on one line), SHALL render as an alert holding its Markdown, of the kind its `type` names (`note` by default; `info` a note titled "Información", `tip`, `important`, `warning`, `caution`, and `danger` a caution titled "Peligro"), titled by its `title` when given and by its kind otherwise. An unknown `type`, an attribute other than `type` and `title`, or an attribute value in braces SHALL be reported with its line while the alert still renders, and a `<Callout>` inside a paragraph's text SHALL be reported as needing its own block and rendered as a notice. Every other JSX element SHALL be reported as a component the platform does not provide, with its name and line, and SHALL be rendered as a visible notice naming it in place of the element. A fenced code block whose language is `diagram` SHALL be reported with its line as a diagram that belongs in `diagramas/` and is shown with `<Diagram id="…" />`, and SHALL render as a notice saying so. A page that cannot be parsed SHALL be reported with the parser's line and message, and SHALL have no body.
 
 #### Scenario: Import refused
 
@@ -58,6 +63,11 @@ A page body SHALL be read as MDX with GitHub-flavoured Markdown (tables, task li
 - **WHEN** a page holds `<Callout type="rojo">` around a paragraph
 - **THEN** the page SHALL be reported on that line with the accepted types, and the alert SHALL render as a note
 
+#### Scenario: Inline diagram block
+
+- **WHEN** a page holds a fenced block opened with ` ```diagram `
+- **THEN** the page SHALL be reported on that line saying diagrams go in `diagramas/` and are shown with `<Diagram id="…" />`, and a notice SHALL render in place of the block
+
 #### Scenario: Syntax error
 
 - **WHEN** a page holds an unclosed `<div`
@@ -65,9 +75,9 @@ A page body SHALL be read as MDX with GitHub-flavoured Markdown (tables, task li
 
 ### Requirement: Entities component
 
-`<Entities type="…" />`, written as a block, SHALL render a table of the valid entities of the catalog type its `type` names, as part of the page's render tree. `columns` (field names separated by commas, `id` included) SHALL choose the columns in that order; without it the columns SHALL be the type's `vista.columnas`, and without those the type's `etiqueta` field (or `id` when the type has none) followed by every other declared field in declaration order. Each column's header SHALL be its field name. Rows SHALL be ordered by the entity's label: its `etiqueta` value, or its id when the type has no `etiqueta` or the entity leaves it out. The label column (the `etiqueta` field, or `id`) SHALL show the label, linked to the entity's page — the value of the first `ficha` field its type declares — or as plain text when the entity has none.
+`<Entities type="…" />`, written as a block, SHALL render a table of the valid entities of the catalog type its `type` names, as part of the page's render tree. `columns` (field names separated by commas, `id` included) SHALL choose the columns in that order; without it the columns SHALL be the type's `vista.columnas`, and without those the type's `etiqueta` field (or `id` when the type has none) followed by every other declared field in declaration order. Each column's header SHALL be its field name. Rows SHALL be ordered by the entity's label: its `etiqueta` value, or its id when the type has no `etiqueta` or the entity leaves it out. The label column (the `etiqueta` field, or `id`) SHALL show the label, linked to the entity's page — the value of the first `ficha` field its type declares — or, when the entity has none, to its generated catalog page (`content-catalog-pages`).
 
-Other cells SHALL show their value by field kind: `texto`, `numero`, `entero`, `fecha`, `ip` and `enum` as written; `booleano` as "Sí" or "No"; `ref` as the referenced entity's label, linked to its page when it has one; `ficha` as a link to that page titled with the page's title; `url` and `email` as links out; `lista` as its values shown by their kind and joined by commas; `objeto` as its `name: value` pairs joined by semicolons. An absent optional value SHALL leave the cell empty.
+Other cells SHALL show their value by field kind: `texto`, `numero`, `entero`, `fecha`, `ip` and `enum` as written; `booleano` as "Sí" or "No"; `ref` as the referenced entity's label, linked to its page, or to its generated catalog page when it has none; `ficha` as a link to that page titled with the page's title; `url` and `email` as links out; `lista` as its values shown by their kind and joined by commas; `objeto` as its `name: value` pairs joined by semicolons. An absent optional value SHALL leave the cell empty.
 
 `group` SHALL split the table into one block per value of the field it names, each preceded by that value shown by its kind, in the order of the field's `valores` for an `enum` and by shown value otherwise, with a last block for the entities that leave the field out; the group field's own column SHALL be left out of every block. A type with no valid entities SHALL render a line saying so.
 
@@ -86,7 +96,7 @@ An attribute other than `type`, `columns` and `group`, an attribute value in bra
 #### Scenario: Entity linked to its page
 
 - **WHEN** the service `komodo` has `page: containers/komodo` in repository `casa`, and the service `adguard` has no `page`
-- **THEN** "Komodo" SHALL link to `/casa/containers/komodo` and "AdGuard" SHALL render as plain text
+- **THEN** "Komodo" SHALL link to `/casa/containers/komodo` and "AdGuard" SHALL link to `/casa/catalogo/services/adguard`
 
 #### Scenario: Unknown column
 
@@ -124,7 +134,7 @@ The platform SHALL turn each page body into an HTML tree that holds only element
 
 ### Requirement: Links and images
 
-A relative link to another page (`.mdx`, with or without an anchor) SHALL be rewritten to that page's reader route in the same repository, keeping the anchor; a link to a page that does not exist SHALL be reported and rendered as plain text. A `catalogo:<type>/<id>` link SHALL point to the reader route of that entity's page (the value of the first `ficha` field its type declares) and SHALL render as plain text without a problem when the entity has no page; a link to a type or entity that does not exist SHALL be reported and rendered as plain text. A relative image under `docs/` with a `png`, `jpg`, `jpeg`, `gif`, `webp`, `avif` or `svg` extension SHALL be rewritten to the repository's file URL; a missing image, or a relative link or image to any other file or outside `docs/`, SHALL be reported. Absolute `http`/`https` links SHALL be kept.
+A relative link to another page (`.mdx`, with or without an anchor) SHALL be rewritten to that page's reader route in the same repository, keeping the anchor; a link to a page that does not exist SHALL be reported and rendered as plain text. A `catalogo:<type>/<id>` link SHALL point to the reader route of that entity's page (the value of the first `ficha` field its type declares) and, when the entity has no page, to its generated catalog page; a `catalogo:<type>` link SHALL point to the type's generated page; a link to a type or entity that does not exist SHALL be reported and rendered as plain text. A relative image under `docs/` with a `png`, `jpg`, `jpeg`, `gif`, `webp`, `avif` or `svg` extension SHALL be rewritten to the repository's file URL; a missing image, or a relative link or image to any other file or outside `docs/`, SHALL be reported. Absolute `http`/`https` links SHALL be kept.
 
 #### Scenario: Link to another page
 
@@ -139,7 +149,12 @@ A relative link to another page (`.mdx`, with or without an anchor) SHALL be rew
 #### Scenario: Link to an entity
 
 - **WHEN** a page of repository `casa` links `[Komodo](catalogo:services/komodo)` and `komodo` has `page: containers/komodo`, and links `[docker-01](catalogo:machines/docker-01)` and `docker-01` has no page
-- **THEN** "Komodo" SHALL link to `/casa/containers/komodo`, "docker-01" SHALL render as plain text, and no problem SHALL be reported
+- **THEN** "Komodo" SHALL link to `/casa/containers/komodo`, "docker-01" SHALL link to `/casa/catalogo/machines/docker-01`, and no problem SHALL be reported
+
+#### Scenario: Link to a type
+
+- **WHEN** a page of repository `casa` links `[Stacks](catalogo:stacks)`
+- **THEN** "Stacks" SHALL link to `/casa/catalogo/stacks`
 
 #### Scenario: Link to a missing entity
 
@@ -153,7 +168,7 @@ A relative link to another page (`.mdx`, with or without an anchor) SHALL be rew
 
 ### Requirement: Navigation tree
 
-A repository's pages SHALL form a tree: `docs/index.mdx` is the repository's home, each folder under `docs/` is a section titled and described by its `index.mdx` (by its folder name when it has none), and each other `.mdx` file is a page of its folder's section. Within a section, sections and pages SHALL be ordered by `orden` (pages without one last) and then by title in Spanish collation. The reading order SHALL visit each section's index before its pages and subsections, depth first, and give every page its previous and next page and its breadcrumbs (the sections above it).
+A repository's pages SHALL form a tree: `docs/index.mdx` is the repository's home, each folder under `docs/` is a section titled and described by its `index.mdx` (by its folder name when it has none), and each other `.mdx` file is a page of its folder's section. Within a section, sections and pages SHALL be ordered by `orden` (pages without one last) and then by title in Spanish collation. The reading order SHALL visit each section's index before its pages and subsections, depth first, and give every page its previous and next page and its breadcrumbs (the sections above it). When the repository has a valid `menu.yaml`, the top of the navigation, the reading order and the breadcrumbs SHALL follow it instead (`content-menu`), and each folder it shows SHALL keep the order described here inside it.
 
 #### Scenario: Order inside a section
 
@@ -169,6 +184,11 @@ A repository's pages SHALL form a tree: `docs/index.mdx` is the repository's hom
 
 - **WHEN** the section "red" lists VPN then DNS
 - **THEN** VPN's next page SHALL be DNS and DNS's previous page SHALL be VPN
+
+#### Scenario: Order kept inside a menu entry
+
+- **WHEN** `menu.yaml` lists the folder `red` and `docs/red/` holds `dns.mdx` (`orden: 2`) and `vpn.mdx` (`orden: 1`)
+- **THEN** the section "red" SHALL list VPN then DNS inside its group
 
 ### Requirement: Page problems are reported per file
 
