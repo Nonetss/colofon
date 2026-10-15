@@ -11,7 +11,8 @@ export const sessionMiddleware = createMiddleware<{ Variables: AuthVariables }>(
     // Better Auth resolves the session itself for its own routes (the
     // frontend's SSR `get-session` lookup included), and they are outside the
     // activity log, so resolving it here too would only double the work.
-    if (c.req.path.startsWith("/api/auth/")) {
+    // Git requests to the hosted repositories never carry a session.
+    if (c.req.path.startsWith("/api/auth/") || c.req.path.startsWith("/git/")) {
       c.set("user", null)
       c.set("session", null)
       await next()

@@ -1,5 +1,9 @@
-import { beforeEach, describe, expect, mock, test } from "bun:test"
-import type { SyncResult } from "@nonete/content"
+import { afterAll, beforeEach, describe, expect, mock, test } from "bun:test"
+import { existsSync } from "node:fs"
+import { mkdir, mkdtemp, rm } from "node:fs/promises"
+import { tmpdir } from "node:os"
+import path from "node:path"
+import { ensureBareRepo, hostedFolder, type SyncResult } from "@nonete/content"
 import { contentRepositoryRow, NOW, stepArgs } from "@nonete/db/testing"
 import { call } from "@orpc/server"
 import { createContentRemote } from "#tests/fixtures/content"
@@ -15,6 +19,12 @@ import { contentRouter } from "#v1/content/router"
 const SECRET_URL = "https://ana:secreto@git.example/org/docs.git"
 const row = contentRepositoryRow()
 const privateRow = contentRepositoryRow({ url: SECRET_URL })
+const hostedRow = contentRepositoryRow({
+  slug: "manual",
+  name: "Manual",
+  url: "/git/manual.git",
+})
+const HOSTED_ROOT = await mkdtemp(path.join(tmpdir(), "api-hosted-root-"))
 
 /** A reader whose syncs and removals are recorded, never run. */
 function fakeReader(result: SyncResult = { ok: true, commit: "abc123" }) {
@@ -29,18 +39,27 @@ function fakeReader(result: SyncResult = { ok: true, commit: "abc123" }) {
 }
 
 let reader = fakeReader()
-let handler = createContentHandler(reader)
+let handler = createContentHandler(reader, { hostedRoot: HOSTED_ROOT })
 
 function useReader(next: ReturnType<typeof fakeReader>) {
   reader = next
-  handler = createContentHandler(reader)
+  handler = createContentHandler(reader, { hostedRoot: HOSTED_ROOT })
 }
 
-beforeEach(() => {
+/** Whether the bare repository of the row with `id` exists. */
+function hasBareRepo(id: string) {
+  return existsSync(path.join(hostedFolder(HOSTED_ROOT, id), "HEAD"))
+}
+
+beforeEach(async () => {
   fakeDb.reset()
   resetEnv()
   useReader(fakeReader())
+  await rm(HOSTED_ROOT, { recursive: true, force: true })
+  await mkdir(HOSTED_ROOT)
 })
+
+afterAll(() => rm(HOSTED_ROOT, { recursive: true, force: true }))
 
 describe("access", () => {
   test("without a session the repositories are UNAUTHORIZED, and FORBIDDEN for a non-admin", async () => {
@@ -78,6 +97,38 @@ describe("content input", () => {
       contentInput.createRepository.parse({ ...base, slug: "mis-docs-2" })
     ).toMatchObject({ slug: "mis-docs-2", ref: "main" })
   })
+
+  test("a repository is created with either a URL or hosted, never both or neither", () => {
+    const base = { slug: "manual", name: "Manual" }
+    const url = "https://git.example/docs.git"
+    const parse = (input: object) =>
+      contentInput.createRepository.safeParse({ ...base, ...input }).success
+    expect(parse({ url })).toBe(true)
+    expect(parse({ hosted: true })).toBe(true)
+    expect(parse({ url, hosted: true })).toBe(false)
+    expect(parse({})).toBe(false)
+  })
+
+  test("the hosted marker can't be typed as a URL", () => {
+    expect(
+      contentInput.createRepository.safeParse({
+        slug: "manual",
+        name: "Manual",
+        url: "/git/manual.git",
+      }).success
+    ).toBe(false)
+  })
+
+  test("an edit sends a URL or hosted, or neither, never both", () => {
+    const parse = (input: object) =>
+      contentInput.updateRepository.safeParse({ slug: "manual", ...input })
+        .success
+    expect(parse({})).toBe(true)
+    expect(parse({ hosted: true })).toBe(true)
+    expect(parse({ url: "https://git.example/docs.git", hosted: true })).toBe(
+      false
+    )
+  })
 })
 
 describe("content.listRepositories", () => {
@@ -101,6 +152,19 @@ describe("content.listRepositories", () => {
       lastSyncError: null,
     })
     expect(JSON.stringify(listed)).not.toContain("secreto")
+  })
+
+  test("a hosted repository carries its push URL, an external one none", async () => {
+    fakeDb.queue("query.contentRepository.findMany", [hostedRow, row])
+
+    const [manual, documentacion] = await handler.listRepositories()
+
+    expect(manual).toMatchObject({
+      url: "/git/manual.git",
+      hosted: true,
+      pushUrl: `${testEnv.CORS_ORIGIN}/git/manual.git`,
+    })
+    expect(documentacion).toMatchObject({ hosted: false, pushUrl: null })
   })
 })
 
@@ -139,6 +203,37 @@ describe("content.createRepository", () => {
     expect(stepArgs(insert, "values")[0]).toEqual(input)
     expect(reader.syncInBackground).toHaveBeenCalledWith(privateRow)
     expect(created.url).toBe("https://***@git.example/org/docs.git")
+  })
+
+  test("a hosted repository stores its marker, gets an empty bare repository and no sync", async () => {
+    fakeDb.queue("query.contentRepository.findFirst", undefined)
+    fakeDb.queue("insert", [hostedRow])
+
+    const created = await handler.createRepository({
+      input: { slug: "manual", name: "Manual", hosted: true, ref: "main" },
+    })
+
+    const [insert] = fakeDb.calls("insert")
+    if (!insert) throw new Error("no insert recorded")
+    expect(stepArgs(insert, "values")[0]).toEqual({
+      slug: "manual",
+      name: "Manual",
+      url: "/git/manual.git",
+      ref: "main",
+    })
+    expect(hasBareRepo(hostedRow.id)).toBe(true)
+    expect(reader.syncInBackground).not.toHaveBeenCalled()
+    expect(created).toMatchObject({ hosted: true, lastSyncedAt: null })
+  })
+
+  test("neither a URL nor hosted is BAD_REQUEST and nothing is inserted", async () => {
+    await expectErrorCode(
+      handler.createRepository({
+        input: { slug: "manual", name: "Manual", ref: "main" },
+      }),
+      "BAD_REQUEST"
+    )
+    expect(fakeDb.calls()).toEqual([])
   })
 })
 
@@ -183,6 +278,39 @@ describe("content.updateRepository", () => {
     expect(reader.syncInBackground).not.toHaveBeenCalled()
   })
 
+  test("making a repository hosted stores its marker, creates its bare repository and syncs", async () => {
+    const updated = { ...row, url: "/git/documentacion.git" }
+    fakeDb.queue("query.contentRepository.findFirst", row)
+    fakeDb.queue("update", [updated])
+
+    const result = await handler.updateRepository({
+      input: { slug: "documentacion", hosted: true },
+    })
+
+    const [update] = fakeDb.calls("update")
+    if (!update) throw new Error("no update recorded")
+    expect(stepArgs(update, "set")[0]).toEqual({
+      url: "/git/documentacion.git",
+    })
+    expect(hasBareRepo(row.id)).toBe(true)
+    expect(reader.syncInBackground).toHaveBeenCalledWith(updated)
+    expect(result.hosted).toBe(true)
+  })
+
+  test("a URL makes a hosted repository external and keeps its bare repository", async () => {
+    await ensureBareRepo(hostedFolder(HOSTED_ROOT, hostedRow.id), "main")
+    const url = "https://git.example/manual.git"
+    fakeDb.queue("query.contentRepository.findFirst", hostedRow)
+    fakeDb.queue("update", [{ ...hostedRow, url }])
+
+    const result = await handler.updateRepository({
+      input: { slug: "manual", url },
+    })
+
+    expect(result).toMatchObject({ hosted: false, pushUrl: null, url })
+    expect(hasBareRepo(hostedRow.id)).toBe(true)
+  })
+
   test("an empty patch writes nothing and returns the repository", async () => {
     fakeDb.queue("query.contentRepository.findFirst", row)
 
@@ -216,6 +344,27 @@ describe("content.deleteRepository", () => {
     ).toEqual({ id: row.id, success: true })
     expect(fakeDb.calls("delete")).toHaveLength(1)
     expect(reader.remove).toHaveBeenCalledWith(row)
+  })
+
+  test("deleting a hosted repository removes its bare repository too", async () => {
+    await ensureBareRepo(hostedFolder(HOSTED_ROOT, hostedRow.id), "main")
+    fakeDb.queue("query.contentRepository.findFirst", hostedRow)
+    fakeDb.queue("delete", undefined)
+
+    await handler.deleteRepository({ input: { slug: "manual" } })
+
+    expect(reader.remove).toHaveBeenCalledWith(hostedRow)
+    expect(existsSync(hostedFolder(HOSTED_ROOT, hostedRow.id))).toBe(false)
+  })
+
+  test("deleting an external repository leaves the hosted root alone", async () => {
+    await ensureBareRepo(hostedFolder(HOSTED_ROOT, row.id), "main")
+    fakeDb.queue("query.contentRepository.findFirst", row)
+    fakeDb.queue("delete", undefined)
+
+    await handler.deleteRepository({ input: { slug: "documentacion" } })
+
+    expect(hasBareRepo(row.id)).toBe(true)
   })
 })
 
@@ -307,6 +456,16 @@ describe("content.listBranches", () => {
     } finally {
       await remote.remove()
     }
+  })
+
+  test("reads a hosted repository from its bare repository: none before a push", async () => {
+    await ensureBareRepo(hostedFolder(HOSTED_ROOT, hostedRow.id), "main")
+    fakeDb.queue("query.contentRepository.findFirst", hostedRow)
+
+    expect(await handler.listBranches({ input: { slug: "manual" } })).toEqual({
+      branches: [],
+      defaultBranch: null,
+    })
   })
 
   test("an unknown stored repository is NOT_FOUND", async () => {

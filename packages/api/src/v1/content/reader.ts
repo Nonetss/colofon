@@ -34,6 +34,8 @@ export type RepositoryStore = {
 export type ContentReaderOptions = {
   cloneRoot: string
   repositories: RepositoryStore
+  /** What git clones a repository from: its URL, or a hosted one's folder. */
+  resolveSource: (repository: StoredRepository) => string
   logger: Pick<Logger, "info" | "warn">
 }
 
@@ -75,7 +77,7 @@ type RepoSync = { key: string; run: () => Promise<SyncResult> }
 export function createContentReader(
   options: ContentReaderOptions
 ): ContentReader {
-  const { cloneRoot, repositories, logger } = options
+  const { cloneRoot, repositories, resolveSource, logger } = options
   const lastValid = new Map<string, ContentDeclarations>()
   const reportedProblems = new Map<string, string>()
   // One sync per clone folder, replaced when the URL or ref changes.
@@ -136,7 +138,11 @@ export function createContentReader(
     if (existing !== undefined && existing.key === key) return existing
     const created = {
       key,
-      run: createRepoSync({ url: repository.url, ref: repository.ref, root }),
+      run: createRepoSync({
+        url: resolveSource(repository),
+        ref: repository.ref,
+        root,
+      }),
     }
     repoSyncs.set(root, created)
     return created

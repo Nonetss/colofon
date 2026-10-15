@@ -24,6 +24,21 @@ const ref = z
   .max(255)
   .describe("Branch, tag or commit to check out")
 
+const hosted = z
+  .literal(true)
+  .describe(
+    "Host the repository on the platform, served at /git/<slug>.git, instead of reading it from a URL"
+  )
+
+/** Neither both a URL and `hosted`, nor, unless `optional`, neither. */
+function oneSource(optional: boolean) {
+  return (input: { url?: string; hosted?: true }) => {
+    const sent = Number(input.url !== undefined) + Number(input.hosted === true)
+    if (optional) return sent <= 1
+    return sent === 1
+  }
+}
+
 export const contentInput = {
   schemaCatalog: z.object({ repository }),
   configSchema: z.object({ repository }),
@@ -35,18 +50,28 @@ export const contentInput = {
       .min(1)
       .describe("Catalog type id: the name of its folder under catalogo/"),
   }),
-  createRepository: z.object({
-    slug: repository,
-    name,
-    url,
-    ref: ref.default("main"),
-  }),
-  updateRepository: z.object({
-    slug: repository.describe("Slug of the repository to edit; never changes"),
-    name: name.optional(),
-    url: url.optional(),
-    ref: ref.optional(),
-  }),
+  createRepository: z
+    .object({
+      slug: repository,
+      name,
+      url: url.optional(),
+      hosted: hosted.optional(),
+      ref: ref.default("main"),
+    })
+    .refine(oneSource(false), { message: "Send either url or hosted" }),
+  updateRepository: z
+    .object({
+      slug: repository.describe(
+        "Slug of the repository to edit; never changes"
+      ),
+      name: name.optional(),
+      url: url
+        .optional()
+        .describe("A new URL; makes a hosted repository external"),
+      hosted: hosted.optional(),
+      ref: ref.optional(),
+    })
+    .refine(oneSource(true), { message: "Send url or hosted, not both" }),
   listBranches: z
     .object({
       url: url

@@ -11,7 +11,14 @@ const repository = z.object({
   url: z
     .string()
     .describe(
-      "URL of the git repository, with any credentials replaced by ***"
+      "URL of the git repository, with any credentials replaced by ***; /git/<slug>.git for a hosted one"
+    ),
+  hosted: z.boolean().describe("Whether the platform hosts the repository"),
+  pushUrl: z
+    .string()
+    .nullable()
+    .describe(
+      "Absolute git URL to clone and push a hosted repository; null for an external one"
     ),
   ref: z.string().describe("Branch, tag or commit checked out"),
   catalogUrl: z

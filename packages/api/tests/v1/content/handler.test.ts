@@ -19,9 +19,12 @@ import {
   SCHEMAS_PATH,
   syncFields,
 } from "#v1/content/handler"
+import { gitSourceOf } from "#v1/content/hosting"
 import { createContentReader } from "#v1/content/reader"
 
 const repository = storedRepository()
+// No test here reads a hosted repository through the handler's options.
+const HOSTED_ROOT = "/nonexistent/hosted"
 const cleanups: (() => Promise<void>)[] = []
 
 beforeEach(() => resetEnv())
@@ -67,9 +70,15 @@ async function setup(
   const reader = createContentReader({
     cloneRoot: root.root,
     repositories: store,
+    resolveSource: (stored) => gitSourceOf(stored, HOSTED_ROOT),
     logger,
   })
-  return { root, store, logger, handler: createContentHandler(reader) }
+  return {
+    root,
+    store,
+    logger,
+    handler: createContentHandler(reader, { hostedRoot: HOSTED_ROOT }),
+  }
 }
 
 const input = { repository: repository.slug }

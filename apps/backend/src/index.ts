@@ -13,6 +13,7 @@ import { noStoreContentSchemas } from "@/middlewares/no-store"
 import { requestLogger } from "@/middlewares/request-logger"
 import authRouter from "@/routers/auth"
 import docsRouter from "@/routers/docs"
+import gitRouter from "@/routers/git"
 import rpcRouter from "@/routers/rpc"
 
 /**
@@ -48,6 +49,7 @@ app.use("/api/*", noStoreContentSchemas)
 app.route("/", authRouter)
 app.route("/", rpcRouter)
 app.route("/", docsRouter)
+app.route("/", gitRouter)
 
 app.get("/", (c) => c.text("OK"))
 
