@@ -9,6 +9,14 @@ export {
 } from "#editor-schemas"
 export { type CatalogIndex, entitySchema, fieldSchema } from "#entity-schema"
 export {
+  createGitHttpHandler,
+  ensureBareRepo,
+  type GitHttpHandler,
+  type GitHttpOptions,
+  HOSTED_DIR,
+  hostedFolder,
+} from "#hosting"
+export {
   type ContentDeclarations,
   type ContentProblem,
   type LoadResult,

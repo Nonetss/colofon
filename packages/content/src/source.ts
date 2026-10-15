@@ -158,14 +158,14 @@ function gitRunner(options: RepoSyncOptions): Git {
   return (args) => spawnGit(args, { cwd: options.root, env, timeoutMs })
 }
 
-type SpawnGitOptions = {
+export type SpawnGitOptions = {
   cwd: string
   env: Record<string, string | undefined>
   timeoutMs: number
 }
 
 /** Runs git and returns its stdout, throwing with its stderr on failure. */
-async function spawnGit(
+export async function spawnGit(
   args: string[],
   options: SpawnGitOptions
 ): Promise<string> {
