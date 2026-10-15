@@ -81,8 +81,8 @@ Every page except login and signup requires a session.
 | `/<slug>` | A repository's home (its `docs/index.mdx`) |
 | `/<slug>/<path>` | A documentation page, with breadcrumbs, previous/next and its table of contents; admins also see the page's problems |
 | `/login`, `/signup` | Sign in and create an account (email/password, plus OIDC when configured) |
-| `/me` | The signed-in user's account: name, email, role, changing the name and password |
-| `/admin/users`, `/admin/api-keys` | Admin only: users and API keys |
+| `/me` | The signed-in user's account: name, email, role, changing the name and password, and their own API keys (to hand to an AI that reads `/llms.txt`) |
+| `/admin/users`, `/admin/api-keys` | Admin only: users, and the admin's own API keys as a table |
 | `/admin/content` | Admin only: content repositories as cards, with their sync state, sync button and editor catalog URL |
 | `/admin/git`, `/admin/git/[repo]` | Admin only: the hosted repositories, and a code screen to browse each one's branches, folders and files |
 | `/scalar` | Interactive API docs (admin session) |

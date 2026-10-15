@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Enables the Better Auth API Key plugin so administrators can create, list, search, revoke and verify their own API keys, and so an `x-api-key` header resolves to the owning user's session.
+Enables the Better Auth API Key plugin so every signed-in user can create, list, search, revoke and verify their own API keys (to hand one to an AI that reads the documentation), and so an `x-api-key` header resolves to the owning user's session.
 
 ## Requirements
 
@@ -17,56 +17,65 @@ The system SHALL enable the Better Auth API Key plugin on both the server and th
 
 ### Requirement: Create an API key
 
-The system SHALL allow a globally authenticated administrator to create an API key through the `v1.apiKey.create` procedure. The request MAY specify a `name` and an `expiresIn` value in seconds; when omitted they SHALL default to `"API Key"` and 30 days. The created key SHALL belong to the requesting administrator, use the `default` configuration, have no per-key rate limit (`rateLimitEnabled: false`), and be returned with HTTP status 201. Date fields in the response (`expiresAt`, `createdAt`, `updatedAt`, `lastRefillAt`, `lastRequest`) SHALL be serialized as ISO strings or null.
+The system SHALL allow any authenticated user, whatever their role, to create an API key through the `v1.apiKey.create` procedure. The request MAY specify a `name` and an `expiresIn` value in seconds, or `null` for a key that never expires; when omitted they SHALL default to `"API Key"` and 30 days. The created key SHALL belong to the requesting user, use the `default` configuration, have no per-key rate limit (`rateLimitEnabled: false`), and be returned with HTTP status 201. Date fields in the response (`expiresAt`, `createdAt`, `updatedAt`, `lastRefillAt`, `lastRequest`) SHALL be serialized as ISO strings or null.
 
-#### Scenario: Administrator creates a key with defaults
+#### Scenario: User creates a key with defaults
 
-- **WHEN** a user with the global `admin` role calls `v1.apiKey.create` without input
-- **THEN** the system SHALL return a new API key named `"API Key"` whose `referenceId` is the administrator's user id, whose expiry is 30 days out and whose `rateLimitEnabled` is `false`
+- **WHEN** an authenticated user calls `v1.apiKey.create` without input
+- **THEN** the system SHALL return a new API key named `"API Key"` whose `referenceId` is the user's id, whose expiry is 30 days out and whose `rateLimitEnabled` is `false`
 
 #### Scenario: Key used many times in a day
 
 - **WHEN** an API key created through `v1.apiKey.create` authenticates more than 10 requests within 24 hours
 - **THEN** every request SHALL still resolve to the key owner's session
 
-#### Scenario: Administrator customizes the key
+#### Scenario: User customizes the key
 
-- **WHEN** a user with the global `admin` role calls `v1.apiKey.create` with a `name` and `expiresIn`
+- **WHEN** an authenticated user calls `v1.apiKey.create` with a `name` and `expiresIn`
 - **THEN** the created key SHALL use the provided name and expire after the requested number of seconds
+
+#### Scenario: Key that never expires
+
+- **WHEN** an authenticated user calls `v1.apiKey.create` with `expiresIn: null`
+- **THEN** the created key SHALL have no expiry
 
 #### Scenario: Unauthenticated create attempt
 
 - **WHEN** a request without a valid session calls `v1.apiKey.create`
 - **THEN** the system SHALL reject it as `UNAUTHORIZED`
 
-#### Scenario: Non-admin create attempt
+### Requirement: Manage owned API keys
 
-- **WHEN** an authenticated user without the global `admin` role calls `v1.apiKey.create`
-- **THEN** the system SHALL reject it as `FORBIDDEN`
+The system SHALL allow any authenticated user to call `v1.apiKey.list`, `v1.apiKey.search`, and `v1.apiKey.delete`. Each operation SHALL act only on API keys owned by the requesting user; no user, administrators included, SHALL list, search or revoke another user's keys through them.
 
-### Requirement: Administer owned API keys
+#### Scenario: User lists or searches owned keys
 
-The system SHALL restrict `v1.apiKey.list`, `v1.apiKey.search`, and `v1.apiKey.delete` to globally authenticated administrators. After authorization, each operation SHALL continue to act only on API keys owned by the requesting administrator.
+- **WHEN** an authenticated user calls `v1.apiKey.list` or `v1.apiKey.search`
+- **THEN** the system SHALL return only API keys owned by that user
 
-#### Scenario: Administrator lists or searches owned keys
+#### Scenario: User deletes an owned key
 
-- **WHEN** a user with the global `admin` role calls `v1.apiKey.list` or `v1.apiKey.search`
-- **THEN** the system SHALL return only API keys owned by that administrator
-
-#### Scenario: Administrator deletes an owned key
-
-- **WHEN** a user with the global `admin` role calls `v1.apiKey.delete` for one of their API keys
+- **WHEN** an authenticated user calls `v1.apiKey.delete` for one of their API keys
 - **THEN** the system SHALL revoke that key and report the operation result
 
-#### Scenario: Non-admin attempts API-key administration
-
-- **WHEN** an authenticated user without the global `admin` role calls `v1.apiKey.list`, `v1.apiKey.search`, or `v1.apiKey.delete`
-- **THEN** the system SHALL reject the request as `FORBIDDEN`
-
-#### Scenario: Anonymous caller attempts API-key administration
+#### Scenario: Anonymous caller attempts API-key management
 
 - **WHEN** a request without a valid session calls `v1.apiKey.list`, `v1.apiKey.search`, or `v1.apiKey.delete`
 - **THEN** the system SHALL reject the request as `UNAUTHORIZED`
+
+### Requirement: API keys on the profile
+
+The profile page (`/me`) SHALL list the signed-in user's API keys with their name, the visible start of the key and their expiry, offer to create one (name and an expiry of 30, 90, 180 or 365 days, or none) and to revoke each one after a confirmation. On creation it SHALL show the key once, with a copy control, together with instructions to paste into an AI: the address of the site's `/llms.txt`, that each page reads as Markdown at its `llm.txt` link, and the `x-api-key` header carrying the key.
+
+#### Scenario: Creating a key for an AI
+
+- **WHEN** a signed-in user creates an API key from `/me`
+- **THEN** the page SHALL show the key once and instructions naming `<origin>/llms.txt` and the header `x-api-key: <key>`, each with a copy control
+
+#### Scenario: Revoking a key
+
+- **WHEN** the user revokes one of their keys from `/me` and confirms
+- **THEN** the key SHALL be removed from the list and stop authenticating requests
 
 ### Requirement: Session from API key
 

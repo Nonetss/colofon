@@ -222,8 +222,9 @@ según [llmstxt.org](https://llmstxt.org):
 | `/<slug>/llms.txt` | Lo mismo para un solo repositorio. |
 
 Piden la misma credencial que el lector: la sesión del navegador o, para un
-agente, una API key (se crea en `/admin/api-keys`) en la cabecera
-`x-api-key`. Sin credencial responden `401` con una línea que lo explica, en
+agente, una API key en la cabecera `x-api-key`. Cada usuario crea las suyas
+en su perfil (`/me`), y al crearla se le dan las instrucciones listas para
+pegarle a su IA; la key lee con los permisos de su dueño. Sin credencial responden `401` con una línea que lo explica, en
 lugar de mandar al login. Las direcciones completas salen de `CORS_ORIGIN`.
 
 Las API keys se crean sin límite de peticiones; las creadas antes de este
