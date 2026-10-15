@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test"
 import { ORPCError } from "@orpc/client"
 import { skipToken } from "@tanstack/react-query"
 import {
+  ancestorFolders,
   branchesInput,
   breadcrumb,
   EMPTY_LOCATION,
@@ -15,6 +16,7 @@ import {
   parseLocation,
   shownBranch,
   startingBranch,
+  toggledFolder,
 } from "@/features/admin/git-repository/model/git-location"
 
 const listing = { branches: ["borrador", "main"], defaultBranch: "main" }
@@ -121,6 +123,22 @@ describe("breadcrumb / parentFolder", () => {
   test("a file's folder, the root for a file at the root", () => {
     expect(parentFolder("docs/red/dns.mdx")).toBe("docs/red")
     expect(parentFolder("doc.config.yaml")).toBe("")
+  })
+})
+
+describe("ancestorFolders / toggledFolder", () => {
+  test("every folder above a file, from the root down", () => {
+    expect(ancestorFolders("docs/red/dns.mdx")).toEqual(["docs", "docs/red"])
+    expect(ancestorFolders("doc.config.yaml")).toEqual([])
+  })
+
+  test("unfolds a folded folder and folds an unfolded one, as a new set", () => {
+    const folders = new Set(["docs"])
+    expect(toggledFolder(folders, "docs/red")).toEqual(
+      new Set(["docs", "docs/red"])
+    )
+    expect(toggledFolder(folders, "docs")).toEqual(new Set())
+    expect(folders).toEqual(new Set(["docs"]))
   })
 })
 

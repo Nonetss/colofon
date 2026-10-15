@@ -128,6 +128,26 @@ export function parentFolder(filePath: string): string {
   return filePath.slice(0, slash)
 }
 
+/**
+ * The folders to unfold for the file tree to show `filePath`, from the root
+ * down: `docs/red/a.md` → `docs`, `docs/red`.
+ */
+export function ancestorFolders(filePath: string): string[] {
+  const segments = filePath.split("/").slice(0, -1)
+  return segments.map((_, index) => segments.slice(0, index + 1).join("/"))
+}
+
+/** `folders` with `path` folded if it was unfolded, unfolded if not. */
+export function toggledFolder(
+  folders: ReadonlySet<string>,
+  path: string
+): Set<string> {
+  const next = new Set(folders)
+  if (next.has(path)) next.delete(path)
+  else next.add(path)
+  return next
+}
+
 /** Whether `error` is the API's NOT_FOUND. */
 export function isNotFound(error: unknown): boolean {
   return error instanceof ORPCError && error.code === "NOT_FOUND"
