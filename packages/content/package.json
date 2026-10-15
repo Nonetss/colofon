@@ -1,0 +1,29 @@
+{
+  "name": "@nonete/content",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "imports": {
+    "#tests/*": "./tests/*.ts",
+    "#*": "./src/*.ts"
+  },
+  "exports": {
+    ".": {
+      "default": "./src/index.ts"
+    }
+  },
+  "scripts": {
+    "build": "true",
+    "check-types": "tsc -b",
+    "test": "bun test --only-failures"
+  },
+  "dependencies": {
+    "yaml": "^2.9.1",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@nonete/config": "workspace:*",
+    "@types/bun": "catalog:",
+    "typescript": "catalog:"
+  }
+}

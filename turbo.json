@@ -21,6 +21,9 @@
     "@nonete/auth#build": {
       "outputs": []
     },
+    "@nonete/content#build": {
+      "outputs": []
+    },
     "@nonete/cron#build": {
       "outputs": []
     },
