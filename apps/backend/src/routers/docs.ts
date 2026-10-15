@@ -1,5 +1,6 @@
-import { createContext } from "@nonete/api/context"
+import { type Context, createContext } from "@nonete/api/context"
 import { appRouter } from "@nonete/api/router"
+import { SCHEMAS_PATH } from "@nonete/api/v1/content/handler"
 import { SmartCoercionHandlerPlugin } from "@orpc/json-schema"
 import { OpenAPIGenerator } from "@orpc/openapi"
 import { OpenAPIHandler } from "@orpc/openapi/fetch"
@@ -78,6 +79,18 @@ const docsHandler = new OpenAPIHandler(appRouter, {
   ],
 })
 
+// Shared by both /api handlers. Query and path values arrive as strings;
+// SmartCoercion turns them into the type the input schema declares (e.g.
+// `limit` to a number) before validation. /rpc doesn't need it: its
+// serializer keeps the types.
+const apiPlugins = () => [
+  new SmartCoercionHandlerPlugin({
+    converters: [new ZodToJsonSchemaConverter()],
+  }),
+  loggingPlugin(),
+  ...hardeningPlugins(),
+]
+
 const apiHandler = new OpenAPIHandler(appRouter, {
   plugins: [
     // /api is called both by browsers on the session cookie and by external
@@ -86,16 +99,17 @@ const apiHandler = new OpenAPIHandler(appRouter, {
     // browser still sends it on: a top-level GET navigation. Server-to-server
     // calls (API-key clients) carry no Fetch Metadata and pass.
     new GetMethodCsrfProtectionHandlerPlugin(),
-    // Query and path values arrive as strings; coerce them to the type the
-    // input schema declares (e.g. `limit` to a number) before validation.
-    // /rpc doesn't need it: its serializer keeps the types.
-    new SmartCoercionHandlerPlugin({
-      converters: [new ZodToJsonSchemaConverter()],
-    }),
-    loggingPlugin(),
-    ...hardeningPlugins(),
+    ...apiPlugins(),
   ],
   toFetchResponse: eventStreamResponseOptions,
+})
+
+// The content schema endpoints are public, read-only and never use the
+// session, so there is nothing to forge: they skip the CSRF plugin, which
+// would refuse a catalog URL opened from the address bar or from a link
+// outside the browser (Sec-Fetch-Site `none` or `cross-site`).
+const contentSchemasHandler = new OpenAPIHandler(appRouter, {
+  plugins: apiPlugins(),
 })
 
 const router = new Hono()
@@ -118,20 +132,27 @@ router.use("/scalar", requireAdmin, docsMiddleware)
 router.use("/scalar/*", requireAdmin, docsMiddleware)
 router.use("/openapi.json", requireAdmin, docsMiddleware)
 
-const apiMiddleware: Parameters<typeof router.use>[1] = async (c, next) => {
-  const context = await createContext({
-    context: c,
-    request: c.get("requestScope"),
-  })
-  const result = await apiHandler.handle(c.req.raw, {
-    prefix: "/api",
-    context,
-  })
-  if (result.matched)
-    return c.newResponse(result.response.body, result.response)
-  await next()
+function openApiMiddleware(
+  handler: OpenAPIHandler<Context>
+): Parameters<typeof router.use>[1] {
+  return async (c, next) => {
+    const context = await createContext({
+      context: c,
+      request: c.get("requestScope"),
+    })
+    const result = await handler.handle(c.req.raw, {
+      prefix: "/api",
+      context,
+    })
+    if (result.matched)
+      return c.newResponse(result.response.body, result.response)
+    await next()
+  }
 }
 
-router.use("/api/*", apiMiddleware)
+// Registered first: a content schema request is answered by its own handler,
+// and only a path under it that matches no procedure falls through to /api.
+router.use(`${SCHEMAS_PATH}/*`, openApiMiddleware(contentSchemasHandler))
+router.use("/api/*", openApiMiddleware(apiHandler))
 
 export default router
