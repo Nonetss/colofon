@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test"
 import {
   cardBlocks,
+  currentHref,
   type DocsRepository,
   flattenPages,
   pagesMeta,
@@ -79,6 +80,53 @@ describe("sectionsAbove", () => {
 
   test("a page outside every section opens nothing", () => {
     expect(sectionsAbove(casa.nodes, "/casa")).toEqual([])
+  })
+
+  test("a page outside the navigation opens the sections above its closest listed page", () => {
+    expect(sectionsAbove(menuNodes, "/casa/catalogo/maquinas/nas")).toEqual([
+      "/casa/catalogo",
+    ])
+  })
+})
+
+/** A menu group showing the catalog, whose entity pages are not listed. */
+const menuNodes: DocsRepository["nodes"] = [
+  {
+    kind: "group",
+    title: "Datos",
+    description: "",
+    icon: null,
+    children: [
+      {
+        kind: "section",
+        ...entry("catalogo", "Referencia"),
+        children: [{ kind: "page", ...entry("catalogo/maquinas", "Máquinas") }],
+      },
+    ],
+  },
+]
+
+describe("currentHref", () => {
+  test("a listed page is its own current entry", () => {
+    expect(currentHref(casa.nodes, "/casa/red/dns")).toBe("/casa/red/dns")
+  })
+
+  test("a page outside the navigation takes the deepest listed page above it", () => {
+    expect(currentHref(menuNodes, "/casa/catalogo/maquinas/nas")).toBe(
+      "/casa/catalogo/maquinas"
+    )
+    expect(currentHref(casa.nodes, "/casa/red/vpn/wg/extra")).toBe(
+      "/casa/red/vpn/wg"
+    )
+  })
+
+  test("a prefix counts only at a path boundary", () => {
+    expect(currentHref(casa.nodes, "/casa/redes")).toBeNull()
+  })
+
+  test("the home and pages with nothing listed above them have no current entry", () => {
+    expect(currentHref(casa.nodes, "/casa")).toBeNull()
+    expect(currentHref(casa.nodes, "/otra/red")).toBeNull()
   })
 })
 

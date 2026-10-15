@@ -22,7 +22,8 @@ const ChevronRight = getIcon("controls", "chevronRight")
 
 export interface NavTreeProps {
   nodes: readonly DocsNavNode[]
-  pathname: string
+  /** The href the sidebar marks as current (`currentHref`), `""` for none. */
+  current: string
   open: ReadonlySet<string>
   onToggle: (href: string) => void
 }
@@ -86,7 +87,7 @@ function guideIndent(nested: boolean): string {
 /** Pages and subsections inside a section, with the guide line on the left. */
 function SubTree({
   nodes,
-  pathname,
+  current,
   open,
   onToggle,
   nested = false,
@@ -101,8 +102,8 @@ function SubTree({
       {nodes.map((node) => {
         // Groups of the menu are top-level only; a section never holds one.
         if (node.kind === "group") return null
-        const active = node.href === pathname
-        if (node.kind === "page") {
+        const active = node.href === current
+        if (node.kind === "page" || node.children.length === 0) {
           return (
             <SidebarMenuSubItem key={node.href}>
               <SidebarMenuSubButton
@@ -134,7 +135,7 @@ function SubTree({
             {isOpen ? (
               <SubTree
                 nodes={node.children}
-                pathname={pathname}
+                current={current}
                 open={open}
                 onToggle={onToggle}
                 nested
@@ -150,7 +151,7 @@ function SubTree({
 /** A group of the menu: a heading with its icon, its entries below it. */
 function GroupItem({
   group,
-  pathname,
+  current,
   open,
   onToggle,
 }: Omit<NavTreeProps, "nodes"> & { group: DocsNavGroup }) {
@@ -172,7 +173,7 @@ function GroupItem({
       </div>
       <DocsNavTree
         nodes={group.children}
-        pathname={pathname}
+        current={current}
         open={open}
         onToggle={onToggle}
       />
@@ -184,7 +185,7 @@ function GroupItem({
  * A repository's top-level groups, sections and pages, each with its icon. A
  * group of the menu holds the same rows, under its heading.
  */
-export function DocsNavTree({ nodes, pathname, open, onToggle }: NavTreeProps) {
+export function DocsNavTree({ nodes, current, open, onToggle }: NavTreeProps) {
   return (
     <SidebarMenu>
       {nodes.map((node) => {
@@ -193,14 +194,14 @@ export function DocsNavTree({ nodes, pathname, open, onToggle }: NavTreeProps) {
             <GroupItem
               key={`group:${node.title}`}
               group={node}
-              pathname={pathname}
+              current={current}
               open={open}
               onToggle={onToggle}
             />
           )
-        const active = node.href === pathname
-        const inside = pathname.startsWith(`${node.href}/`)
-        if (node.kind === "page") {
+        const active = node.href === current
+        const inside = current.startsWith(`${node.href}/`)
+        if (node.kind === "page" || node.children.length === 0) {
           return (
             <SidebarMenuItem key={node.href}>
               <SidebarMenuButton
@@ -244,7 +245,7 @@ export function DocsNavTree({ nodes, pathname, open, onToggle }: NavTreeProps) {
             {isOpen ? (
               <SubTree
                 nodes={node.children}
-                pathname={pathname}
+                current={current}
                 open={open}
                 onToggle={onToggle}
               />

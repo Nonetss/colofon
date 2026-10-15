@@ -15,6 +15,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 import {
+  currentHref,
   type DocsNav,
   type DocsRepository,
   sectionsAbove,
@@ -202,7 +203,7 @@ function RepositoryGroup({
       {repository.available ? (
         <DocsNavTree
           nodes={repository.nodes}
-          pathname={pathname}
+          current={currentHref(repository.nodes, pathname) ?? ""}
           open={open}
           onToggle={onToggle}
         />

@@ -76,24 +76,59 @@ function collect(
 }
 
 /**
- * The hrefs of the sections that hold `pathname`, outermost first, so the
- * sidebar can open them. Groups are headings, always open: they are passed
- * through.
+ * The href of the entry the sidebar marks for `pathname`: the page itself
+ * when the navigation lists it, otherwise the deepest listed page above it
+ * by path (an entity page marks its type). `null` when nothing is listed
+ * at or above it.
+ */
+export function currentHref(
+  nodes: readonly DocsNavNode[],
+  pathname: string
+): string | null {
+  const above = linkHrefs(nodes).filter(
+    (href) => href === pathname || pathname.startsWith(`${href}/`)
+  )
+  const [deepest] = above.sort((a, b) => b.length - a.length)
+  return deepest ?? null
+}
+
+function linkHrefs(nodes: readonly DocsNavNode[]): string[] {
+  const hrefs: string[] = []
+  for (const node of nodes) {
+    if (node.kind !== "group") hrefs.push(node.href)
+    if (node.kind !== "page") hrefs.push(...linkHrefs(node.children))
+  }
+  return hrefs
+}
+
+/**
+ * The hrefs of the sections that hold the current entry of `pathname`
+ * (`currentHref`), outermost first, so the sidebar can open them. Groups are
+ * headings, always open: they are passed through.
  */
 export function sectionsAbove(
+  nodes: readonly DocsNavNode[],
+  pathname: string
+): string[] {
+  const current = currentHref(nodes, pathname)
+  if (current === null) return []
+  return sectionsHolding(nodes, current)
+}
+
+function sectionsHolding(
   nodes: readonly DocsNavNode[],
   pathname: string
 ): string[] {
   for (const node of nodes) {
     if (node.kind === "page") continue
     if (node.kind === "group") {
-      const inGroup = sectionsAbove(node.children, pathname)
+      const inGroup = sectionsHolding(node.children, pathname)
       if (inGroup.length > 0) return inGroup
       continue
     }
     if (node.href === pathname) return [node.href]
     if (holds(node.children, pathname))
-      return [node.href, ...sectionsAbove(node.children, pathname)]
+      return [node.href, ...sectionsHolding(node.children, pathname)]
   }
   return []
 }
