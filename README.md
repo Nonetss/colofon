@@ -99,11 +99,13 @@ the page header fields and the field types:
 ```txt
 documentacion/
 ├── doc.config.yaml        # name, platform version (plataforma: "1"), extra header fields
+├── menu.yaml              # optional: the sidebar's groups, which win over page headers
 ├── docs/                  # MDX pages; each folder is a section with its index.mdx
 ├── catalogo/
 │   └── maquinas/
 │       ├── _tipo.yaml     # the type's schema
 │       └── nas.yaml       # one entity per file; the file name is its id
+├── diagramas/             # optional: one YAML per diagram, shown with <Diagram id="…" />
 └── skills/                # this site's own agent skills
 ```
 

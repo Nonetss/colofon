@@ -11,10 +11,23 @@ están en la spec `content-contract` y en `packages/content`.
 | Ruta | Qué hay |
 | --- | --- |
 | `doc.config.yaml` | Nombre del sitio, versión de la plataforma (`plataforma: "1"`) y los campos extra de la cabecera de las fichas (`cabecera`). |
-| `docs/` | Las fichas `.mdx`. Cada carpeta es una sección y lleva su `index.mdx`. |
+| `menu.yaml` | Opcional. El menú del sidebar: grupos con sus páginas, carpetas y páginas del catálogo (ver [El menú](#el-menú)). |
+| `docs/` | Las fichas `.mdx`. Cada carpeta es una sección y lleva su `index.mdx`. `docs/catalogo/` está reservada. |
 | `catalogo/<tipo>/_tipo.yaml` | El esquema de un tipo: sus campos y cómo se muestra. El nombre de la carpeta es el id del tipo. |
 | `catalogo/<tipo>/<id>.yaml` | Una entidad. El nombre del fichero es su id. |
+| `diagramas/<id>.yaml` | Opcional. Un diagrama, que las fichas muestran con `<Diagram id="<id>" />` (ver [Diagramas](#diagramas)). |
 | `skills/<nombre>/SKILL.md` | Skills para los agentes: cómo trabajar con este sitio. |
+
+**Lo que dice un YAML manda sobre lo que dice la cabecera de una ficha.** Si
+`menu.yaml` le pone a una entrada un título o un icono, ese es el que se ve en
+todas partes, diga lo que diga su cabecera; la cabecera solo cuenta para lo que
+el YAML no dice, y si dice otra cosa se avisa como problema.
+
+**Todo `icono` es un nombre de icono de Lucide** (`server`, `map-pin`,
+`network`), el de la versión que dibuja el lector: en `_tipo.yaml`, en
+`menu.yaml`, en las cabeceras y en los nodos de los diagramas. El editor los
+sugiere y marca los que no existen. La lista sale de `lucide-react` con `bun
+run icons:catalog`.
 
 La plataforma no sabe nada del dominio: los tipos (máquinas, frutas,
 proveedores…) y sus campos los decide el contenido.
@@ -81,6 +94,81 @@ git push origen main
   externa, la plataforma deja de leerlo pero conserva su repositorio bare
   hasta que lo borres.
 
+## El menú
+
+Sin `menu.yaml`, el sidebar son las carpetas de `docs/` (cada una una
+sección, ordenada por `orden` y por título) y al final la sección "Catálogo".
+Con él, el sidebar son sus grupos, en el orden escrito:
+
+```yaml
+secciones:
+  - titulo: Red
+    icono: network
+    descripcion: El DNS y cómo se publica cada servicio
+    paginas:
+      - network                                  # una carpeta, con todas sus fichas
+      - { ruta: containers/komodo, icono: layers } # con su título o icono
+      - backups/duplicati/create-backup            # una ficha suelta
+  - titulo: Datos
+    icono: database
+    paginas: [catalogo]                          # el catálogo; o catalogo/<tipo>
+```
+
+- Las carpetas guardan las fichas y el menú decide dónde salen: un grupo puede
+  juntar carpetas de cualquier sitio. La URL de cada ficha sigue siendo su
+  ruta en `docs/`.
+- Dentro de una carpeta, las fichas siguen ordenadas por `orden`.
+- Una entrada que no existe, la portada, o una que ya sale por otra entrada
+  (la misma, una carpeta que la contiene o una ficha que está dentro) se avisa
+  y se salta; el resto del menú se usa.
+- Lo que el menú no muestra va a un último grupo **"Otros"**, y cada ficha que
+  cae ahí se avisa.
+- Un `menu.yaml` mal formado (una clave desconocida, un icono que no existe)
+  es como un `_tipo.yaml` roto: se sigue con la última versión válida.
+- Los problemas de `menu.yaml` se ven en la portada del repositorio.
+
+## El catálogo en el lector
+
+La plataforma hace páginas del catálogo sin que haya ningún `.mdx`:
+
+| Ruta | Qué muestra |
+| --- | --- |
+| `/<slug>/catalogo` | Cada tipo, con cuántas entidades tiene y cuántas tienen página. |
+| `/<slug>/catalogo/<tipo>` | La tabla del tipo (sus `vista.columnas`), que se ordena y filtra como cualquier tabla. |
+| `/<slug>/catalogo/<tipo>/<id>` | La ficha de la entidad: sus campos, su página, las fichas que la citan (en la cabecera o con un enlace `catalogo:`), las entidades que apuntan a ella y los diagramas en los que sale. |
+
+El menú las muestra con `catalogo` o `catalogo/<tipo>`; las de cada entidad
+no salen en el menú. Tienen su `llm.txt` como cualquier ficha. Por eso
+`docs/catalogo/` está reservada: lo que haya ahí se avisa y no se publica.
+
+## Diagramas
+
+Un diagrama es un fichero `diagramas/<id>.yaml` que se declara, no se dibuja:
+
+```yaml
+titulo: Cómo despliega Komodo
+descripcion: Komodo manda a Periphery, que levanta los stacks
+direccion: derecha            # o abajo
+nodos:
+  komodo: { entidad: services/komodo }        # una entidad del catálogo
+  periphery: { nombre: Periphery, sub: agente en cada servidor, tipo: entrada }
+  stacks: Stacks                              # solo un nombre
+conexiones:
+  - komodo -> periphery: deploy
+  - periphery -> stacks
+zonas:
+  casa: { titulo: Casa, nodos: [komodo, periphery] }
+```
+
+Cualquier ficha lo muestra con `<Diagram id="komodo" />`, y varias pueden
+mostrar el mismo. Se valida contra el catálogo: una entidad que no existe,
+una conexión a un nodo que no está o un nodo en dos zonas se avisan en el
+fichero y en cada ficha que lo muestra, y lo que es válido se muestra igual.
+Un bloque ` ```diagram ` dentro de una ficha se avisa y se muestra como un
+aviso: los diagramas van en `diagramas/`. Hasta que la plataforma los dibuje,
+un diagrama se ve como texto: su título y descripción, sus zonas y una línea
+por conexión ("Komodo → Periphery: deploy").
+
 ## Cómo se escriben las fichas
 
 Cada fichero `docs/**/*.mdx` es una ficha. Cada carpeta de `docs/` es una
@@ -107,7 +195,7 @@ actualizado: 2026-09-30
 | --- | --- |
 | `titulo` | Obligatorio. El título de la ficha. |
 | `descripcion` | Obligatorio. Una frase que se muestra bajo el título. |
-| `icono` | Opcional. Un nombre de icono de Lucide en minúsculas y con guiones (`hard-drive`, `git-branch`). |
+| `icono` | Opcional. Un nombre de icono de Lucide (`hard-drive`, `git-branch`); uno que no existe se avisa. Si `menu.yaml` le da otro, manda el del menú. |
 | `orden` | Opcional. Un número que ordena la ficha dentro de su sección; las que no lo tienen van al final, y a igualdad, por título. |
 | `actualizado` | Opcional. Fecha `AAAA-MM-DD` de la última revisión. Si tiene más de seis meses, la ficha se marca con "Revisar". |
 
@@ -136,15 +224,18 @@ ningún otro.
   texto.
 - **Enlaces a entidades**: `[docker-01](catalogo:machines/docker-01)` lleva
   a la página de la entidad, que es el valor del primer campo `ficha` que
-  declara su tipo. Si la entidad no tiene, se muestra como texto sin avisar;
-  si el tipo o la entidad no existen, se avisa como enlace roto.
+  declara su tipo; si no tiene, a su página del catálogo
+  (`/<slug>/catalogo/machines/docker-01`). `[Máquinas](catalogo:machines)`
+  lleva a la página del tipo. Si el tipo o la entidad no existen, se avisa
+  como enlace roto.
 - **Imágenes**: con la ruta relativa a un fichero dentro de `docs/` (png,
   jpg, jpeg, gif, webp, avif o svg, de 10 MiB como mucho). Las sirve la
   plataforma. Un enlace a cualquier otro tipo de fichero se avisa.
 
 ### Componentes
 
-La plataforma ofrece dos componentes. Cada uno va en su propio bloque, con una
+La plataforma ofrece tres componentes: `<Callout>`, `<Entities>` y
+`<Diagram>` (ver [Diagramas](#diagramas)). Cada uno va en su propio bloque, con una
 línea en blanco antes y después; dentro de un párrafo se avisa y se muestra
 como un aviso.
 
@@ -172,7 +263,7 @@ como un aviso.
   | `group` | Opcional. Un campo por el que se parte la tabla en bloques, en el orden de `valores` si es un `enum`, con las entidades sin valor al final. |
 
   La columna de la etiqueta enlaza a la página de cada entidad (su primer
-  campo `ficha`). Las referencias muestran la etiqueta de la entidad a la que
+  campo `ficha`) o, si no tiene, a su página del catálogo. Las referencias muestran la etiqueta de la entidad a la que
   apuntan, los campos `ficha` el título de su página y los `url` son enlaces.
   Un tipo, columna o atributo que no existen y las entidades que no cumplen
   su tipo se avisan como problemas de la ficha; el resto de la tabla se
@@ -202,7 +293,8 @@ Cualquier usuario con sesión lee todos los repositorios:
 
 El sidebar tiene arriba un **selector de repositorio**: "Todos" muestra cada
 repositorio como un grupo con sus secciones, y uno solo muestra sus
-secciones. La elección se recuerda en la cookie `docs_scope`, sigue a la
+secciones. Con `menu.yaml`, las secciones van bajo los títulos de sus grupos,
+y las migas de cada ficha empiezan por su grupo. La elección se recuerda en la cookie `docs_scope`, sigue a la
 ficha que abres y acota también la búsqueda del navbar. En el móvil, el
 sidebar se abre desde el navbar. Cada ficha lleva sus migas, los campos de la
 cabecera, la anterior y la siguiente, y en pantallas anchas el índice "En
@@ -243,7 +335,9 @@ GET /api/v1/content/schemas/<slug>
 La extensión YAML de Red Hat (`redhat.vscode-yaml`, en VS Code y Cursor) lo
 usa para autocompletar, validar y documentar cada YAML del contenido: los
 campos de cada tipo con su descripción, los valores de cada `enum`, los ids
-que acepta cada referencia y las rutas de las fichas. Basta **un ajuste**; la
+que acepta cada referencia, las rutas de las fichas, lo que puede nombrar una
+entrada de `menu.yaml`, las entidades que puede ser un nodo de un diagrama y
+los nombres de los iconos. Basta **un ajuste**; la
 URL exacta de cada repositorio se copia desde su fila en `/admin/content`:
 
 ```json
