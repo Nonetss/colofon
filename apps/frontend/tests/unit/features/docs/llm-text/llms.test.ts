@@ -118,4 +118,24 @@ describe("repositoryLlmsIndex", () => {
     const text = repositoryLlmsIndex(trabajo, origin)
     expect(text.startsWith("# Trabajo\n\nCada página")).toBe(true)
   })
+
+  test("labels a page with its menu group, which gets no line of its own", () => {
+    const grouped: DocsRepository = {
+      ...casa,
+      nodes: [
+        {
+          kind: "group",
+          title: "Infraestructura",
+          description: "",
+          icon: null,
+          children: casa.nodes,
+        },
+      ],
+    }
+    const index = repositoryLlmsIndex(grouped, origin)
+    expect(index).toContain(
+      "- [Infraestructura / Red / DNS](https://docs.example.org/casa/red/dns/llm.txt): Resolución de nombres"
+    )
+    expect(index).not.toContain("[Infraestructura](")
+  })
 })

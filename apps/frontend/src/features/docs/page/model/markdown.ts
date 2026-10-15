@@ -5,8 +5,9 @@ import { toMarkdown } from "mdast-util-to-markdown"
 
 // What "Copiar en Markdown" copies: the page's title, description and body,
 // written back from the tree the reader renders. The platform's own notices
-// (components it doesn't provide) are left out, and `[!KIND]` alerts become
-// quotes with their title in bold, as GitHub writes them by hand.
+// (components it doesn't provide) are left out, `[!KIND]` alerts become
+// quotes with their title in bold, as GitHub writes them by hand, and a
+// diagram becomes its caption followed by its zones and connections.
 
 export interface MarkdownSource {
   title: string
@@ -29,12 +30,19 @@ function boldTitle(node: ElementContent): ElementContent {
   return element("p", [element("strong", node.children)])
 }
 
+/** A diagram's caption, written as the paragraph that opens it. */
+function captionAsParagraph(node: ElementContent): ElementContent {
+  if (node.type !== "element" || node.tagName !== "figcaption") return node
+  return element("p", node.children)
+}
+
 function prepare(node: ElementContent): ElementContent[] {
   if (node.type !== "element") return [node]
   if (hasClass(node, "doc-component-notice")) return []
   const children = node.children.flatMap(prepare)
   if (hasClass(node, "doc-alert"))
     return [element("blockquote", children.map(boldTitle))]
+  if (hasClass(node, "doc-diagram")) return children.map(captionAsParagraph)
   return [{ ...node, children }]
 }
 

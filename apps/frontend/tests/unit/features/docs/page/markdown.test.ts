@@ -121,4 +121,28 @@ describe("pageMarkdown", () => {
     })
     expect(markdown).toBe("# T\n\n> **Aviso**\n>\n> Cuidado\n")
   })
+
+  test("a diagram becomes its caption as a paragraph, then its lists", () => {
+    const markdown = pageMarkdown({
+      title: "Komodo",
+      description: "",
+      tree: root(
+        el("figure", { className: ["doc-diagram"], dataDiagram: "komodo" }, [
+          el("figcaption", {}, [
+            el("strong", {}, [text("Cómo despliega")]),
+            text(". Komodo manda a Periphery"),
+          ]),
+          el("ul", { className: ["doc-diagram-connections"] }, [
+            el("li", {}, [
+              el("a", { href: "/casa/komodo" }, [text("Komodo")]),
+              text(" → Periphery: deploy"),
+            ]),
+          ]),
+        ])
+      ),
+    })
+    expect(markdown).toBe(
+      "# Komodo\n\n**Cómo despliega**. Komodo manda a Periphery\n\n- [Komodo](/casa/komodo) → Periphery: deploy\n"
+    )
+  })
 })

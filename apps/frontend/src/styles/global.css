@@ -1050,6 +1050,23 @@ html.theme-transitioning::view-transition-new(root) {
     color: var(--color-muted-foreground);
   }
 
+  /* A diagram as text, until the platform draws it: its caption, then its
+     zones and connections as compact lists inside a framed block. */
+  .doc :where(figure.doc-diagram) {
+    margin-block-start: var(--typeset-flow);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: 0.75rem 1rem;
+  }
+
+  .doc :where(figure.doc-diagram > figcaption) {
+    color: var(--color-muted-foreground);
+  }
+
+  .doc :where(figure.doc-diagram > ul) {
+    margin-block-start: 0.5em;
+  }
+
   .doc :where(div.doc-component-notice) {
     margin-block-start: var(--typeset-flow);
     border: 1px dashed var(--color-border);

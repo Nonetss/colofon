@@ -48,12 +48,16 @@ const meta = textVariants({ role: "status", tone: updatedTone(stale) })
                 /
               </span>
             )}
-            <a
-              href={link.href}
-              class="rounded-sm transition-colors hover:text-foreground"
-            >
-              {link.title}
-            </a>
+            {link.href !== null ? (
+              <a
+                href={link.href}
+                class="rounded-sm transition-colors hover:text-foreground"
+              >
+                {link.title}
+              </a>
+            ) : (
+              <span>{link.title}</span>
+            )}
           </li>
         ))}
       </ol>

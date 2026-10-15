@@ -1,6 +1,11 @@
 ---
 import { textVariants } from "@/components/shared/brand/typography"
-import { DocCard, type DocsNav, pagesMeta } from "@/features/docs/shared"
+import {
+  cardBlocks,
+  DocCard,
+  type DocsNav,
+  pagesMeta,
+} from "@/features/docs/shared"
 
 interface Props {
   nav: DocsNav
@@ -9,10 +14,18 @@ interface Props {
 
 // The "Todos" home: every repository as a block headed by its name and
 // description, its top-level sections as cards that come in one after
-// another.
+// another; with a menu, the cards of each group under its title.
 const { nav, isAdmin } = Astro.props
 const muted = textVariants({ role: "meta", tone: "muted" })
 const label = textVariants({ role: "label", tone: "muted" })
+
+/** The top-level entries, counting each group's entries instead of it. */
+function sectionCount(nodes: DocsNav["repositories"][number]["nodes"]): number {
+  return cardBlocks(nodes).reduce(
+    (total, block) => total + block.links.length,
+    0
+  )
+}
 
 /** "3 secciones" under a repository's name. */
 function sectionsLabel(count: number): string {
@@ -75,27 +88,39 @@ function sectionsLabel(count: number): string {
           </div>
           {repository.available && (
             <span class={textVariants({ role: "data", tone: "muted" })}>
-              {sectionsLabel(repository.nodes.length)}
+              {sectionsLabel(sectionCount(repository.nodes))}
             </span>
           )}
         </div>
         {repository.available ? (
-          repository.nodes.length > 0 && (
-            <ul class="grid grid-cols-1 gap-3 @xl:grid-cols-2 @4xl:grid-cols-3">
-              {repository.nodes.map((node, index) => (
-                <li class="flex">
-                  <DocCard
-                    href={node.href}
-                    title={node.title}
-                    description={node.description}
-                    icon={node.icon}
-                    meta={pagesMeta(node)}
-                    delay={Math.min(repositoryIndex * 30 + index * 40, 400)}
-                  />
-                </li>
-              ))}
-            </ul>
-          )
+          cardBlocks(repository.nodes).map((block) => (
+            <div class="flex flex-col gap-2">
+              {block.group && (
+                <div class="mt-2 flex flex-col gap-0.5">
+                  <h3 class={textVariants({ role: "title" })}>
+                    {block.group.title}
+                  </h3>
+                  {block.group.description && (
+                    <p class={muted}>{block.group.description}</p>
+                  )}
+                </div>
+              )}
+              <ul class="grid grid-cols-1 gap-3 @xl:grid-cols-2 @4xl:grid-cols-3">
+                {block.links.map((node, index) => (
+                  <li class="flex">
+                    <DocCard
+                      href={node.href}
+                      title={node.title}
+                      description={node.description}
+                      icon={node.icon}
+                      meta={pagesMeta(node)}
+                      delay={Math.min(repositoryIndex * 30 + index * 40, 400)}
+                    />
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))
         ) : (
           <p class={muted}>Sin contenido todavía.</p>
         )}

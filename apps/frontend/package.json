@@ -53,6 +53,7 @@
     "@astrojs/check": "catalog:",
     "@happy-dom/global-registrator": "^21.0.1",
     "@nonete/config": "workspace:*",
+    "@nonete/content": "workspace:*",
     "@tailwindcss/language-server": "^0.16.0",
     "@tailwindcss/vite": "catalog:",
     "@testing-library/dom": "^10.4.2",

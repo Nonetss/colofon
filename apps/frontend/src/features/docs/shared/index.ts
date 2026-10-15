@@ -3,7 +3,11 @@ export { useHasDocsSidebar } from "@/features/docs/shared/hooks/use-has-docs-sid
 export { loadIcon } from "@/features/docs/shared/model/icon"
 export { isMissing } from "@/features/docs/shared/model/missing"
 export {
+  type CardBlock,
+  cardBlocks,
   type DocsNav,
+  type DocsNavGroup,
+  type DocsNavLink,
   type DocsNavNode,
   type DocsPageEntry,
   type DocsRepository,

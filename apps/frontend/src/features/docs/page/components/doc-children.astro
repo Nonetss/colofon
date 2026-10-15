@@ -1,13 +1,18 @@
 ---
 import { textVariants } from "@/components/shared/brand/typography"
 import type { DocsPage } from "@/features/docs/page/model/types"
-import { DocCard, pagesMeta } from "@/features/docs/shared"
+import { cardBlocks, DocCard, pagesMeta } from "@/features/docs/shared"
 
 interface Props {
   page: DocsPage
 }
 
+// The pages and subsections of a section as cards. On the home of a
+// repository with a menu, each group of the menu is a block of cards under
+// its title.
 const { page } = Astro.props
+const blocks = cardBlocks(page.children)
+const label = textVariants({ role: "label", tone: "muted" })
 ---
 
 {page.children.length > 0 && (
@@ -15,22 +20,36 @@ const { page } = Astro.props
     class="@container mt-12 flex flex-col gap-3"
     aria-labelledby="fichas"
   >
-    <h2 id="fichas" class={textVariants({ role: "label", tone: "muted" })}>
+    <h2 id="fichas" class={label}>
       {page.path === "" ? "Secciones" : `En ${page.header.title}`}
     </h2>
-    <ul class="grid grid-cols-1 gap-3 @xl:grid-cols-2">
-      {page.children.map((child, index) => (
-        <li class="flex">
-          <DocCard
-            href={child.href}
-            title={child.title}
-            description={child.description}
-            icon={child.icon}
-            meta={pagesMeta(child)}
-            delay={Math.min(index * 40, 400)}
-          />
-        </li>
-      ))}
-    </ul>
+    {blocks.map((block, blockIndex) => (
+      <div class="flex flex-col gap-2">
+        {block.group && (
+          <div class="mt-3 flex flex-col gap-0.5">
+            <h3 class={textVariants({ role: "title" })}>{block.group.title}</h3>
+            {block.group.description && (
+              <p class={textVariants({ role: "meta", tone: "muted" })}>
+                {block.group.description}
+              </p>
+            )}
+          </div>
+        )}
+        <ul class="grid grid-cols-1 gap-3 @xl:grid-cols-2">
+          {block.links.map((child, index) => (
+            <li class="flex">
+              <DocCard
+                href={child.href}
+                title={child.title}
+                description={child.description}
+                icon={child.icon}
+                meta={pagesMeta(child)}
+                delay={Math.min(blockIndex * 60 + index * 40, 400)}
+              />
+            </li>
+          ))}
+        </ul>
+      </div>
+    ))}
   </section>
 )}

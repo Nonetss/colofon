@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test"
 import {
+  cardBlocks,
   type DocsRepository,
   flattenPages,
   pagesMeta,
@@ -99,5 +100,81 @@ describe("pagesMeta", () => {
     expect(pagesMeta({ kind: "page", ...entry("red/dns", "DNS") })).toBe(
       undefined
     )
+  })
+})
+
+// The same pages, with a menu: "Red" in the group "Infraestructura", and the
+// catalog in "Datos".
+const withMenu: DocsRepository = {
+  ...casa,
+  nodes: [
+    {
+      kind: "group",
+      title: "Infraestructura",
+      description: "Lo de casa",
+      icon: "network",
+      children: casa.nodes,
+    },
+    {
+      kind: "group",
+      title: "Datos",
+      description: "",
+      icon: null,
+      children: [
+        {
+          kind: "section",
+          ...entry("catalogo", "Catálogo"),
+          children: [
+            { kind: "page", ...entry("catalogo/machines", "Machines") },
+          ],
+        },
+      ],
+    },
+  ],
+}
+
+describe("navigation with menu groups", () => {
+  test("search trails start with the group, and groups are not records", () => {
+    expect(
+      flattenPages([withMenu], false).map((page) => [page.href, page.trail])
+    ).toEqual([
+      ["/casa", []],
+      ["/casa/red", ["Infraestructura"]],
+      ["/casa/red/dns", ["Infraestructura", "Red"]],
+      ["/casa/red/vpn", ["Infraestructura", "Red"]],
+      ["/casa/red/vpn/wg", ["Infraestructura", "Red", "VPN"]],
+      ["/casa/catalogo", ["Datos"]],
+      ["/casa/catalogo/machines", ["Datos", "Catálogo"]],
+    ])
+  })
+
+  test("the sections above a page are found through its group", () => {
+    expect(sectionsAbove(withMenu.nodes, "/casa/red/vpn/wg")).toEqual([
+      "/casa/red",
+      "/casa/red/vpn",
+    ])
+    expect(sectionsAbove(withMenu.nodes, "/casa/catalogo/machines")).toEqual([
+      "/casa/catalogo",
+    ])
+  })
+
+  test("a group counts the pages it holds, not itself", () => {
+    const [infra] = withMenu.nodes
+    if (infra === undefined) throw new Error("No group")
+    expect(pagesMeta(infra)).toBe("4 fichas")
+  })
+
+  test("cards come in one block per group, and loose entries in their own", () => {
+    const blocks = cardBlocks([...casa.nodes, ...withMenu.nodes])
+    expect(
+      blocks.map((block) => [
+        block.group?.title ?? null,
+        block.links.map((link) => link.title),
+      ])
+    ).toEqual([
+      [null, ["Red"]],
+      ["Infraestructura", ["Red"]],
+      ["Datos", ["Catálogo"]],
+    ])
   })
 })

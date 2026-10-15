@@ -9,7 +9,11 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
 } from "@/components/ui/sidebar"
-import type { DocsNavNode } from "@/features/docs/shared/model/nav"
+import type {
+  DocsNavGroup,
+  DocsNavLink,
+  DocsNavNode,
+} from "@/features/docs/shared/model/nav"
 import { DocIcon } from "@/features/docs/sidebar/components/doc-icon"
 import { getIcon } from "@/lib/icon-registry"
 import { cn } from "@/lib/utils"
@@ -49,7 +53,7 @@ function FoldButton({
   onToggle,
   className,
 }: {
-  node: DocsNavNode
+  node: DocsNavLink
   open: boolean
   onToggle: (href: string) => void
   className?: string
@@ -95,6 +99,8 @@ function SubTree({
       )}
     >
       {nodes.map((node) => {
+        // Groups of the menu are top-level only; a section never holds one.
+        if (node.kind === "group") return null
         const active = node.href === pathname
         if (node.kind === "page") {
           return (
@@ -104,6 +110,9 @@ function SubTree({
                 className={subButton}
                 render={<AppLink href={node.href} />}
               >
+                {node.icon !== null ? (
+                  <DocIcon name={node.icon} className={iconClass(active)} />
+                ) : null}
                 <span>{node.title}</span>
               </SidebarMenuSubButton>
             </SidebarMenuSubItem>
@@ -138,11 +147,57 @@ function SubTree({
   )
 }
 
-/** A repository's top-level sections and pages, each with its icon. */
+/** A group of the menu: a heading with its icon, its entries below it. */
+function GroupItem({
+  group,
+  pathname,
+  open,
+  onToggle,
+}: Omit<NavTreeProps, "nodes"> & { group: DocsNavGroup }) {
+  return (
+    <SidebarMenuItem className="mt-3 first:mt-0">
+      <div
+        className={cn(
+          textVariants({ role: "label", tone: "muted" }),
+          "flex h-7 items-center gap-2 px-2"
+        )}
+      >
+        {group.icon !== null ? (
+          <DocIcon
+            name={group.icon}
+            className="size-3.5 text-muted-foreground"
+          />
+        ) : null}
+        <span className="truncate">{group.title}</span>
+      </div>
+      <DocsNavTree
+        nodes={group.children}
+        pathname={pathname}
+        open={open}
+        onToggle={onToggle}
+      />
+    </SidebarMenuItem>
+  )
+}
+
+/**
+ * A repository's top-level groups, sections and pages, each with its icon. A
+ * group of the menu holds the same rows, under its heading.
+ */
 export function DocsNavTree({ nodes, pathname, open, onToggle }: NavTreeProps) {
   return (
     <SidebarMenu>
       {nodes.map((node) => {
+        if (node.kind === "group")
+          return (
+            <GroupItem
+              key={`group:${node.title}`}
+              group={node}
+              pathname={pathname}
+              open={open}
+              onToggle={onToggle}
+            />
+          )
         const active = node.href === pathname
         const inside = pathname.startsWith(`${node.href}/`)
         if (node.kind === "page") {
