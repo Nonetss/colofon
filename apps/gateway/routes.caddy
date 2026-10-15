@@ -21,14 +21,6 @@ header {
 	-Server
 }
 
-# Trace context is only trusted between our own services (the frontend's SSR
-# session lookup reaches the backend directly, never through here). Dropped
-# from public requests so a client can't pick its trace ids or force
-# sampling; the apps start a fresh trace instead.
-request_header -traceparent
-request_header -tracestate
-request_header -baggage
-
 # Liveness of the gateway itself, for the compose healthcheck
 handle /health {
 	respond "ok" 200

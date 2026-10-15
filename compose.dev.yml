@@ -4,12 +4,10 @@
 #
 #   bun run dev        # build, start and watch (Ctrl+C stops)
 #   bun run dev:down   # remove the containers
-#   bun run loki:start # only Loki on 127.0.0.1:3100, for native dev
-#   bun run tempo:start # only Tempo on 127.0.0.1:4318/3200, for native dev
 #   bun run postgres:start # only PostgreSQL on 127.0.0.1:5432, for native dev
 #
 # Like production, the gateway is the only service that publishes a port:
-# https://localhost:4321 (local CA, HTTP/2). The apps, PostgreSQL, Loki and Tempo stay on the
+# https://localhost:4321 (local CA, HTTP/2). The apps and PostgreSQL stay on the
 # stack's private network and reach each other by service name; the
 # `environment` overrides below swap .env's localhost addresses for those
 # names, everything else comes from the root .env unchanged. Native dev
@@ -26,26 +24,6 @@ x-node-ignore: &node-ignore
   - dist/
   - .astro/
   - .turbo/
-
-# Same image, flags and 720h retention as compose.yml's loki.
-x-loki: &loki
-  image: grafana/loki:3.7.7
-  volumes:
-    - loki_data:/loki
-  command:
-    - -config.file=/etc/loki/local-config.yaml
-    - -validation.allow-structured-metadata=true
-    - -store.retention=720h
-    - -compactor.working-directory=/loki/compactor
-    - -compactor.delete-request-store=filesystem
-    - -compactor.retention-enabled=true
-  healthcheck:
-    test: [ "CMD", "wget", "--spider", "-q", "http://localhost:3100/ready" ]
-    interval: 10s
-    timeout: 5s
-    retries: 5
-    start_period: 10s
-  restart: unless-stopped
 
 # Same image, database and healthcheck as compose.yml's db.
 x-db: &db
@@ -64,44 +42,6 @@ x-db: &db
     start_period: 10s
   restart: unless-stopped
 
-# Same image, flags, inline config and 168h retention as compose.yml's tempo.
-# The image has no shell, so no healthcheck; nothing waits for it.
-x-tempo: &tempo
-  image: grafana/tempo:3.1.0
-  volumes:
-    - tempo_data:/var/tempo
-  configs:
-    - source: tempo_config
-      target: /etc/tempo.yaml
-  command:
-    - -target=all
-    - -config.file=/etc/tempo.yaml
-    - -server.http-listen-port=3200
-    - -storage.trace.backend=local
-    - -storage.trace.local.path=/var/tempo/blocks
-    - -storage.trace.wal.path=/var/tempo/wal
-    - -log.level=warn
-    - -reporting.enabled=false
-  restart: unless-stopped
-
-# Tempo takes almost everything as flags (its `command`), like Loki, but its
-# OTLP receivers and retention exist only as YAML: they live here, inline, so
-# no config file has to sit next to the compose file. Same settings in every
-# compose file.
-configs:
-  tempo_config:
-    content: |
-      distributor:
-        receivers:
-          otlp:
-            protocols:
-              http:
-                endpoint: 0.0.0.0:4318
-      overrides:
-        defaults:
-          compaction:
-            block_retention: 168h
-
 services:
   frontend:
     build:
@@ -113,8 +53,6 @@ services:
         required: false
     environment:
       BACKEND_URL: http://backend:3000
-      LOKI_URL: http://loki:3100
-      OTEL_EXPORTER_OTLP_ENDPOINT: http://tempo:4318
     expose:
       - "4320"
     depends_on:
@@ -146,9 +84,6 @@ services:
         - action: sync
           path: ./packages/logger/src
           target: /app/packages/logger/src
-        - action: sync
-          path: ./packages/telemetry/src
-          target: /app/packages/telemetry/src
         - action: sync+restart
           path: ./apps/frontend/astro.config.mjs
           target: /app/apps/frontend/astro.config.mjs
@@ -169,9 +104,6 @@ services:
         required: false
     environment:
       DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:-postgres}@db:5432/doc
-      LOKI_URL: http://loki:3100
-      OTEL_EXPORTER_OTLP_ENDPOINT: http://tempo:4318
-      TEMPO_URL: http://tempo:3200
       CONTENT_DIR: ${CONTENT_DIR:+/content}
     volumes:
       # The content: a CONTENT_DIR from .env is mounted read-only at /content
@@ -214,9 +146,6 @@ services:
         - action: sync+restart
           path: ./packages/logger/src
           target: /app/packages/logger/src
-        - action: sync+restart
-          path: ./packages/telemetry/src
-          target: /app/packages/telemetry/src
         - action: rebuild
           path: ./bun.lock
         - action: rebuild
@@ -257,25 +186,6 @@ services:
           path: ./apps/gateway/routes.caddy
           target: /etc/caddy/routes.caddy
 
-  # Activity log sink for the dev stack, on the private network only (the
-  # apps' LOKI_URL override). Nothing waits for it.
-  loki:
-    <<: *loki
-    container_name: doc-dev-loki
-    expose:
-      - "3100"
-
-  # The same Loki for native dev (`bun run loki:start` / `loki:stop`, profile
-  # `native`), published on 127.0.0.1:3100, the LOKI_URL in .env. `bun run
-  # dev` never starts it; it shares loki_data, so run one or the other.
-  loki-native:
-    <<: *loki
-    container_name: doc-dev-loki-native
-    profiles:
-      - native
-    ports:
-      - "127.0.0.1:3100:3100"
-
   # The dev database, on the private network only (the backend's
   # DATABASE_URL override). The backend waits for it to be healthy.
   db:
@@ -296,33 +206,9 @@ services:
     ports:
       - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
 
-  # Trace store for the dev stack, on the private network only (the apps'
-  # OTEL_EXPORTER_OTLP_ENDPOINT and the backend's TEMPO_URL overrides).
-  tempo:
-    <<: *tempo
-    container_name: doc-dev-tempo
-    expose:
-      - "3200"
-      - "4318"
-
-  # The same Tempo for native dev (`bun run tempo:start` / `tempo:stop`,
-  # profile `native`), published on 127.0.0.1:4318 (OTLP) and 127.0.0.1:3200
-  # (query API), the OTEL_EXPORTER_OTLP_ENDPOINT and TEMPO_URL in .env. `bun
-  # run dev` never starts it; it shares tempo_data, so run one or the other.
-  tempo-native:
-    <<: *tempo
-    container_name: doc-dev-tempo-native
-    profiles:
-      - native
-    ports:
-      - "127.0.0.1:4318:4318"
-      - "127.0.0.1:3200:3200"
-
 volumes:
   content_data:
   content_unset:
   db_data:
   frontend_vite_cache:
   gateway_data:
-  loki_data:
-  tempo_data:
