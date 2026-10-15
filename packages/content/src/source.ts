@@ -1,52 +1,56 @@
 import { mkdir, readdir, rm } from "node:fs/promises"
 import path from "node:path"
 
-// Where the content comes from: a local folder (CONTENT_DIR) read in place,
-// or a git repository (CONTENT_REPO at CONTENT_REF) kept in a clone folder
-// with the git CLI. Credentials only travel inside the repository URL and
-// are redacted from everything this module reports.
+// Where the content comes from: git repositories, each kept in its own clone
+// folder under one clone root with the git CLI. Credentials only travel
+// inside the repository URL and are redacted from everything this module
+// reports.
 
-/** Folder, under the repo root, where a CONTENT_REPO clone is kept. */
+/** Folder, under the repo root, holding one clone per content repository. */
 export const CLONE_DIR = ".content"
 
 const GIT_TIMEOUT_MS = 60_000
 
-export type ContentSource =
-  | { kind: "none" }
-  | { kind: "dir"; root: string }
-  | { kind: "repo"; url: string; ref: string; root: string }
-
-export type ContentSourceOptions = {
-  dir?: string | undefined
-  repo?: string | undefined
+/** What this module needs to know about a content repository. */
+export type RepositorySource = {
+  slug: string
+  url: string
   ref: string
-  /** The repo root: a relative `dir` and the clone folder hang from it. */
-  repoRoot: string
 }
 
-/** The content source the options describe; `dir` wins over nothing else. */
-export function resolveContentSource(
-  options: ContentSourceOptions
-): ContentSource {
-  if (options.dir !== undefined) {
-    return { kind: "dir", root: path.resolve(options.repoRoot, options.dir) }
-  }
-  if (options.repo !== undefined) {
-    return {
-      kind: "repo",
-      url: options.repo,
-      ref: options.ref,
-      root: path.join(options.repoRoot, CLONE_DIR),
-    }
-  }
-  return { kind: "none" }
+/** The folder of the clone of the repository with `id`, under `cloneRoot`. */
+export function cloneFolder(cloneRoot: string, id: string): string {
+  return path.join(cloneRoot, id)
 }
 
-/** A line describing `source` for the logs, without credentials. */
-export function describeSource(source: ContentSource): string {
-  if (source.kind === "none") return "no content source configured"
-  if (source.kind === "dir") return `content folder ${source.root}`
-  return `content repository ${publicUrl(source.url)} at ${source.ref}`
+/**
+ * Removes every entry of `cloneRoot` that is not the clone folder of one of
+ * `keepIds`, and returns their names. A missing root has nothing to remove.
+ * The root may be a mount point, so it is never removed itself.
+ */
+export async function pruneClones(
+  cloneRoot: string,
+  keepIds: Iterable<string>
+): Promise<string[]> {
+  const keep = new Set(keepIds)
+  const stale = (await entriesOf(cloneRoot)).filter((entry) => !keep.has(entry))
+  for (const entry of stale) {
+    await rm(path.join(cloneRoot, entry), { recursive: true, force: true })
+  }
+  return stale
+}
+
+async function entriesOf(folder: string): Promise<string[]> {
+  try {
+    return await readdir(folder)
+  } catch {
+    return []
+  }
+}
+
+/** A line describing `repository` for the logs, without credentials. */
+export function describeRepository(repository: RepositorySource): string {
+  return `content repository ${repository.slug} (${publicUrl(repository.url)}) at ${repository.ref}`
 }
 
 /** `url` with its user and password, if any, replaced by `***`. */

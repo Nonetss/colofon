@@ -1,6 +1,8 @@
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import path from "node:path"
+import type { SyncResult } from "@nonete/content"
+import type { RepositoryStore, StoredRepository } from "#v1/content/reader"
 
 /** A small valid content repository: two types, one pointing at the other. */
 export const CONTENT_SITE: Record<string, string> = {
@@ -45,4 +47,82 @@ export async function createContentFolder(
     write,
     remove: () => rm(root, { recursive: true, force: true }),
   }
+}
+
+/** The repositories a test stores, and every sync outcome recorded on them. */
+export type MemoryRepositoryStore = RepositoryStore & {
+  rows: StoredRepository[]
+  recorded: { id: string; result: SyncResult }[]
+}
+
+/** A repository store over `rows`, kept in memory; `list` keeps their order. */
+export function memoryRepositoryStore(
+  rows: StoredRepository[] = []
+): MemoryRepositoryStore {
+  const recorded: { id: string; result: SyncResult }[] = []
+  return {
+    rows,
+    recorded,
+    find: async (slug) => rows.find((row) => row.slug === slug),
+    list: async () => [...rows],
+    recordSync: async (id, result) => {
+      recorded.push({ id, result })
+    },
+  }
+}
+
+/** A stored repository; its id names its clone folder. */
+export function storedRepository(
+  overrides: Partial<StoredRepository> = {}
+): StoredRepository {
+  return {
+    id: "repo-1",
+    slug: "documentacion",
+    url: "https://git.example/documentacion.git",
+    ref: "main",
+    ...overrides,
+  }
+}
+
+/**
+ * A git repository on disk, reached over `file://`, holding `files` on main:
+ * syncs run the real git CLI and stay hermetic.
+ */
+export async function createContentRemote(
+  files: Record<string, string> = CONTENT_SITE
+): Promise<{ url: string; remove: () => Promise<void> }> {
+  const base = await mkdtemp(path.join(tmpdir(), "api-content-remote-"))
+  const bare = path.join(base, "remote.git")
+  const work = path.join(base, "work")
+  await git(base, ["init", "--quiet", "--bare", "--initial-branch=main", bare])
+  await git(base, ["init", "--quiet", "--initial-branch=main", work])
+  for (const [file, text] of Object.entries(files)) {
+    const target = path.join(work, file)
+    await mkdir(path.dirname(target), { recursive: true })
+    await writeFile(target, text)
+  }
+  await git(work, ["add", "--all"])
+  await git(work, ["commit", "--quiet", "-m", "content"])
+  await git(work, ["push", "--quiet", bare, "main"])
+  return {
+    url: `file://${bare}`,
+    remove: () => rm(base, { recursive: true, force: true }),
+  }
+}
+
+async function git(cwd: string, args: string[]) {
+  const child = Bun.spawn(
+    ["git", "-c", "user.name=test", "-c", "user.email=test@test", ...args],
+    {
+      cwd,
+      env: { ...process.env, GIT_TERMINAL_PROMPT: "0" },
+      stdout: "pipe",
+      stderr: "pipe",
+    }
+  )
+  const [stderr, exitCode] = await Promise.all([
+    new Response(child.stderr).text(),
+    child.exited,
+  ])
+  if (exitCode !== 0) throw new Error(`git ${args.join(" ")}: ${stderr}`)
 }

@@ -4,6 +4,39 @@ const jsonSchema = z
   .record(z.string(), z.unknown())
   .describe("A JSON Schema (draft-07) for one kind of content file")
 
+const repository = z.object({
+  id: z.uuid(),
+  slug: z.string(),
+  name: z.string(),
+  url: z
+    .string()
+    .describe(
+      "URL of the git repository, with any credentials replaced by ***"
+    ),
+  ref: z.string().describe("Branch, tag or commit checked out"),
+  catalogUrl: z
+    .string()
+    .describe(
+      "Absolute URL of the repository's schema catalog, for the editor's yaml.schemaStore.url"
+    ),
+  lastSyncedAt: z
+    .string()
+    .nullable()
+    .describe("When the last sync ran, null before the first one"),
+  lastCommit: z
+    .string()
+    .nullable()
+    .describe("Commit checked out by the last successful sync"),
+  lastSyncError: z
+    .string()
+    .nullable()
+    .describe("Error of the last sync when it failed, without credentials"),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+})
+
+export type ContentRepositoryOutput = z.infer<typeof repository>
+
 export const contentOutput = {
   schemaCatalog: z
     .object({
@@ -25,13 +58,17 @@ export const contentOutput = {
   configSchema: jsonSchema,
   typeSchema: jsonSchema,
   entitySchema: jsonSchema,
+  listRepositories: z.array(repository),
+  createRepository: repository,
+  updateRepository: repository,
+  deleteRepository: z.object({ id: z.uuid(), success: z.boolean() }),
+  syncRepository: repository,
   sync: z.object({
-    source: z
-      .enum(["none", "dir", "repo"])
-      .describe("Kind of content source configured"),
-    commit: z
-      .string()
-      .nullable()
-      .describe("Commit checked out, for a repository source"),
+    repositories: z.array(
+      z.object({
+        slug: z.string(),
+        commit: z.string().describe("Commit checked out"),
+      })
+    ),
   }),
 }

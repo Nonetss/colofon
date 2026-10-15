@@ -5,11 +5,12 @@ import { tmpdir } from "node:os"
 import path from "node:path"
 import {
   CLONE_DIR,
+  cloneFolder,
   createRepoSync,
-  describeSource,
+  describeRepository,
+  pruneClones,
   publicUrl,
   redactCredentials,
-  resolveContentSource,
   type SyncResult,
 } from "#source"
 import {
@@ -41,36 +42,30 @@ function commitOf(result: SyncResult): string {
   return result.commit
 }
 
-describe("resolveContentSource", () => {
-  test("a relative folder hangs from the repo root", () => {
-    expect(
-      resolveContentSource({
-        dir: "../documentacion",
-        ref: "main",
-        repoRoot: "/code/doc",
-      })
-    ).toEqual({ kind: "dir", root: "/code/documentacion" })
+describe("clone folders", () => {
+  test("each repository's clone hangs from the clone root by its id", () => {
+    expect(cloneFolder("/app/.content", "repo-id")).toBe(
+      "/app/.content/repo-id"
+    )
   })
 
-  test("a repository is cloned into the clone folder under the repo root", () => {
-    expect(
-      resolveContentSource({
-        repo: "https://git.example/doc.git",
-        ref: "v1",
-        repoRoot: "/app",
-      })
-    ).toEqual({
-      kind: "repo",
-      url: "https://git.example/doc.git",
-      ref: "v1",
-      root: `/app/${CLONE_DIR}`,
-    })
+  test("pruning removes every entry that is not a kept clone, a stray .git included", async () => {
+    const root = await tempFolder()
+    await mkdir(path.join(root, "kept", ".git"), { recursive: true })
+    await mkdir(path.join(root, "gone"))
+    await mkdir(path.join(root, ".git"))
+    await writeFile(path.join(root, "doc.config.yaml"), "nombre: Viejo\n")
+
+    const removed = await pruneClones(root, ["kept"])
+
+    expect(removed.toSorted()).toEqual([".git", "doc.config.yaml", "gone"])
+    expect(existsSync(path.join(root, "kept", ".git"))).toBe(true)
+    expect(existsSync(root)).toBe(true)
   })
 
-  test("without either there is no source", () => {
-    expect(resolveContentSource({ ref: "main", repoRoot: "/app" })).toEqual({
-      kind: "none",
-    })
+  test("pruning a clone root that does not exist removes nothing", async () => {
+    const missing = path.join(await tempFolder(), "missing")
+    expect(await pruneClones(missing, [])).toEqual([])
   })
 })
 
@@ -88,13 +83,12 @@ describe("credentials", () => {
     ).toBe("fatal: ***, *** and *** rejected")
   })
 
-  test("describing a repository source never shows its credentials", () => {
-    const source = resolveContentSource({
-      repo: url,
-      ref: "main",
-      repoRoot: "/app",
-    })
-    expect(describeSource(source)).not.toContain("s3cr")
+  test("describing a repository names its slug and ref but never its credentials", () => {
+    const line = describeRepository({ slug: "documentacion", url, ref: "v2" })
+    expect(line).toContain("documentacion")
+    expect(line).toContain("v2")
+    expect(line).not.toContain("s3cr")
+    expect(line).not.toContain("user")
   })
 })
 

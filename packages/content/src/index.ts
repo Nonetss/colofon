@@ -23,11 +23,12 @@ export {
 } from "#meta-schema"
 export {
   CLONE_DIR,
-  type ContentSource,
+  cloneFolder,
   createRepoSync,
-  describeSource,
+  describeRepository,
+  pruneClones,
   publicUrl,
+  type RepositorySource,
   redactCredentials,
-  resolveContentSource,
   type SyncResult,
 } from "#source"

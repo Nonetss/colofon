@@ -33,9 +33,6 @@ const cleared = [
   "OIDC_CLIENT_ID",
   "OIDC_CLIENT_SECRET",
   "OIDC_DISCOVERY_URL",
-  "CONTENT_DIR",
-  "CONTENT_REPO",
-  "CONTENT_REF",
 ]
 
 Object.assign(process.env, placeholders)
