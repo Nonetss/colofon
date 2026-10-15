@@ -14,6 +14,7 @@ import {
   lineCount,
   parentFolder,
   parseLocation,
+  revealedFolders,
   shownBranch,
   startingBranch,
   toggledFolder,
@@ -126,10 +127,21 @@ describe("breadcrumb / parentFolder", () => {
   })
 })
 
-describe("ancestorFolders / toggledFolder", () => {
+describe("ancestorFolders / revealedFolders / toggledFolder", () => {
   test("every folder above a file, from the root down", () => {
     expect(ancestorFolders("docs/red/dns.mdx")).toEqual(["docs", "docs/red"])
     expect(ancestorFolders("doc.config.yaml")).toEqual([])
+  })
+
+  test("reveals the named folder and the open file's folders, once each", () => {
+    expect(revealedFolders({ path: "", file: "" })).toEqual([])
+    expect(revealedFolders({ path: "docs/red", file: "" })).toEqual([
+      "docs",
+      "docs/red",
+    ])
+    expect(revealedFolders({ path: "docs", file: "docs/red/dns.mdx" })).toEqual(
+      ["docs", "docs/red"]
+    )
   })
 
   test("unfolds a folded folder and folds an unfolded one, as a new set", () => {

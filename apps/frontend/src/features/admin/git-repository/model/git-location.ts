@@ -137,6 +137,22 @@ export function ancestorFolders(filePath: string): string[] {
   return segments.map((_, index) => segments.slice(0, index + 1).join("/"))
 }
 
+/**
+ * The folders to unfold for the file tree to show a location: the folder it
+ * names with the ones above it, and the ones above its open file.
+ */
+export function revealedFolders(location: {
+  path: string
+  file: string
+}): string[] {
+  const folders = new Set(ancestorFolders(location.file))
+  if (location.path !== "") {
+    for (const folder of ancestorFolders(location.path)) folders.add(folder)
+    folders.add(location.path)
+  }
+  return [...folders]
+}
+
 /** `folders` with `path` folded if it was unfolded, unfolded if not. */
 export function toggledFolder(
   folders: ReadonlySet<string>,
