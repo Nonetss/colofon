@@ -1,7 +1,14 @@
 import path from "node:path"
 import GithubSlugger from "github-slugger"
-import type { Blockquote, Definition, Image, Link, Root } from "mdast"
-import type {} from "mdast-util-mdx"
+import type {
+  Blockquote,
+  Definition,
+  Image,
+  Link,
+  Paragraph,
+  Root,
+} from "mdast"
+import type { MdxJsxFlowElement, MdxJsxTextElement } from "mdast-util-mdx"
 import type {} from "mdast-util-to-hast"
 import { toString as textOf } from "mdast-util-to-string"
 import { SKIP, visit } from "unist-util-visit"
@@ -9,8 +16,10 @@ import type { PageHeading, PageProblem } from "#pages/types"
 
 // Walks a page's syntax tree before it becomes HTML: reports what a page
 // cannot use, gives headings their ids, turns `[!KIND]` blockquotes into
-// alerts and points links and images at the reader's routes. MDX nodes are
-// left in place; `to-hast.ts` drops them or renders them as notices.
+// alerts and points links and images at the reader's routes. `<Callout>`,
+// the one component the platform provides, becomes an alert too; other MDX
+// nodes are left in place and `to-hast.ts` drops them or renders them as
+// notices.
 
 /** Image files a page can show, by extension. */
 export const IMAGE_EXTENSIONS = [
@@ -48,6 +57,22 @@ const ALERT_TITLES = {
 
 type AlertKind = keyof typeof ALERT_TITLES
 
+/** The component pages may use, rendered as an alert. */
+export const CALLOUT = "Callout"
+
+/** `<Callout type="…">`: the alert kind and default title of each type. */
+const CALLOUT_TYPES = {
+  note: { kind: "note", title: ALERT_TITLES.note },
+  info: { kind: "note", title: "Información" },
+  tip: { kind: "tip", title: ALERT_TITLES.tip },
+  important: { kind: "important", title: ALERT_TITLES.important },
+  warning: { kind: "warning", title: ALERT_TITLES.warning },
+  caution: { kind: "caution", title: ALERT_TITLES.caution },
+  danger: { kind: "caution", title: "Peligro" },
+} as const satisfies Record<string, { kind: AlertKind; title: string }>
+
+type CalloutType = keyof typeof CALLOUT_TYPES
+
 const ALERT_MARKER = /^\[!(note|tip|important|warning|caution)\][ \t]*(\r?\n)?/i
 
 const SCHEME = /^[a-z][a-z0-9+.-]*:/i
@@ -62,7 +87,7 @@ export function transformPage(
   const report = (line: number | null, message: string) =>
     problems.push({ file: context.file, line, message })
 
-  visit(tree, (node) => {
+  visit(tree, (node, index, parent) => {
     const line = node.position?.start.line ?? null
     switch (node.type) {
       case "mdxjsEsm":
@@ -77,9 +102,29 @@ export function transformPage(
           )
         return SKIP
       case "mdxJsxFlowElement":
+        if (
+          node.name !== CALLOUT ||
+          parent === undefined ||
+          index === undefined
+        ) {
+          report(line, componentMessage(node.name))
+          return SKIP
+        }
+        // Replaced by its alert, which is visited next for the links inside.
+        parent.children.splice(index, 1, toCallout(node, line, report))
+        return [SKIP, index]
       case "mdxJsxTextElement":
-        report(line, componentMessage(node.name))
+        report(line, componentMessage(node.name, "inline"))
         return SKIP
+      case "paragraph": {
+        // `<Callout>…</Callout>` on a line of its own reads as a paragraph
+        // holding just that element: it is a block all the same.
+        const callout = soleCallout(node)
+        if (callout === null || parent === undefined || index === undefined)
+          return
+        parent.children.splice(index, 1, toCallout(callout, line, report))
+        return [SKIP, index]
+      }
       case "heading": {
         if (node.depth === 1) {
           report(
@@ -123,10 +168,107 @@ function esmMessage(value: string): string {
   return `Las fichas no admiten \`${keyword}\`: solo Markdown y los componentes de la plataforma`
 }
 
-/** The notice text, also used for the message of the problem. */
-export function componentMessage(name: string | null): string {
+/**
+ * The notice text, also used for the message of the problem. A `<Callout>`
+ * inside a paragraph is refused for where it is, not for what it is.
+ */
+export function componentMessage(
+  name: string | null,
+  placement: "block" | "inline" = "block"
+): string {
   if (name === null) return "Las fichas no admiten fragmentos JSX (<>…</>)"
+  if (name === CALLOUT && placement === "inline")
+    return `El componente <${CALLOUT}> va en su propio bloque, con una línea en blanco antes y después`
   return `El componente <${name}> no existe en la plataforma`
+}
+
+function isCalloutType(value: string): value is CalloutType {
+  return Object.hasOwn(CALLOUT_TYPES, value)
+}
+
+/** The `type` and `title` a `<Callout>` was written with, checked. */
+function calloutOptions(
+  node: MdxJsxFlowElement,
+  line: number | null,
+  report: Report
+): { type: CalloutType; title: string | null } {
+  let type: CalloutType = "note"
+  let title: string | null = null
+  for (const attribute of node.attributes) {
+    if (attribute.type !== "mdxJsxAttribute") {
+      report(line, `<${CALLOUT}> no admite atributos entre llaves {…}`)
+      continue
+    }
+    const { name, value } = attribute
+    if (typeof value !== "string") {
+      report(line, `El atributo ${name} de <${CALLOUT}> va entre comillas`)
+      continue
+    }
+    if (name === "type" && isCalloutType(value)) type = value
+    else if (name === "type")
+      report(
+        line,
+        `<${CALLOUT} type="${value}">: el tipo es ${Object.keys(CALLOUT_TYPES).join(", ")}`
+      )
+    else if (name === "title") title = value
+    else report(line, `<${CALLOUT}> no tiene el atributo ${name}`)
+  }
+  return { type, title }
+}
+
+function isBlank(node: Paragraph["children"][number]): boolean {
+  return node.type === "text" && node.value.trim() === ""
+}
+
+/** The `<Callout>` a paragraph holds alone, as the block it stands for. */
+function soleCallout(paragraph: Paragraph): MdxJsxFlowElement | null {
+  const content = paragraph.children.filter((child) => !isBlank(child))
+  const [only] = content
+  if (content.length !== 1 || only === undefined) return null
+  if (only.type !== "mdxJsxTextElement" || only.name !== CALLOUT) return null
+  return asBlock(only, paragraph)
+}
+
+function asBlock(
+  element: MdxJsxTextElement,
+  paragraph: Paragraph
+): MdxJsxFlowElement {
+  return {
+    type: "mdxJsxFlowElement",
+    name: element.name,
+    attributes: element.attributes,
+    children: [{ type: "paragraph", children: element.children }],
+    position: paragraph.position,
+  }
+}
+
+function titleOr(title: string | null, fallback: string): string {
+  if (title === null) return fallback
+  return title
+}
+
+/** A `<Callout>` as the alert a `[!KIND]` blockquote becomes. */
+function toCallout(
+  node: MdxJsxFlowElement,
+  line: number | null,
+  report: Report
+): Blockquote {
+  const { type, title } = calloutOptions(node, line, report)
+  const { kind, title: defaultTitle } = CALLOUT_TYPES[type]
+  const heading: Paragraph = {
+    type: "paragraph",
+    children: [{ type: "text", value: titleOr(title, defaultTitle) }],
+    data: { hProperties: { className: ["doc-alert-title"] } },
+  }
+  return {
+    type: "blockquote",
+    children: [heading, ...node.children],
+    position: node.position,
+    data: {
+      hName: "div",
+      hProperties: { className: ["doc-alert", `doc-alert-${kind}`] },
+    },
+  }
 }
 
 function toAlert(node: Blockquote) {

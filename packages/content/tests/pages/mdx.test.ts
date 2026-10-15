@@ -56,6 +56,81 @@ describe("accepted MDX", () => {
     )
   })
 
+  test("a Callout becomes an alert of its type, its Markdown rendered", async () => {
+    const found = await notas(
+      '<Callout type="info">\nLas claves están en el **vault**.\n</Callout>'
+    )
+    expect(found.problems).toEqual([])
+    expect(htmlOf(found.tree)).toBe(
+      '<div class="doc-alert doc-alert-note">\n<p class="doc-alert-title">Información</p>\n<p>Las claves están en el <strong>vault</strong>.</p>\n</div>'
+    )
+  })
+
+  test("a Callout without type is a note, and title replaces its heading", async () => {
+    const found = await notas(
+      '<Callout title="Antes de empezar">\nHola\n</Callout>'
+    )
+    expect(found.problems).toEqual([])
+    expect(htmlOf(found.tree)).toContain(
+      '<div class="doc-alert doc-alert-note">\n<p class="doc-alert-title">Antes de empezar</p>'
+    )
+  })
+
+  test("a Callout on one line renders its text too", async () => {
+    const found = await notas('<Callout type="tip">Usa la VPN</Callout>')
+    expect(found.problems).toEqual([])
+    expect(htmlOf(found.tree)).toContain("Usa la VPN")
+    expect(htmlOf(found.tree)).toContain(
+      '<p class="doc-alert-title">Consejo</p>'
+    )
+  })
+
+  test("danger is a caution alert titled Peligro", async () => {
+    const found = await notas('<Callout type="danger">\nNo\n</Callout>')
+    expect(htmlOf(found.tree)).toContain(
+      '<div class="doc-alert doc-alert-caution">\n<p class="doc-alert-title">Peligro</p>'
+    )
+  })
+
+  test("links inside a Callout point at their reader routes", async () => {
+    const site = await siteOf({
+      "docs/notas.mdx": page(
+        "Notas",
+        "<Callout>\nVer [DNS](dns.mdx) y [roto](nada.mdx)\n</Callout>"
+      ),
+      "docs/dns.mdx": page("DNS", "Hola"),
+    })
+    const found = pageAt(site, "notas")
+    // Reported once: the element's old children are not visited again.
+    expect(messagesOf(found)).toEqual([
+      "Enlace roto: nada.mdx no es ninguna ficha",
+    ])
+    expect(htmlOf(found.tree)).toContain('href="/')
+    expect(htmlOf(found.tree)).not.toContain("dns.mdx")
+  })
+
+  test("an unknown type, an unknown attribute and an expression are reported, and it still renders", async () => {
+    const found = await notas(
+      '<Callout type="rojo" color="red" title={x}>\nHola\n</Callout>'
+    )
+    expect(messagesOf(found)).toEqual([
+      '<Callout type="rojo">: el tipo es note, info, tip, important, warning, caution, danger',
+      "<Callout> no tiene el atributo color",
+      "El atributo title de <Callout> va entre comillas",
+    ])
+    expect(htmlOf(found.tree)).toContain('<p class="doc-alert-title">Nota</p>')
+  })
+
+  test("a Callout inside a paragraph is reported for where it is", async () => {
+    const found = await notas("Texto <Callout>hola</Callout> fin")
+    expect(messagesOf(found)).toEqual([
+      "El componente <Callout> va en su propio bloque, con una línea en blanco antes y después",
+    ])
+    expect(htmlOf(found.tree)).toContain(
+      '<span class="doc-component-notice" data-component="Callout">'
+    )
+  })
+
   test("a syntax error is reported with its line and the page has no body", async () => {
     const found = await notas("Texto\n\n<div")
     expect(found.tree).toBeNull()

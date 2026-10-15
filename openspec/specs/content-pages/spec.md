@@ -26,7 +26,7 @@ A page SHALL start with a YAML front matter block holding its header. `titulo` a
 
 ### Requirement: Accepted MDX
 
-A page body SHALL be read as MDX with GitHub-flavoured Markdown (tables, task lists, strikethrough, autolinks and footnotes) and SHALL NOT be executed. `import` and `export` statements and `{…}` expressions SHALL be refused, each reported with its line, and left out of the render tree; an expression that holds only a comment (`{/* … */}`) SHALL be dropped without a problem. Every JSX element SHALL be reported as a component the platform does not provide, with its name and line, and SHALL be rendered as a visible notice naming it in place of the element. A page that cannot be parsed SHALL be reported with the parser's line and message, and SHALL have no body.
+A page body SHALL be read as MDX with GitHub-flavoured Markdown (tables, task lists, strikethrough, autolinks and footnotes) and SHALL NOT be executed. `import` and `export` statements and `{…}` expressions SHALL be refused, each reported with its line, and left out of the render tree; an expression that holds only a comment (`{/* … */}`) SHALL be dropped without a problem. `<Callout>` is the one component the platform provides: written as a block (on its own lines, or alone on one line), it SHALL render as an alert holding its Markdown, of the kind its `type` names (`note` by default; `info` a note titled "Información", `tip`, `important`, `warning`, `caution`, and `danger` a caution titled "Peligro"), titled by its `title` when given and by its kind otherwise. An unknown `type`, an attribute other than `type` and `title`, or an attribute value in braces SHALL be reported with its line while the alert still renders, and a `<Callout>` inside a paragraph's text SHALL be reported as needing its own block and rendered as a notice. Every other JSX element SHALL be reported as a component the platform does not provide, with its name and line, and SHALL be rendered as a visible notice naming it in place of the element. A page that cannot be parsed SHALL be reported with the parser's line and message, and SHALL have no body.
 
 #### Scenario: Import refused
 
@@ -47,6 +47,16 @@ A page body SHALL be read as MDX with GitHub-flavoured Markdown (tables, task li
 
 - **WHEN** a page holds `<Entidades tipo="servicios" />`
 - **THEN** the page SHALL be reported on that line with "El componente <Entidades> no existe en la plataforma" and the page SHALL show a notice naming `Entidades` where it was
+
+#### Scenario: Callout
+
+- **WHEN** a page holds `<Callout type="info">` on its own line, a paragraph, and `</Callout>`
+- **THEN** no problem SHALL be reported and the page SHALL show a note alert titled "Información" holding that paragraph, with its links pointing at the reader's routes
+
+#### Scenario: Callout with an unknown type
+
+- **WHEN** a page holds `<Callout type="rojo">` around a paragraph
+- **THEN** the page SHALL be reported on that line with the accepted types, and the alert SHALL render as a note
 
 #### Scenario: Syntax error
 

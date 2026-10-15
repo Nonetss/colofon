@@ -10,7 +10,7 @@ import { componentMessage } from "#pages/transform"
 
 const drop: Handler = () => undefined
 
-/** A component the platform doesn't provide, rendered as a notice. */
+/** A component the platform doesn't provide (or not there), as a notice. */
 function notice(tagName: "div" | "span"): Handler {
   return (_state, node) => {
     const name = jsxName(node)
@@ -21,10 +21,17 @@ function notice(tagName: "div" | "span"): Handler {
         className: ["doc-component-notice"],
         dataComponent: name ?? "",
       },
-      children: [{ type: "text", value: componentMessage(name) }],
+      children: [
+        { type: "text", value: componentMessage(name, placementOf(tagName)) },
+      ],
     }
     return element
   }
+}
+
+function placementOf(tagName: "div" | "span"): "block" | "inline" {
+  if (tagName === "span") return "inline"
+  return "block"
 }
 
 function jsxName(node: unknown): string | null {
