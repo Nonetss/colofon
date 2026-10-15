@@ -1,5 +1,6 @@
 ---
 import { textVariants } from "@/components/shared/brand/typography"
+import { DocTables } from "@/features/docs/page/components/doc-tables"
 import { renderBlocks } from "@/features/docs/page/model/render"
 import type { DocsPage } from "@/features/docs/page/model/types"
 import { getIcon } from "@/lib/icon-registry"
@@ -53,6 +54,7 @@ const notice =
           </section>
         )
       })}
+      <DocTables client:only="react" />
     </div>
   )
 )}

@@ -3,6 +3,7 @@ export { default as DocChildren } from "@/features/docs/page/components/doc-chil
 export { default as DocHero } from "@/features/docs/page/components/doc-hero.astro"
 export { DocLightbox } from "@/features/docs/page/components/doc-lightbox"
 export { default as DocPager } from "@/features/docs/page/components/doc-pager.astro"
+export { DocTables } from "@/features/docs/page/components/doc-tables"
 export { default as DocToc } from "@/features/docs/page/components/doc-toc.astro"
 export { withOrigin } from "@/features/docs/page/model/full-links"
 export { pageMarkdown } from "@/features/docs/page/model/markdown"

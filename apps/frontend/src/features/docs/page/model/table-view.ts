@@ -1,72 +1,133 @@
+import {
+  type ColumnKind,
+  detectKind,
+  isEmptyCell,
+  type SortKey,
+  sortKey,
+} from "@/features/docs/page/model/table-kinds"
 import { foldText } from "@/lib/fold-text"
-import { sortRows } from "@/lib/sort-rows"
 
-// What a table of a documentation page shows: its rows filtered by the text
-// typed over it and ordered by the column whose header was clicked.
+// A table of a documentation page as read from the server's HTML: its
+// columns (with a unique id and the kind their cells read as) and its rows
+// (texts, folded texts and sort keys), plus the labels its toolbar shows.
+// The state and the view are TanStack Table's (`doc-table.ts`).
 
-/** Rows from which a table gets its search box (fewer are read at a glance). */
-export const SEARCHABLE_ROWS = 8
+/** Rows from which a table gets its toolbar; below, it only sorts. */
+export const TOOLBAR_ROWS = 2
+/** Above this many rows a table is split in pages. */
+export const PAGED_ROWS = 50
+export const PAGE_SIZE = 25
+/** The page sizes offered, besides every row. */
+export const PAGE_SIZES = [25, 50, 100] as const
+
+export interface TableColumn {
+  index: number
+  /** The header folded into a slug (`estado`), unique in the table. */
+  id: string
+  header: string
+  kind: ColumnKind
+}
 
 export interface TableRow {
-  /** The text of each cell, in column order. */
-  cells: string[]
+  /** Its place in the written order. */
+  index: number
+  /** Cell texts, spaces collapsed. */
+  text: string[]
+  /** The same, folded, for the filters. */
+  folded: string[]
+  keys: SortKey[]
 }
 
-export interface TableSort {
-  column: number
-  desc: boolean
+export interface TableModel {
+  columns: TableColumn[]
+  rows: TableRow[]
+  /** Has the toolbar; otherwise it only sorts. */
+  full: boolean
+  /** Split in pages. */
+  paged: boolean
 }
 
-/** A header click: ascending, then descending, then the written order. */
-export function nextSort(
-  sort: TableSort | null,
-  column: number
-): TableSort | null {
-  if (sort === null || sort.column !== column) return { column, desc: false }
-  if (sort.desc) return null
-  return { column, desc: true }
+/** Collapses the spaces of a cell's text. */
+export function cellText(text: string): string {
+  return text.replace(/\s+/g, " ").trim()
 }
 
-/** Every word of `query` is somewhere in the row, accents and case aside. */
-function matches(row: TableRow, words: readonly string[]): boolean {
-  const text = foldText(row.cells.join(" "))
-  return words.every((word) => text.includes(word))
+/** The text a filter value stands for: an empty cell is `""`. */
+export function facetValue(text: string): string {
+  if (isEmptyCell(text)) return ""
+  return text
 }
 
-function cellValue(column: number) {
-  return (row: TableRow): string | null => {
-    const text = row.cells[column]?.trim()
-    if (text === undefined || text === "") return null
-    return text
-  }
+/** A header folded into a slug; `col<n>` when nothing is left. */
+export function slugOf(text: string): string {
+  return foldText(text)
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "")
 }
 
-/**
- * The rows to show, in order: those that hold every word of `query`, sorted
- * by `sort` (empty cells last, ties in the written order).
- */
-export function visibleRows<T extends TableRow>(
-  rows: readonly T[],
-  query: string,
-  sort: TableSort | null
-): T[] {
-  const words = foldText(query).split(/\s+/).filter(Boolean)
-  const shown = rows.filter((row) => matches(row, words))
-  if (sort === null) return shown
-  const id = String(sort.column)
-  return sortRows(shown, [{ id, desc: sort.desc }], {
-    [id]: cellValue(sort.column),
+/** One id per header, in order: its slug, with `-2`, `-3` when repeated. */
+function columnIds(headers: readonly string[]): string[] {
+  const taken = new Set<string>()
+  return headers.map((header, index) => {
+    const base = slugOrDefault(slugOf(header), index)
+    let id = base
+    for (let n = 2; taken.has(id); n++) id = `${base}-${n}`
+    taken.add(id)
+    return id
   })
 }
 
-/** "12 filas", or "3 de 12 filas" while a search hides some. */
-export function rowsLabel(shown: number, total: number): string {
+function slugOrDefault(slug: string, index: number): string {
+  if (slug !== "") return slug
+  return `col${index + 1}`
+}
+
+/** The model of a table from its header texts and the texts of its cells. */
+export function tableModel(
+  headers: readonly string[],
+  cells: readonly (readonly string[])[]
+): TableModel {
+  const texts = cells.map((row) =>
+    headers.map((_, index) => cellText(row[index] ?? ""))
+  )
+  const ids = columnIds(headers.map(cellText))
+  const columns = ids.map((id, index) => ({
+    index,
+    id,
+    header: cellText(headers[index] ?? ""),
+    kind: detectKind(texts.map((row) => row[index] ?? "")),
+  }))
+  const rows = texts.map((text, index) => ({
+    index,
+    text,
+    folded: text.map(foldText),
+    keys: columns.map((column) =>
+      sortKey(column.kind, text[column.index] ?? "")
+    ),
+  }))
+  const full = rows.length >= TOOLBAR_ROWS
+  return { columns, rows, full, paged: full && rows.length > PAGED_ROWS }
+}
+
+/** "(vacía)" for the empty cells, as the filter lists them. */
+export function facetLabel(value: string): string {
+  if (value === "") return "(vacía)"
+  return value
+}
+
+/** "12 filas", or "3 de 12 filas" while filtered. */
+export function rowsLabel(shown: number, total: number, filtered: boolean) {
   const count = `${total} ${rowsNoun(total)}`
-  if (shown === total) return count
+  if (!filtered) return count
   return `${shown} de ${count}`
 }
 
 function rowsNoun(total: number): string {
   if (total === 1) return "fila"
   return "filas"
+}
+
+/** "Página 2 de 5". */
+export function pageLabel(pageIndex: number, pageCount: number): string {
+  return `Página ${pageIndex + 1} de ${Math.max(pageCount, 1)}`
 }

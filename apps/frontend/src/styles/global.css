@@ -1137,10 +1137,20 @@ html.theme-transitioning::view-transition-new(root) {
     background-color: color-mix(in oklch, var(--color-card) 40%, transparent);
   }
 
-  .doc :where(.doc-table table) {
+  /* The table fits the reading column and its cells wrap, instead of the
+     typeset's max-content width that makes every long cell scroll
+     sideways. A word longer than its column breaks (`break-word` keeps
+     short words whole when the columns share the width); the frame only
+     scrolls when the columns' shortest widths don't fit. */
+  .doc :where(.doc-table) table {
+    width: 100%;
     min-width: 100%;
     border-block-end: 0;
     font-size: 0.8125rem;
+  }
+
+  .doc :where(.doc-table tbody td) {
+    overflow-wrap: break-word;
   }
 
   .doc :where(.doc-table thead th) {
@@ -1397,9 +1407,11 @@ html.theme-transitioning::view-transition-new(root) {
   }
 }
 
-/* Interactive tables of a documentation page (`features/docs/page/model/
-   interactive-tables.ts`): sortable headers, and a search box with a count
-   over the long ones. */
+/* Interactive tables of a documentation page (`features/docs/page/
+   components/doc-tables.tsx` over `model/table-dom.ts`): sortable headers
+   and, on the long ones, a toolbar, a filter per column, highlights and
+   pages. The controls are the design system's; this styles the server's
+   table around them. */
 @layer components {
   .doc :where(.doc-table-sort) {
     display: inline-flex;
@@ -1454,44 +1466,48 @@ html.theme-transitioning::view-transition-new(root) {
     transform: rotate(180deg);
   }
 
-  .doc :where(.doc-table-bar) {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    margin-block-start: var(--typeset-flow);
-  }
-
-  .doc :where(.doc-table-bar + .doc-table) {
-    margin-block-start: 0.5rem;
-  }
-
-  .doc :where(.doc-table-search) {
-    height: 2rem;
-    width: min(100%, 16rem);
-    border: 1px solid var(--color-input);
-    border-radius: var(--radius-md);
-    background-color: var(--color-background);
-    padding-inline: 0.625rem;
-    font-size: var(--font-size-meta);
-    outline: none;
-    transition:
-      border-color 0.15s ease,
-      box-shadow 0.15s ease;
-  }
-
-  .doc :where(.doc-table-search):focus-visible {
-    border-color: var(--color-ring);
-    box-shadow: 0 0 0 3px
-      color-mix(in oklch, var(--color-ring) 50%, transparent);
-  }
-
-  .doc :where(.doc-table-count) {
-    margin-inline-start: auto;
-    color: var(--color-muted-foreground);
+  /* With Shift, several columns sort at once: each shows its place. */
+  .doc :where(.doc-table-sort[data-sort-index])::after {
+    content: attr(data-sort-index);
+    color: var(--color-primary);
     font-family: var(--font-mono);
     font-size: var(--font-size-label);
     font-variant-numeric: tabular-nums;
-    white-space: nowrap;
+  }
+
+  /* A header holds its sort button and, on a full table, its filter. */
+  .doc :where(.doc-table-th) {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.125rem;
+  }
+
+  .doc :where(.doc-table-filter:empty) {
+    display: none;
+  }
+
+  /* The toolbar over the table and the pager under it, in one box that the
+     full-screen dialog takes. */
+  .doc :where(.doc-table-box) {
+    margin-block-start: var(--typeset-flow);
+  }
+
+  .doc :where(.doc-table-box > .doc-table) {
+    margin-block: 0.5rem;
+  }
+
+  .doc :where(.doc-table-tools:empty, .doc-table-foot:empty) {
+    display: none;
+  }
+
+  .doc :where(.doc-table mark[data-table-mark]) {
+    border-radius: 0.125rem;
+    background-color: color-mix(
+      in oklch,
+      var(--color-primary) 22%,
+      transparent
+    );
+    color: inherit;
   }
 
   .doc :where(.doc-table[data-empty] tbody) {

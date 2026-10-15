@@ -3,7 +3,6 @@
 // and rereads the page on `astro:page-load`.
 
 import { withOrigin } from "@/features/docs/page/model/full-links"
-import { mountTables } from "@/features/docs/page/model/interactive-tables"
 
 const COPIED_MS = 1500
 
@@ -147,11 +146,13 @@ function setupTableOfContents() {
 
 let started = false
 
-/** Sets up the page's buttons, tables and table of contents, once. */
+/**
+ * Sets up the page's buttons and table of contents, once. The tables are
+ * the `DocTables` island's (`components/doc-tables.tsx`).
+ */
 export function onDocsPageLoad() {
   if (started) return
   started = true
-  document.addEventListener("astro:page-load", mountTables)
   setupCopyButtons()
   setupCopyMarkdown()
   setupWidthToggle()
