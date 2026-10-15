@@ -171,7 +171,15 @@ export const docsOutput = {
       icon: z.string().nullable(),
       updated: z.string().nullable().describe("`actualizado`, YYYY-MM-DD"),
       fields: z
-        .array(z.object({ name: z.string(), values: z.array(headerValue) }))
+        .array(
+          z.object({
+            name: z.string(),
+            label: z
+              .string()
+              .describe("The field's `etiqueta`, or its name without one"),
+            values: z.array(headerValue),
+          })
+        )
         .describe("The site's own header fields (`cabecera`) that are set"),
     }),
     tree: hastRoot

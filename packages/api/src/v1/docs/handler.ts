@@ -5,6 +5,7 @@ import {
   DOCS_DIR,
   entityPath,
   type FieldDefinition,
+  fieldLabel,
   isImageFile,
   type NavEntry,
   type NavNode,
@@ -233,7 +234,8 @@ function headerFields(
   for (const [name, field] of Object.entries(cabecera)) {
     if (!(name in found.header.campos)) continue
     const values = valuesOf(found.header.campos[name], field, site, routes)
-    if (values.length > 0) fields.push({ name, values })
+    if (values.length > 0)
+      fields.push({ name, label: fieldLabel(name, field), values })
   }
   return fields
 }

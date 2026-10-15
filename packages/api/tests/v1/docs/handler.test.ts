@@ -37,6 +37,7 @@ const SITE: Record<string, string> = {
     "  ver:",
     "    tipo: lista",
     "    opcional: true",
+    "    etiqueta: Ver también",
     "    de: { tipo: ficha }",
     "  maquinas:",
     "    tipo: lista",
@@ -144,7 +145,7 @@ describe("docs.nav", () => {
 })
 
 describe("docs.page", () => {
-  test("a page carries its header, tree, headings, links and the routes of its header fields", async () => {
+  test("a page carries its header, tree, headings, links and its header fields with their labels and routes", async () => {
     const { handler } = await setup([casa], inClone(casa, SITE))
     const page = await handler.page({
       context: adminContext(),
@@ -158,9 +159,14 @@ describe("docs.page", () => {
       icon: null,
       updated: null,
       fields: [
-        { name: "ver", values: [{ text: "VPN", href: "/casa/red/vpn" }] },
+        {
+          name: "ver",
+          label: "Ver también",
+          values: [{ text: "VPN", href: "/casa/red/vpn" }],
+        },
         {
           name: "maquinas",
+          label: "maquinas",
           values: [{ text: "nas", href: "/casa/catalogo/maquinas/nas" }],
         },
       ],
