@@ -300,6 +300,15 @@ sidebar se abre desde el navbar. Cada ficha lleva sus migas, los campos de la
 cabecera, la anterior y la siguiente, y en pantallas anchas el índice "En
 esta página".
 
+Las tablas de las fichas (menos las de clave/valor) se ordenan pulsando su
+cabecera, cada columna según lo que lleva (IP, fechas, tamaños, versiones,
+números o texto), y con Mayús por varias columnas a la vez. Desde 2 filas
+tienen encima una caja que filtra (`columna:valor` mira solo esa columna), un
+filtro por valores en cada cabecera, chips con los filtros activos, lo
+encontrado resaltado, un menú de columnas, "Copiar en Markdown", "Descargar
+CSV", "Copiar enlace a esta vista" (el orden y los filtros van en la URL,
+`?tabla=…`) y pantalla completa; con más de 50 filas se paginan de 25 en 25.
+
 ### Que una IA lea la documentación
 
 Cada ficha se lee también en Markdown, sin el HTML, añadiendo `/llm.txt` a su
