@@ -1,6 +1,6 @@
 import { Text, textVariants } from "@/components/shared/brand/typography"
 import { QueryState } from "@/components/shared/feedback/query-state"
-import { CopyButton } from "@/components/shared/form/copy-button"
+
 import { PageHero } from "@/components/shared/layout/page-hero"
 import { PageShell } from "@/components/shared/layout/page-shell"
 import { AppLink } from "@/components/ui/app-link"
@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { GitBrowser } from "@/features/admin/git-repository/components/git-browser"
 import { useHostedRepositories } from "@/features/admin/git-repository/hooks/use-git-browser"
 import { repositoryNamed } from "@/features/admin/git-repository/model/git-location"
+import { CopyableUrl } from "@/features/admin/shared"
 import { appSurfaces } from "@/lib/app-surfaces"
 import { getIcon } from "@/lib/icon-registry"
 import { cn } from "@/lib/utils"
@@ -74,7 +75,12 @@ export function GitRepositoryContent({ slug }: { slug: string }) {
                   }
                 />
                 {repository.pushUrl !== null && (
-                  <PushUrl url={repository.pushUrl} name={repository.name} />
+                  <CopyableUrl
+                    label="Git"
+                    labelPlacement="inline"
+                    url={repository.pushUrl}
+                    copyLabel={`Copiar la URL de git de ${repository.name}`}
+                  />
                 )}
                 <GitBrowser repository={repository} />
               </>
@@ -83,24 +89,5 @@ export function GitRepositoryContent({ slug }: { slug: string }) {
         </QueryState>
       </div>
     </PageShell>
-  )
-}
-
-function PushUrl({ url, name }: { url: string; name: string }) {
-  return (
-    <div className="flex min-w-0 items-center gap-2 rounded-md bg-muted py-1 pr-1 pl-2.5">
-      <Text variant="label" tone="muted" className="shrink-0">
-        Git
-      </Text>
-      <Text variant="data" className="min-w-0 flex-1 truncate">
-        {url}
-      </Text>
-      <CopyButton
-        text={url}
-        label={`Copiar la URL de git de ${name}`}
-        copiedLabel="URL copiada"
-        className="shrink-0"
-      />
-    </div>
   )
 }

@@ -3,6 +3,7 @@ import { getIcon } from "@/lib/icon-registry"
 const ArrowUpRight = getIcon("navigation", "openSection")
 const ChevronRight = getIcon("controls", "next")
 
+import { surfaceVariants } from "@/components/shared/brand/surface"
 import { Text, textVariants } from "@/components/shared/brand/typography"
 import { AppLink } from "@/components/ui/app-link"
 import type { SiteNavItem, SiteNavSubItem } from "@/lib/site-nav"
@@ -45,8 +46,8 @@ export function SurfaceCard({
   return (
     <article
       className={cn(
-        "group dash-enter relative flex flex-col gap-3 rounded-xl border bg-card/40 p-4",
-        "transition-colors duration-200 hover:border-foreground/15 hover:bg-muted has-focus-visible:border-foreground/15 has-focus-visible:bg-muted",
+        "group dash-enter relative flex flex-col gap-3 p-4",
+        surfaceVariants({ interactive: true }),
         className
       )}
     >

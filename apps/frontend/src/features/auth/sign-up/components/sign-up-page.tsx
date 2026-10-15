@@ -3,6 +3,7 @@ import { getIcon } from "@/lib/icon-registry"
 const Loader2 = getIcon("status", "loading")
 
 import { AppLogo } from "@/components/shared/brand/app-logo"
+import { inlineLinkClass } from "@/components/shared/brand/inline-link"
 import { Text, textVariants } from "@/components/shared/brand/typography"
 import { FormField } from "@/components/shared/form/field-label"
 import { AppLink } from "@/components/ui/app-link"
@@ -151,10 +152,7 @@ export function SignUpPage() {
           className="w-full text-center"
         >
           ¿Ya tienes cuenta?{" "}
-          <AppLink
-            href="/login"
-            className="font-medium text-foreground underline decoration-muted-foreground/40 underline-offset-4 transition-colors hover:decoration-foreground"
-          >
+          <AppLink href="/login" className={inlineLinkClass}>
             Inicia sesión
           </AppLink>
         </Text>

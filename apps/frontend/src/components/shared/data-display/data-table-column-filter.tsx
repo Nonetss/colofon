@@ -8,9 +8,9 @@ const ChevronDown = getIcon("controls", "expand")
 import { type ReactNode, useId, useState } from "react"
 import { Text } from "@/components/shared/brand/typography"
 import { Hint } from "@/components/shared/feedback/hint"
+import { CheckboxRow } from "@/components/shared/form/checkbox-row"
 import { SearchInput } from "@/components/shared/form/search-input"
 import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
 import {
   Popover,
   PopoverContent,
@@ -323,59 +323,24 @@ export function DataTableColumnFilter({
                 </li>
               ) : null}
               {!folded && !remote ? (
-                <li className="flex items-center gap-2 rounded-sm px-2 py-1.5 hover:bg-accent">
-                  <Checkbox
-                    id={`${idPrefix}-all`}
-                    checked={allChecked}
-                    onCheckedChange={toggleAll}
-                  />
-                  <label
-                    htmlFor={`${idPrefix}-all`}
-                    className="flex-1 cursor-pointer font-medium text-sm"
-                  >
-                    Seleccionar todo
-                  </label>
-                </li>
+                <CheckboxRow
+                  id={`${idPrefix}-all`}
+                  label="Seleccionar todo"
+                  emphasis
+                  checked={allChecked}
+                  onCheckedChange={toggleAll}
+                />
               ) : null}
               {visible.map((option, index) => (
-                <li
+                <CheckboxRow
                   key={option.value}
-                  className="flex items-center gap-2 rounded-sm px-2 py-1.5 hover:bg-accent"
-                >
-                  <Checkbox
-                    id={`${idPrefix}-${index}`}
-                    checked={isChecked(option.value)}
-                    onCheckedChange={() => toggle(option.value)}
-                  />
-                  <label
-                    htmlFor={`${idPrefix}-${index}`}
-                    className="flex min-w-0 flex-1 cursor-pointer items-center gap-2 text-sm"
-                  >
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate">{option.label}</span>
-                      {option.detail ? (
-                        <Text
-                          as="span"
-                          variant="data"
-                          tone="muted"
-                          className="block truncate"
-                        >
-                          {option.detail}
-                        </Text>
-                      ) : null}
-                    </span>
-                    {option.count !== undefined ? (
-                      <Text
-                        as="span"
-                        variant="compact"
-                        tone="muted"
-                        className="tabular-nums"
-                      >
-                        {option.count}
-                      </Text>
-                    ) : null}
-                  </label>
-                </li>
+                  id={`${idPrefix}-${index}`}
+                  label={option.label}
+                  detail={option.detail}
+                  count={option.count}
+                  checked={isChecked(option.value)}
+                  onCheckedChange={() => toggle(option.value)}
+                />
               ))}
             </ul>
           )}

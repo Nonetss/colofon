@@ -1,9 +1,11 @@
+import { surfaceVariants } from "@/components/shared/brand/surface"
 import { Text } from "@/components/shared/brand/typography"
-import { CopyButton } from "@/components/shared/form/copy-button"
 import { AppLink } from "@/components/ui/app-link"
 import { Button } from "@/components/ui/button"
 import type { HostedRepository } from "@/features/admin/git/model/types"
+import { CopyableUrl } from "@/features/admin/shared"
 import { getIcon } from "@/lib/icon-registry"
+import { cn } from "@/lib/utils"
 
 const FolderGit = getIcon("entities", "contentRepository")
 const Branch = getIcon("entities", "gitBranch")
@@ -17,7 +19,12 @@ export function GitRepositoryCard({
   const href = `/admin/git/${repository.slug}`
 
   return (
-    <article className="dash-enter flex w-full min-w-0 flex-col rounded-xl border bg-card/40">
+    <article
+      className={cn(
+        "dash-enter flex w-full min-w-0 flex-col",
+        surfaceVariants()
+      )}
+    >
       <header className="flex min-w-0 items-start gap-3 p-4">
         <span aria-hidden className="mt-0.5 shrink-0 text-primary">
           <FolderGit className="size-5" />
@@ -52,17 +59,10 @@ export function GitRepositoryCard({
           </Text>
         </span>
         {repository.pushUrl !== null && (
-          <div className="flex min-w-0 items-center gap-2 rounded-md bg-muted py-1 pr-1 pl-2.5">
-            <Text variant="data" className="min-w-0 flex-1 truncate">
-              {repository.pushUrl}
-            </Text>
-            <CopyButton
-              text={repository.pushUrl}
-              label={`Copiar la URL de git de ${repository.name}`}
-              copiedLabel="URL copiada"
-              className="shrink-0"
-            />
-          </div>
+          <CopyableUrl
+            url={repository.pushUrl}
+            copyLabel={`Copiar la URL de git de ${repository.name}`}
+          />
         )}
       </footer>
     </article>

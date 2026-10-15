@@ -1,4 +1,5 @@
 ---
+import { inlineLinkClass } from "@/components/shared/brand/inline-link"
 import { textVariants } from "@/components/shared/brand/typography"
 import {
   cardBlocks,
@@ -49,10 +50,7 @@ function sectionsLabel(count: number): string {
     {isAdmin ? (
       <p class={muted}>
         Añade un repositorio de contenido en{" "}
-        <a
-          href="/admin/content"
-          class="text-primary underline-offset-4 hover:underline"
-        >
+        <a href="/admin/content" class={inlineLinkClass}>
           Administración · Contenido
         </a>
         .

@@ -3,6 +3,7 @@ import { getIcon } from "@/lib/icon-registry"
 const FolderGit = getIcon("entities", "contentRepository")
 const Refresh = getIcon("actions", "refresh")
 
+import { surfaceVariants } from "@/components/shared/brand/surface"
 import { Text } from "@/components/shared/brand/typography"
 import { MetadataCell } from "@/components/shared/data-display/metadata-cell"
 import { RowActions } from "@/components/shared/data-display/row-action-items"
@@ -10,7 +11,6 @@ import {
   type StatusDotTone,
   StatusTag,
 } from "@/components/shared/data-display/status-dot"
-import { CopyButton } from "@/components/shared/form/copy-button"
 import { Button } from "@/components/ui/button"
 import {
   type ContentRepositoryCardContext,
@@ -21,6 +21,7 @@ import {
   lastSyncOf,
 } from "@/features/admin/content/model/last-sync"
 import type { ContentRepository } from "@/features/admin/content/model/types"
+import { CopyableUrl } from "@/features/admin/shared"
 import { formatDateTime } from "@/lib/format"
 import { cn } from "@/lib/utils"
 
@@ -76,7 +77,8 @@ export function ContentRepositoryCard({
   return (
     <article
       className={cn(
-        "dash-enter flex w-full min-w-0 flex-col rounded-xl border bg-card/40 transition-opacity",
+        "dash-enter flex w-full min-w-0 flex-col transition-opacity",
+        surfaceVariants(),
         busy && "opacity-60"
       )}
       aria-busy={busy}
@@ -171,35 +173,5 @@ export function ContentRepositoryCard({
         />
       </footer>
     </article>
-  )
-}
-
-/** A labelled URL in a well, with a control to copy it. */
-function CopyableUrl({
-  label,
-  url,
-  copyLabel,
-}: {
-  label: string
-  url: string
-  copyLabel: string
-}) {
-  return (
-    <div className="min-w-0">
-      <Text as="p" variant="label" tone="muted">
-        {label}
-      </Text>
-      <div className="mt-1.5 flex min-w-0 items-center gap-2 rounded-md bg-muted py-1 pr-1 pl-2.5">
-        <Text variant="data" className="min-w-0 flex-1 truncate">
-          {url}
-        </Text>
-        <CopyButton
-          text={url}
-          label={copyLabel}
-          copiedLabel="URL copiada"
-          className="shrink-0"
-        />
-      </div>
-    </div>
   )
 }

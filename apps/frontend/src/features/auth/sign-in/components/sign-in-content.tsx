@@ -4,6 +4,7 @@ const Loader2 = getIcon("status", "loading")
 const Fingerprint = getIcon("auth", "sso")
 
 import { AppLogo } from "@/components/shared/brand/app-logo"
+import { inlineLinkClass } from "@/components/shared/brand/inline-link"
 import { Text, textVariants } from "@/components/shared/brand/typography"
 import { FormField } from "@/components/shared/form/field-label"
 import { AppLink } from "@/components/ui/app-link"
@@ -170,10 +171,7 @@ export function SignInContent() {
           className="w-full text-center"
         >
           ¿No tienes cuenta?{" "}
-          <AppLink
-            href="/signup"
-            className="font-medium text-foreground underline decoration-muted-foreground/40 underline-offset-4 transition-colors hover:decoration-foreground"
-          >
+          <AppLink href="/signup" className={inlineLinkClass}>
             Regístrate
           </AppLink>
         </Text>

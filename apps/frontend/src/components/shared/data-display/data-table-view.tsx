@@ -8,6 +8,7 @@ const SortDescendingIcon = getIcon("views", "sortDescending")
 
 import type { Cell, Row, RowData } from "@tanstack/react-table"
 import { type ReactNode, type Ref, useState } from "react"
+import { surfaceVariants } from "@/components/shared/brand/surface"
 import { Text } from "@/components/shared/brand/typography"
 import { DataTableCells } from "@/components/shared/data-display/data-table-cells"
 import {
@@ -403,7 +404,8 @@ export function DataTableView<TData extends RowData>({
       <div
         ref={scrollRef}
         className={cn(
-          "min-h-0 overflow-auto rounded-xl border bg-card/40",
+          "min-h-0 overflow-auto",
+          surfaceVariants(),
           scrollClassName
         )}
       >

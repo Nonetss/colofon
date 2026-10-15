@@ -11,8 +11,8 @@ import {
   SortableItem,
   useSortableList,
 } from "@/components/shared/data-display/sortable-list"
+import { CheckboxRow } from "@/components/shared/form/checkbox-row"
 import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
 import {
   Popover,
   PopoverContent,
@@ -104,31 +104,20 @@ function ColumnRow<TData extends RowData>({
   column: MenuColumn
   handle: ReactNode
 }) {
-  const checkboxId = `data-table-column-${column.id}`
+  const note = column.canHide ? undefined : "Siempre visible"
   return (
-    <div className="flex items-center gap-2 rounded-sm py-1 pr-1 pl-2 hover:bg-muted/50">
-      <Checkbox
-        id={checkboxId}
-        checked={column.visible}
-        disabled={!column.canHide}
-        onCheckedChange={(checked) =>
-          table.getColumn(column.id)?.toggleVisibility(checked)
-        }
-      />
-      <Text
-        as="label"
-        htmlFor={checkboxId}
-        className="flex min-w-0 flex-1 flex-col"
-      >
-        <span className="truncate">{column.label}</span>
-        {column.canHide ? null : (
-          <Text variant="compact" tone="muted">
-            Siempre visible
-          </Text>
-        )}
-      </Text>
-      {handle}
-    </div>
+    <CheckboxRow
+      as="div"
+      id={`data-table-column-${column.id}`}
+      label={column.label}
+      note={note}
+      checked={column.visible}
+      disabled={!column.canHide}
+      onCheckedChange={(checked) =>
+        table.getColumn(column.id)?.toggleVisibility(checked)
+      }
+      action={handle}
+    />
   )
 }
 

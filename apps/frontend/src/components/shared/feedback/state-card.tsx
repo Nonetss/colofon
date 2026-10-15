@@ -3,6 +3,7 @@ import { getIcon } from "@/lib/icon-registry"
 const Loader2 = getIcon("status", "loading")
 
 import type { ReactNode } from "react"
+import { surfaceVariants } from "@/components/shared/brand/surface"
 import { Text } from "@/components/shared/brand/typography"
 import { cn } from "@/lib/utils"
 
@@ -32,7 +33,8 @@ export function StateCard({
   return (
     <div
       className={cn(
-        "dash-enter relative flex flex-col items-center gap-3 overflow-hidden rounded-xl border border-dashed bg-card/40 px-6 py-16 text-center",
+        "dash-enter relative flex flex-col items-center gap-3 overflow-hidden border-dashed px-6 py-16 text-center",
+        surfaceVariants(),
         tone === "celebrate" && "border-solid",
         className
       )}

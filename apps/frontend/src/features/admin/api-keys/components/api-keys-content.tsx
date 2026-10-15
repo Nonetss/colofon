@@ -5,7 +5,8 @@ const KeyRound = getIcon("entities", "apiKey")
 const Plus = getIcon("actions", "add")
 
 import { useMemo, useState } from "react"
-import { Text } from "@/components/shared/brand/typography"
+import { inlineLinkClass } from "@/components/shared/brand/inline-link"
+import { Text, textVariants } from "@/components/shared/brand/typography"
 import { DataTableView } from "@/components/shared/data-display/data-table-view"
 import { RowActions } from "@/components/shared/data-display/row-action-items"
 import { HeroCount } from "@/components/shared/layout/page-hero"
@@ -35,6 +36,7 @@ import { useSortQueryParam } from "@/hooks/use-sort-query-param"
 import { useTargetConfirmDialog } from "@/hooks/use-target-confirm-dialog"
 import { useTargetDialog } from "@/hooks/use-target-dialog"
 import { sortRows } from "@/lib/sort-rows"
+import { cn } from "@/lib/utils"
 
 export function ApiKeysContent() {
   const { data: apiKeys = [], isPending, isError, refetch } = useApiKeysList()
@@ -114,7 +116,7 @@ export function ApiKeysContent() {
                 href="/scalar"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="font-mono text-foreground underline underline-offset-4 hover:text-primary"
+                className={cn(inlineLinkClass, textVariants({ role: "data" }))}
               >
                 /scalar
               </a>

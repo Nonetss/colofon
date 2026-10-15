@@ -11,9 +11,10 @@ const LinkIcon = getIcon("actions", "copyLink")
 import type { ComponentType, KeyboardEvent } from "react"
 import { Text } from "@/components/shared/brand/typography"
 import { Hint } from "@/components/shared/feedback/hint"
+import { CheckboxRow } from "@/components/shared/form/checkbox-row"
 import { SearchInput } from "@/components/shared/form/search-input"
 import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
+
 import {
   Popover,
   PopoverContent,
@@ -117,22 +118,14 @@ function ColumnsMenu({
           {columns.map((column, index) => {
             const id = `doc-table-column-${column.id}`
             return (
-              <li
+              <CheckboxRow
                 key={column.id}
-                className="flex items-center gap-2 rounded-sm px-2 py-1.5 hover:bg-accent"
-              >
-                <Checkbox
-                  id={id}
-                  checked={!hidden.includes(column.id)}
-                  disabled={index === 0}
-                  onCheckedChange={(checked) => onToggle(column.id, checked)}
-                />
-                <label htmlFor={id} className="min-w-0 flex-1 truncate">
-                  <Text variant="meta">
-                    {column.header || `Columna ${index + 1}`}
-                  </Text>
-                </label>
-              </li>
+                id={id}
+                label={column.header || `Columna ${index + 1}`}
+                checked={!hidden.includes(column.id)}
+                disabled={index === 0}
+                onCheckedChange={(checked) => onToggle(column.id, checked)}
+              />
             )
           })}
         </ul>
