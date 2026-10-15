@@ -1,4 +1,5 @@
 import { closeStreams } from "@nonete/api/lifecycle"
+import { startContentSync } from "@nonete/api/v1/content/handler"
 import { auth } from "@nonete/auth"
 import { closeDb } from "@nonete/db"
 import { seed } from "@nonete/db/seed"
@@ -11,6 +12,7 @@ import { Hono } from "hono"
 import { cors } from "hono/cors"
 import { cronScheduler, startCron } from "@/cron"
 import { type AuthVariables, sessionMiddleware } from "@/middlewares/auth"
+import { noStoreContentSchemas } from "@/middlewares/no-store"
 import { requestLogger } from "@/middlewares/request-logger"
 import { requestTracing } from "@/middlewares/tracing"
 import authRouter from "@/routers/auth"
@@ -43,6 +45,7 @@ if (!globalThis.__backendTelemetry) {
 }
 
 async function bootstrap() {
+  startContentSync()
   await seed(auth)
   await startCron()
 }
@@ -61,6 +64,7 @@ app.use(
   })
 )
 app.use("/*", sessionMiddleware)
+app.use("/api/*", noStoreContentSchemas)
 
 app.route("/", authRouter)
 app.route("/", rpcRouter)

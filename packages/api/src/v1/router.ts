@@ -3,6 +3,7 @@ import { adminUserRouter } from "#v1/admin-user/router"
 import { apiKeyRouter } from "#v1/api-key/router"
 import { authConfigRouter } from "#v1/auth-config/router"
 import { commentRouter } from "#v1/comment/router"
+import { contentRouter } from "#v1/content/router"
 import { cronRouter } from "#v1/cron/router"
 import { entityIconRouter } from "#v1/entity-icon/router"
 import { healthRouter } from "#v1/health/router"
@@ -27,6 +28,7 @@ export const appRouter = {
   adminUser: adminUserRouter,
   logs: logsRouter,
   traces: tracesRouter,
+  content: contentRouter,
 }
 export type AppRouter = typeof appRouter
 export type AppRouterClient = RouterClient<typeof appRouter>

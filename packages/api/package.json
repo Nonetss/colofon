@@ -20,9 +20,11 @@
   },
   "dependencies": {
     "@nonete/auth": "workspace:*",
+    "@nonete/content": "workspace:*",
     "@nonete/cron": "workspace:*",
     "@nonete/db": "workspace:*",
     "@nonete/env": "workspace:*",
+    "@nonete/logger": "workspace:*",
     "@orpc/client": "catalog:",
     "@orpc/contract": "catalog:",
     "@orpc/openapi": "catalog:",
