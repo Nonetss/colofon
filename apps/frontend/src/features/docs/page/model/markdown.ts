@@ -7,7 +7,8 @@ import { toMarkdown } from "mdast-util-to-markdown"
 // written back from the tree the reader renders. The platform's own notices
 // (components it doesn't provide) are left out, `[!KIND]` alerts become
 // quotes with their title in bold, as GitHub writes them by hand, and a
-// diagram becomes its caption followed by its zones and connections.
+// diagram becomes its caption followed by its zones and connections, without
+// its drawing.
 
 export interface MarkdownSource {
   title: string
@@ -30,10 +31,17 @@ function boldTitle(node: ElementContent): ElementContent {
   return element("p", [element("strong", node.children)])
 }
 
-/** A diagram's caption, written as the paragraph that opens it. */
-function captionAsParagraph(node: ElementContent): ElementContent {
-  if (node.type !== "element" || node.tagName !== "figcaption") return node
-  return element("p", node.children)
+/**
+ * A diagram's part as Markdown: the caption as the paragraph that opens it,
+ * the text version's lists as they are (out of the block that hides them on
+ * screen), and nothing of the drawing.
+ */
+function diagramPart(node: ElementContent): ElementContent[] {
+  if (node.type !== "element") return [node]
+  if (node.tagName === "figcaption") return [element("p", node.children)]
+  if (hasClass(node, "doc-diagram-canvas")) return []
+  if (hasClass(node, "doc-diagram-text")) return node.children
+  return [node]
 }
 
 function prepare(node: ElementContent): ElementContent[] {
@@ -42,7 +50,7 @@ function prepare(node: ElementContent): ElementContent[] {
   const children = node.children.flatMap(prepare)
   if (hasClass(node, "doc-alert"))
     return [element("blockquote", children.map(boldTitle))]
-  if (hasClass(node, "doc-diagram")) return children.map(captionAsParagraph)
+  if (hasClass(node, "doc-diagram")) return children.flatMap(diagramPart)
   return [{ ...node, children }]
 }
 

@@ -145,4 +145,30 @@ describe("pageMarkdown", () => {
       "# Komodo\n\n**Cómo despliega**. Komodo manda a Periphery\n\n- [Komodo](/casa/komodo) → Periphery: deploy\n"
     )
   })
+
+  test("a drawn diagram leaves its drawing out and keeps its hidden text version", () => {
+    const markdown = pageMarkdown({
+      title: "Komodo",
+      description: "",
+      tree: root(
+        el("figure", { className: ["doc-diagram"], dataDiagram: "komodo" }, [
+          el("figcaption", {}, [el("strong", {}, [text("Cómo despliega")])]),
+          el("div", { className: ["doc-diagram-canvas"] }, [
+            el("svg", { className: ["doc-diagram-svg"] }, [
+              el("title", {}, [text("Cómo despliega")]),
+              el("text", {}, [text("Komodo")]),
+            ]),
+          ]),
+          el("div", { className: ["doc-diagram-text"] }, [
+            el("ul", { className: ["doc-diagram-connections"] }, [
+              el("li", {}, [text("Komodo → Periphery: deploy")]),
+            ]),
+          ]),
+        ])
+      ),
+    })
+    expect(markdown).toBe(
+      "# Komodo\n\n**Cómo despliega**\n\n- Komodo → Periphery: deploy\n"
+    )
+  })
 })

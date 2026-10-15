@@ -33,84 +33,110 @@ function updatedLabel(updated: string, isStaleData: boolean): string {
 }
 
 const meta = textVariants({ role: "status", tone: updatedTone(stale) })
+const LinkIcon = getIcon("actions", "copyLink")
+/** The file the page comes from, as doc-sjd shows it under the date. */
+const sourcePath = page.source === "file" ? page.path : null
+const chip = textVariants({
+  role: "compact",
+  class:
+    "inline-flex items-center gap-1.5 rounded-md border bg-card/40 px-2 py-1",
+})
+const chipLink =
+  "transition-colors hover:border-foreground/15 hover:bg-muted/60 focus-visible:outline-2 focus-visible:outline-ring"
 ---
 
-<header class="flex flex-col gap-3 border-b pb-6">
-  {page.path !== "" && (
-    <nav aria-label="Ruta" data-md-skip>
-      <ol
-        class:list={["flex flex-wrap items-center gap-x-1.5 gap-y-1", eyebrow]}
-      >
-        {trail.map((link, index) => (
-          <li class="flex items-center gap-1.5">
-            {index > 0 && (
-              <span aria-hidden="true" class="text-border">
-                /
-              </span>
-            )}
-            {link.href !== null ? (
-              <a
-                href={link.href}
-                class="rounded-sm transition-colors hover:text-foreground"
-              >
-                {link.title}
-              </a>
-            ) : (
-              <span>{link.title}</span>
-            )}
-          </li>
-        ))}
-      </ol>
-    </nav>
-  )}
-  <div class="flex items-center gap-2.5">
-    {Icon && <Icon className="size-5 shrink-0 text-primary" />}
-    <h1 class:list={[textVariants({ role: "display" }), "text-balance"]}>
-      {header.title}
-    </h1>
-  </div>
-  {header.description && (
-    <p
-      class:list={[textVariants({ role: "meta", tone: "muted" }), "max-w-3xl"]}
-    >
-      {header.description}
-    </p>
-  )}
-  {header.updated && (
-    <p class:list={["inline-flex items-center gap-1.5", meta]}>
-      <CalendarIcon className="size-3.5" />
-      {updatedLabel(header.updated, stale)}
-    </p>
-  )}
-  {header.fields.length > 0 && (
-    <dl class="mt-1 grid grid-cols-[auto_1fr] gap-x-6 gap-y-1.5 border-y py-3">
-      {header.fields.map((field) => (
-        <>
-          <dt class={eyebrow}>{field.name}</dt>
-          <dd
+<header class="flex flex-col gap-4 border-b pb-6">
+  <div
+    class="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between"
+  >
+    <div class="flex min-w-0 flex-col gap-1">
+      {page.path !== "" && (
+        <nav aria-label="Ruta" data-md-skip>
+          <ol
             class:list={[
-              textVariants({ role: "meta" }),
-              "flex flex-wrap gap-x-2",
+              "flex flex-wrap items-center gap-x-1.5 gap-y-1",
+              eyebrow,
             ]}
           >
-            {field.values.map((value, index) => (
-              <span>
-                {value.href ? (
+            {trail.map((link, index) => (
+              <li class="flex items-center gap-1.5">
+                {index > 0 && (
+                  <span aria-hidden="true" class="text-border">
+                    /
+                  </span>
+                )}
+                {link.href !== null ? (
                   <a
-                    href={value.href}
-                    class="text-primary underline-offset-4 hover:underline"
+                    href={link.href}
+                    class="rounded-sm transition-colors hover:text-foreground"
                   >
-                    {value.text}
+                    {link.title}
                   </a>
                 ) : (
-                  value.text
+                  <span>{link.title}</span>
                 )}
-                {index < field.values.length - 1 && ","}
-              </span>
+              </li>
             ))}
-          </dd>
-        </>
-      ))}
-    </dl>
-  )}
+          </ol>
+        </nav>
+      )}
+      <div class="flex items-center gap-2.5">
+        {Icon && <Icon className="size-5 shrink-0 text-primary" />}
+        <h1 class:list={[textVariants({ role: "display" }), "text-balance"]}>
+          {header.title}
+        </h1>
+      </div>
+      {header.description && (
+        <p
+          class:list={[
+            textVariants({ role: "meta", tone: "muted" }),
+            "max-w-3xl",
+          ]}
+        >
+          {header.description}
+        </p>
+      )}
+    </div>
+    {(header.updated || sourcePath) && (
+      <div class="flex min-w-0 flex-col items-start gap-1.5 sm:ml-auto sm:items-end sm:pt-1.5">
+        {header.updated && (
+          <p
+            class:list={[
+              "inline-flex items-center gap-1.5 whitespace-nowrap",
+              meta,
+            ]}
+          >
+            <CalendarIcon className="size-3.5" />
+            {updatedLabel(header.updated, stale)}
+          </p>
+        )}
+        {sourcePath && (
+          <span class={textVariants({ role: "data", tone: "muted" })}>
+            {sourcePath}
+          </span>
+        )}
+      </div>
+    )}
+  </div>
 </header>
+{header.fields.length > 0 && (
+  <dl class="mt-4 flex flex-col gap-2">
+    {header.fields.map((field) => (
+      <div class="flex flex-wrap items-center gap-1.5">
+        <dt class:list={[eyebrow, "mr-1"]}>{field.label}</dt>
+        {field.values.map((value) => (
+          <dd>
+            {value.href ? (
+              <a href={value.href} class:list={[chip, chipLink]}>
+                <LinkIcon className="size-3 text-primary" />
+                {value.text}
+              </a>
+            ) : (
+              <span class={chip}>{value.text}</span>
+            )}
+          </dd>
+        ))}
+      </div>
+    ))}
+  </dl>
+)}
