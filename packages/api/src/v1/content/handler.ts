@@ -9,6 +9,8 @@ import {
   hostedFolder,
   listRemoteBranches,
   publicUrl,
+  readFile,
+  readFolder,
   type SyncResult,
   schemaCatalog,
   TYPE_SCHEMA,
@@ -41,6 +43,7 @@ import {
 export const SCHEMAS_PATH = "/api/v1/content/schemas"
 
 const NOT_FOUND_MESSAGE = "Repositorio de contenido no encontrado"
+const NOT_IN_REPOSITORY_MESSAGE = "No existe esa rama o ruta en el repositorio"
 
 /** The absolute URL of a repository's schema catalog. */
 export function catalogUrlOf(slug: string): string {
@@ -128,6 +131,19 @@ export function createContentHandler(
       throw errors.BAD_REQUEST({ message: "Send either url or slug" })
     }
     const row = assertFound(await findRow(input.slug), NOT_FOUND_MESSAGE)
+    return gitSourceOf(row, hostedRoot)
+  }
+
+  /**
+   * The bare repository folder of the hosted repository `slug`. An external
+   * one is as unknown as a missing one. Never created here: reads don't
+   * write.
+   */
+  async function hostedFolderOf(slug: string): Promise<string> {
+    const row = await findRow(slug)
+    if (row === undefined || !isHosted(row)) {
+      throw errors.NOT_FOUND({ message: NOT_FOUND_MESSAGE })
+    }
     return gitSourceOf(row, hostedRoot)
   }
 
@@ -256,6 +272,45 @@ export function createContentHandler(
       const result = await listRemoteBranches(await branchesSourceOf(input))
       if (!result.ok) throw errors.BAD_GATEWAY({ message: result.error })
       return { branches: result.branches, defaultBranch: result.defaultBranch }
+    },
+
+    async readFolder({
+      input,
+    }: {
+      input: z.infer<typeof contentInput.readFolder>
+    }): Promise<z.infer<typeof contentOutput.readFolder>> {
+      const folder = await hostedFolderOf(input.slug)
+      const result = await readFolder(folder, input.branch, input.path)
+      if (!result.ok) {
+        throw errors.NOT_FOUND({ message: NOT_IN_REPOSITORY_MESSAGE })
+      }
+      return { entries: result.entries }
+    },
+
+    async readFile({
+      input,
+    }: {
+      input: z.infer<typeof contentInput.readFile>
+    }): Promise<z.infer<typeof contentOutput.readFile>> {
+      const folder = await hostedFolderOf(input.slug)
+      const result = await readFile(folder, input.branch, input.path)
+      if (!result.ok) {
+        throw errors.NOT_FOUND({ message: NOT_IN_REPOSITORY_MESSAGE })
+      }
+      if (result.kind === "text") {
+        return {
+          path: input.path,
+          size: result.size,
+          kind: result.kind,
+          content: result.content,
+        }
+      }
+      return {
+        path: input.path,
+        size: result.size,
+        kind: result.kind,
+        content: null,
+      }
     },
 
     async deleteRepository({

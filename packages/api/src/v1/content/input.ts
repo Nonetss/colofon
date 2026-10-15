@@ -30,6 +30,31 @@ const hosted = z
     "Host the repository on the platform, served at /git/<slug>.git, instead of reading it from a URL"
   )
 
+const branch = z
+  .string()
+  .min(1)
+  .max(255)
+  .refine((value) => !value.startsWith("-") && !value.includes(":"), {
+    message: "Not a branch name",
+  })
+  .describe("Branch to read")
+
+/** Whether `value` is a path under the repository root that can't climb. */
+function isRepositoryPath(value: string): boolean {
+  return value
+    .split("/")
+    .every((segment) => segment !== "" && segment !== "." && segment !== "..")
+}
+
+const filePath = z
+  .string()
+  .min(1)
+  .max(1024)
+  .refine(isRepositoryPath, {
+    message: "A relative path without empty, . or .. segments",
+  })
+  .describe("Path from the repository root, with / separators")
+
 /** Neither both a URL and `hosted`, nor, unless `optional`, neither. */
 function oneSource(optional: boolean) {
   return (input: { url?: string; hosted?: true }) => {
@@ -89,6 +114,17 @@ export const contentInput = {
         message: "Send either url or slug",
       }
     ),
+  readFolder: z.object({
+    slug: repository,
+    branch,
+    path: z
+      .union([z.literal(""), filePath])
+      .default("")
+      .describe(
+        "Folder from the repository root, with / separators; empty for the root"
+      ),
+  }),
+  readFile: z.object({ slug: repository, branch, path: filePath }),
   deleteRepository: z.object({ slug: repository }),
   syncRepository: z.object({ slug: repository }),
 }

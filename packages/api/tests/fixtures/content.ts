@@ -110,7 +110,8 @@ export async function createContentRemote(
   }
 }
 
-async function git(cwd: string, args: string[]) {
+/** Runs git in `cwd` with a fixed identity, failing loudly. */
+export async function git(cwd: string, args: string[]) {
   const child = Bun.spawn(
     ["git", "-c", "user.name=test", "-c", "user.email=test@test", ...args],
     {

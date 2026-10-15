@@ -44,6 +44,13 @@ const repository = z.object({
 
 export type ContentRepositoryOutput = z.infer<typeof repository>
 
+const folderEntry = z.object({
+  name: z.string(),
+  path: z.string().describe("Path from the repository root"),
+  kind: z.enum(["folder", "file", "submodule"]),
+  size: z.number().int().nullable().describe("Bytes, for a file"),
+})
+
 export const contentOutput = {
   schemaCatalog: z
     .object({
@@ -74,6 +81,22 @@ export const contentOutput = {
       .string()
       .nullable()
       .describe("The branch the remote's HEAD points at, when it has one"),
+  }),
+  readFolder: z.object({
+    entries: z
+      .array(folderEntry)
+      .describe("The folder's entries, folders first, then by name"),
+  }),
+  readFile: z.object({
+    path: z.string(),
+    size: z.number().int().describe("Bytes"),
+    kind: z
+      .enum(["text", "binary", "too-large"])
+      .describe("Whether the content is included, and why not"),
+    content: z
+      .string()
+      .nullable()
+      .describe("UTF-8 text of a text file within the size limit; else null"),
   }),
   deleteRepository: z.object({ id: z.uuid(), success: z.boolean() }),
   syncRepository: repository,

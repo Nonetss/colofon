@@ -147,6 +147,34 @@ export const contentRouter = {
     .output(contentOutput.deleteRepository)
     .handler(({ input }) => contentHandler.deleteRepository({ input })),
 
+  readFolder: adminProcedure
+    .meta(
+      openapi({
+        summary: "Read a folder of a hosted repository",
+        description:
+          "Entries of one folder (the root when `path` is empty) on one branch of a content repository the platform hosts, read from its bare repository: folders first, then by name, with each file's size. NOT_FOUND for an unknown or external repository, a branch it lacks, or a path that is not a folder on that branch.",
+        tags,
+        method: "GET",
+      })
+    )
+    .input(contentInput.readFolder)
+    .output(contentOutput.readFolder)
+    .handler(({ input }) => contentHandler.readFolder({ input })),
+
+  readFile: adminProcedure
+    .meta(
+      openapi({
+        summary: "Read a file of a hosted repository",
+        description:
+          "One file on one branch of a content repository the platform hosts, read from its bare repository: its size and, for a text file of at most 512 KiB, its UTF-8 content. A binary or larger file comes without content. NOT_FOUND for an unknown or external repository, a branch it lacks, or a path that is not a file on that branch.",
+        tags,
+        method: "GET",
+      })
+    )
+    .input(contentInput.readFile)
+    .output(contentOutput.readFile)
+    .handler(({ input }) => contentHandler.readFile({ input })),
+
   syncRepository: adminProcedure
     .meta(
       openapi({
