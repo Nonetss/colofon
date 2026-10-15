@@ -89,3 +89,20 @@ function holds(nodes: readonly DocsNavNode[], pathname: string): boolean {
     return holds(node.children, pathname)
   })
 }
+
+/** How many pages `node` holds: itself and every page under it. */
+function pagesIn(node: DocsNavNode): number {
+  if (node.kind === "page") return 1
+  return node.children.reduce((total, child) => total + pagesIn(child), 1)
+}
+
+/**
+ * The fact a section's card shows: how many pages it holds, itself included
+ * ("5 fichas"). A page has none.
+ */
+export function pagesMeta(node: DocsNavNode): string | undefined {
+  if (node.kind === "page") return undefined
+  const count = pagesIn(node)
+  if (count === 1) return "1 ficha"
+  return `${count} fichas`
+}

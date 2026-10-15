@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test"
 import {
   type DocsRepository,
   flattenPages,
+  pagesMeta,
   sectionsAbove,
 } from "@/features/docs/shared/model/nav"
 
@@ -77,5 +78,26 @@ describe("sectionsAbove", () => {
 
   test("a page outside every section opens nothing", () => {
     expect(sectionsAbove(casa.nodes, "/casa")).toEqual([])
+  })
+})
+
+describe("pagesMeta", () => {
+  const [red] = casa.nodes
+
+  test("a section counts itself and every page under it", () => {
+    if (red === undefined) throw new Error("fixture without sections")
+    expect(pagesMeta(red)).toBe("4 fichas")
+  })
+
+  test("a section alone is one ficha", () => {
+    expect(
+      pagesMeta({ kind: "section", ...entry("vacia", "Vacía"), children: [] })
+    ).toBe("1 ficha")
+  })
+
+  test("a page shows no count", () => {
+    expect(pagesMeta({ kind: "page", ...entry("red/dns", "DNS") })).toBe(
+      undefined
+    )
   })
 })

@@ -1,16 +1,24 @@
 ---
 import { textVariants } from "@/components/shared/brand/typography"
-import type { DocsNav } from "@/features/docs/shared"
+import { DocCard, type DocsNav, pagesMeta } from "@/features/docs/shared"
 
 interface Props {
   nav: DocsNav
   isAdmin: boolean
 }
 
-// The "Todos" home: every repository as a section of one document, with its
-// description and top-level sections listed under it. No cards.
+// The "Todos" home: every repository as a block headed by its name and
+// description, its top-level sections as cards that come in one after
+// another.
 const { nav, isAdmin } = Astro.props
 const muted = textVariants({ role: "meta", tone: "muted" })
+const label = textVariants({ role: "label", tone: "muted" })
+
+/** "3 secciones" under a repository's name. */
+function sectionsLabel(count: number): string {
+  if (count === 1) return "1 sección"
+  return `${count} secciones`
+}
 ---
 
 <header class="flex flex-col gap-2 border-b pb-6">
@@ -43,44 +51,47 @@ const muted = textVariants({ role: "meta", tone: "muted" })
     )}
   </section>
 ) : (
-  <div class="mt-8 flex flex-col gap-12">
-    {nav.repositories.map((repository) => (
+  <div class="mt-8 flex flex-col gap-10">
+    {nav.repositories.map((repository, repositoryIndex) => (
       <section
-        class="flex flex-col gap-3"
+        class="@container flex flex-col gap-3"
         aria-labelledby={`repo-${repository.slug}`}
       >
-        <h2
-          id={`repo-${repository.slug}`}
-          class={textVariants({ role: "headline" })}
-        >
-          <a
-            href={`/${repository.slug}`}
-            class="transition-colors hover:text-primary"
-          >
-            {repository.name}
-          </a>
-        </h2>
-        {repository.description && (
-          <p class:list={[muted, "max-w-3xl"]}>{repository.description}</p>
-        )}
+        <div class="flex flex-wrap items-end justify-between gap-x-3 gap-y-1">
+          <div class="min-w-0">
+            <h2 id={`repo-${repository.slug}`} class={label}>
+              <a
+                href={`/${repository.slug}`}
+                class="transition-colors hover:text-foreground"
+              >
+                {repository.name}
+              </a>
+            </h2>
+            {repository.description && (
+              <p class:list={[muted, "mt-1 max-w-3xl"]}>
+                {repository.description}
+              </p>
+            )}
+          </div>
+          {repository.available && (
+            <span class={textVariants({ role: "data", tone: "muted" })}>
+              {sectionsLabel(repository.nodes.length)}
+            </span>
+          )}
+        </div>
         {repository.available ? (
           repository.nodes.length > 0 && (
-            <ul class="divide-y border-y">
-              {repository.nodes.map((node) => (
-                <li>
-                  <a href={node.href} class="group flex flex-col gap-0.5 py-3">
-                    <span
-                      class:list={[
-                        textVariants({ role: "title" }),
-                        "group-hover:text-primary",
-                      ]}
-                    >
-                      {node.title}
-                    </span>
-                    {node.description && (
-                      <span class={muted}>{node.description}</span>
-                    )}
-                  </a>
+            <ul class="grid grid-cols-1 gap-3 @xl:grid-cols-2 @4xl:grid-cols-3">
+              {repository.nodes.map((node, index) => (
+                <li class="flex">
+                  <DocCard
+                    href={node.href}
+                    title={node.title}
+                    description={node.description}
+                    icon={node.icon}
+                    meta={pagesMeta(node)}
+                    delay={Math.min(repositoryIndex * 30 + index * 40, 400)}
+                  />
                 </li>
               ))}
             </ul>

@@ -1,0 +1,60 @@
+---
+import { textVariants } from "@/components/shared/brand/typography"
+import { loadIcon } from "@/features/docs/shared/model/icon"
+import { getIcon } from "@/lib/icon-registry"
+
+interface Props {
+  href: string
+  title: string
+  description?: string
+  /** Lucide name from the page's `icono`; none draws no icon. */
+  icon?: string | null
+  /** Small mono fact at the bottom ("5 fichas"). */
+  meta?: string
+  /** Entrance delay in ms, for a grid that comes in one card after another. */
+  delay?: number
+}
+
+// A page or section of the documentation as a card: its icon, title and
+// description, and a fact under a rule. The home and a section's pages use it.
+const { href, title, description, icon = null, meta, delay = 0 } = Astro.props
+const Icon = await loadIcon(icon)
+const ChevronRight = getIcon("controls", "chevronRight")
+---
+
+<a
+  href={href}
+  style={`--dash-delay:${delay}ms`}
+  class="group dash-enter flex min-w-0 flex-1 items-start gap-2.5 rounded-xl border bg-card/40 p-4 outline-none transition-colors duration-200 hover:border-foreground/15 hover:bg-muted/40 focus-visible:ring-[3px] focus-visible:ring-ring/50"
+>
+  {Icon && <Icon aria-hidden className="size-5 shrink-0 text-primary" />}
+  <span class="flex min-w-0 flex-1 flex-col gap-1">
+    <span class:list={[textVariants({ role: "headline" }), "truncate"]}>
+      {title}
+    </span>
+    {description && (
+      <span
+        class:list={[
+          textVariants({ role: "meta", tone: "muted" }),
+          "line-clamp-2 min-h-[2.9em] leading-relaxed",
+        ]}
+      >
+        {description}
+      </span>
+    )}
+    {meta && (
+      <span
+        class:list={[
+          "mt-2 border-t pt-2.5",
+          textVariants({ role: "data", tone: "muted" }),
+        ]}
+      >
+        {meta}
+      </span>
+    )}
+  </span>
+  <ChevronRight
+    aria-hidden
+    className="size-4 shrink-0 text-muted-foreground transition-[color,transform] group-hover:translate-x-0.5 group-hover:text-foreground"
+  />
+</a>
