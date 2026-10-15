@@ -1,3 +1,4 @@
+import { textVariants } from "@/components/shared/brand/typography"
 import { AppLink } from "@/components/ui/app-link"
 import {
   SidebarMenu,
@@ -26,6 +27,15 @@ function foldLabel(open: boolean, title: string): string {
   if (open) return `Plegar ${title}`
   return `Desplegar ${title}`
 }
+
+/** A page or subsection under a section: smaller and muted until current. */
+const subButton = cn(
+  textVariants({ role: "meta", tone: "muted" }),
+  "h-auto min-h-7 py-1 hover:bg-sidebar-accent/60 hover:text-foreground data-active:font-medium data-active:text-sidebar-accent-foreground"
+)
+
+/** Top-level rows lighten on hover; the current one takes the accent. */
+const rowButton = "hover:bg-sidebar-accent/60"
 
 function iconClass(active: boolean): string {
   if (active) return "text-primary"
@@ -63,10 +73,27 @@ function FoldButton({
   )
 }
 
+/** Where the guide line sits: under the section's icon, or a level deeper. */
+function guideIndent(nested: boolean): string {
+  if (nested) return "ml-3"
+  return "ml-4.25"
+}
+
 /** Pages and subsections inside a section, with the guide line on the left. */
-function SubTree({ nodes, pathname, open, onToggle }: NavTreeProps) {
+function SubTree({
+  nodes,
+  pathname,
+  open,
+  onToggle,
+  nested = false,
+}: NavTreeProps & { nested?: boolean }) {
   return (
-    <SidebarMenuSub className="mr-0 pr-0">
+    <SidebarMenuSub
+      className={cn(
+        "mx-0 mt-0.5 mb-1 translate-x-0 gap-0.5 pr-0 pl-2",
+        guideIndent(nested)
+      )}
+    >
       {nodes.map((node) => {
         const active = node.href === pathname
         if (node.kind === "page") {
@@ -74,6 +101,7 @@ function SubTree({ nodes, pathname, open, onToggle }: NavTreeProps) {
             <SidebarMenuSubItem key={node.href}>
               <SidebarMenuSubButton
                 isActive={active}
+                className={subButton}
                 render={<AppLink href={node.href} />}
               >
                 <span>{node.title}</span>
@@ -87,7 +115,7 @@ function SubTree({ nodes, pathname, open, onToggle }: NavTreeProps) {
             <div className="flex items-center gap-0.5">
               <SidebarMenuSubButton
                 isActive={active}
-                className="flex-1"
+                className={cn(subButton, "flex-1")}
                 render={<AppLink href={node.href} />}
               >
                 <span>{node.title}</span>
@@ -100,6 +128,7 @@ function SubTree({ nodes, pathname, open, onToggle }: NavTreeProps) {
                 pathname={pathname}
                 open={open}
                 onToggle={onToggle}
+                nested
               />
             ) : null}
           </SidebarMenuSubItem>
@@ -121,6 +150,7 @@ export function DocsNavTree({ nodes, pathname, open, onToggle }: NavTreeProps) {
             <SidebarMenuItem key={node.href}>
               <SidebarMenuButton
                 isActive={active}
+                className={rowButton}
                 render={<AppLink href={node.href} />}
               >
                 <DocIcon name={node.icon} className={iconClass(active)} />
@@ -134,7 +164,7 @@ export function DocsNavTree({ nodes, pathname, open, onToggle }: NavTreeProps) {
           <SidebarMenuItem key={node.href}>
             <SidebarMenuButton
               isActive={active}
-              className={cn(inside && "font-medium")}
+              className={cn(rowButton, inside && "font-medium text-foreground")}
               render={<AppLink href={node.href} />}
             >
               <DocIcon

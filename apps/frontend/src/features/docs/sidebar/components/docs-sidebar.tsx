@@ -149,6 +149,7 @@ function SidebarBody({ initialNav, initialScope }: DocsSidebarProps) {
             <SidebarMenuItem>
               <SidebarMenuButton
                 isActive={pathname === home}
+                className="hover:bg-sidebar-accent/60"
                 render={<AppLink href={home} />}
               >
                 <HomeIcon aria-hidden className={iconTone(pathname === home)} />
@@ -192,7 +193,7 @@ function RepositoryGroup({
           render={<AppLink href={`/${repository.slug}`} />}
           className={cn(
             textVariants({ role: "label", tone: "muted" }),
-            "hover:text-foreground"
+            "h-7 hover:text-foreground"
           )}
         >
           {repository.name}

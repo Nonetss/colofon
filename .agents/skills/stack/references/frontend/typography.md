@@ -12,6 +12,7 @@ Product text goes through the `Text` component (`apps/frontend/src/components/sh
 
 - **Tokens**: `--font-size-*`, `--line-height-*` and `--tracking-caps` / `--tracking-eyebrow` in `:root` of `apps/frontend/src/styles/global.css`, and a `--text-<role>` entry per role in its `@theme inline` block. A `text-<role>` utility sets only the size (plus line height for `meta-sm` and `status`).
 - **Recipes**: each role's full class list (weight, tracking, leading, case) is `textVariants` in `typography.tsx`, the single source of truth. Read it there instead of copying it.
+- **Scoped sizes**: the documentation reader's page column (`layouts/Docs.astro`) sets `--font-size-display: 1.75rem`, so page titles read larger there than in `/admin`. Scope a token on a layout element like that instead of adding a one-off role.
 - **Merging**: `cn()` (`src/lib/utils.ts`, built with `createCn` from the `cn` package) registers the role names as font sizes. Without that, `text-label` next to `text-muted-foreground` is taken as a second text color and dropped. shadcn registry components import `cn` straight from `"cn"`, which lacks the roles: after `shadcn add`, rewrite that import to `@/lib/utils`, and never run `shadcn migrate cn`.
 
 ## Choosing a role

@@ -22,7 +22,9 @@ const { title, nav, storedScope, wide = false } = Astro.props
   The documentation reader. The window scrolls; the sidebar and the table of
   contents stick below the navbar. The sidebar is a persisted island, so it
   keeps its scroll and open sections across navigations; its wrapper reserves
-  its width before it hydrates. Only the page column fades.
+  its width before it hydrates. Only the page column fades. The page title
+  reads larger here than in the app's other pages: the column scopes the
+  `display` role's size.
 -->
 <Layout
   title={title}
@@ -43,7 +45,7 @@ const { title, nav, storedScope, wide = false } = Astro.props
       />
     </div>
     <main
-      class="flex min-w-0 flex-1 justify-center gap-10 px-4 py-8 sm:px-8"
+      class="flex min-w-0 flex-1 justify-center gap-10 px-4 py-8 [--font-size-display:1.75rem] sm:px-8"
       transition:animate={fade({ duration: "0.2s" })}
     >
       <article

@@ -382,7 +382,7 @@
   --sidebar-primary-foreground: oklch(0.9881 0 0);
   --sidebar-accent: oklch(0.168 0.002 106.6177);
   --sidebar-accent-foreground: oklch(0.8074 0.0142 93.0137);
-  --sidebar-border: oklch(0.955 0.003 98);
+  --sidebar-border: var(--border);
   --sidebar-ring: oklch(0.7731 0 0);
   --font-sans: "Space Grotesk Variable", "Space Grotesk", sans-serif;
   --font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
@@ -826,6 +826,89 @@ html.theme-transitioning::view-transition-new(root) {
 @layer components {
   .doc :where([id]) {
     scroll-margin-block-start: calc(var(--navbar-height) + 1.5rem);
+  }
+
+  /* Body a step below the white of headings and bold in dark mode, so those
+     stand out by more than their weight. */
+  .dark .doc {
+    color: color-mix(
+      in oklch,
+      var(--color-foreground) 92%,
+      var(--color-muted-foreground)
+    );
+  }
+
+  /* A rule over every section but the first. */
+  .doc :where(h2) {
+    border-block-start: 1px solid var(--color-border);
+    padding-block-start: 1.25rem;
+    letter-spacing: -0.01em;
+  }
+
+  .doc > :where(h2):first-child {
+    border-block-start: 0;
+    padding-block-start: 0;
+  }
+
+  .doc :where(h3) {
+    letter-spacing: -0.01em;
+  }
+
+  .doc :where(p, li) {
+    text-wrap: pretty;
+  }
+
+  /* Bold sits on a soft tint of the accent, so it shows at a glance without
+     shouting or looking like a link. */
+  .doc :where(strong, b) {
+    font-weight: 700;
+    color: var(--color-foreground);
+    background-color: color-mix(
+      in oklch,
+      var(--color-primary) 13%,
+      transparent
+    );
+    border-radius: 0.2em;
+    padding-inline: 0.15em;
+    box-decoration-break: clone;
+  }
+
+  .doc :where(:is(a, h1, h2, h3, h4, .doc-alert) :is(strong, b), strong a) {
+    background-color: transparent;
+    padding-inline: 0;
+  }
+
+  /* Links in the accent toned towards the text, with a thick underline that
+     moves away on hover (no weight change, so nothing reflows). */
+  .doc :where(a) {
+    color: color-mix(
+      in oklch,
+      var(--color-primary) 78%,
+      var(--color-foreground)
+    );
+    font-weight: 500;
+    text-decoration-color: color-mix(
+      in oklch,
+      var(--color-primary) 55%,
+      transparent
+    );
+    text-decoration-thickness: 2px;
+    text-underline-offset: 0.2em;
+    transition:
+      color 0.15s ease,
+      text-underline-offset 0.15s ease;
+  }
+
+  .doc :where(a):hover {
+    color: var(--color-primary);
+    font-weight: 500;
+    text-decoration-color: var(--color-primary);
+    text-underline-offset: 0.35em;
+  }
+
+  .doc :where(:is(h1, h2, h3, h4) a, a.doc-anchor) {
+    color: inherit;
+    text-decoration: none;
   }
 
   .doc :where(.doc-anchor) {
