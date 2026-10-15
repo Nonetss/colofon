@@ -33,6 +33,7 @@ const { title, nav, storedScope, wide = false } = Astro.props
   scrollToTop
   bodyAttributes={{ [DOCS_SIDEBAR_ATTRIBUTE]: "" }}
 >
+  <slot name="head" slot="head" />
   <div class="flex w-full">
     <div
       class="sticky top-(--navbar-height) hidden h-[calc(100dvh-var(--navbar-height))] w-64 shrink-0 border-sidebar-border border-r bg-sidebar md:block lg:w-72"

@@ -56,6 +56,14 @@ export default defineConfig({
         context: "server",
         default: "http://localhost:3000",
       }),
+      // The public origin the browser uses (the backend reads the same
+      // variable): full links in `llms.txt` and `llm.txt`. Unset, those
+      // routes use the request's own origin.
+      CORS_ORIGIN: envField.string({
+        access: "secret",
+        context: "server",
+        optional: true,
+      }),
     },
   },
 

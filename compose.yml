@@ -19,6 +19,8 @@ services:
     environment:
       NODE_ENV: production
       BACKEND_URL: http://backend:3000
+      # The public origin: full links in `llms.txt` and every `llm.txt`.
+      CORS_ORIGIN: http://localhost:${FRONTEND_PORT:-4444}
     depends_on:
       backend:
         condition: service_healthy

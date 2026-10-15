@@ -3,4 +3,6 @@ export { default as DocChildren } from "@/features/docs/page/components/doc-chil
 export { default as DocHero } from "@/features/docs/page/components/doc-hero.astro"
 export { default as DocPager } from "@/features/docs/page/components/doc-pager.astro"
 export { default as DocToc } from "@/features/docs/page/components/doc-toc.astro"
+export { withOrigin } from "@/features/docs/page/model/full-links"
+export { pageMarkdown } from "@/features/docs/page/model/markdown"
 export type { DocsPage } from "@/features/docs/page/model/types"

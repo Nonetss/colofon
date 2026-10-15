@@ -1,5 +1,4 @@
 ---
-import { ORPCError } from "@orpc/client"
 import {
   DocBody,
   DocChildren,
@@ -9,6 +8,7 @@ import {
 } from "@/features/docs/page"
 import {
   DOCS_SCOPE_COOKIE,
+  isMissing,
   SCOPE_COOKIE_MAX_AGE,
   scopeToStore,
 } from "@/features/docs/shared"
@@ -26,12 +26,6 @@ function scopeNow(
 ): string | undefined {
   if (store !== undefined) return store
   return stored
-}
-
-/** An answer meaning there is no such page (or the path can't be one). */
-function isMissing(error: unknown): boolean {
-  if (!(error instanceof ORPCError)) return false
-  return error.code === "NOT_FOUND" || error.code === "BAD_REQUEST"
 }
 
 const client = createServerClient(Astro.request)
@@ -66,6 +60,12 @@ const title = `${page.header.title} · ${page.repository.name}`
 ---
 
 <Docs title={title} nav={nav} storedScope={scope}>
+  <link
+    slot="head"
+    rel="alternate"
+    type="text/markdown"
+    href={`${page.href}/llm.txt`}
+  >
   <DocHero page={page} />
   <DocBody page={page} />
   <DocChildren page={page} />
