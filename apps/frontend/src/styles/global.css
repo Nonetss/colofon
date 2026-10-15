@@ -225,6 +225,9 @@
 @plugin "@tailwindcss/typography";
 
 @custom-variant dark (&:is(.dark *));
+/* The reader at the whole width of the screen (`data-reading-width-full` on
+   <html>, set by the "Ancho completo" button of a documentation page). */
+@custom-variant reading-full (&:is([data-reading-width-full] *));
 
 :root {
   --brand-orange: oklch(0.6724 0.1308 38.7559);

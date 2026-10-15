@@ -123,6 +123,8 @@ const viewIcons = {
   sortable: Lucide.ArrowUpDown,
   sortAscending: Lucide.ArrowUp,
   sortDescending: Lucide.ArrowDown,
+  fullWidth: Lucide.UnfoldHorizontal,
+  readingWidth: Lucide.FoldHorizontal,
 } as const
 
 const communicationIcons = {

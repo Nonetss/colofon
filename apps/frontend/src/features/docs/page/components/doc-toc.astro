@@ -1,12 +1,29 @@
 ---
 import { textVariants } from "@/components/shared/brand/typography"
+import { pageMarkdown } from "@/features/docs/page/model/markdown"
 import type { DocsPage } from "@/features/docs/page/model/types"
+import { getIcon } from "@/lib/icon-registry"
 
 interface Props {
   page: DocsPage
 }
 
-const { headings } = Astro.props.page
+const { page } = Astro.props
+const { headings } = page
+const markdown = pageMarkdown({
+  title: page.header.title,
+  description: page.header.description,
+  tree: page.tree,
+})
+// JSON inside a script tag: "<" escaped so the text cannot close it.
+const json = JSON.stringify(markdown).replace(/</g, "\\u003c")
+const CopyIcon = getIcon("actions", "copy")
+const CheckIcon = getIcon("controls", "check")
+const FullWidthIcon = getIcon("views", "fullWidth")
+const ReadingWidthIcon = getIcon("views", "readingWidth")
+const tool = textVariants({ role: "compact", tone: "muted" })
+const toolButton =
+  "group/tool inline-flex h-8 w-full items-center gap-2 rounded-md border border-input bg-background px-2.5 outline-none transition-colors hover:border-foreground/15 hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50"
 const link =
   "-ml-px block border-transparent border-l-2 py-1 pr-2 text-muted-foreground transition-colors hover:text-foreground data-current:border-primary data-current:font-medium data-current:text-primary"
 ---
@@ -14,6 +31,42 @@ const link =
 <aside
   class="sticky top-[calc(var(--navbar-height)+2rem)] hidden max-h-[calc(100dvh-var(--navbar-height)-4rem)] w-56 shrink-0 self-start overflow-y-auto xl:block"
 >
+  <button
+    type="button"
+    data-copy-md
+    class:list={[
+      tool,
+      toolButton,
+      "mb-2 data-done:border-primary/40 data-done:text-primary",
+    ]}
+  >
+    <CopyIcon
+      aria-hidden
+      className="size-3.5 shrink-0 group-data-done/tool:hidden"
+    />
+    <CheckIcon
+      aria-hidden
+      className="hidden size-3.5 shrink-0 group-data-done/tool:block"
+    />
+    <span data-copy-md-label>Copiar en Markdown</span>
+  </button>
+  <script type="application/json" id="page-markdown" set:html={json} />
+  <button
+    type="button"
+    data-width-toggle
+    class:list={[tool, toolButton, "mb-6"]}
+  >
+    <FullWidthIcon
+      aria-hidden
+      className="size-3.5 shrink-0 reading-full:hidden"
+    />
+    <ReadingWidthIcon
+      aria-hidden
+      className="hidden size-3.5 shrink-0 reading-full:block"
+    />
+    <span class="reading-full:hidden">Ancho completo</span>
+    <span class="hidden reading-full:inline">Ancho de lectura</span>
+  </button>
   {headings.length > 2 && (
     <nav id="toc" aria-label="En esta página">
       <p class:list={["mb-3", textVariants({ role: "label", tone: "muted" })]}>

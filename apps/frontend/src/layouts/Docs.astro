@@ -49,7 +49,10 @@ const { title, nav, storedScope, wide = false } = Astro.props
       transition:animate={fade({ duration: "0.2s" })}
     >
       <article
-        class:list={["min-w-0 flex-1", wide ? "max-w-5xl" : "max-w-4xl"]}
+        class:list={[
+          "min-w-0 flex-1 reading-full:max-w-none",
+          wide ? "max-w-5xl" : "max-w-4xl",
+        ]}
       >
         <slot />
       </article>

@@ -82,10 +82,21 @@ const isAdmin = isAdminUser(user)
             : "light"
       doc.documentElement.classList.toggle("dark", theme === "dark")
     }
+    // The reader's page width ("Ancho completo"), set before painting like
+    // the theme so a full-width page doesn't open narrow and then jump.
+    function applyReadingWidth(doc) {
+      let full = false
+      try {
+        full = localStorage.getItem("docs-width") === "full"
+      } catch {}
+      doc.documentElement.toggleAttribute("data-reading-width-full", full)
+    }
     applyTheme(document)
-    document.addEventListener("astro:before-swap", (event) =>
+    applyReadingWidth(document)
+    document.addEventListener("astro:before-swap", (event) => {
       applyTheme(event.newDocument)
-    )
+      applyReadingWidth(event.newDocument)
+    })
     window
       .matchMedia("(prefers-color-scheme: dark)")
       .addEventListener("change", () => applyTheme(document))

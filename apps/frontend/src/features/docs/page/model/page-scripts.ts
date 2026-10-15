@@ -29,6 +29,62 @@ function setupCopyButtons() {
   })
 }
 
+const COPY_MD_LABEL = "Copiar en Markdown"
+const WIDTH_STORAGE_KEY = "docs-width"
+const FULL_WIDTH_ATTRIBUTE = "data-reading-width-full"
+
+/** The page's Markdown, its reader routes made full addresses to paste. */
+function pageMarkdown(): string {
+  const source = document.getElementById("page-markdown")?.textContent
+  if (source === undefined || source === null || source === "") return ""
+  const markdown: unknown = JSON.parse(source)
+  if (typeof markdown !== "string") return ""
+  return markdown.replaceAll("](/", `](${window.location.origin}/`)
+}
+
+function copiedLabel(done: boolean): string {
+  if (done) return "Copiado"
+  return "No se pudo copiar"
+}
+
+function setupCopyMarkdown() {
+  let timer: number | undefined
+  document.addEventListener("click", async (event) => {
+    if (!(event.target instanceof Element)) return
+    const button = event.target.closest("[data-copy-md]")
+    if (button === null) return
+    const label = button.querySelector("[data-copy-md-label]")
+    let done = true
+    try {
+      await navigator.clipboard.writeText(pageMarkdown())
+    } catch {
+      done = false
+    }
+    if (label !== null) label.textContent = copiedLabel(done)
+    button.toggleAttribute("data-done", done)
+    window.clearTimeout(timer)
+    timer = window.setTimeout(() => {
+      if (label !== null) label.textContent = COPY_MD_LABEL
+      button.removeAttribute("data-done")
+    }, COPIED_MS)
+  })
+}
+
+/** Reading width (the default) or the whole screen, remembered. */
+function setupWidthToggle() {
+  document.addEventListener("click", (event) => {
+    if (!(event.target instanceof Element)) return
+    if (event.target.closest("[data-width-toggle]") === null) return
+    const full = document.documentElement.toggleAttribute(FULL_WIDTH_ATTRIBUTE)
+    try {
+      if (full) localStorage.setItem(WIDTH_STORAGE_KEY, "full")
+      else localStorage.removeItem(WIDTH_STORAGE_KEY)
+    } catch {
+      // Without storage the width still changes, just for this visit.
+    }
+  })
+}
+
 /** Pixels from the top of the window where reading happens. */
 function readingLine(): number {
   const navbar = Number.parseFloat(
@@ -88,10 +144,12 @@ function setupTableOfContents() {
 
 let started = false
 
-/** Sets up the copy buttons and the table of contents, once. */
+/** Sets up the page's buttons and the table of contents, once. */
 export function onDocsPageLoad() {
   if (started) return
   started = true
   setupCopyButtons()
+  setupCopyMarkdown()
+  setupWidthToggle()
   setupTableOfContents()
 }
