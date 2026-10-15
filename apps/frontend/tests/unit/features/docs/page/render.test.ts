@@ -42,8 +42,22 @@ describe("renderBlocks", () => {
       )
     )
     expect(html).toBe(
-      '<div class="doc-code"><div class="doc-code-bar" data-md-skip><span class="doc-code-language">yaml</span><button type="button" class="doc-code-copy" data-copy>Copiar</button></div><pre><code class="language-yaml">a: 1\n</code></pre></div>'
+      '<div class="doc-code"><div class="doc-code-bar" data-md-skip><span class="doc-code-language">yaml</span><button type="button" class="doc-code-copy" data-copy>Copiar</button></div><pre><code class="language-yaml"><span class="th-token th-property">a</span>: <span class="th-token th-string">1</span>\n</code></pre></div>'
     )
+  })
+
+  test("a yaml comment is coloured and the text stays in the block", () => {
+    const html = renderPage(
+      root(
+        el("pre", {}, [
+          el("code", { className: ["language-yaml"] }, [
+            { type: "text", value: "a: 1 # nota\n" },
+          ]),
+        ])
+      )
+    )
+    expect(html).toContain('<span class="th-token th-property">a</span>')
+    expect(html).toContain('<span class="th-token th-comment"># nota</span>')
   })
 
   test("a code block without language still gets the copy button", () => {

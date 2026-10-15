@@ -1,5 +1,6 @@
 import type { Element, ElementContent, Root, RootContent } from "hast"
 import { toHtml } from "hast-util-to-html"
+import { codeTokens } from "@/features/docs/page/model/code-highlight"
 import {
   type SectionKind,
   sectionKindOf,
@@ -7,9 +8,10 @@ import {
 
 // Turns a page tree from the API (already sanitized by the backend) into the
 // HTML the reader shows. Only presentation is added here: frames around code
-// and tables, the copy button, anchors on headings, zoomable lazy images, new
-// tabs for links that leave the site, and the known sections (`sections.ts`)
-// split apart so the page can dress them.
+// and tables, TanStack Highlight spans inside fenced blocks, the copy button,
+// anchors on headings, zoomable lazy images, new tabs for links that leave
+// the site, and the known sections (`sections.ts`) split apart so the page
+// can dress them.
 
 const ANCHORED_HEADINGS = new Set(["h2", "h3", "h4"])
 
@@ -38,6 +40,37 @@ function languageOf(pre: Element): string | null {
   return null
 }
 
+/** The block's text as coloured spans. Plain tokens stay text. */
+function highlighted(code: string, language: string | null): ElementContent[] {
+  const children: ElementContent[] = []
+  for (const token of codeTokens(code, language)) {
+    if (token.value === "") continue
+    if (token.className === undefined) {
+      children.push(text(token.value))
+      continue
+    }
+    children.push(
+      element("span", { className: ["th-token", `th-${token.className}`] }, [
+        text(token.value),
+      ])
+    )
+  }
+  return children
+}
+
+/** The `<code>` inside a fence, with its text replaced by token spans. */
+function highlightCode(pre: Element): Element {
+  const [code] = pre.children
+  if (code === undefined || code.type !== "element" || code.tagName !== "code")
+    return pre
+  return {
+    ...pre,
+    children: [
+      { ...code, children: highlighted(textOf(code), languageOf(pre)) },
+    ],
+  }
+}
+
 function codeFrame(pre: Element): Element {
   const language = languageOf(pre)
   const label: ElementContent[] = []
@@ -54,7 +87,7 @@ function codeFrame(pre: Element): Element {
         [text("Copiar")]
       ),
     ]),
-    pre,
+    highlightCode(pre),
   ])
 }
 
