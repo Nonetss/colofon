@@ -8,15 +8,7 @@ import {
   useOrganizationUpdate,
 } from "@/features/admin/organizations/hooks/use-organizations"
 import type { Organization } from "@/features/admin/organizations/model/types"
-
-function slugify(value: string) {
-  return value
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-}
+import { slugify } from "@/lib/slugify"
 
 interface OrganizationFormDialogProps {
   organization: Organization | null
