@@ -9,6 +9,7 @@ import {
   eventStreamResponseOptions,
   hardeningPlugins,
   loggingPlugin,
+  responseHeadersPlugin,
 } from "@/routers/handler-plugins"
 
 /** True for procedures declared `GET` or `QUERY`: they never write. */
@@ -28,7 +29,7 @@ const handler = new RPCHandler(appRouter, {
     if (method === "QUERY") return isReadProcedure(procedure)
     return RPC_DEFAULT_ALLOW_METHODS.includes(method)
   },
-  plugins: [loggingPlugin(), ...hardeningPlugins()],
+  plugins: [loggingPlugin(), ...hardeningPlugins(), responseHeadersPlugin()],
   toFetchResponse: eventStreamResponseOptions,
 })
 

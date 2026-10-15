@@ -5,6 +5,7 @@ import { authConfigRouter } from "#v1/auth-config/router"
 import { commentRouter } from "#v1/comment/router"
 import { contentRouter } from "#v1/content/router"
 import { cronRouter } from "#v1/cron/router"
+import { docsRouter } from "#v1/docs/router"
 import { entityIconRouter } from "#v1/entity-icon/router"
 import { healthRouter } from "#v1/health/router"
 import { organizationRouter } from "#v1/organization/router"
@@ -25,6 +26,7 @@ export const appRouter = {
   sessionHistory: sessionHistoryRouter,
   adminUser: adminUserRouter,
   content: contentRouter,
+  docs: docsRouter,
 }
 export type AppRouter = typeof appRouter
 export type AppRouterClient = RouterClient<typeof appRouter>

@@ -13,6 +13,7 @@ import {
   eventStreamResponseOptions,
   hardeningPlugins,
   loggingPlugin,
+  responseHeadersPlugin,
 } from "@/routers/handler-plugins"
 
 // Relative on purpose: /scalar is served through the frontend's origin (Caddy
@@ -89,6 +90,7 @@ const apiPlugins = () => [
   }),
   loggingPlugin(),
   ...hardeningPlugins(),
+  responseHeadersPlugin(),
 ]
 
 const apiHandler = new OpenAPIHandler(appRouter, {

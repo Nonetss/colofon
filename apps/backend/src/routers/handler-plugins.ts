@@ -5,6 +5,7 @@ import { COMMON_ERROR_STATUS_MAP, ORPCError } from "@orpc/server"
 import {
   PrototypePollutionProtectionHandlerPlugin,
   RequestLimitHandlerPlugin,
+  ResponseHeadersHandlerPlugin,
 } from "@orpc/server/plugins"
 import type { StandardHandlerRoutingInterceptorOptions } from "@orpc/server/standard"
 import type { Level } from "pino"
@@ -87,4 +88,13 @@ export function hardeningPlugins() {
     }),
     new PrototypePollutionProtectionHandlerPlugin<Context>(),
   ]
+}
+
+/**
+ * Gives procedures `context.resHeaders`, the headers added to their HTTP
+ * response (the docs feature marks the images it serves `nosniff` and gives
+ * SVGs a content security policy).
+ */
+export function responseHeadersPlugin() {
+  return new ResponseHeadersHandlerPlugin<Context>()
 }

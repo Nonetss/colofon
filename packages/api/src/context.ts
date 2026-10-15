@@ -39,6 +39,11 @@ export interface Context {
   headers: Headers
   requestId?: string
   cron?: { jobId: string; jobName: string }
+  /**
+   * Headers added to the HTTP response, set by the backend's
+   * `ResponseHeadersHandlerPlugin`; absent outside HTTP (cron, tests).
+   */
+  resHeaders?: Headers
 }
 
 /** What `createContext` builds: a `Context` that also carries the logger. */
