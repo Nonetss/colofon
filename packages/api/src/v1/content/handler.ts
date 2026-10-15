@@ -366,7 +366,7 @@ export function createContentHandler(
 }
 
 /** The stored repositories, read and updated through Drizzle. */
-const repositoryStore: RepositoryStore = {
+export const repositoryStore: RepositoryStore = {
   find: findRow,
   list: () => db.query.contentRepository.findMany({ orderBy: { name: "asc" } }),
   recordSync: async (id, result) => {
@@ -386,7 +386,7 @@ const contentLogger = child({ module: "content" })
 const cloneRoot = path.resolve(process.cwd(), "../..", CLONE_DIR)
 const hostedRoot = path.resolve(process.cwd(), "../..", HOSTED_DIR)
 
-const contentReader = createContentReader({
+export const contentReader = createContentReader({
   cloneRoot,
   repositories: repositoryStore,
   resolveSource: (repository) => gitSourceOf(repository, hostedRoot),

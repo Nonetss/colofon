@@ -7,7 +7,11 @@ import { ensureBareRepo, hostedFolder, type SyncResult } from "@nonete/content"
 import { contentRepositoryRow, NOW, stepArgs } from "@nonete/db/testing"
 import { call } from "@orpc/server"
 import { createContentRemote } from "#tests/fixtures/content"
-import { anonymousContext, userContext } from "#tests/fixtures/context"
+import {
+  adminContext,
+  anonymousContext,
+  userContext,
+} from "#tests/fixtures/context"
 import { fakeDb } from "#tests/fixtures/db"
 import { resetEnv, testEnv } from "#tests/fixtures/env"
 import { expectErrorCode } from "#tests/fixtures/errors"
@@ -30,6 +34,8 @@ const HOSTED_ROOT = await mkdtemp(path.join(tmpdir(), "api-hosted-root-"))
 function fakeReader(result: SyncResult = { ok: true, commit: "abc123" }) {
   const reader = {
     content: mock(async (_slug: string) => undefined),
+    site: mock(async (_slug: string) => undefined),
+    folderOf: mock((_repository: StoredRepository) => "/nonexistent"),
     sync: mock(async (_repository: StoredRepository) => result),
     syncAll: mock(async () => []),
     syncInBackground: mock((_repository: StoredRepository) => {}),
@@ -96,6 +102,26 @@ describe("content input", () => {
     expect(
       contentInput.createRepository.parse({ ...base, slug: "mis-docs-2" })
     ).toMatchObject({ slug: "mis-docs-2", ref: "main" })
+  })
+
+  test("a reserved slug is refused with a Spanish message and nothing is stored", async () => {
+    const base = { name: "Docs", url: "https://git.example/docs.git" }
+    const parsed = contentInput.createRepository.safeParse({
+      ...base,
+      slug: "admin",
+    })
+    expect(parsed.error?.issues.map((issue) => issue.message)).toEqual([
+      "Ese slug está reservado por la plataforma (admin, api, login…); elige otro",
+    ])
+    await expectErrorCode(
+      call(
+        contentRouter.createRepository,
+        { ...base, slug: "api" },
+        { context: adminContext() }
+      ),
+      "BAD_REQUEST"
+    )
+    expect(fakeDb.calls()).toEqual([])
   })
 
   test("a repository is created with either a URL or hosted, never both or neither", () => {

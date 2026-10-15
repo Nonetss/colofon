@@ -1,3 +1,4 @@
+import { isReservedSlug } from "@nonete/content"
 import { z } from "zod"
 
 const repository = z
@@ -8,6 +9,13 @@ const repository = z
   .describe(
     "Slug of a content repository: lowercase letters, digits and single hyphens"
   )
+
+// A new slug becomes the first segment of the repository's reader routes,
+// so it can't take a name the web or the gateway already answers.
+const newRepository = repository.refine((slug) => !isReservedSlug(slug), {
+  message:
+    "Ese slug está reservado por la plataforma (admin, api, login…); elige otro",
+})
 
 const name = z.string().trim().min(1).max(100).describe("Display name")
 
@@ -77,7 +85,7 @@ export const contentInput = {
   }),
   createRepository: z
     .object({
-      slug: repository,
+      slug: newRepository,
       name,
       url: url.optional(),
       hosted: hosted.optional(),

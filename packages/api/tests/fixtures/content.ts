@@ -78,6 +78,7 @@ export function storedRepository(
   return {
     id: "repo-1",
     slug: "documentacion",
+    name: "Documentación",
     url: "https://git.example/documentacion.git",
     ref: "main",
     ...overrides,

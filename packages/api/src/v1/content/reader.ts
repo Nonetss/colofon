@@ -6,7 +6,10 @@ import {
   describeRepository,
   loadContent,
   pruneClones,
+  readSite,
   redactCredentials,
+  type Site,
+  type SiteRoutes,
   type SyncResult,
 } from "@nonete/content"
 import type { Logger } from "pino"
@@ -20,6 +23,8 @@ import type { Logger } from "pino"
 export type StoredRepository = {
   id: string
   slug: string
+  /** Display name, as the admin screen shows it. */
+  name: string
   url: string
   ref: string
 }
@@ -45,6 +50,25 @@ export type RepositoryContent = {
   declarations: ContentDeclarations | undefined
 }
 
+/** A repository's declarations and its pages, `undefined` without content. */
+export type RepositorySite = {
+  repository: StoredRepository
+  declarations: ContentDeclarations | undefined
+  site: Site | undefined
+}
+
+/** Where the reader's pages, links and images live for the repository `slug`. */
+export function readerRoutesOf(slug: string): SiteRoutes {
+  return {
+    routeOf: (pagePath) => {
+      if (pagePath === "") return `/${slug}`
+      return `/${slug}/${pagePath}`
+    },
+    fileUrlOf: (docsPath) =>
+      `/api/v1/docs/${slug}/files/${encodeURI(docsPath)}`,
+  }
+}
+
 export type RepositorySyncOutcome = {
   repository: StoredRepository
   result: SyncResult
@@ -56,6 +80,14 @@ export type ContentReader = {
    * ones when its content is now invalid; `undefined` for an unknown slug.
    */
   content: (slug: string) => Promise<RepositoryContent | undefined>
+  /**
+   * The repository with `slug`, its declarations and its pages, read once
+   * per checkout: a successful sync or a removal drops them. `undefined` for
+   * an unknown slug.
+   */
+  site: (slug: string) => Promise<RepositorySite | undefined>
+  /** The repository's clone folder, where its files are read. */
+  folderOf: (repository: StoredRepository) => string
   /** Brings the repository's clone to its ref and records the outcome. */
   sync: (repository: StoredRepository) => Promise<SyncResult>
   /**
@@ -82,6 +114,8 @@ export function createContentReader(
   const reportedProblems = new Map<string, string>()
   // One sync per clone folder, replaced when the URL or ref changes.
   const repoSyncs = new Map<string, RepoSync>()
+  // The pages of each clone folder, built on first read after a sync.
+  const sites = new Map<string, Promise<Site>>()
 
   async function content(slug: string) {
     const repository = await repositories.find(slug)
@@ -114,9 +148,64 @@ export function createContentReader(
     return lastValid.get(folder)
   }
 
+  async function site(slug: string) {
+    const repository = await repositories.find(slug)
+    if (repository === undefined) return undefined
+    const declarations = await declarationsOf(repository)
+    if (declarations === undefined)
+      return { repository, declarations, site: undefined }
+    return {
+      repository,
+      declarations,
+      site: await siteOf(repository, declarations),
+    }
+  }
+
+  function siteOf(
+    repository: StoredRepository,
+    declarations: ContentDeclarations
+  ): Promise<Site> {
+    const folder = cloneFolder(cloneRoot, repository.id)
+    const cached = sites.get(folder)
+    if (cached !== undefined) return cached
+    const built = buildSite(repository, declarations, folder)
+    sites.set(folder, built)
+    // A failed build is not kept, so the next read tries again.
+    built.catch(() => sites.delete(folder))
+    return built
+  }
+
+  async function buildSite(
+    repository: StoredRepository,
+    declarations: ContentDeclarations,
+    folder: string
+  ): Promise<Site> {
+    const built = await readSite(
+      folder,
+      declarations.config,
+      declarations.index,
+      readerRoutesOf(repository.slug)
+    )
+    if (built.problems.length > 0) {
+      logger.warn(
+        {
+          source: describeRepository(repository),
+          problems: built.problems,
+        },
+        "Content pages have problems"
+      )
+    }
+    return built
+  }
+
+  function folderOf(repository: StoredRepository) {
+    return cloneFolder(cloneRoot, repository.id)
+  }
+
   async function sync(repository: StoredRepository) {
     const result = await repoSyncFor(repository).run()
     if (result.ok) {
+      sites.delete(cloneFolder(cloneRoot, repository.id))
       logger.info(
         { source: describeRepository(repository), commit: result.commit },
         "Content repository synced"
@@ -188,6 +277,7 @@ export function createContentReader(
     lastValid.delete(folder)
     reportedProblems.delete(folder)
     repoSyncs.delete(folder)
+    sites.delete(folder)
   }
 
   async function remove(repository: StoredRepository) {
@@ -202,7 +292,15 @@ export function createContentReader(
     void syncIsolated(repository)
   }
 
-  return { content, sync, syncAll, syncInBackground, remove }
+  return {
+    content,
+    site,
+    folderOf,
+    sync,
+    syncAll,
+    syncInBackground,
+    remove,
+  }
 }
 
 async function isFolder(folder: string): Promise<boolean> {
