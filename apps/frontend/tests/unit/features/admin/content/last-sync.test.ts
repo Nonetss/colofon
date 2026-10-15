@@ -15,6 +15,8 @@ function repository(
     slug: "documentacion",
     name: "Documentación",
     url: "https://git.example/docs.git",
+    hosted: false,
+    pushUrl: null,
     ref: "main",
     catalogUrl: "https://localhost:4321/api/v1/content/schemas/documentacion",
     lastSyncedAt: null,

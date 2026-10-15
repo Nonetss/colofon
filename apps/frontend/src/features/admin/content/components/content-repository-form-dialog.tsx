@@ -2,13 +2,23 @@ import { type SyntheticEvent, useEffect, useState } from "react"
 import { textVariants } from "@/components/shared/brand/typography"
 import { FormField } from "@/components/shared/form/field-label"
 import { FormDialog } from "@/components/shared/form/form-dialog"
+import { SegmentedPicker } from "@/components/shared/form/segmented-picker"
 import { Input } from "@/components/ui/input"
 import { RefField } from "@/features/admin/content/components/ref-field"
 import {
   useContentRepositoryCreate,
   useContentRepositoryUpdate,
 } from "@/features/admin/content/hooks/use-content-repositories"
-import type { ContentRepository } from "@/features/admin/content/model/types"
+import {
+  createInput,
+  initialSource,
+  updateInput,
+  urlRequired,
+} from "@/features/admin/content/model/repository-form"
+import type {
+  ContentRepository,
+  RepositorySource,
+} from "@/features/admin/content/model/types"
 import { slugify } from "@/lib/slugify"
 
 interface ContentRepositoryFormDialogProps {
@@ -18,21 +28,16 @@ interface ContentRepositoryFormDialogProps {
   onOpenChange: (open: boolean) => void
 }
 
-type UpdateFields = { name?: string; url?: string; ref?: string }
+const SOURCE_OPTIONS = [
+  { value: "url", label: "URL externa" },
+  { value: "hosted", label: "Alojado en la plataforma" },
+] as const satisfies readonly { value: RepositorySource; label: string }[]
 
-/**
- * What an edit sends: only the fields that changed. An empty URL keeps the
- * stored one, credentials included, since the list only shows it masked.
- */
-function changedFields(
-  repository: ContentRepository,
-  values: { name: string; url: string; ref: string }
-): UpdateFields {
-  return {
-    ...(values.name !== repository.name && { name: values.name }),
-    ...(values.url !== "" && { url: values.url }),
-    ...(values.ref !== repository.ref && { ref: values.ref }),
+function urlHintOf(repository: ContentRepository | null): string {
+  if (repository === null || repository.hosted) {
+    return "Para uno privado, pon las credenciales en la URL: https://usuario:token@host/org/repo.git"
   }
+  return "Déjala vacía para mantener la actual, credenciales incluidas."
 }
 
 function dialogCopy(repository: ContentRepository | null) {
@@ -40,18 +45,35 @@ function dialogCopy(repository: ContentRepository | null) {
     return {
       title: "Nuevo repositorio",
       description:
-        "Conecta un repositorio git de documentación. La plataforma lo clona y lo sincroniza cada cinco minutos.",
+        "Conecta un repositorio git de documentación o alójalo en la plataforma, que lo sincroniza tras cada push.",
       submitLabel: "Crear repositorio",
-      urlHint:
-        "Para uno privado, pon las credenciales en la URL: https://usuario:token@host/org/repo.git",
     }
   }
   return {
     title: "Editar repositorio",
     description: `El slug "${repository.slug}" no cambia: es el que usan los editores en su URL del catálogo.`,
     submitLabel: "Guardar",
-    urlHint: "Déjala vacía para mantener la actual, credenciales incluidas.",
   }
+}
+
+function urlPlaceholderOf(repository: ContentRepository | null): string {
+  if (repository === null || repository.hosted) {
+    return "https://git.example.com/org/docs.git"
+  }
+  return repository.url
+}
+
+function sourceHint(
+  repository: ContentRepository | null,
+  source: RepositorySource
+): string {
+  if (source === "url") {
+    return "La plataforma clona el repositorio y lo sincroniza cada cinco minutos."
+  }
+  if (repository !== null && !repository.hosted) {
+    return "El contenido pasa a leerse del repositorio de la plataforma: sube su historial con git push. La URL externa deja de usarse."
+  }
+  return "La plataforma guarda el repositorio. Cualquiera que llegue a la plataforma puede clonarlo y hacer push, sin credenciales."
 }
 
 export function ContentRepositoryFormDialog({
@@ -67,6 +89,7 @@ export function ContentRepositoryFormDialog({
   const [name, setName] = useState("")
   const [slug, setSlug] = useState("")
   const [slugTouched, setSlugTouched] = useState(false)
+  const [source, setSource] = useState<RepositorySource>("url")
   const [url, setUrl] = useState("")
   const [ref, setRef] = useState("main")
   // An edited repository's ref, or one the user picked, is never replaced by
@@ -78,6 +101,7 @@ export function ContentRepositoryFormDialog({
     setName(repository?.name ?? "")
     setSlug(repository?.slug ?? "")
     setSlugTouched(false)
+    setSource(initialSource(repository))
     setUrl("")
     setRef(repository?.ref ?? "main")
     setRefChosen(repository !== null)
@@ -102,14 +126,16 @@ export function ContentRepositoryFormDialog({
 
   const handleSubmit = async (e: SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault()
-    const values = { name: name.trim(), url: url.trim(), ref: ref.trim() }
+    const values = {
+      source,
+      name: name.trim(),
+      url: url.trim(),
+      ref: ref.trim(),
+    }
     if (repository !== null) {
-      await updateRepository.mutateAsync({
-        slug: repository.slug,
-        ...changedFields(repository, values),
-      })
+      await updateRepository.mutateAsync(updateInput(repository, values))
     } else {
-      await createRepository.mutateAsync({ slug, ...values })
+      await createRepository.mutateAsync(createInput(slug, values))
     }
     handleOpenChange(false)
   }
@@ -153,27 +179,37 @@ export function ContentRepositoryFormDialog({
           />
         </FormField>
       )}
-      <FormField
-        label="URL del repositorio git"
-        htmlFor="content-repository-url"
-        hint={copy.urlHint}
-      >
-        <Input
-          id="content-repository-url"
-          type="url"
-          required={!isEditing}
-          placeholder={
-            repository?.url ?? "https://git.example.com/org/docs.git"
-          }
-          className={textVariants({ role: "data" })}
-          autoComplete="off"
-          value={url}
-          onChange={(e) => setUrl(e.target.value)}
+      <FormField label="Origen" hint={sourceHint(repository, source)}>
+        <SegmentedPicker
+          label="Origen del repositorio"
+          options={SOURCE_OPTIONS}
+          value={source}
+          onChange={setSource}
+          columns={2}
         />
       </FormField>
+      {source === "url" && (
+        <FormField
+          label="URL del repositorio git"
+          htmlFor="content-repository-url"
+          hint={urlHintOf(repository)}
+        >
+          <Input
+            id="content-repository-url"
+            type="url"
+            required={urlRequired(repository, source)}
+            placeholder={urlPlaceholderOf(repository)}
+            className={textVariants({ role: "data" })}
+            autoComplete="off"
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+          />
+        </FormField>
+      )}
       <RefField
         open={open}
         repository={repository}
+        source={source}
         url={url}
         value={ref}
         onChange={chooseRef}

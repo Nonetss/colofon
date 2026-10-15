@@ -35,6 +35,15 @@ function pendingSlugOf(...mutations: SlugMutation[]): string | null {
   return null
 }
 
+function deleteDescription(repository: ContentRepository): string {
+  const effect =
+    "Los editores que apunten a su catálogo dejarán de tener autocompletado."
+  if (repository.hosted) {
+    return `Se borra "${repository.name}" con todo su historial git, que solo guarda la plataforma: haz antes una copia si la necesitas. ${effect}`
+  }
+  return `Se borra "${repository.name}" y su clon. ${effect}`
+}
+
 export function ContentContent() {
   const {
     data: repositories = [],
@@ -48,8 +57,7 @@ export function ContentContent() {
   const editDialog = useEditDialog<ContentRepository>()
   const deleteDialog = useTargetConfirmDialog<ContentRepository>({
     title: "Eliminar repositorio",
-    description: (repository) =>
-      `Se borra "${repository.name}" y su clon. Los editores que apunten a su catálogo dejarán de tener autocompletado.`,
+    description: deleteDescription,
     confirmLabel: "Eliminar",
     onConfirm: (repository) =>
       deleteRepository.mutateAsync({ slug: repository.slug }),

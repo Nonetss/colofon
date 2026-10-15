@@ -47,7 +47,10 @@ function lastSyncTag(lastSync: LastSync): {
   return { tone: "foreground", label: "Sincronizado" }
 }
 
-function lastSyncDetail(lastSync: LastSync): string {
+function lastSyncDetail(lastSync: LastSync, hosted: boolean): string {
+  if (lastSync.state === "never" && hosted) {
+    return "Se publica con el primer push"
+  }
   if (lastSync.state === "never") return "Todavía no se ha descargado"
   const when = formatDateTime(lastSync.at)
   if (lastSync.state === "ok" && lastSync.commit !== null) {
@@ -110,11 +113,19 @@ export function ContentRepositoryCard({
 
       <div className="@container border-t px-4 py-3">
         <dl className="grid gap-x-6 gap-y-3 @md:grid-cols-[minmax(0,1fr)_auto]">
-          <MetadataCell as="dl" label="Repositorio git">
-            <Text variant="data" className="block truncate">
-              {repository.url}
-            </Text>
-          </MetadataCell>
+          {repository.hosted ? (
+            <MetadataCell as="dl" label="Alojado en la plataforma">
+              <Text variant="compact" tone="muted">
+                Clónalo y haz push con la URL de abajo.
+              </Text>
+            </MetadataCell>
+          ) : (
+            <MetadataCell as="dl" label="Repositorio git">
+              <Text variant="data" className="block truncate">
+                {repository.url}
+              </Text>
+            </MetadataCell>
+          )}
           <MetadataCell as="dl" label="Rama">
             <Text variant="data" className="block truncate">
               {repository.ref}
@@ -128,7 +139,7 @@ export function ContentRepositoryCard({
             <span className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
               <StatusTag dotTone={tag.tone}>{tag.label}</StatusTag>
               <Text variant="compact" tone="muted" className="tabular-nums">
-                {lastSyncDetail(lastSync)}
+                {lastSyncDetail(lastSync, repository.hosted)}
               </Text>
             </span>
           </MetadataCell>
@@ -145,22 +156,50 @@ export function ContentRepositoryCard({
         )}
       </div>
 
-      <footer className="mt-auto border-t px-4 py-3">
-        <Text as="p" variant="label" tone="muted">
-          Catálogo para el editor
-        </Text>
-        <div className="mt-1.5 flex min-w-0 items-center gap-2 rounded-md bg-muted py-1 pr-1 pl-2.5">
-          <Text variant="data" className="min-w-0 flex-1 truncate">
-            {repository.catalogUrl}
-          </Text>
-          <CopyButton
-            text={repository.catalogUrl}
-            label={`Copiar la URL del catálogo de ${repository.name}`}
-            copiedLabel="URL copiada"
-            className="shrink-0"
+      <footer className="mt-auto flex flex-col gap-3 border-t px-4 py-3">
+        {repository.pushUrl !== null && (
+          <CopyableUrl
+            label="URL de git"
+            url={repository.pushUrl}
+            copyLabel={`Copiar la URL de git de ${repository.name}`}
           />
-        </div>
+        )}
+        <CopyableUrl
+          label="Catálogo para el editor"
+          url={repository.catalogUrl}
+          copyLabel={`Copiar la URL del catálogo de ${repository.name}`}
+        />
       </footer>
     </article>
+  )
+}
+
+/** A labelled URL in a well, with a control to copy it. */
+function CopyableUrl({
+  label,
+  url,
+  copyLabel,
+}: {
+  label: string
+  url: string
+  copyLabel: string
+}) {
+  return (
+    <div className="min-w-0">
+      <Text as="p" variant="label" tone="muted">
+        {label}
+      </Text>
+      <div className="mt-1.5 flex min-w-0 items-center gap-2 rounded-md bg-muted py-1 pr-1 pl-2.5">
+        <Text variant="data" className="min-w-0 flex-1 truncate">
+          {url}
+        </Text>
+        <CopyButton
+          text={url}
+          label={copyLabel}
+          copiedLabel="URL copiada"
+          className="shrink-0"
+        />
+      </div>
+    </div>
   )
 }

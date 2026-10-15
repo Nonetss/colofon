@@ -1,6 +1,10 @@
 import { type skipToken, useQuery } from "@tanstack/react-query"
 import type { BranchesSource } from "@/features/admin/content/model/branches-source"
-import type { ContentRepository } from "@/features/admin/content/model/types"
+import type {
+  ContentRepository,
+  CreateRepositoryInput,
+  UpdateRepositoryInput,
+} from "@/features/admin/content/model/types"
 import { useResourceMutation } from "@/hooks/use-resource-mutation"
 import { orpc } from "@/lib/orpc"
 
@@ -14,20 +18,6 @@ export const useContentRepositoryBranches = (
   source: BranchesSource | typeof skipToken
 ) => useQuery(orpc.v1.content.listBranches.queryOptions({ input: source }))
 
-type ContentRepositoryCreateInput = {
-  slug: string
-  name: string
-  url: string
-  ref: string
-}
-
-type ContentRepositoryUpdateInput = {
-  slug: string
-  name?: string
-  url?: string
-  ref?: string
-}
-
 type ContentRepositoryDeleteOutput = { id: string; success: boolean }
 
 function applyDeleteOptimistic(
@@ -40,21 +30,21 @@ function applyDeleteOptimistic(
 
 export const useContentRepositoryCreate = () =>
   useResourceMutation<
-    ContentRepositoryCreateInput,
+    CreateRepositoryInput,
     ContentRepository,
     ContentRepository[]
   >({
     mutationFn: (input) => orpc.v1.content.createRepository.call(input),
     listKey,
     messages: {
-      success: "Repositorio creado; se está sincronizando",
+      success: "Repositorio creado",
       error: "No se pudo crear el repositorio",
     },
   })
 
 export const useContentRepositoryUpdate = () =>
   useResourceMutation<
-    ContentRepositoryUpdateInput,
+    UpdateRepositoryInput,
     ContentRepository,
     ContentRepository[]
   >({

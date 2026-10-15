@@ -15,7 +15,10 @@ import {
   refOptions,
   suggestedBranch,
 } from "@/features/admin/content/model/branches-source"
-import type { ContentRepository } from "@/features/admin/content/model/types"
+import type {
+  ContentRepository,
+  RepositorySource,
+} from "@/features/admin/content/model/types"
 import { useDebouncedValue } from "@/hooks/use-debounced-value"
 import { cn } from "@/lib/utils"
 
@@ -26,6 +29,8 @@ interface RefFieldProps {
   open: boolean
   /** The repository being edited, or `null` when creating one. */
   repository: ContentRepository | null
+  /** Where the repository's history lives, as chosen in the form. */
+  source: RepositorySource
   /** The URL field as typed; its branches are read once it is complete. */
   url: string
   value: string
@@ -45,6 +50,7 @@ interface RefFieldProps {
 export function RefField({
   open,
   repository,
+  source,
   url,
   value,
   onChange,
@@ -53,7 +59,7 @@ export function RefField({
 }: RefFieldProps) {
   const debouncedUrl = useDebouncedValue(url.trim(), URL_DEBOUNCE_MS)
   const branches = useContentRepositoryBranches(
-    branchesSource(open, repository, debouncedUrl)
+    branchesSource(open, repository, source, debouncedUrl)
   )
   const data = branches.data
 
@@ -105,7 +111,7 @@ export function RefField({
   }
 
   return (
-    <FormField label="Ref" htmlFor={FIELD_ID} hint={refHint(branches)}>
+    <FormField label="Ref" htmlFor={FIELD_ID} hint={refHint(source, branches)}>
       <Input
         id={FIELD_ID}
         required
@@ -118,12 +124,18 @@ export function RefField({
   )
 }
 
-function refHint(branches: {
-  isFetching: boolean
-  isError: boolean
-  error: Error | null
-}): string {
+function refHint(
+  source: RepositorySource,
+  branches: {
+    isFetching: boolean
+    isError: boolean
+    error: Error | null
+  }
+): string {
   if (branches.isFetching) return "Leyendo las ramas del repositorio…"
+  if (source === "hosted") {
+    return "Rama que se publica: cada push a ella actualiza el contenido."
+  }
   if (branches.isError) {
     return `No se pudieron leer las ramas (${branches.error?.message ?? "error desconocido"}); escribe la rama, el tag o el commit.`
   }
