@@ -1,6 +1,7 @@
 export { default as DocBody } from "@/features/docs/page/components/doc-body.astro"
 export { default as DocChildren } from "@/features/docs/page/components/doc-children.astro"
 export { default as DocHero } from "@/features/docs/page/components/doc-hero.astro"
+export { DocLightbox } from "@/features/docs/page/components/doc-lightbox"
 export { default as DocPager } from "@/features/docs/page/components/doc-pager.astro"
 export { default as DocToc } from "@/features/docs/page/components/doc-toc.astro"
 export { withOrigin } from "@/features/docs/page/model/full-links"

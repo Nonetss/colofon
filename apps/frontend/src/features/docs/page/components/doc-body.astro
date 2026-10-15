@@ -1,14 +1,15 @@
 ---
 import { textVariants } from "@/components/shared/brand/typography"
-import { renderPage } from "@/features/docs/page/model/render"
+import { renderBlocks } from "@/features/docs/page/model/render"
 import type { DocsPage } from "@/features/docs/page/model/types"
+import { getIcon } from "@/lib/icon-registry"
 
 interface Props {
   page: DocsPage
 }
 
 const { page } = Astro.props
-const html = page.tree === null ? "" : renderPage(page.tree)
+const blocks = page.tree === null ? [] : renderBlocks(page.tree)
 const unreadable = page.source === "file" && page.tree === null
 const notice =
   "mt-6 flex flex-col gap-2 rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3"
@@ -38,5 +39,20 @@ const notice =
     Esta ficha no se puede mostrar: su contenido tiene un error.
   </p>
 ) : (
-  html !== "" && <div class="typeset typeset-docs doc mt-6" set:html={html} />
+  blocks.length > 0 && (
+    <div class="typeset typeset-docs doc mt-6">
+      {blocks.map((block) => {
+        if (block.kind === null) return <Fragment set:html={block.html} />
+        const Icon = getIcon("docSections", block.kind)
+        return (
+          <section class="doc-section" data-kind={block.kind}>
+            <span class="doc-section-badge" aria-hidden="true">
+              <Icon className="size-4.5" />
+            </span>
+            <Fragment set:html={block.html} />
+          </section>
+        )
+      })}
+    </div>
+  )
 )}

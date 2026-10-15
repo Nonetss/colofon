@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test"
 import type { Element, Root } from "hast"
 import { isStale } from "@/features/docs/page/model/dates"
-import { renderPage } from "@/features/docs/page/model/render"
+import { renderBlocks } from "@/features/docs/page/model/render"
 
 function el(
   tagName: string,
@@ -15,7 +15,22 @@ function root(...children: Element[]): Root {
   return { type: "root", children }
 }
 
-describe("renderPage", () => {
+function h2(text: string): Element {
+  return el("h2", {}, [{ type: "text", value: text }])
+}
+
+function p(text: string): Element {
+  return el("p", {}, [{ type: "text", value: text }])
+}
+
+/** The whole page as one string, the way a page without sections reads. */
+function renderPage(tree: Root): string {
+  return renderBlocks(tree)
+    .map((block) => block.html)
+    .join("")
+}
+
+describe("renderBlocks", () => {
   test("a code block gets a frame with its language and a copy button", () => {
     const html = renderPage(
       root(
@@ -39,8 +54,19 @@ describe("renderPage", () => {
 
   test("tables scroll inside a frame", () => {
     expect(renderPage(root(el("table", {})))).toBe(
-      '<div class="typeset-scroll"><table></table></div>'
+      '<div class="typeset-scroll doc-table"><table></table></div>'
     )
+  })
+
+  test("a table whose first header cell is empty is a key/value one", () => {
+    const table = (head: string) =>
+      el("table", {}, [
+        el("thead", {}, [
+          el("tr", {}, [el("th", {}, [{ type: "text", value: head }])]),
+        ]),
+      ])
+    expect(renderPage(root(table(" ")))).toContain("data-table-kv")
+    expect(renderPage(root(table("Puerto")))).not.toContain("data-table-kv")
   })
 
   test("headings with an id get an anchor link", () => {
@@ -66,10 +92,43 @@ describe("renderPage", () => {
     )
   })
 
-  test("images load lazily", () => {
+  test("images load lazily and can be enlarged", () => {
     expect(renderPage(root(el("img", { src: "/x.png" })))).toBe(
-      '<img src="/x.png" loading="lazy">'
+      '<img src="/x.png" loading="lazy" data-zoomable>'
     )
+  })
+
+  test("a page without known sections is one plain block", () => {
+    const blocks = renderBlocks(root(p("Hola"), h2("Zonas"), p("Más")))
+    expect(blocks.map((block) => block.kind)).toEqual([null])
+  })
+
+  test("a known section runs from its heading to the next ##", () => {
+    const blocks = renderBlocks(
+      root(
+        p("Intro"),
+        h2("¿Dónde busco…?"),
+        p("Aquí"),
+        h2("Trampas y decisiones"),
+        p("Ojo"),
+        h2("Notas sueltas"),
+        p("Fin")
+      )
+    )
+    expect(blocks.map((block) => block.kind)).toEqual([
+      null,
+      "where",
+      "pitfalls",
+      null,
+    ])
+    expect(blocks[1]?.html).toContain("Aquí")
+    expect(blocks[1]?.html).not.toContain("Ojo")
+    expect(blocks[3]?.html).toContain("Notas sueltas")
+  })
+
+  test("headings match whatever their case and spacing", () => {
+    const [block] = renderBlocks(root(h2("  QUÉ ES "), p("Un servicio")))
+    expect(block?.kind).toBe("about")
   })
 })
 

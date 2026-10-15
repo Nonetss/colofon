@@ -1,5 +1,5 @@
 ---
-import { fade } from "astro:transitions"
+import { DocLightbox } from "@/features/docs/page"
 import { DOCS_SIDEBAR_ATTRIBUTE, type DocsNav } from "@/features/docs/shared"
 import { DocsSidebar } from "@/features/docs/sidebar"
 import Layout from "@/layouts/Layout.astro"
@@ -16,13 +16,26 @@ interface Props {
 }
 
 const { title, nav, storedScope, wide = false } = Astro.props
+// The page rises in a little as it fades; the old one goes at once, since a
+// scrolled page would jump to the top while fading (keyframes in global.css).
+const pageOld = { name: "page-leave", duration: "0s", fillMode: "both" }
+const pageNew = {
+  name: "page-enter",
+  duration: "0.2s",
+  easing: "ease",
+  fillMode: "both",
+}
+const pageAnimation = {
+  forwards: { old: pageOld, new: pageNew },
+  backwards: { old: pageOld, new: pageNew },
+}
 ---
 
 <!--
   The documentation reader. The window scrolls; the sidebar and the table of
   contents stick below the navbar. The sidebar is a persisted island, so it
   keeps its scroll and open sections across navigations; its wrapper reserves
-  its width before it hydrates. Only the page column fades. The page title
+  its width before it hydrates. Only the page column moves. The page title
   reads larger here than in the app's other pages: the column scopes the
   `display` role's size.
 -->
@@ -47,7 +60,7 @@ const { title, nav, storedScope, wide = false } = Astro.props
     </div>
     <main
       class="flex min-w-0 flex-1 justify-center gap-10 px-4 py-8 [--font-size-display:1.75rem] sm:px-8"
-      transition:animate={fade({ duration: "0.2s" })}
+      transition:animate={pageAnimation}
     >
       <article
         class:list={[
@@ -59,6 +72,9 @@ const { title, nav, storedScope, wide = false } = Astro.props
       </article>
       <slot name="aside" />
     </main>
+  </div>
+  <div transition:persist="docs-lightbox">
+    <DocLightbox client:only="react" />
   </div>
   <script>
   import { onDocsPageLoad } from "@/features/docs/page/model/page-scripts"

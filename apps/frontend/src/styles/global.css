@@ -711,6 +711,20 @@ html.theme-transitioning::view-transition-new(root) {
   }
 }
 
+/* The documentation page coming in (`layouts/Docs.astro`). */
+@keyframes page-leave {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
 @keyframes dash-enter {
   from {
     opacity: 0;
@@ -1057,5 +1071,408 @@ html.theme-transitioning::view-transition-new(root) {
   .doc :where(.doc-broken-image) {
     color: var(--color-muted-foreground);
     font-style: italic;
+  }
+}
+
+/* The reader's frames, dressed as the earlier documentation site did: code
+   and tables in soft cards, key/value tables as fact rows, zoomable images,
+   and the repeated sections of a page (`.doc-section`, split apart by
+   `features/docs/page/model/render.ts`). Monochrome but for the accent of
+   "¿Dónde busco…?" (the way in) and the destructive tone of "Trampas y
+   decisiones" (a warning). */
+@layer components {
+  .doc :where(.doc-code) {
+    border-radius: var(--radius-xl);
+    background-color: var(--color-card);
+  }
+
+  .doc :where(.doc-code > pre) {
+    background-color: transparent;
+    font-size: 0.8125rem;
+  }
+
+  .doc :where(.doc-code-bar) {
+    padding: 0.375rem 0.5rem 0.375rem 1rem;
+    letter-spacing: 0;
+    text-transform: lowercase;
+  }
+
+  .doc :where(.doc-code-copy) {
+    border-radius: var(--radius-md);
+    padding: 0.125rem 0.5rem;
+    font-family: var(--font-sans);
+    font-size: 0.75rem;
+    text-transform: none;
+    transition:
+      color 0.15s ease,
+      background-color 0.15s ease;
+  }
+
+  .doc :where(.doc-code-copy):hover,
+  .doc :where(.doc-code-copy):focus-visible {
+    background-color: var(--color-accent);
+  }
+
+  /* Tables sit in a soft card and scroll sideways inside it. */
+  .doc :where(.doc-table) {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-xl);
+    background-color: color-mix(in oklch, var(--color-card) 40%, transparent);
+  }
+
+  .doc :where(.doc-table table) {
+    min-width: 100%;
+    border-block-end: 0;
+    font-size: 0.8125rem;
+  }
+
+  .doc :where(.doc-table thead th) {
+    padding: 0.625rem 0.875rem;
+    background-color: var(--color-card);
+    color: var(--color-muted-foreground);
+    font-size: var(--font-size-label);
+    font-weight: 500;
+    letter-spacing: var(--tracking-caps);
+    text-transform: uppercase;
+  }
+
+  .doc :where(.doc-table :is(tbody, tfoot) :is(td, th)) {
+    padding: 0.625rem 0.875rem;
+  }
+
+  .doc :where(.doc-table tbody tr) {
+    transition: background-color 0.15s ease;
+  }
+
+  .doc :where(.doc-table tbody tr):hover {
+    background-color: color-mix(in oklch, var(--color-muted) 40%, transparent);
+  }
+
+  /* Key/value tables (`| | |` with an empty head) read as fact rows. */
+  .doc :where(.doc-table[data-table-kv] thead) {
+    display: none;
+  }
+
+  .doc :where(.doc-table[data-table-kv] tbody tr:first-child > *) {
+    border-block-start: 0;
+  }
+
+  .doc :where(.doc-table[data-table-kv] tbody td:first-child) {
+    width: 1%;
+    white-space: nowrap;
+    color: var(--color-muted-foreground);
+    font-size: var(--font-size-label);
+    font-weight: 500;
+    letter-spacing: var(--tracking-caps);
+    text-transform: uppercase;
+  }
+
+  .doc :where(img) {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-xl);
+  }
+
+  /* Images open enlarged in the lightbox (`doc-lightbox.tsx`). */
+  .doc :where(img[data-zoomable]) {
+    cursor: zoom-in;
+    transition: border-color 0.15s ease;
+  }
+
+  .doc :where(img[data-zoomable]):hover {
+    border-color: color-mix(
+      in oklch,
+      var(--color-primary) 50%,
+      var(--color-border)
+    );
+  }
+
+  .doc :where(a img[data-zoomable]) {
+    cursor: pointer;
+  }
+
+  .doc :where(.doc-alert) {
+    --alert: var(--color-muted-foreground);
+    border: 1px solid color-mix(in oklch, var(--alert) 30%, var(--color-border));
+    border-inline-start: 4px solid var(--alert);
+    border-radius: var(--radius-xl);
+    background-color: color-mix(
+      in oklch,
+      var(--alert) 7%,
+      var(--color-background)
+    );
+    padding: 0.875rem 1rem;
+  }
+
+  .doc :where(.doc-alert-title) {
+    color: var(--alert);
+  }
+
+  .doc :where(.doc-alert-warning, .doc-alert-important) {
+    --alert: var(--color-primary);
+    border-inline-start-color: var(--alert);
+  }
+
+  .doc :where(.doc-alert-caution) {
+    --alert: var(--color-destructive);
+    border-inline-start-color: var(--alert);
+  }
+
+  .doc :where(blockquote:not(.doc-alert)) {
+    border: 1px solid
+      color-mix(in oklch, var(--color-primary) 20%, var(--color-border));
+    border-inline-start: 4px solid var(--color-primary);
+    border-radius: var(--radius-xl);
+    background-color: color-mix(
+      in oklch,
+      var(--color-primary) 6%,
+      var(--color-background)
+    );
+    padding: 0.25rem 1rem 0.75rem;
+  }
+
+  /* The repeated sections: the heading beside a small icon. Quiet ones keep
+     the rule over them; "where" and "pitfalls" are cards. */
+  .doc :where(.doc-section) {
+    --section: var(--color-muted-foreground);
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    column-gap: 0.625rem;
+    align-items: center;
+    margin-block-start: calc(var(--typeset-flow) * 1.6);
+    border-block-start: 1px solid var(--color-border);
+    padding-block-start: 1.25rem;
+  }
+
+  .doc > :where(.doc-section:first-child) {
+    margin-block-start: 0;
+    border-block-start: 0;
+    padding-block-start: 0;
+  }
+
+  .doc :where(.doc-section-badge) {
+    grid-column: 1;
+    grid-row: 1;
+    display: inline-flex;
+    color: var(--section);
+  }
+
+  .doc :where(.doc-section > h2) {
+    grid-column: 2;
+    grid-row: 1;
+    margin-block-start: 0;
+    border: 0;
+    padding: 0;
+  }
+
+  .doc :where(.doc-section > :not(.doc-section-badge, h2)) {
+    grid-column: 1 / -1;
+  }
+
+  .doc :where(.doc-section[data-kind="where"]) {
+    --section: var(--color-primary);
+    border: 1px solid
+      color-mix(in oklch, var(--section) 30%, var(--color-border));
+    border-radius: calc(var(--radius-xl) + 4px);
+    background-color: color-mix(
+      in oklch,
+      var(--section) 5%,
+      var(--color-background)
+    );
+    padding: 1.5rem;
+  }
+
+  .doc :where(.doc-section[data-kind="where"] .doc-table) {
+    background-color: var(--color-card);
+  }
+
+  .doc :where(.doc-section[data-kind="where"] .doc-table tbody tr):hover {
+    background-color: transparent;
+  }
+
+  .doc :where(.doc-section[data-kind="pitfalls"]) {
+    --section: var(--color-destructive);
+    border: 1px solid
+      color-mix(in oklch, var(--section) 25%, var(--color-border));
+    border-inline-start: 4px solid var(--section);
+    border-radius: var(--radius-xl);
+    background-color: color-mix(
+      in oklch,
+      var(--section) 5%,
+      var(--color-background)
+    );
+    padding: 1.25rem 1.375rem;
+  }
+
+  @media (max-width: 40rem) {
+    .doc
+      :where(
+        .doc-section[data-kind="where"],
+        .doc-section[data-kind="pitfalls"]
+      ) {
+      padding: 1rem;
+    }
+  }
+}
+
+/* The documentation's image viewer (`features/docs/page/components/
+   doc-lightbox.tsx`): the whole screen over a dimmed page. */
+.doc-lightbox {
+  width: 100vw;
+  max-width: none;
+  height: 100dvh;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  overflow: hidden;
+}
+
+.doc-lightbox::backdrop {
+  background: rgb(0 0 0 / 0.75);
+  backdrop-filter: blur(3px);
+}
+
+.doc-lightbox-stage {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  touch-action: none;
+  user-select: none;
+  cursor: zoom-in;
+}
+
+.doc-lightbox-stage[data-zoomed] {
+  cursor: grab;
+}
+
+.doc-lightbox-stage[data-zoomed][data-dragging] {
+  cursor: grabbing;
+}
+
+.doc-lightbox-picture {
+  display: block;
+  max-width: 94vw;
+  max-height: 86dvh;
+  transform-origin: 0 0;
+  border-radius: var(--radius-xl);
+  background: var(--card);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .doc-lightbox[open],
+  .doc-lightbox[open]::backdrop {
+    animation: lightbox-in 150ms ease-out;
+  }
+}
+
+@keyframes lightbox-in {
+  from {
+    opacity: 0;
+  }
+}
+
+/* Interactive tables of a documentation page (`features/docs/page/model/
+   interactive-tables.ts`): sortable headers, and a search box with a count
+   over the long ones. */
+@layer components {
+  .doc :where(.doc-table-sort) {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    margin: -0.125rem -0.25rem;
+    border-radius: var(--radius-md);
+    padding: 0.125rem 0.25rem;
+    font: inherit;
+    letter-spacing: inherit;
+    text-transform: inherit;
+    transition: color 0.15s ease;
+  }
+
+  .doc :where(.doc-table-sort):hover,
+  .doc
+    :where(th[aria-sort="ascending"], th[aria-sort="descending"])
+    :where(.doc-table-sort) {
+    color: var(--color-foreground);
+  }
+
+  .doc :where(.doc-table-sort):focus-visible {
+    outline: 2px solid var(--color-ring);
+    outline-offset: 1px;
+  }
+
+  /* An up/down chevron pair, shown on hover; the active direction alone. */
+  .doc :where(.doc-table-sort-icon) {
+    display: inline-block;
+    width: 0.5rem;
+    height: 0.75rem;
+    background-color: currentColor;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+    mask:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 12'%3E%3Cpath d='M1 4.5 4 1.5l3 3M1 7.5l3 3 3-3' fill='none' stroke='black' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")
+      center / contain no-repeat;
+  }
+
+  .doc :where(.doc-table-sort:hover .doc-table-sort-icon) {
+    opacity: 0.6;
+  }
+
+  .doc :where(th[aria-sort="ascending"]) :where(.doc-table-sort-icon),
+  .doc :where(th[aria-sort="descending"]) :where(.doc-table-sort-icon) {
+    opacity: 1;
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 12'%3E%3Cpath d='M1 4.5 4 1.5l3 3' fill='none' stroke='black' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    color: var(--color-primary);
+  }
+
+  .doc :where(th[aria-sort="descending"]) :where(.doc-table-sort-icon) {
+    transform: rotate(180deg);
+  }
+
+  .doc :where(.doc-table-bar) {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-block-start: var(--typeset-flow);
+  }
+
+  .doc :where(.doc-table-bar + .doc-table) {
+    margin-block-start: 0.5rem;
+  }
+
+  .doc :where(.doc-table-search) {
+    height: 2rem;
+    width: min(100%, 16rem);
+    border: 1px solid var(--color-input);
+    border-radius: var(--radius-md);
+    background-color: var(--color-background);
+    padding-inline: 0.625rem;
+    font-size: var(--font-size-meta);
+    outline: none;
+    transition:
+      border-color 0.15s ease,
+      box-shadow 0.15s ease;
+  }
+
+  .doc :where(.doc-table-search):focus-visible {
+    border-color: var(--color-ring);
+    box-shadow: 0 0 0 3px
+      color-mix(in oklch, var(--color-ring) 50%, transparent);
+  }
+
+  .doc :where(.doc-table-count) {
+    margin-inline-start: auto;
+    color: var(--color-muted-foreground);
+    font-family: var(--font-mono);
+    font-size: var(--font-size-label);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  .doc :where(.doc-table[data-empty] tbody) {
+    display: none;
   }
 }

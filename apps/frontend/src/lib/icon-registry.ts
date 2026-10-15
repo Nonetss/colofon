@@ -125,6 +125,8 @@ const viewIcons = {
   sortDescending: Lucide.ArrowDown,
   fullWidth: Lucide.UnfoldHorizontal,
   readingWidth: Lucide.FoldHorizontal,
+  zoomIn: Lucide.ZoomIn,
+  zoomOut: Lucide.ZoomOut,
 } as const
 
 const communicationIcons = {
@@ -149,6 +151,21 @@ const configIcons = {
   appearance: Lucide.Palette,
 } as const
 
+/** The repeated sections of a documentation page (`docs/page/model/sections.ts`). */
+const docSectionIcons = {
+  where: Lucide.Compass,
+  about: Lucide.BookOpen,
+  config: Lucide.SlidersHorizontal,
+  notes: Lucide.ClipboardList,
+  fit: Lucide.Network,
+  works: Lucide.Cog,
+  parts: Lucide.FolderTree,
+  extend: Lucide.Puzzle,
+  pitfalls: Lucide.TriangleAlert,
+  specs: Lucide.FileText,
+  data: Lucide.Database,
+} as const
+
 export const iconRegistry = {
   navigation: navigationIcons,
   auth: authIcons,
@@ -164,6 +181,7 @@ export const iconRegistry = {
   scheduling: schedulingIcons,
   theme: themeIcons,
   config: configIcons,
+  docSections: docSectionIcons,
 } as const
 
 export type IconGroup = keyof typeof iconRegistry
