@@ -50,7 +50,7 @@ The system SHALL apply CORS using the configured origin (`CORS_ORIGIN`), allow c
 
 ### Requirement: Global request logging and session resolution
 
-The system SHALL apply request logging to all routes, and session resolution to every route except Better Auth's own `/api/auth/*`, before dispatching to any router. On `/api/auth/*`, `user` and `session` SHALL be `null` in the request context, because Better Auth resolves the session itself and those routes are not activity-logged. Request logging SHALL be emitted through the shared structured logger (not Hono's default logger), producing a leveled, structured entry per request that shares format and level configuration with application logs. The "request completed" entry SHALL carry the status, latency and, when signed in, the user, at `error` for a 5xx status, `warn` for a 4xx status and `info` otherwise.
+The system SHALL apply request logging to all routes, and session resolution to every route except Better Auth's own `/api/auth/*`, before dispatching to any router. On `/api/auth/*`, `user` and `session` SHALL be `null` in the request context, because Better Auth resolves the session itself. Request logging SHALL be emitted through the shared structured logger (not Hono's default logger), producing a leveled, structured entry per request that shares format and level configuration with application logs. The "request completed" entry SHALL carry the status, latency and, when signed in, the user, at `error` for a 5xx status, `warn` for a 4xx status and `info` otherwise.
 
 #### Scenario: Every request resolves a session
 
@@ -88,7 +88,7 @@ The backend process SHALL serve all application database access — API handlers
 
 ### Requirement: Graceful shutdown
 
-On `SIGINT` or `SIGTERM` the backend SHALL shut down in this order: end open server-pushed event subscriptions, stop accepting new HTTP connections and let in-flight HTTP requests complete, stop the cron scheduler, close the shared database pool, shut down the tracer provider (flushing pending spans), and exit. The database pool SHALL be closed only after HTTP and cron have stopped, and the tracer provider only after the database pool. The process SHALL exit with status `0` when every step succeeds. A step that fails SHALL be logged and SHALL NOT prevent the remaining steps from running. A failure in any step other than the tracer provider shutdown SHALL make the process exit with a non-zero status. A tracer provider failure SHALL be logged at `warn` and SHALL NOT affect the exit status.
+On `SIGINT` or `SIGTERM` the backend SHALL shut down in this order: end open server-pushed event subscriptions, stop accepting new HTTP connections and let in-flight HTTP requests complete, stop the cron scheduler, close the shared database pool, and exit. The database pool SHALL be closed only after HTTP and cron have stopped. The process SHALL exit with status `0` when every step succeeds. A step that fails SHALL be logged and SHALL NOT prevent the remaining steps from running. A failure in any step SHALL make the process exit with a non-zero status.
 
 #### Scenario: In-flight request completes during shutdown
 
@@ -103,17 +103,12 @@ On `SIGINT` or `SIGTERM` the backend SHALL shut down in this order: end open ser
 #### Scenario: Clean shutdown
 
 - **WHEN** the backend receives `SIGINT` or `SIGTERM` and every shutdown step succeeds
-- **THEN** the process SHALL release all of its database connections, flush its pending spans and exit with status `0`
+- **THEN** the process SHALL release all of its database connections and exit with status `0`
 
 #### Scenario: A shutdown step fails
 
 - **WHEN** one shutdown step throws (for example, stopping the cron scheduler fails)
 - **THEN** the failure SHALL be logged, the database pool SHALL still be closed, and the process SHALL exit with a non-zero status
-
-#### Scenario: Tracer flush fails
-
-- **WHEN** every other step succeeds and the tracer provider shutdown fails
-- **THEN** the failure SHALL be logged at `warn` and the process SHALL exit with status `0`
 
 ### Requirement: Bounded shutdown time
 

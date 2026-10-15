@@ -12,8 +12,8 @@ The repo SHALL be configured from one `.env` file at the repo root. Every worksp
 
 #### Scenario: One value reaches every service
 
-- **WHEN** `LOKI_URL` is set only in the root `.env` and `bun run dev:local` starts the backend and the frontend
-- **THEN** both of them SHALL read that same `LOKI_URL`
+- **WHEN** `DATABASE_URL` is set only in the root `.env`, `bun run dev:local` starts the backend and a developer runs the Drizzle CLI
+- **THEN** both of them SHALL read that same `DATABASE_URL`
 
 #### Scenario: Per-app files are ignored
 
@@ -34,10 +34,10 @@ The repo SHALL be configured from one `.env` file at the repo root. Every worksp
 
 `@nonete/env/server` SHALL validate the server variables with t3-env and zod and export them as a typed `env` object:
 - required: `DATABASE_URL`, `BETTER_AUTH_SECRET` (at least 32 characters), `BETTER_AUTH_URL` (URL) and `CORS_ORIGIN` (URL);
-- with defaults: `NODE_ENV` (`development` | `production` | `test`, default `development`), `LOG_LEVEL` (`fatal` | `error` | `warn` | `info` | `debug` | `trace`, default `info`), `OTEL_TRACES_SAMPLER_ARG` (a number from `0` to `1`, default `1`) and `CONTENT_REF` (default `main`);
-- optional: `LOKI_URL`, `OTEL_EXPORTER_OTLP_ENDPOINT` (URL), `TEMPO_URL` (URL), `ADMIN_EMAIL`, `ADMIN_PASSWORD` (at least 8 characters), `ADMIN_NAME`, `OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET`, `OIDC_DISCOVERY_URL`, `CONTENT_DIR` (a folder path) and `CONTENT_REPO` (a git repository URL), where `CONTENT_DIR` and `CONTENT_REPO` SHALL NOT both be set.
+- with defaults: `NODE_ENV` (`development` | `production` | `test`, default `development`), `LOG_LEVEL` (`fatal` | `error` | `warn` | `info` | `debug` | `trace`, default `info`) and `CONTENT_REF` (default `main`);
+- optional: `ADMIN_EMAIL`, `ADMIN_PASSWORD` (at least 8 characters), `ADMIN_NAME`, `OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET`, `OIDC_DISCOVERY_URL`, `CONTENT_DIR` (a folder path) and `CONTENT_REPO` (a git repository URL), where `CONTENT_DIR` and `CONTENT_REPO` SHALL NOT both be set.
 
-Empty strings SHALL be treated as unset. Validation SHALL be skipped when `SKIP_ENV_VALIDATION` is set. `@nonete/env/web` SHALL validate the client variable `PUBLIC_SERVER_URL`. The frontend's `astro:env` schema SHALL declare `OTEL_EXPORTER_OTLP_ENDPOINT` and `OTEL_TRACES_SAMPLER_ARG` as optional server variables with the same meaning and default.
+Empty strings SHALL be treated as unset. Validation SHALL be skipped when `SKIP_ENV_VALIDATION` is set. `@nonete/env/web` SHALL validate the client variable `PUBLIC_SERVER_URL`.
 
 #### Scenario: Missing required variable
 
@@ -46,13 +46,8 @@ Empty strings SHALL be treated as unset. Validation SHALL be skipped when `SKIP_
 
 #### Scenario: Defaults apply
 
-- **WHEN** neither `NODE_ENV`, `LOG_LEVEL`, `OTEL_TRACES_SAMPLER_ARG` nor `CONTENT_REF` is set
-- **THEN** `env.NODE_ENV` SHALL be `development`, `env.LOG_LEVEL` SHALL be `info`, `env.OTEL_TRACES_SAMPLER_ARG` SHALL be `1` and `env.CONTENT_REF` SHALL be `main`
-
-#### Scenario: Out-of-range sample ratio
-
-- **WHEN** the backend starts with `OTEL_TRACES_SAMPLER_ARG=2`
-- **THEN** environment validation SHALL fail and the backend SHALL NOT start
+- **WHEN** neither `NODE_ENV`, `LOG_LEVEL` nor `CONTENT_REF` is set
+- **THEN** `env.NODE_ENV` SHALL be `development`, `env.LOG_LEVEL` SHALL be `info` and `env.CONTENT_REF` SHALL be `main`
 
 #### Scenario: Two content sources
 
@@ -66,7 +61,7 @@ Empty strings SHALL be treated as unset. Validation SHALL be skipped when `SKIP_
 
 ### Requirement: One example documents every variable
 
-The repo SHALL ship a single `.env.example` at the root that lists every variable any workspace, compose file or script reads, grouped by concern; the code that reads a variable is the source of truth for whether it belongs there. Each entry SHALL say whether it is required and what it defaults to. Uncommented lines SHALL be what local dev needs: the required values, with `DATABASE_URL` set to the dev stack's PostgreSQL as native dev reaches it (`postgresql://postgres:postgres@localhost:5432/stack`), and the optional values local dev relies on, such as `LOKI_URL` set to the dev stack's Loki (`http://localhost:3100`) and `OTEL_EXPORTER_OTLP_ENDPOINT` and `TEMPO_URL` set to its Tempo (`http://localhost:4318`, `http://localhost:3200`). Every other optional variable SHALL be commented out, showing its default. No `apps/*/.env.example` SHALL exist.
+The repo SHALL ship a single `.env.example` at the root that lists every variable any workspace, compose file or script reads, grouped by concern; the code that reads a variable is the source of truth for whether it belongs there. Each entry SHALL say whether it is required and what it defaults to. Uncommented lines SHALL be what local dev needs: the required values, with `DATABASE_URL` set to the dev stack's PostgreSQL as native dev reaches it (`postgresql://postgres:postgres@localhost:5432/stack`), and the optional values local dev relies on. Every other optional variable SHALL be commented out, showing its default. No `apps/*/.env.example` SHALL exist.
 
 #### Scenario: Example covers the code
 
@@ -101,7 +96,7 @@ The names `SERVER_URL`, `ENVIRONMENT` and `BACKEND_PROXY_TARGET` SHALL NOT be re
 ### Requirement: Compose files read the root env file
 
 Every compose file (`compose.yml`, `compose.dev.yml`, `compose.prod.yml`) SHALL load the root `.env` for the app services and SHALL override only:
-- container-network addresses (service hostnames, `BACKEND_URL`, `LOKI_URL`, `OTEL_EXPORTER_OTLP_ENDPOINT`, `TEMPO_URL`);
+- container-network addresses (service hostnames, `BACKEND_URL`);
 - container paths of host folders the compose file mounts (`CONTENT_DIR`, set to where the host's `CONTENT_DIR` is mounted, and only when the host value is set);
 - values fixed by the compose file itself (such as the `CORS_ORIGIN` and `BETTER_AUTH_URL` of the port it publishes, or `BETTER_AUTH_URL` taken from `CORS_ORIGIN`);
 - `NODE_ENV`.
@@ -113,7 +108,6 @@ It SHALL always use the unified names.
 - **WHEN** `compose.prod.yml` starts the stack from a `.env` written by `scripts/bootstrap.sh`
 - **THEN** the backend SHALL receive the public origin as `CORS_ORIGIN` from `.env`, the same origin as `BETTER_AUTH_URL`, and `NODE_ENV=production`
 - **AND** the frontend SHALL receive its internal backend address as `BACKEND_URL`
-- **AND** both apps SHALL receive `OTEL_EXPORTER_OTLP_ENDPOINT=http://tempo:4318`, and the backend `TEMPO_URL=http://tempo:3200`
 
 #### Scenario: Content folder inside a container
 

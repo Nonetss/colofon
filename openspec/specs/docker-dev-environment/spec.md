@@ -2,48 +2,34 @@
 
 ## Purpose
 
-Provides a hot-reloading Docker Compose dev stack with a local dev PostgreSQL, Loki and Tempo that shares the native dev configuration and coexists with native dev.
+Provides a hot-reloading Docker Compose dev stack with a local dev PostgreSQL that shares the native dev configuration and coexists with native dev.
 
 ## Requirements
 
 ### Requirement: Hot-reloading Docker dev stack
 
-The repo SHALL provide `compose.dev.yml`, with compose project name `stack-dev`, running `frontend`, `backend`, `gateway`, `db`, `loki` and `tempo` on the stack's private network. Like production, the `gateway` SHALL be the only service that publishes a port (`4321:4321`, see "HTTPS and HTTP/2 dev entry on the usual port"). `frontend`, `backend`, `db`, `loki` and `tempo` SHALL use `expose` only, and no dev service SHALL use `network_mode: host`. Each app SHALL run its development server from source: the frontend `astro dev` on `0.0.0.0:4320` and the backend `bun --hot` on `:3000`. The gateway SHALL reach them as `frontend:4320` and `backend:3000`. The apps SHALL reach Loki as `loki:3100` and send spans to `http://tempo:4318`. The backend SHALL query Tempo at `http://tempo:3200` and SHALL reach the database at `db:5432`. `bun run dev` SHALL run `docker compose -f compose.dev.yml up --build --watch` and `bun run dev:down` SHALL remove the containers.
+The repo SHALL provide `compose.dev.yml`, with compose project name `stack-dev`, running `frontend`, `backend`, `gateway` and `db` on the stack's private network. Like production, the `gateway` SHALL be the only service that publishes a port (`4321:4321`, see "HTTPS and HTTP/2 dev entry on the usual port"). `frontend`, `backend` and `db` SHALL use `expose` only, and no dev service SHALL use `network_mode: host`. Each app SHALL run its development server from source: the frontend `astro dev` on `0.0.0.0:4320` and the backend `bun --hot` on `:3000`. The gateway SHALL reach them as `frontend:4320` and `backend:3000`. The backend SHALL reach the database at `db:5432`. `bun run dev` SHALL run `docker compose -f compose.dev.yml up --build --watch` and `bun run dev:down` SHALL remove the containers.
 
 #### Scenario: Starting the dev stack
 
 - **WHEN** a developer runs `bun run dev`
-- **THEN** compose SHALL build the dev images, start all six services with file watching enabled for the apps, and the app SHALL be reachable at `https://localhost:4321`
+- **THEN** compose SHALL build the dev images, start all four services with file watching enabled for the apps, and the app SHALL be reachable at `https://localhost:4321`
 
 #### Scenario: Single published port
 
 - **WHEN** the dev stack runs
-- **THEN** only the host port `4321` SHALL be bound by the stack, and the backend (`3000`), the frontend dev server (`4320`), PostgreSQL (`5432`), Loki (`3100`) and Tempo (`3200`, `4318`) SHALL NOT be reachable from the host except through the gateway's routing
+- **THEN** only the host port `4321` SHALL be bound by the stack, and the backend (`3000`), the frontend dev server (`4320`) and PostgreSQL (`5432`) SHALL NOT be reachable from the host except through the gateway's routing
 
 #### Scenario: Production-like routing in the dev stack
 
 - **WHEN** the dev stack runs and the browser requests `https://localhost:4321/rpc/...`, `/api/...`, `/scalar` or `/openapi.json`
 - **THEN** the gateway SHALL forward them to `backend:3000` and every other path to `frontend:4320`
 
-### Requirement: Local Loki service
-
-`compose.dev.yml` SHALL define a `loki` service running `grafana/loki` with the same flags and 720h retention as `compose.yml`, keeping its data in a named volume, reachable only on the stack's private network. No service SHALL wait for it. For native dev, `compose.dev.yml` SHALL define a `loki-native` service with the same definition under the `native` profile, published only on `127.0.0.1:3100` (the `LOKI_URL` of `.env.example`). `bun run dev` SHALL NOT start it. The root scripts `loki:start` and `loki:stop` SHALL start (detached) and stop only `loki-native`.
-
-#### Scenario: Activity log in the dev stack
-
-- **WHEN** a developer runs `bun run dev`
-- **THEN** backend API calls and frontend page views SHALL reach the dev Loki over the private network and show up at `/admin/logs`
-
-#### Scenario: Standalone Loki for native dev
-
-- **WHEN** a developer runs `bun run loki:start`
-- **THEN** only `loki-native` SHALL start, on `127.0.0.1:3100`, and the apps started with `bun run dev:local` SHALL ship logs to it with the default `LOKI_URL`
-
 ### Requirement: Edits reach containers without rebuilding
 
 `compose.dev.yml` SHALL declare `develop.watch` rules, used by `docker compose watch` / `up --watch`, so that:
-- edits under an app's source (`apps/frontend/src`, `apps/frontend/public`, `apps/backend/src`) and under the `packages/*/src` the frontend uses (`api`, `auth`, `env`, `logger`, `telemetry`) are synced into the containers that use them and picked up by the running dev server without restarting the container;
-- edits under the `packages/*/src` the backend uses (`api`, `auth`, `cron`, `db`, `env`, `logger`, `telemetry`) are synced into the backend container and restart it, because `bun --hot` doesn't reload synced edits to workspace packages;
+- edits under an app's source (`apps/frontend/src`, `apps/frontend/public`, `apps/backend/src`) and under the `packages/*/src` the frontend uses (`api`, `auth`, `env`, `logger`) are synced into the containers that use them and picked up by the running dev server without restarting the container;
+- edits under the `packages/*/src` the backend uses (`api`, `auth`, `cron`, `db`, `env`, `logger`) are synced into the backend container and restart it, because `bun --hot` doesn't reload synced edits to workspace packages;
 - edits to `apps/frontend/astro.config.mjs` are synced and restart the frontend;
 - edits to `apps/gateway/Caddyfile.dev` or `apps/gateway/routes.caddy` are synced and restart the gateway;
 - edits to a dependency manifest or lockfile (`package.json`, `bun.lock`, `apps/<app>/package.json`) rebuild the affected services.
@@ -86,7 +72,7 @@ Each of backend and frontend SHALL have an `apps/<app>/Dockerfile.dev` that inst
 
 ### Requirement: Dev stack uses the native dev configuration
 
-Each dev app container SHALL read its configuration from the root `.env` file that native dev reads. The only compose `environment` overrides for the apps SHALL be container addresses: `BACKEND_URL=http://backend:3000` for the frontend, `LOKI_URL=http://loki:3100` and `OTEL_EXPORTER_OTLP_ENDPOINT=http://tempo:4318` for both apps, and `DATABASE_URL` (the stack's `db`) and `TEMPO_URL=http://tempo:3200` for the backend; and, for the backend, the container path of the content folder. When `.env` sets `CONTENT_DIR`, the backend container SHALL get that host folder mounted read-only and `CONTENT_DIR` overridden to the mount path; when it does not, no host folder SHALL be mounted and `CONTENT_DIR` SHALL stay unset. The backend SHALL keep a `CONTENT_REPO` clone in a named volume, so it survives recreating the container. Every other value, including `BETTER_AUTH_URL`, `CORS_ORIGIN`, `CONTENT_REPO` and `CONTENT_REF`, SHALL come from `.env` unchanged.
+Each dev app container SHALL read its configuration from the root `.env` file that native dev reads. The only compose `environment` overrides for the apps SHALL be container addresses: `BACKEND_URL=http://backend:3000` for the frontend and `DATABASE_URL` (the stack's `db`) for the backend; and, for the backend, the container path of the content folder. When `.env` sets `CONTENT_DIR`, the backend container SHALL get that host folder mounted read-only and `CONTENT_DIR` overridden to the mount path; when it does not, no host folder SHALL be mounted and `CONTENT_DIR` SHALL stay unset. The backend SHALL keep a `CONTENT_REPO` clone in a named volume, so it survives recreating the container. Every other value, including `BETTER_AUTH_URL`, `CORS_ORIGIN`, `CONTENT_REPO` and `CONTENT_REF`, SHALL come from `.env` unchanged.
 
 #### Scenario: Shared data with native dev
 
@@ -114,7 +100,7 @@ Each dev app container SHALL read its configuration from the root `.env` file th
 
 ### Requirement: Coexistence with native dev
 
-Native dev (`bun run dev:local` plus `bun run gateway`, and optionally `bun run loki:start`) SHALL keep working alongside the Docker dev stack and serve the app at the same `https://localhost:4321`. The gateway is required for native dev, because it terminates TLS on `:4321` in front of the host processes `astro dev` (`:4320`) and backend (`:3000`). Because both setups bind the host's `:4321`, the documentation SHALL state that only one of them runs at a time.
+Native dev (`bun run dev:local` plus `bun run gateway`) SHALL keep working alongside the Docker dev stack and serve the app at the same `https://localhost:4321`. The gateway is required for native dev, because it terminates TLS on `:4321` in front of the host processes `astro dev` (`:4320`) and backend (`:3000`). Because both setups bind the host's `:4321`, the documentation SHALL state that only one of them runs at a time.
 
 #### Scenario: Switching back to native dev
 
@@ -195,17 +181,3 @@ The CA SHALL persist in the named volume `gateway_data`, shared by `compose.dev.
 
 - **WHEN** a developer runs `bun run dev:down` without `-v`
 - **THEN** the `db_data` volume and its data SHALL be kept
-
-### Requirement: Local Tempo service
-
-`compose.dev.yml` SHALL define a `tempo` service running `grafana/tempo` in monolithic mode (OTLP HTTP receiver on `4318`, query API on `3200`), keeping its data in a named volume, reachable only on the stack's private network. Like Loki, Tempo SHALL be configured by the compose file alone, with no config file in the repo: flags in `command`, plus an inline compose `configs` entry for the settings Tempo only accepts as YAML (the OTLP receiver and the retention). No service SHALL wait for it. For native dev, `compose.dev.yml` SHALL define a `tempo-native` service with the same definition under the `native` profile, published only on `127.0.0.1:4318` and `127.0.0.1:3200` (the `OTEL_EXPORTER_OTLP_ENDPOINT` and `TEMPO_URL` of `.env.example`). `bun run dev` SHALL NOT start it. The root scripts `tempo:start` and `tempo:stop` SHALL start (detached) and stop only `tempo-native`.
-
-#### Scenario: Traces in the dev stack
-
-- **WHEN** a developer runs `bun run dev` and loads a page as an administrator
-- **THEN** the frontend's and backend's spans SHALL reach `tempo` over the private network, and the trace SHALL show up at `/admin/traces`
-
-#### Scenario: Standalone Tempo for native dev
-
-- **WHEN** a developer runs `bun run tempo:start` and `bun run dev:local`
-- **THEN** only `tempo-native` SHALL start, the apps SHALL export spans to it with the default `OTEL_EXPORTER_OTLP_ENDPOINT`, and the backend SHALL read them back with the default `TEMPO_URL`

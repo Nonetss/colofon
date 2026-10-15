@@ -27,7 +27,7 @@ The repo SHALL run every workspace's unit-test suite from the root with `bun run
 
 ### Requirement: Unit tests are hermetic
 
-Unit tests SHALL NOT open a database connection, make a network call, or depend on a running service (backend, frontend, gateway, Postgres or Loki). A unit suite SHALL pass on a machine where none of those is running and no `.env` file is present, and SHALL produce the same results when a root `.env` is present. The `packages/api` suite SHALL preload a setup file (`packages/api/tests/setup.ts`) that overwrites the required server variables with placeholders (a `DATABASE_URL` pointing at a loopback port that refuses connections) and sets the optional variables that switch on integrations (`LOKI_URL`, `ADMIN_*`, `OIDC_*`, `SKIP_ENV_VALIDATION`) to an empty value, so loading the root `.env` cannot re-enable them. The same setup file SHALL replace `@nonete/env/server` once, for the whole run, with the shared env fixture (`testEnv` in `packages/api/tests/fixtures/env.ts`): a test turns an integration on by setting it on `testEnv`, and `resetEnv()` in `beforeEach` restores the placeholder env with every integration off. Code that queries the database SHALL be tested against the fake database fixture, never a real or in-process database. Code that calls `fetch` SHALL be tested with `fetch` replaced for the duration of the test. Results that depend on the timezone or the current time SHALL be computed under a fixed timezone and a fixed system clock.
+Unit tests SHALL NOT open a database connection, make a network call, or depend on a running service (backend, frontend, gateway or Postgres). A unit suite SHALL pass on a machine where none of those is running and no `.env` file is present, and SHALL produce the same results when a root `.env` is present. The `packages/api` suite SHALL preload a setup file (`packages/api/tests/setup.ts`) that overwrites the required server variables with placeholders (a `DATABASE_URL` pointing at a loopback port that refuses connections) and sets the optional variables that switch on integrations (`ADMIN_*`, `OIDC_*`, `SKIP_ENV_VALIDATION`) to an empty value, so loading the root `.env` cannot re-enable them. The same setup file SHALL replace `@nonete/env/server` once, for the whole run, with the shared env fixture (`testEnv` in `packages/api/tests/fixtures/env.ts`): a test turns an integration on by setting it on `testEnv`, and `resetEnv()` in `beforeEach` restores the placeholder env with every integration off. Code that queries the database SHALL be tested against the fake database fixture, never a real or in-process database. Code that calls `fetch` SHALL be tested with `fetch` replaced for the duration of the test. Results that depend on the timezone or the current time SHALL be computed under a fixed timezone and a fixed system clock.
 
 #### Scenario: Suites pass with nothing running
 
@@ -41,13 +41,13 @@ Unit tests SHALL NOT open a database connection, make a network call, or depend 
 
 #### Scenario: The root .env does not re-enable integrations
 
-- **WHEN** the `packages/api` suite runs with a root `.env` that sets `LOKI_URL`, `OIDC_*` or `ADMIN_*`
+- **WHEN** the `packages/api` suite runs with a root `.env` that sets `OIDC_*` or `ADMIN_*`
 - **THEN** `@nonete/env/server` SHALL read those variables as unset unless a test sets them on `testEnv`
 
 #### Scenario: An integration a test turns on does not leak
 
-- **WHEN** a test sets `testEnv.LOKI_URL` and the next test starts after `resetEnv()` in `beforeEach`
-- **THEN** the next test SHALL read `LOKI_URL` as unset
+- **WHEN** a test sets `testEnv.CONTENT_DIR` and the next test starts after `resetEnv()` in `beforeEach`
+- **THEN** the next test SHALL read `CONTENT_DIR` as unset
 
 #### Scenario: Results do not depend on the machine's timezone
 
@@ -164,7 +164,6 @@ The `packages/api` unit suite SHALL cover the rules each feature handler enforce
 - `organization`: assigning a role that is neither built-in nor a custom role of that organization fails with `BAD_REQUEST`; adding a user who is already a member fails with `CONFLICT`; a missing organization, member or team fails with `NOT_FOUND`.
 - `session-history`: the page holds at most `limit` sessions, `nextCursor` is set only when more rows exist and decodes to the last row, and sessions without a user are skipped.
 - `api-key`: the dates Better Auth returns are serialized as ISO strings or `null`.
-- `logs`: the LogQL query includes each provided filter with quotes and regex characters escaped; a network failure or a non-OK Loki response fails with `BAD_GATEWAY`; unparsable lines are skipped and pino numeric levels map to their labels.
 - `cron`: `CronNotFoundError`, `CronReadOnlyError` and `CronValidationError` from the service map to `NOT_FOUND`, `CONFLICT` and `BAD_REQUEST`; `create` binds the job to the caller when `userId` is omitted and to no user when it is `null`; `listRuns` pages with a keyset cursor.
 
 #### Scenario: Soft-deleted comment with replies stays in the tree
@@ -181,11 +180,6 @@ The `packages/api` unit suite SHALL cover the rules each feature handler enforce
 
 - **WHEN** `organization.addMember` is called with a role that is not built-in and not a custom role of the organization
 - **THEN** the call SHALL fail with `BAD_REQUEST` and no insert SHALL be recorded
-
-#### Scenario: Loki is unreachable
-
-- **WHEN** `logs.query` runs and `fetch` rejects
-- **THEN** the call SHALL fail with `BAD_GATEWAY`
 
 #### Scenario: Read-only cron job
 

@@ -12,7 +12,7 @@ Every cached read of an entity SHALL be keyed under that entity's prefix, whethe
 
 #### Scenario: A user lookup shares the users prefix
 
-- **WHEN** a screen looks up one user by id for an admin view (the cron "runs as" user, the activity log's user filter)
+- **WHEN** a screen looks up one user by id for an admin view (the cron "runs as" user)
 - **THEN** that read SHALL be keyed under the admin users prefix
 
 #### Scenario: A new admin user read

@@ -102,7 +102,7 @@ The system SHALL provide a protected `v1.private.getPrivateData` procedure that 
 
 ### Requirement: Feature-nested router
 
-The router SHALL group procedures by feature, nesting each feature's procedures under its own key (for example `v1.health.check`, `v1.apiKey.create`, `v1.private.getPrivateData`). Client calls SHALL address procedures as `<version>.<feature>.<method>`, never as a flat top-level name and never omitting the version. The `v1` router SHALL contain the features `health`, `private`, `authConfig`, `apiKey`, `organization`, `plugins`, `sessionHistory`, `adminUser`, `logs`, `cron`, `comment` and `entityIcon`.
+The router SHALL group procedures by feature, nesting each feature's procedures under its own key (for example `v1.health.check`, `v1.apiKey.create`, `v1.private.getPrivateData`). Client calls SHALL address procedures as `<version>.<feature>.<method>`, never as a flat top-level name and never omitting the version. The `v1` router SHALL contain the features `health`, `private`, `authConfig`, `apiKey`, `organization`, `plugins`, `sessionHistory`, `adminUser`, `cron`, `comment` and `entityIcon`.
 
 #### Scenario: Client calls a nested procedure
 
@@ -188,7 +188,7 @@ A list whose caller chooses the order SHALL take a `sort` input (an enum of the 
 
 #### Scenario: Non-keyset pagination still shares the slicing helper
 
-- **WHEN** a procedure paginates over a data source that isn't queried by keyset (for example a Loki log query bounded by a single timestamp), so the shared encode/decode pair doesn't apply
+- **WHEN** a procedure paginates over a data source that isn't queried by keyset, so the shared encode/decode pair doesn't apply
 - **THEN** it SHALL still use the shared `paginate()` slicing helper for the over-fetch/`hasMore` step, and MAY manage its own cursor value
 
 #### Scenario: A caller-ordered list pages through every row once

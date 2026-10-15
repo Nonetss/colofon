@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Enables the Better Auth Admin plugin and defines the admin role, account banning and the admin panel pages for plugins, activity log, session history and API keys.
+Enables the Better Auth Admin plugin and defines the admin role, account banning and the admin panel pages for plugins, users, session history and API keys.
 
 ## Requirements
 
@@ -105,33 +105,6 @@ ban, delete) SHALL stay on Better Auth's admin endpoints.
 
 - **WHEN** a user without the `admin` role calls `v1.adminUser.list`
 - **THEN** the system SHALL deny access
-
-### Requirement: Administrative activity log
-
-The admin panel SHALL provide a read-only activity log at `/admin/logs`,
-sourced from indexed page-view and API-call log entries, filterable by
-user, event type, path, and date range, and gated by the `admin` role. The
-entries SHALL be shown newest first by default, and the administrator SHALL
-be able to sort them by time in either direction.
-
-#### Scenario: Admin opens the activity log
-
-- **WHEN** an authenticated user with the `admin` role navigates to
-  `/admin/logs`
-- **THEN** the page SHALL render filterable, paginated activity entries
-  with the associated user, event type, path, and timestamp, newest first
-
-#### Scenario: Admin reads the log oldest first
-
-- **WHEN** an administrator sorts the activity log by date, ascending
-- **THEN** the page SHALL reload the entries from the oldest one in the
-  selected range and keep loading later entries on scroll
-
-#### Scenario: Non-admin attempts to reach the activity log
-
-- **WHEN** an authenticated user without the `admin` role requests
-  `/admin/logs`
-- **THEN** the application middleware SHALL redirect them to `/`
 
 ### Requirement: Administrative session history
 

@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Provides a shared pino-based structured logger with environment-controlled level and format, error causes, cause-appropriate API error severity, request correlation and optional Loki shipping.
+Provides a shared pino-based structured logger with environment-controlled level and format, error causes, cause-appropriate API error severity and request correlation, written to stdout through a factory shared by the backend and the frontend's server.
 
 ## Requirements
 
@@ -100,45 +100,16 @@ Every HTTP request SHALL receive a server-generated request id, and every log en
 - **WHEN** a procedure handling an HTTP request logs through the logger obtained from its context
 - **THEN** the entry SHALL carry that request's id
 
-### Requirement: Shared logger factory with optional Loki shipping
+### Requirement: Shared logger factory
 
-`@nonete/logger/factory` SHALL export an env-agnostic `createLogger({ service, level, production, lokiUrl })` used by both the backend (service `backend`) and the frontend's server (service `frontend`). When `lokiUrl` is given (from `LOKI_URL`), the logger SHALL additionally push its lines to Loki's HTTP push API in batches, with `service` as the only stream label. The logger SHALL use plain synchronous streams (`pino.multistream`), never `pino.transport()`, so it keeps working when bundled into an image without `node_modules`. A failed Loki push SHALL be swallowed and SHALL NOT affect console output or the application.
+`@nonete/logger/factory` SHALL export an env-agnostic `createLogger({ service, level, production })` used by both the backend (service `backend`) and the frontend's server (service `frontend`). The logger SHALL write its lines to stdout only. The logger SHALL use plain synchronous streams, never `pino.transport()`, so it keeps working when bundled into an image without `node_modules`.
 
-#### Scenario: No Loki configured
+#### Scenario: Logs go to stdout
 
-- **WHEN** the backend starts without `LOKI_URL`
-- **THEN** logs SHALL go to stdout only and nothing SHALL attempt to contact Loki
-
-#### Scenario: Loki configured
-
-- **WHEN** the backend runs with `LOKI_URL=http://loki:3100`
-- **THEN** its log lines SHALL be pushed to `http://loki:3100/loki/api/v1/push` under the label `service="backend"`, while still being written to stdout
-
-#### Scenario: Loki unreachable
-
-- **WHEN** a push to Loki fails
-- **THEN** the failure SHALL NOT be thrown or logged, and the request being served SHALL be unaffected
+- **WHEN** the backend starts
+- **THEN** logs SHALL go to stdout only and nothing SHALL attempt to contact a log store
 
 #### Scenario: Bundled runtime
 
 - **WHEN** the backend or frontend runs from its bundled production image with no `node_modules`
-- **THEN** the logger, including Loki shipping, SHALL work without resolving any module at runtime
-
-### Requirement: Trace context on log lines
-
-Every logger built by `createLogger` SHALL add `traceId` and `spanId` as structured fields to each line written while a sampled span is active. It SHALL add neither field when no span is active or the active span is not sampled. These fields SHALL NOT become Loki labels. `requestId` SHALL keep being written as before.
-
-#### Scenario: Log inside a traced request
-
-- **WHEN** a procedure logs through its context logger while its request is traced and sampled
-- **THEN** the line SHALL carry the request's `requestId` and the active span's `traceId` and `spanId`
-
-#### Scenario: Tracing disabled
-
-- **WHEN** the backend runs without `OTEL_EXPORTER_OTLP_ENDPOINT`
-- **THEN** log lines SHALL carry no `traceId` or `spanId` field
-
-#### Scenario: Unsampled trace
-
-- **WHEN** a line is written inside a span whose trace was not sampled
-- **THEN** it SHALL carry no `traceId` or `spanId` field
+- **THEN** the logger SHALL work without resolving any module at runtime

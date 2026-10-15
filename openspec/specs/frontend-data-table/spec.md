@@ -8,7 +8,7 @@ Lets users read every resource list of the application as a table they can shape
 
 ### Requirement: Resource lists render as data tables
 
-The application's resource lists SHALL render as data tables: the API keys, users, organizations, teams, plugins, sessions and activity log pages under `/admin`, the members, pending invitations, teams and custom roles of the organization detail view, the team member-management view, the `/crons` job list and the run history of `/crons/{id}`. Each table SHALL keep the data, actions, links, filters, dialogs, permissions and live updates its list offered before, and its rows SHALL keep their muted and disabled treatments. A muted row (a paused or read-only job) SHALL show its text in the muted tone over the normal row background, never dimmed as a whole.
+The application's resource lists SHALL render as data tables: the API keys, users, organizations, teams, plugins and sessions pages under `/admin`, the members, pending invitations, teams and custom roles of the organization detail view, the team member-management view, the `/crons` job list and the run history of `/crons/{id}`. Each table SHALL keep the data, actions, links, filters, dialogs, permissions and live updates its list offered before, and its rows SHALL keep their muted and disabled treatments. A muted row (a paused or read-only job) SHALL show its text in the muted tone over the normal row background, never dimmed as a whole.
 
 A row whose list opened it (a detail link or a detail view) SHALL keep that open control on its identifying cell. A row with actions SHALL keep them in a trailing actions column whose menu is named after the row, with destructive actions marked as such.
 
