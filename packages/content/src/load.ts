@@ -36,7 +36,8 @@ export type LoadResult =
 
 const ID_PATTERN = /^[a-z0-9]+(-[a-z0-9]+)*$/
 
-const spanishErrors = z.locales.es().localeError
+/** Zod's Spanish messages, as the editor and the platform report them. */
+export const spanishErrors = z.locales.es().localeError
 
 /** Loads the declarations of the content repository at `root`. */
 export async function loadContent(root: string): Promise<LoadResult> {
@@ -105,12 +106,12 @@ async function readDeclaration<T>(
   return undefined
 }
 
-function describeIssue(issue: z.core.$ZodIssue): string {
+export function describeIssue(issue: z.core.$ZodIssue): string {
   if (issue.path.length === 0) return issue.message
   return `${issue.path.join(".")}: ${issue.message}`
 }
 
-async function readText(file: string): Promise<string | undefined> {
+export async function readText(file: string): Promise<string | undefined> {
   try {
     return await readFile(file, "utf8")
   } catch (error) {
@@ -123,7 +124,7 @@ function isMissingFile(error: unknown): boolean {
   return error instanceof Error && "code" in error && error.code === "ENOENT"
 }
 
-function parseYaml(
+export function parseYaml(
   text: string,
   file: string,
   problems: ContentProblem[]

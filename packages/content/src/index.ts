@@ -8,6 +8,13 @@ export {
   readFolder,
 } from "#browse"
 export {
+  type Catalog,
+  type CatalogType,
+  type Entity,
+  labelField,
+  readCatalog,
+} from "#catalog"
+export {
   CONFIG_SCHEMA,
   type EditorSchema,
   ENTITY_SCHEMA_PREFIX,
