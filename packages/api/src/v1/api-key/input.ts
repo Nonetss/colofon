@@ -7,7 +7,10 @@ export const apiKeyInput = {
     name: z.string().describe("The name of the API key").default("API Key"),
     expiresIn: z
       .number()
-      .describe("The number of seconds until the API key expires")
+      .nullable()
+      .describe(
+        "The number of seconds until the API key expires; null for a key that never expires"
+      )
       .default(3600 * 24 * 30),
   }),
   delete: z.object({

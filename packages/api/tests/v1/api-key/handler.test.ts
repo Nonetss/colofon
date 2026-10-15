@@ -3,6 +3,7 @@ import { auth } from "@nonete/auth"
 import { listedApiKey, listedApiKeys } from "#tests/fixtures/auth"
 import { userContext } from "#tests/fixtures/context"
 import { apiKeyHandler } from "#v1/api-key/handler"
+import { apiKeyRouter } from "#v1/api-key/router"
 
 const listApiKeys = spyOn(auth.api, "listApiKeys")
 const createApiKey = spyOn(auth.api, "createApiKey")
@@ -66,6 +67,23 @@ describe("apiKey.create", () => {
   })
 })
 
+describe("apiKey.create without expiry", () => {
+  test("passes null on so the key never expires", async () => {
+    createApiKey.mockResolvedValue({ ...listedApiKey(), key: "sk_secret" })
+
+    await apiKeyHandler.create({
+      context: userContext(),
+      input: { name: "Agent", expiresIn: null },
+    })
+
+    expect(createApiKey).toHaveBeenCalledWith(
+      expect.objectContaining({
+        body: { configId: "default", name: "Agent", expiresIn: null },
+      })
+    )
+  })
+})
+
 describe("apiKey.search", () => {
   test("matches names case-insensitively, up to the limit", async () => {
     listApiKeys.mockResolvedValue(
@@ -84,4 +102,14 @@ describe("apiKey.search", () => {
 
     expect(found).toEqual([{ id: "a", name: "Deploy prod", prefix: "sk_" }])
   })
+})
+
+describe("apiKey access", () => {
+  // Every user manages their own keys (handed to an agent to read the
+  // documentation), not only administrators.
+  for (const [name, procedure] of Object.entries(apiKeyRouter)) {
+    test(`${name} is open to any signed-in user`, () => {
+      expect(procedure["~orpc"].meta.access).toBe("protected")
+    })
+  }
 })
