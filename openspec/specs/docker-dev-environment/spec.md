@@ -72,7 +72,7 @@ Each of backend and frontend SHALL have an `apps/<app>/Dockerfile.dev` that inst
 
 ### Requirement: Dev stack uses the native dev configuration
 
-Each dev app container SHALL read its configuration from the root `.env` file that native dev reads. The only compose `environment` overrides for the apps SHALL be container addresses: `BACKEND_URL=http://backend:3000` for the frontend and `DATABASE_URL` (the stack's `db`) for the backend. No host content folder SHALL be mounted in the backend container. The backend SHALL keep its content repository clones in a named volume, so they survive recreating the container. Every other value, including `BETTER_AUTH_URL` and `CORS_ORIGIN`, SHALL come from `.env` unchanged.
+Each dev app container SHALL read its configuration from the root `.env` file that native dev reads. The only compose `environment` overrides for the apps SHALL be container addresses: `BACKEND_URL=http://backend:3000` for the frontend and `DATABASE_URL` (the stack's `db`) for the backend. No host content folder SHALL be mounted in the backend container. The backend SHALL keep its content repository clones in a named volume, and the bare repositories of hosted content repositories in another named volume, so both survive recreating the container. Every other value, including `BETTER_AUTH_URL` and `CORS_ORIGIN`, SHALL come from `.env` unchanged.
 
 #### Scenario: Shared data with native dev
 
@@ -93,6 +93,11 @@ Each dev app container SHALL read its configuration from the root `.env` file th
 
 - **WHEN** the backend dev container is recreated after it cloned a content repository
 - **THEN** the new container SHALL find the clone in the named volume and fetch it instead of cloning from scratch
+
+#### Scenario: Hosted repositories survive recreating the backend
+
+- **WHEN** the backend dev container is recreated after a writer pushed to a hosted repository
+- **THEN** the new container SHALL find that repository's bare repository, with the pushed commits, in its named volume
 
 ### Requirement: Configurable Astro dev proxy target
 

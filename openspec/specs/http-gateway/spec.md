@@ -8,7 +8,7 @@ Provides a Caddy gateway as the single public HTTP entry point that routes API t
 
 ### Requirement: Single public HTTP entry point
 
-The gateway (`apps/gateway/Caddyfile`, Caddy) SHALL serve an HTTP site on port `GATEWAY_HTTP_PORT` (default `80`). It SHALL forward `/rpc/*`, `/api/*`, `/scalar*` and `/openapi.json` to the backend's HTTP server (`BACKEND_HTTP_UPSTREAM`, default `backend:3000`) and every other request to the frontend's Astro server (`FRONTEND_HTTP_UPSTREAM`, default `frontend:4321`). Responses SHALL be compressed with zstd or gzip when the client accepts it. Because both apps are served on the same origin, the browser SHALL reach the API and Better Auth without cross-origin requests. The site's body (compression, security headers, `/health` and routing) SHALL live in `apps/gateway/routes.caddy`, imported by every gateway site, so production and dev never route differently. The production `Caddyfile` SHALL define only this HTTP site, with its admin API and automatic HTTPS disabled.
+The gateway (`apps/gateway/Caddyfile`, Caddy) SHALL serve an HTTP site on port `GATEWAY_HTTP_PORT` (default `80`). It SHALL forward `/rpc/*`, `/api/*`, `/git/*`, `/scalar*` and `/openapi.json` to the backend's HTTP server (`BACKEND_HTTP_UPSTREAM`, default `backend:3000`) and every other request to the frontend's Astro server (`FRONTEND_HTTP_UPSTREAM`, default `frontend:4321`). Responses SHALL be compressed with zstd or gzip when the client accepts it, except git protocol responses under `/git/*`, whose packs are already compressed, which SHALL be streamed as the backend sends them. Because both apps are served on the same origin, the browser SHALL reach the API and Better Auth without cross-origin requests. The site's body (compression, security headers, `/health` and routing) SHALL live in `apps/gateway/routes.caddy`, imported by every gateway site, so production and dev never route differently. The production `Caddyfile` SHALL define only this HTTP site, with its admin API and automatic HTTPS disabled.
 
 #### Scenario: API call on the page's origin
 
@@ -24,6 +24,11 @@ The gateway (`apps/gateway/Caddyfile`, Caddy) SHALL serve an HTTP site on port `
 
 - **WHEN** a client requests `/scalar` or `/openapi.json`
 - **THEN** the gateway SHALL forward it to the backend
+
+#### Scenario: Git over the public URL
+
+- **WHEN** a writer runs `git push https://docs.example.com/git/manual.git main`
+- **THEN** the gateway SHALL forward the git requests to the backend and stream its responses uncompressed
 
 ### Requirement: Baseline security headers
 
