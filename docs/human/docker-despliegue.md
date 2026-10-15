@@ -44,8 +44,8 @@ Comandos: `docker:build`, `docker:up`, `docker:logs` y `docker:down`.
 
 ## `compose.prod.yml`: producción
 
-Usa las imágenes publicadas `ghcr.io/nonetss/stack-{frontend,backend,gateway}:main`
-y los mismos cuatro servicios en una red `stack`. Toda la configuración sale
+Usa las imágenes publicadas `ghcr.io/nonetss/doc-{frontend,backend,gateway}:main`
+y los mismos cuatro servicios en una red `doc`. Toda la configuración sale
 de un `.env` junto al compose, en el directorio del servidor.
 
 **Solo el gateway publica un puerto.** Un proxy inverso con https delante del
