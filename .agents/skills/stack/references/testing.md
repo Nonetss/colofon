@@ -6,13 +6,13 @@ Which tests a change needs and how to write them: `references/writing-unit-tests
 
 1. `bun run --filter <workspace> check-types` for the workspaces touched (or `bun run check-types`).
 2. `bunx biome check <paths>` (or `bun run check`).
-3. `bun run test` when a workspace with a suite changed, or anything it imports. `turbo run test --filter=<workspace>` runs one suite (`@nonete/api`, `@nonete/cron`, `@nonete/db`, `@nonete/telemetry`, `frontend`).
+3. `bun run test` when a workspace with a suite changed, or anything it imports. `turbo run test --filter=<workspace>` runs one suite (`@nonete/api`, `@nonete/content`, `@nonete/cron`, `@nonete/db`, `@nonete/telemetry`, `frontend`).
 
 Live checks of `/scalar`, `/openapi.json`, `/rpc` or the UI happen only when the user explicitly asks. If runtime confirmation is needed, ask the user for a screenshot or a pasted response.
 
 ## Unit suites — `bun run test`
 
-`turbo test --log-order=grouped --ui=stream` runs every workspace `test` script and exits non-zero on any failure. Five workspaces have one, each run with `bun test --only-failures`: `packages/api`, `packages/cron`, `packages/db`, `packages/telemetry` and `apps/frontend`.
+`turbo test --log-order=grouped --ui=stream` runs every workspace `test` script and exits non-zero on any failure. Six workspaces have one, each run with `bun test --only-failures`: `packages/api`, `packages/content`, `packages/cron`, `packages/db`, `packages/telemetry` and `apps/frontend`.
 
 The run is kept quiet so a green run is a few lines per suite: Turbo prints each suite's output as one block instead of interleaving them, and `bun test` hides passing tests (failures still print with their diff, then the pass/fail counts). Running `bun test` directly inside a workspace lists every test.
 
@@ -59,6 +59,11 @@ It checks what the code reads and writes, not the SQL. Queue results in the orde
 - `tests/fixtures/logger.ts`: `pino({ level: "silent" })`.
 - `tests/fixtures/bun-cron.ts`: `installFakeBunCron()` replaces in-process `Bun.cron` with a recorder that keeps the real `parse`. A test fires a job with `jobs[i].fire()`, and no timer runs. Call `restore()` in `afterEach`.
 - `runNow` returns before the run finishes. Wait for the final status through `onRunChange`, never by sleeping.
+
+### `packages/content` — `bun test`
+
+- No preload: nothing reads the env. Pure schema tests call `createMetaSchemas()`, `entitySchema()` and `schemaCatalog()` directly; `loadContent()` runs against a real temporary folder from `createContentDir(files)` (`tests/fixtures/content-dir.ts`, with `VALID_SITE` as the base site), removed in `afterEach`. `createRepoSync()` runs the real git CLI against a bare repository in a temp folder reached over `file://` (`tests/fixtures/git-remote.ts`), and an unreachable remote is `127.0.0.1:1`. The disk is local and private to the test and nothing touches the network, so this stays hermetic.
+- `packages/api`'s content handler tests (`tests/v1/content/`) build the handler over `createContentReader()` with a fake logger and temp content folders (`tests/fixtures/content.ts`); `resetEnv()` clears `CONTENT_DIR` and `CONTENT_REPO`.
 
 ### `packages/db` — `bun test`
 

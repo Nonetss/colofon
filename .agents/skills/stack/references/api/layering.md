@@ -40,7 +40,7 @@ Everything version-specific lives under `src/<version>/` (currently only `src/v1
 - `src/<version>/router.ts` nests each feature's router under its own key (`apiKey: apiKeyRouter`, `health: healthRouter`).
 - `packages/api/tests/v1/<feature>/handler.test.ts` — the unit tests of the handler, written with it (`references/writing-unit-tests.md`). A feature isn't done without them.
 
-Some features also carry feature-specific modules beside those four (`cron/discovery.ts`, `cron/events.ts`, `cron/runtime.ts`, `entity-icon/targets.ts`).
+Some features also carry feature-specific modules beside those four (`cron/discovery.ts`, `cron/events.ts`, `cron/runtime.ts`, `entity-icon/targets.ts`, `content/reader.ts`). Routes come from the router keys; `content` is the one feature that sets `openapi({ path })` (with the `/v1` prefix), because its public schema URLs are part of a contract with editors.
 
 OpenAPI `summary`/`description`/`.describe()` texts are English.
 

@@ -33,7 +33,7 @@ The Docker dev stack runs all three itself. For native dev, start only what you 
 | Command | What it does |
 | --- | --- |
 | `bun run build` | `turbo build`: depends on `^build`; reads `.env*` as inputs; outputs `dist/**`, `.astro/**`. The `@nonete/*` packages build nothing (`"build": "true"`, no outputs). |
-| `bun run check-types` | `tsc -b` in `apps/backend`, `packages/{cron,logger}`; `tsc --noEmit -p .` in `packages/{api,auth,db,env}`; `astro check` in the frontend. |
+| `bun run check-types` | `tsc -b` in `apps/backend`, `packages/{content,cron,logger}`; `tsc --noEmit -p .` in `packages/{api,auth,db,env}`; `astro check` in the frontend. |
 | `bun run check` | `biome check --write .` (format + lint + organize imports). |
 | `bun run format` | `biome check --write --linter-enabled=false .` (format + organize imports, no lint). |
 | `bun run tailwind:check` / `tailwind:fix` | `tailwint` over `apps/frontend`. |
@@ -48,7 +48,7 @@ A package-specific task in root `turbo.json` (e.g. `@nonete/api#build`) does **n
 
 ## Tests
 
-`bun run test` — `turbo test --log-order=grouped --ui=stream`: runs every workspace `test` script, one output block per suite: `packages/api`, `packages/cron` and `apps/frontend`, each with `bun test --only-failures`, so only failures and counts print (the frontend's unit suite is `tests/unit/`). Exits non-zero on any failure. One suite: `turbo run test --filter=<workspace>` (`@nonete/api`, `@nonete/cron`, `frontend`). See `testing.md`.
+`bun run test` — `turbo test --log-order=grouped --ui=stream`: runs every workspace `test` script, one output block per suite: `packages/api`, `packages/content`, `packages/cron`, `packages/db`, `packages/telemetry` and `apps/frontend`, each with `bun test --only-failures`, so only failures and counts print (the frontend's unit suite is `tests/unit/`). Exits non-zero on any failure. One suite: `turbo run test --filter=<workspace>` (`@nonete/api`, `@nonete/content`, `@nonete/cron`, `@nonete/db`, `@nonete/telemetry`, `frontend`). See `testing.md`.
 
 ## Database migrations and Docker
 

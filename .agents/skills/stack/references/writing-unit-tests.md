@@ -11,6 +11,7 @@ Code that holds a rule ships with the unit tests that pin that rule, in the same
 | A helper in `packages/api/src/shared/` or `src/lib/` | `packages/api/tests/shared/<helper>.test.ts` | `@nonete/api` |
 | An entity-icon target or cron discovery rule | `packages/api/tests/v1/<feature>/<topic>.test.ts` | `@nonete/api` |
 | Anything in `packages/cron/src/` (scheduler, cron service, declared-job sync) | `packages/cron/tests/<module>.test.ts` | `@nonete/cron` |
+| Anything in `packages/content/src/` (meta-schema, entity schemas, loader, editor schemas and catalog, content source and git sync) | `packages/content/tests/<module>.test.ts` | `@nonete/content` |
 | A helper in `apps/frontend/src/lib/` | `apps/frontend/tests/unit/lib/<file>.test.ts` | `frontend` |
 | A hook in `apps/frontend/src/hooks/` that depends only on React and the browser | `apps/frontend/tests/unit/hooks/<hook>.test.tsx` | `frontend` |
 | A component in `apps/frontend/src/components/shared/` with logic of its own (parsing, bounds, branches, callbacks) | `apps/frontend/tests/unit/components/<group>/<component>.test.tsx` | `frontend` |

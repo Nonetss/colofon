@@ -22,6 +22,7 @@ contexto y menos jerga. Si alguna vez no coinciden, mandan las specs de
 8. [Funcionalidades transversales](transversales.md): comentarios, iconos de entidad y registro de actividad.
 9. [Docker y despliegue](docker-despliegue.md): los cuatro compose, las imágenes, el CI y el instalador.
 10. [Convenciones](convenciones.md): estilo de código, idiomas, commits, migraciones y el flujo de OpenSpec.
+11. [Contenido](contenido.md): el repositorio de contenido, de dónde lo lee el backend y el autocompletado en el editor.
 
 ## Diagramas
 
