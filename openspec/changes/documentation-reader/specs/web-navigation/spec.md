@@ -1,0 +1,523 @@
+## MODIFIED Requirements
+
+### Requirement: Authenticated and guest navbars
+
+The web layout SHALL render an authenticated navbar for signed-in users and a
+guest navbar for public pages (such as login and registration) or when no
+session exists. Both navbars SHALL show the application logo and the name the
+layout passes as `nameApp`, linking to `/`. The authenticated navbar SHALL NOT
+render application section links: it SHALL show the brand, the surface search,
+the theme menu and the user menu, plus, on documentation pages below the medium
+breakpoint, a menu button that opens the documentation sidebar. The guest
+navbar SHALL omit the surface search and the user menu.
+
+#### Scenario: Public page renders the guest navbar
+
+- **WHEN** a page is rendered with the guest navbar flag enabled, or without a
+  session
+- **THEN** the layout SHALL show only the brand and the theme menu, without app
+  links or account actions
+
+#### Scenario: Application page renders the authenticated navbar
+
+- **WHEN** a page is rendered for a signed-in user without the guest navbar flag
+- **THEN** the layout SHALL show the brand, the surface search, the theme menu
+  and the user menu, and no section links
+
+#### Scenario: Documentation page on a phone
+
+- **WHEN** a documentation page is rendered on a 390 px wide viewport
+- **THEN** the navbar SHALL show a menu button that opens the documentation
+  sidebar
+
+### Requirement: Account menu
+
+The user menu SHALL reflect the current session. When no user is authenticated
+it SHALL present a sign-in action; when a user is authenticated it SHALL present
+the user's name and email, a link to the profile, an "Administración" link to
+`/admin` for users with the `admin` role only, and a sign-out action.
+
+#### Scenario: Anonymous user sees sign-in
+
+- **WHEN** no authenticated user is present
+- **THEN** the user menu SHALL render a sign-in action linking to the login page
+
+#### Scenario: Authenticated user sees account actions
+
+- **WHEN** a user is authenticated
+- **THEN** the user menu SHALL display the user's name and email and offer
+  profile (`/me`) and sign-out actions
+
+#### Scenario: Admin sees the administration link
+
+- **WHEN** a user with the `admin` role opens the user menu
+- **THEN** it SHALL offer "Administración", linking to `/admin`
+
+#### Scenario: Signing out
+
+- **WHEN** the user selects the sign-out action
+- **THEN** the system SHALL end the session and redirect to the login page
+
+### Requirement: Client-side navigation with view transitions
+
+The layouts SHALL use Astro's `ClientRouter` so navigation between pages happens
+client-side with view transitions. Navigation chrome (navbar, documentation
+sidebar and admin shell) SHALL persist across swaps instead of remounting,
+while the page content fades in.
+
+#### Scenario: Navigating between pages
+
+- **WHEN** the user follows an internal link
+- **THEN** the page content SHALL be swapped with a fade transition and the
+  navbar SHALL remain mounted with its state
+
+#### Scenario: Navigating between documentation pages
+
+- **WHEN** the user follows a link from one documentation page to another
+- **THEN** the documentation sidebar SHALL remain mounted with its scroll
+  offset and expanded sections
+
+### Requirement: Searchable surfaces
+
+The surface search SHALL list every registered surface whose route path has no
+dynamic segment, excluding surfaces that opt out of search and, for users
+without the `admin` role, surfaces marked `adminOnly`. A surface whose path has
+a dynamic segment SHALL NOT be listed as a surface; it SHALL be reachable
+through the search only by way of its records, when it declares a search source
+(see "Searchable records of dynamic surfaces"). Results SHALL be grouped by
+top-level section, and each result SHALL show the surface's icon, label and
+description. The label of a sub-surface SHALL be preceded by the labels of its
+parent sections, outermost first ("Configuración › Apariencia"), wherever the
+result is listed, including the "Recientes" group.
+
+#### Scenario: Dynamic routes are not listed
+
+- **WHEN** the search dialog lists its destinations
+- **THEN** surfaces whose path contains a dynamic segment (such as
+  `/admin/git/[repo]`) SHALL NOT appear as a surface entry with the unresolved path
+
+#### Scenario: Opted-out surfaces are not listed
+
+- **WHEN** the search dialog lists its destinations
+- **THEN** the login, signup and not-found surfaces SHALL NOT appear
+
+#### Scenario: Non-admin does not see admin surfaces
+
+- **WHEN** a user without the `admin` role opens the search dialog
+- **THEN** no `adminOnly` surface SHALL appear, whatever the query
+
+#### Scenario: Admin sees admin surfaces
+
+- **WHEN** a user with the `admin` role searches for "usuarios"
+- **THEN** the admin users surface SHALL appear in the results
+
+#### Scenario: Sub-surfaces are grouped under their section
+
+- **WHEN** the search dialog lists the children of a section (such as the
+  appearance page of the configuration)
+- **THEN** they SHALL appear in a group headed by that section's label
+
+#### Scenario: Sub-surfaces show their section trail
+
+- **WHEN** the user types "apariencia"
+- **THEN** the appearance result SHALL read "Configuración › Apariencia"
+
+### Requirement: Server-searched record sources
+
+A search source SHALL obtain its records through an endpoint of its own record
+entity: its list endpoint when the entity is listed in full, its search endpoint
+when the entity is listed in pages. A full-list source keeps the behavior of
+"Searchable records of dynamic surfaces": it loads the list once while the
+dialog is open and the dialog matches it locally. A source whose entity is
+listed in pages (a server-searched source) SHALL instead ask its entity's search
+endpoint for the records matching the user's text, with the same API
+permissions as the pages that list those records, and SHALL list at most a fixed
+number of records per source in the order the endpoint returns them.
+
+A server-searched source SHALL be queried with the text the user settled on,
+about 150 ms after the last keystroke, not once per keystroke. The words of the
+query that match the labels of the source's own surface or of the concrete-path
+surfaces its route sits under SHALL NOT be sent to the server, while the dialog
+still matches them locally against the record. The source SHALL NOT be queried
+when no word remains or when what remains is shorter than two characters, and
+then it SHALL list no records. While the next answer loads, the records of the
+previous answer SHALL stay listed.
+
+A record SHALL be able to carry extra match terms besides its label and
+description (for example an address the server matched on), and the dialog
+SHALL match the query against them too, so a record the endpoint returned is not
+filtered out because its match is not visible in its label. The rules of
+"Searchable records of dynamic surfaces" on the dialog being open, empty
+queries, `adminOnly` surfaces, loading or failing sources and recent pages SHALL
+apply to server-searched sources as well.
+
+#### Scenario: Full-list sources are unchanged
+
+- **WHEN** the user types in the search dialog
+- **THEN** the documentation pages source SHALL keep listing the navigation it
+  already loaded and SHALL make no request per typed text
+
+#### Scenario: A paginated source asks its own search endpoint
+
+- **WHEN** a source is declared as server-searched and the user types "lectura"
+- **THEN** the records listed for that source SHALL be the ones its entity's
+  search endpoint returns for "lectura", not a page of its list endpoint
+
+#### Scenario: Server search waits for the user to pause
+
+- **WHEN** the user types a word into the dialog one character after another
+  without pausing, with a server-searched source declared
+- **THEN** that source SHALL be queried for the settled text, not once per
+  keystroke
+
+#### Scenario: Section words are not sent to the server
+
+- **WHEN** a server-searched source sits under a section labelled "Dispositivos"
+  and the user types "dispositivos lectura"
+- **THEN** that source SHALL be asked for "lectura" only, and the records it
+  returns SHALL still match the full query in the dialog
+
+#### Scenario: A bare section name does not query the server
+
+- **WHEN** the user types only the label of a server-searched source's section,
+  or a single character besides it
+- **THEN** that source SHALL NOT be queried and SHALL list no records, while the
+  section's surface still appears
+
+#### Scenario: Results are bounded
+
+- **WHEN** more records match than the source's limit
+- **THEN** that source's group SHALL list at most that many records
+
+#### Scenario: Extra match terms keep a server match
+
+- **WHEN** the search endpoint returns a record because its address contains the
+  typed text, and the address is one of the record's extra match terms but not
+  its label or description
+- **THEN** that record SHALL be listed
+
+#### Scenario: Previous answer stays while the next loads
+
+- **WHEN** a server-searched source has listed records for one text and the user
+  extends the text
+- **THEN** the earlier records SHALL stay listed until the new answer arrives,
+  and SHALL disappear when the text no longer qualifies for a server query
+
+### Requirement: Recently visited surfaces
+
+The surface search SHALL remember, in the browser's `localStorage` and scoped to
+the signed-in user, the most recent searchable surfaces the user visited (at
+most five, newest first), and SHALL list them first under a "Recientes" group
+while the query is empty. A visit SHALL count only when the current path is
+exactly a searchable surface's path. Storage failures SHALL NOT break the
+search.
+
+#### Scenario: Recent pages are suggested first
+
+- **WHEN** the user has visited `/admin/users` and then `/me`, navigates to
+  `/admin/content` and opens the search dialog without typing
+- **THEN** a "Recientes" group SHALL appear first listing Mi perfil and then
+  Usuarios
+
+#### Scenario: Current page is not suggested as recent
+
+- **WHEN** the user opens the search dialog on a page that is in their recent
+  list
+- **THEN** that page SHALL NOT appear in the "Recientes" group
+
+#### Scenario: Typing hides the recent group
+
+- **WHEN** the user types a query
+- **THEN** the "Recientes" group SHALL be hidden and only the matching section
+  groups SHALL be shown
+
+#### Scenario: Recents are per user and respect visibility
+
+- **WHEN** a different user signs in on the same browser, or a stored page is no
+  longer searchable for the user
+- **THEN** the dialog SHALL NOT suggest pages from the other user's history nor
+  pages the user can't see
+
+#### Scenario: Storage unavailable
+
+- **WHEN** `localStorage` is unavailable or holds malformed data
+- **THEN** the search dialog SHALL work without a "Recientes" group
+
+### Requirement: Surface search matching and navigation
+
+The surface search SHALL match the query case- and accent-insensitively against
+each surface's label, description and parent section label. A query of several
+words SHALL match a result only when every word is found in at least one of the
+texts that result is matched against; this applies to surfaces and to record
+results alike. The search SHALL show an empty state in Spanish when nothing
+matches. Selecting a result SHALL close the dialog and navigate to the surface's
+path through the View Transitions–aware client navigation.
+
+#### Scenario: Accent-insensitive match
+
+- **WHEN** the user types "documentacion"
+- **THEN** the "Inicio" surface, described as the documentation of every
+  repository, SHALL appear in the results
+
+#### Scenario: Match through the parent section
+
+- **WHEN** an admin types "admin"
+- **THEN** the admin section and its sub-surfaces (such as "Usuarios") SHALL
+  appear in the results
+
+#### Scenario: Multi-word query narrows to one section
+
+- **WHEN** an admin types "admin cuentas"
+- **THEN** the "Usuarios" surface (under "Admin", described as creating,
+  banning or removing accounts) SHALL appear and the "API keys" surface SHALL
+  NOT
+
+#### Scenario: Multi-word query across a record's section and name
+
+- **WHEN** a page titled "DNS" sits in the section "Red" and the user types
+  "red dns"
+- **THEN** the result reading "Red › DNS" SHALL appear in the documentation
+  group
+
+#### Scenario: No matches
+
+- **WHEN** the query matches no searchable surface
+- **THEN** the dialog SHALL show an empty-state message and no results
+
+#### Scenario: Selecting a result
+
+- **WHEN** the user selects a result with the pointer or with `Enter` on the
+  highlighted item
+- **THEN** the dialog SHALL close and the app SHALL navigate to that surface's
+  path
+
+#### Scenario: Current page is marked
+
+- **WHEN** the search dialog lists the surface for the current path
+- **THEN** that result SHALL be visually marked as the current page
+
+## ADDED Requirements
+
+### Requirement: Admin navigation from the surface registry
+
+The admin shell sidebar and the section overview pages SHALL read their
+sections from `lib/site-nav.ts`, which is projected from the
+application-surface registry (`lib/app-surfaces.ts`). A section's child
+surfaces SHALL appear as its sub-items. Navigation components MUST NOT hardcode
+labels, descriptions or icons. Documentation navigation is not part of the
+registry: it comes from the content (`documentation-reader`).
+
+#### Scenario: Admin section with sub-routes
+
+- **WHEN** the admin surface has child surfaces (such as Usuarios and
+  Contenido)
+- **THEN** the admin shell sidebar SHALL list one row per child surface, each
+  with its icon and label from the registry
+
+#### Scenario: Navbar without registry sections
+
+- **WHEN** a surface declares a navigation placement
+- **THEN** the authenticated navbar SHALL still render no section link for it
+
+### Requirement: Responsive documentation navigation
+
+On documentation pages the documentation sidebar SHALL be shown beside the
+page from the medium breakpoint and SHALL open as a sheet from the navbar's
+menu button below it. Pages without the documentation sidebar SHALL show no
+menu button, since the navbar has no section links to collapse.
+
+#### Scenario: Large viewport shows the sidebar
+
+- **WHEN** a documentation page is displayed on a viewport at the medium
+  breakpoint or wider
+- **THEN** the documentation sidebar SHALL be shown beside the page and the
+  navbar SHALL show no menu button
+
+#### Scenario: Small viewport shows the sheet
+
+- **WHEN** a documentation page is displayed below the medium breakpoint
+- **THEN** the documentation sidebar SHALL be available through a sheet opened
+  from the navbar's menu button
+
+#### Scenario: Profile page on a phone
+
+- **WHEN** `/me` is displayed below the medium breakpoint
+- **THEN** the navbar SHALL show no menu button
+
+### Requirement: Current link highlighting
+
+Navigation that lists registry surfaces (the admin shell sidebar, the account
+menu and the surface search) SHALL match the current path through
+`isNavLinkActive(href, pathname)`. The home link MUST match only the exact root
+path, while other links match when the current path equals the link's href or
+is nested under it. Within a section, only the most specific matching row SHALL
+be marked current. The documentation sidebar SHALL mark only the row whose route
+equals the current page's route.
+
+#### Scenario: Home is active only at root
+
+- **WHEN** the current path is `/`
+- **THEN** a link to `/` SHALL be highlighted and no link to a repository SHALL
+
+#### Scenario: Admin sub-route is the current row
+
+- **WHEN** the current path is `/admin/git/manual`
+- **THEN** the admin shell's Git row SHALL be current and the Resumen row SHALL
+  NOT
+
+### Requirement: Admin entry from the account menu
+
+The admin panel (`/admin`) SHALL be reached from the "Administración" entry of
+the account menu and from the surface search, both only for users holding the
+`admin` role. It SHALL NOT be a navbar section, a documentation sidebar entry
+or a card on the home page. The admin shell SHALL offer a link back to the
+documentation at `/`.
+
+#### Scenario: Admin opens the admin panel
+
+- **WHEN** an authenticated user with the `admin` role selects
+  "Administración" in the user menu
+- **THEN** the browser SHALL open `/admin` inside the admin shell
+
+#### Scenario: Non-admin does not see the admin panel
+
+- **WHEN** an authenticated user without the `admin` role opens the user menu
+  or the surface search
+- **THEN** no admin panel entry SHALL be offered
+
+#### Scenario: Back to the documentation
+
+- **WHEN** an admin in the admin shell activates its link back to the
+  documentation
+- **THEN** the browser SHALL open `/`
+
+### Requirement: Layouts by navigation context
+
+The frontend SHALL provide Astro layouts under `apps/frontend/src/layouts/`
+chosen by navigation context, each route rendering exactly one `<main>`:
+`Layout.astro` (navbar, page slot and site footer, with `guestNavbar`,
+`hideFooter` and `scrollToTop` options, for the profile, login, signup and
+not-found pages), `Docs.astro` (the documentation reader: navbar,
+documentation sidebar, page column and table of contents, without footer),
+`Detail.astro` (detail routes rendering `<main>` and a back link) and
+`Admin.astro` (the `/admin` area inside the admin shell sidebar, redirecting to
+`/login` without a user).
+
+#### Scenario: Documentation page renders with its sidebar
+
+- **WHEN** a reader route renders
+- **THEN** it SHALL use `Docs.astro`, showing the documentation sidebar next to
+  the page, without the site footer
+
+#### Scenario: Profile page uses the default layout
+
+- **WHEN** a signed-in user opens `/me`
+- **THEN** the page SHALL render with `Layout.astro`, its navbar and the site
+  footer
+
+### Requirement: Searchable records
+
+The surface search SHALL include records of dynamic surfaces. A surface whose path has a dynamic segment can declare a search source in the
+application-surface registry. The source SHALL enumerate the records the
+signed-in user can open on that surface, using the same API permissions as the
+pages that list them. Each record SHALL become a search result whose path is the
+surface's path with its dynamic segments filled from that record, and whose
+label and description come from the record. The documentation page surface SHALL
+list the pages of the current documentation scope (`documentation-reader`).
+Record results SHALL be shown only while the query is non-empty, SHALL be
+matched case- and accent-insensitively against the record's label, description
+and group label, and against the labels of its surface and of the concrete-path
+surfaces its route sits under, and SHALL appear in a group of their own per
+source with a Spanish heading. Each record result SHALL show the icon of its
+surface, and its label SHALL be preceded by its trail: the labels of the
+concrete-path surfaces its route sits under, or the trail the record itself
+gives ("Red › DNS").
+A source declared on an `adminOnly` surface SHALL NOT be queried for users
+without the `admin` role. Records SHALL be loaded only while the search dialog
+is open, unless the source reads a query the page already holds. While they
+load, or if loading fails, the static surface results SHALL still be shown and
+searchable. Opening a record page SHALL NOT add it to the "Recientes" group.
+
+#### Scenario: Finding a documentation page by title
+
+- **WHEN** the scope is "Casa" and the user types "dns"
+- **THEN** a result reading "Red › DNS" SHALL appear in the documentation
+  group, and selecting it SHALL close the dialog and navigate to
+  `/casa/red/dns`
+
+#### Scenario: Empty query shows no records
+
+- **WHEN** the user opens the search dialog without typing
+- **THEN** no record results SHALL be listed
+
+#### Scenario: Accent-insensitive record match
+
+- **WHEN** a page is titled "Sincronización" and the user types
+  "sincronizacion"
+- **THEN** that page SHALL appear in the results
+
+#### Scenario: Loading or failing source does not block the search
+
+- **WHEN** a search source is still loading or its request fails
+- **THEN** matching surface results SHALL still be shown, and no error SHALL
+  replace the dialog content
+
+#### Scenario: Current record is marked
+
+- **WHEN** the user is on `/casa/red/dns` and that page appears in the results
+- **THEN** that result SHALL be visually marked as the current page
+
+#### Scenario: Record pages are not recorded as recent
+
+- **WHEN** the user visits `/casa/red/dns` and later opens the search dialog
+  without typing
+- **THEN** the "Recientes" group SHALL NOT include that page
+
+#### Scenario: Dynamic surface without a source stays out
+
+- **WHEN** a surface with a dynamic segment declares no search source
+- **THEN** neither the surface nor any of its records SHALL appear in the results
+
+## REMOVED Requirements
+
+### Requirement: Section-sidebar scroll restoration
+
+**Reason**: The section-sidebar layout (`WithSidebar.astro`) and its inner scroller are removed; its only consumer was `/crons`. Documentation pages scroll the window, which the browser and Astro's router restore natively, and the documentation sidebar keeps its own offset (`documentation-reader`).
+
+**Migration**: A future section with sub-pages uses the admin shell pattern or the documentation layout; `hooks/use-scroll-restoration.ts` is removed with its last consumer.
+
+### Requirement: Registry-driven navigation sections
+
+**Reason**: The navbar no longer renders registry sections and the section sidebar is removed; only the admin shell and section overviews read `site-nav.ts`.
+
+**Migration**: Replaced by "Admin navigation from the surface registry".
+
+### Requirement: Responsive navigation
+
+**Reason**: The navbar has no section links to show inline or collapse; on documentation pages the documentation sidebar takes that role.
+
+**Migration**: Replaced by "Responsive documentation navigation".
+
+### Requirement: Active link highlighting
+
+**Reason**: Its examples (`/crons/<id>`, `/config/appearance`) point at removed pages, and the documentation sidebar matches routes exactly.
+
+**Migration**: Replaced by "Current link highlighting".
+
+### Requirement: Admin entry point
+
+**Reason**: Admin is no longer a navigation section; it is reached from the account menu.
+
+**Migration**: Replaced by "Admin entry from the account menu".
+
+### Requirement: Page layouts
+
+**Reason**: `WithSidebar.astro` is removed and `Docs.astro` is added.
+
+**Migration**: Replaced by "Layouts by navigation context".
+
+### Requirement: Searchable records of dynamic surfaces
+
+**Reason**: The cron job source is removed and the documentation page source is added, which reads the query the sidebar already holds.
+
+**Migration**: Replaced by "Searchable records".

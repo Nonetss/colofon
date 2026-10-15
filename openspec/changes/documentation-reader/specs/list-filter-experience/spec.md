@@ -1,0 +1,107 @@
+## MODIFIED Requirements
+
+### Requirement: Active filters are shown as removable chips
+
+A list page with any active filter SHALL show each active filter value as a chip above the list at every width, labelled "<dimension>: <value>" (an excluded facet option reads "<dimension>: no <value>" and is styled as destructive), together with a "Limpiar" action when the list can clear filters. Removing a chip SHALL remove only that value. When no filter is active no chip row SHALL render. A page whose list filters from its table's column headers SHALL show no chip row: the highlighted filter icon of each filtered column and the empty-table message carry the active filters instead.
+
+#### Scenario: Removing one chip
+
+- **WHEN** role filter `admin` and search `ana` are active and the user removes the search chip
+- **THEN** only the role filter SHALL remain active
+
+#### Scenario: Clearing all filters
+
+- **WHEN** the user activates the chips' "Limpiar"
+- **THEN** every filter SHALL be removed and the chip row SHALL disappear
+
+#### Scenario: Chip controls are accessible
+
+- **WHEN** a chip is rendered
+- **THEN** its remove control SHALL have the accessible name "Quitar filtro: <chip label>" and a touch target of at least 44 px
+
+#### Scenario: A table-filtered page shows no chips
+
+- **WHEN** a column of a list filtered from its table's column headers keeps only one value
+- **THEN** no chip row SHALL render, and that column header's filter icon SHALL be highlighted
+
+### Requirement: Long list pages offer a scroll-to-top control
+
+A page that opts in (through the layout's `scrollToTop` prop) SHALL show a floating circular "Volver arriba" button in the bottom-right corner once its content (the window or its app scroll container) has scrolled more than 400 px, and SHALL hide it again when scrolled back above that threshold. Showing and hiding SHALL animate (fade, zoom and slide, 200 ms). Activating it SHALL smoothly scroll the window and every app scroll container to the top. The button SHALL have the accessible name "Volver arriba", SHALL be 44 px on narrow viewports and 36 px from the medium breakpoint, SHALL respect the device safe areas, and SHALL sit above the filter action bar while that bar is visible, dropping to the corner when the bar hides. Pages that do not opt in SHALL never show it, including after a client-side navigation from a page that does. The documentation pages and the admin users, organizations, teams and logs pages SHALL opt in.
+
+#### Scenario: Appears after scrolling a long list
+
+- **WHEN** a user scrolls the admin users page 500 px down
+- **THEN** the "Volver arriba" button SHALL fade in at the bottom-right corner
+
+#### Scenario: Returns to the top
+
+- **WHEN** the user activates "Volver arriba"
+- **THEN** the page SHALL scroll smoothly to its top and the button SHALL animate out
+
+#### Scenario: Clears the filter action bar
+
+- **WHEN** on a narrow viewport the button is visible and the filter action bar is shown
+- **THEN** the button SHALL be positioned above the bar
+- **AND** when the bar slides out the button SHALL move down to the corner
+
+#### Scenario: Page without opt-in
+
+- **WHEN** a user navigates client-side from the admin users page to a page that does not opt in and scrolls it past 400 px
+- **THEN** no scroll-to-top button SHALL be shown
+
+## ADDED Requirements
+
+### Requirement: Narrow viewports filter through an action bar and a filter sheet
+
+Below the medium breakpoint (768 px), a list page with filters SHALL NOT show the inline filter panel and SHALL instead show a fixed bottom action bar with a "Filtros" control that reads "Filtros · N" when N filters are active, plus the list's sort control when the page supplies one. The bar SHALL respect the device bottom safe area, SHALL slide out of view while the user scrolls down past the top 48 px (ignoring movements under 8 px) and SHALL slide back in while scrolling up or when back near the top. "Filtros" SHALL open a bottom sheet titled "Filtros" holding one labelled section per filter, a "Limpiar" action when the list can clear filters, and a confirm button. Categorical (facet) sections SHALL be edited as a draft that is applied only when the user confirms and discarded when the sheet is dismissed; the other filter kinds SHALL apply as the user edits them. At the medium breakpoint and above the page SHALL keep the inline panel and apply every change immediately. The admin lists that filter from their table's column headers (`/admin/users`) SHALL use the same action bar and sheet below the medium breakpoint, the sheet holding the page's own filters, when it has any, followed by one button per filtered column, every change applying as it is made. Their ordering SHALL move to the bar as well: an "Ordenar" button beside "Filtros" SHALL open a bottom sheet titled "Ordenar" listing the sortable columns and the two directions ("Ascendente", "Descendente", unavailable until a column is picked), each pick applying at once. The page content SHALL keep clear of the bar instead of running under it.
+
+#### Scenario: Opening the sheet from the action bar
+
+- **WHEN** a user on a 390 px wide viewport with two active filters taps "Filtros · 2" on a list page
+- **THEN** a bottom sheet titled "Filtros" SHALL open with a section per filter
+
+#### Scenario: The confirm button shows the resulting count
+
+- **WHEN** the sheet is open and the current filter combination matches 12 items
+- **THEN** the confirm button SHALL read "Ver 12 resultados"
+- **AND** it SHALL read "Ver 1 resultado" for one item, "Sin resultados" for zero items, "Cargando…" while the count is not yet known, and "Ver resultados" on a list that can't count its results
+
+#### Scenario: A draft with no results can still be applied
+
+- **WHEN** the draft facet selection matches no items
+- **THEN** the confirm button SHALL read "Sin resultados" and pressing it SHALL apply the draft and close the sheet
+
+#### Scenario: Dismissing discards the facet draft
+
+- **WHEN** a user changes facet options in the sheet and closes it without confirming
+- **THEN** the active facet filters SHALL be those that were active before opening it
+- **AND** reopening the sheet SHALL show those live values
+
+#### Scenario: Clearing from the sheet
+
+- **WHEN** a user taps "Limpiar" in the sheet
+- **THEN** every filter SHALL be cleared and the sheet SHALL close
+
+#### Scenario: The bar hides while reading down
+
+- **WHEN** a user scrolls a long list down past the top of the page
+- **THEN** the action bar SHALL slide out below the viewport
+- **AND** scrolling up SHALL bring it back
+
+#### Scenario: Wide viewport keeps the inline panel
+
+- **WHEN** the same page is shown at 1024 px wide
+- **THEN** no action bar or sheet SHALL render and the collapsible inline filter panel SHALL be shown
+
+#### Scenario: An admin table-filtered page filters through the action bar
+
+- **WHEN** an administrator opens `/admin/users` on a 390 px wide viewport
+- **THEN** the page SHALL show the "Filtros" action bar instead of the column filters above the rows, and its sheet SHALL offer those column filters
+
+## REMOVED Requirements
+
+### Requirement: Narrow viewports filter through an action bar and a bottom sheet
+
+**Reason**: Its last sentence and scenario described `/crons`, which leaves the frontend.
+
+**Migration**: Replaced by "Narrow viewports filter through an action bar and a filter sheet", identical without the `/crons` exception.
