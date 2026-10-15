@@ -159,10 +159,12 @@ function prepare(
   frame.dataset.tableReady = ""
   const sortButtons: HTMLButtonElement[] = []
   const filterSlots: HTMLElement[] = []
-  for (const header of headers) {
-    const { button, slot } = prepareHeader(header, model.full)
+  for (const [index, header] of headers.entries()) {
+    const column = model.columns[index]
+    const withFilter = model.full && column?.filterable === true
+    const { button, slot } = prepareHeader(header, withFilter)
     sortButtons.push(button)
-    if (slot !== null) filterSlots.push(slot)
+    if (slot !== null) filterSlots[index] = slot
   }
   bindColumnResize(table, headers)
 

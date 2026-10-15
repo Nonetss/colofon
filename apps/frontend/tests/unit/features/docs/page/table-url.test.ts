@@ -77,4 +77,31 @@ describe("viewHref and stateFromSearch", () => {
     expect(read?.columnVisibility).toEqual({ notes: false })
     expect(read?.pagination.pageSize).toBe(25)
   })
+
+  test("a filter on a column of long text is left out of the link and the view", () => {
+    const prose = tableModel(
+      ["Clave", "Qué es"],
+      [
+        ["titulo", "x".repeat(41)],
+        ["icono", "y".repeat(41)],
+      ]
+    )
+    const state: DocTableState = {
+      ...initialState(prose),
+      columnFilters: [
+        { id: "clave", value: ["titulo"] },
+        { id: "que-es", value: ["algo"] },
+      ],
+    }
+    const url = new URL(viewHref(page, "t-1", prose, state, 25))
+    expect(url.searchParams.get("f.clave")).toBe("titulo")
+    expect(url.searchParams.get("f.que-es")).toBeNull()
+    const read = stateFromSearch(
+      "?tabla=t-1&f.clave=titulo&f.que-es=algo",
+      "t-1",
+      prose,
+      initialState(prose)
+    )
+    expect(read?.columnFilters).toEqual([{ id: "clave", value: ["titulo"] }])
+  })
 })

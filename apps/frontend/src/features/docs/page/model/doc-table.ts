@@ -157,6 +157,7 @@ export function docTableColumns(model: TableModel) {
         id: column.id,
         header: column.header,
         enableHiding: column.index > 0,
+        enableColumnFilter: column.filterable,
         sortDescFirst: false,
         sortUndefined: "last",
         sortFn: (a, b) =>

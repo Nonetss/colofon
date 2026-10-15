@@ -51,6 +51,8 @@ export function viewHref(
   params.set("tabla", id)
   if (state.sorting.length > 0) params.set("orden", sortingParam(state.sorting))
   for (const filter of state.columnFilters) {
+    const column = model.columns.find((entry) => entry.id === filter.id)
+    if (column === undefined || !column.filterable) continue
     const kept = keptValues(filter.value)
     if (kept.length > 0)
       params.set(`${FILTER_PREFIX}${filter.id}`, kept.join("|"))
@@ -108,12 +110,15 @@ export function stateFromSearch(
   if (params.get("tabla") !== id) return null
   const ids = model.columns.map((column) => column.id)
   const has = (column: string) => ids.includes(column)
+  const filterable = (column: string) =>
+    model.columns.some((entry) => entry.id === column && entry.filterable)
 
   const columnFilters: ColumnFiltersState = []
   for (const [key, value] of params) {
     if (!key.startsWith(FILTER_PREFIX) || value === "") continue
     const column = key.slice(FILTER_PREFIX.length)
-    if (has(column)) columnFilters.push({ id: column, value: value.split("|") })
+    if (filterable(column))
+      columnFilters.push({ id: column, value: value.split("|") })
   }
   const state: DocTableState = {
     ...base,

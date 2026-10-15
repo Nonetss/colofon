@@ -45,6 +45,22 @@ describe("tableModel", () => {
     )
     expect(long.paged).toBe(true)
   })
+
+  test("a column of long text is not filterable", () => {
+    const fit = "x".repeat(40)
+    const overflow = "y".repeat(41)
+    const model = tableModel(
+      ["Clave", "Qué es"],
+      [
+        ["titulo", fit],
+        ["paginas", overflow],
+      ]
+    )
+    expect(model.columns.map((column) => column.filterable)).toEqual([
+      true,
+      false,
+    ])
+  })
 })
 
 describe("labels", () => {

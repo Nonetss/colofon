@@ -62,6 +62,18 @@ describe("prepareTables", () => {
     expect(small?.filterSlots).toHaveLength(0)
     expect(small?.headers[0]?.querySelector(".doc-table-resize")).not.toBeNull()
   })
+
+  test("a column of long text gets no filter slot", () => {
+    const root = page(
+      frame([
+        ["titulo", "x".repeat(41)],
+        ["icono", "Opcional. El nombre de un icono de Lucide."],
+      ])
+    )
+    const [dom] = prepareTables(root)
+    expect(dom?.filterSlots[0]).toBeInstanceOf(HTMLElement)
+    expect(dom?.filterSlots[1]).toBeUndefined()
+  })
 })
 
 describe("applyView", () => {

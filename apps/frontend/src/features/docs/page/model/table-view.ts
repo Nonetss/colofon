@@ -19,6 +19,9 @@ export const PAGED_ROWS = 50
 export const PAGE_SIZE = 25
 /** The page sizes offered, besides every row. */
 export const PAGE_SIZES = [25, 50, 100] as const
+/** Longer than this, a value does not fit one line of the filter panel, so
+ *  the column offers no value filter. */
+export const MAX_FILTER_VALUE_LENGTH = 40
 
 export interface TableColumn {
   index: number
@@ -26,6 +29,8 @@ export interface TableColumn {
   id: string
   header: string
   kind: ColumnKind
+  /** Its values fit the filter panel, so the header offers a value filter. */
+  filterable: boolean
 }
 
 export interface TableRow {
@@ -96,6 +101,7 @@ export function tableModel(
     id,
     header: cellText(headers[index] ?? ""),
     kind: detectKind(texts.map((row) => row[index] ?? "")),
+    filterable: valuesFitFilter(texts, index),
   }))
   const rows = texts.map((text, index) => ({
     index,
@@ -107,6 +113,20 @@ export function tableModel(
   }))
   const full = rows.length >= TOOLBAR_ROWS
   return { columns, rows, full, paged: full && rows.length > PAGED_ROWS }
+}
+
+/** Whether every value of column `index` fits the filter panel. An empty
+ *  cell does: it is listed as "(vacía)". */
+function valuesFitFilter(
+  texts: readonly (readonly string[])[],
+  index: number
+): boolean {
+  for (const row of texts) {
+    const value = row[index]
+    if (value !== undefined && value.length > MAX_FILTER_VALUE_LENGTH)
+      return false
+  }
+  return true
 }
 
 /** "(vacía)" for the empty cells, as the filter lists them. */
