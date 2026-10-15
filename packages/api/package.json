@@ -32,6 +32,7 @@
     "@orpc/publisher": "catalog:",
     "@orpc/server": "catalog:",
     "@orpc/zod": "catalog:",
+    "@types/hast": "catalog:",
     "dotenv": "catalog:",
     "drizzle-orm": "catalog:",
     "pino": "catalog:",
