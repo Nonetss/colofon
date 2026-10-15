@@ -7,12 +7,10 @@ import { contentRouter } from "#v1/content/router"
 import { cronRouter } from "#v1/cron/router"
 import { entityIconRouter } from "#v1/entity-icon/router"
 import { healthRouter } from "#v1/health/router"
-import { logsRouter } from "#v1/logs/router"
 import { organizationRouter } from "#v1/organization/router"
 import { pluginsRouter } from "#v1/plugins/router"
 import { privateRouter } from "#v1/private/router"
 import { sessionHistoryRouter } from "#v1/session-history/router"
-import { tracesRouter } from "#v1/traces/router"
 
 export const appRouter = {
   authConfig: authConfigRouter,
@@ -26,8 +24,6 @@ export const appRouter = {
   cron: cronRouter,
   sessionHistory: sessionHistoryRouter,
   adminUser: adminUserRouter,
-  logs: logsRouter,
-  traces: tracesRouter,
   content: contentRouter,
 }
 export type AppRouter = typeof appRouter

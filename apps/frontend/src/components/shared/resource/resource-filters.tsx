@@ -56,7 +56,7 @@ export interface ResourceFilterOption {
 export interface ResourceFacetOption {
   value: string
   label: string
-  /** Omitted for lists that can't count options (Better Auth/Loki-backed
+  /** Omitted for lists that can't count options (Better Auth-backed
    *  admin lists) — the sheet/panel then renders the option without a count. */
   count?: number
 }

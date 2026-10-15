@@ -12,8 +12,6 @@ export type SurfaceId =
   | "admin"
   | "admin-users"
   | "admin-sessions"
-  | "admin-logs"
-  | "admin-traces"
   | "admin-organizations"
   | "admin-teams"
   | "admin-api-keys"
@@ -193,23 +191,6 @@ const appSurfaceDefinitions: Partial<Record<SurfaceId, SurfaceDefinition>> = {
         label: "Sesiones",
         description: "Gestiona las sesiones de los usuarios.",
         icon: iconRef("admin", "sessions"),
-        adminOnly: true,
-      },
-      "admin-logs": {
-        path: "/admin/logs",
-        title: "Admin · Registro de actividad",
-        label: "Registro de actividad",
-        description: "Consulta qué páginas y endpoints ha usado cada usuario.",
-        icon: iconRef("admin", "logs"),
-        adminOnly: true,
-      },
-      "admin-traces": {
-        path: "/admin/traces",
-        title: "Admin · Trazas",
-        label: "Trazas",
-        description:
-          "Sigue cada petición por el frontend, el backend y la base de datos.",
-        icon: iconRef("admin", "traces"),
         adminOnly: true,
       },
       "admin-organizations": {
