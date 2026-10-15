@@ -11,20 +11,20 @@ This repo, `stack`, is the user's project. TypeScript only: Astro + Hono + oRPC 
 
 ```
 browser ──▶ apps/gateway :80 (Caddy, only published port) ──rest──▶ apps/frontend (Astro SSR :4321)
-                 │ /rpc/*, /api/*, /scalar*, /openapi.json                │ SSR session lookups
+                 │ /rpc/*, /api/*, /git/*, /scalar*, /openapi.json        │ SSR session lookups
                  │ (dev: astro dev's proxy does the same)                 │ (BACKEND_URL)
                  ▼                                                        ▼
           apps/backend (Hono + oRPC on Bun, HTTP :3000) ◀──────────────────┘
            │  packages/api     (contract + handlers)
            │  packages/auth    (Better Auth)
            │  packages/cron    (in-process scheduler)
-           │  packages/content (content contract; clones of the repositories in the DB)
+           │  packages/content (content contract; clones of the repositories in the DB; git server of the hosted ones)
            │  packages/db      (Drizzle) ──▶ PostgreSQL (`db` service in every compose file)
            │  packages/logger  (pino)    ──▶ stdout
 ```
 
 - `packages/api`, `auth`, `content`, `cron`, `db`, `env` and `logger` are consumed as **raw TS source** (no build step; their `build` script is `true`).
-- `apps/gateway` (one Caddy, one HTTP site) is the only routing map: `/rpc/*`, `/api/*`, `/scalar*` and `/openapi.json` go to the backend, `/health` answers `ok`, everything else goes to the frontend. Only the gateway publishes a port in `compose.yml` and `compose.prod.yml` (`${FRONTEND_PORT:-4444}:80`); a new public route goes in its `routes.caddy`, never as a `ports` entry on another service. In dev, the gateway (`Caddyfile.dev`) serves `https://localhost:4321` (HTTP/2, local CA) in front of `astro dev` on `:4320`.
+- `apps/gateway` (one Caddy, one HTTP site) is the only routing map: `/rpc/*`, `/api/*`, `/git/*`, `/scalar*` and `/openapi.json` go to the backend, `/health` answers `ok`, everything else goes to the frontend. Only the gateway publishes a port in `compose.yml` and `compose.prod.yml` (`${FRONTEND_PORT:-4444}:80`); a new public route goes in its `routes.caddy`, never as a `ports` entry on another service. In dev, the gateway (`Caddyfile.dev`) serves `https://localhost:4321` (HTTP/2, local CA) in front of `astro dev` on `:4320`.
 - Foundation features (admin/API-key/organization plugins, cron, comments, entity icons…) exist because they came with the foundation, not because the current task needs them.
 
 ## Where to look

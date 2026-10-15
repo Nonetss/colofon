@@ -29,7 +29,8 @@ Cada uno tiene:
 | --- | --- |
 | Nombre | Cómo se muestra en el panel. |
 | Slug | Su nombre en la URL del catálogo (`documentacion`, `homelab`…). Minúsculas, números y guiones; no se puede cambiar después de crearlo. |
-| URL | La URL `https://` del repositorio git. Para uno privado, las credenciales van en la URL (`https://usuario:token@host/org/repo.git`). La plataforma nunca las muestra ni las escribe en el log. |
+| Origen | **URL externa** (el repositorio vive en GitHub, Gitea…) o **Alojado en la plataforma** (ver abajo). |
+| URL | Solo con origen URL externa: la URL `https://` del repositorio git. Para uno privado, las credenciales van en la URL (`https://usuario:token@host/org/repo.git`). La plataforma nunca las muestra ni las escribe en el log. |
 | Ref | La rama, el tag o el commit que se descarga. Al poner la URL completa, el formulario lee las ramas del repositorio y las ofrece en una lista, con la rama principal elegida; si no puede leerlas, se escribe a mano. |
 
 El backend guarda un clon de cada repositorio en `.content/<id>/` (en Docker,
@@ -44,6 +45,33 @@ motivo. Al borrar un repositorio se borra también su clon.
 
 No hay fuente de carpeta local: para ver un cambio hay que hacer push y
 sincronizar (o esperar a los cinco minutos).
+
+### Repositorios alojados en la plataforma
+
+Con origen **Alojado en la plataforma**, la propia plataforma es el servidor
+git: no hace falta GitHub ni nada más. Su tarjeta en `/admin/content` muestra
+la **URL de git**, `<origen de la plataforma>/git/<slug>.git`, para clonarlo y
+hacer push:
+
+```sh
+git remote add origen https://docs.example.com/git/manual.git
+git push origen main
+```
+
+- **Sin credenciales.** Cualquiera que llegue a la plataforma puede clonarlo y
+  hacer push, `--force` incluido. Es a propósito; no lo expongas donde eso sea
+  un problema.
+- Cada push lo sincroniza al momento, sin esperar a los cinco minutos. Se
+  publica la rama del campo Ref; los push a otras ramas se guardan pero no
+  cambian el contenido.
+- Recién creado está vacío, y su última sincronización queda en blanco hasta
+  el primer push.
+- Los repositorios bare se guardan en `.hosted/<id>/` (en Docker, en el
+  volumen `hosted_data`). Puede que sea la única copia del historial:
+  inclúyelo en las copias de seguridad.
+- Al borrar un repositorio alojado se borra su historial. Si le pones una URL
+  externa, la plataforma deja de leerlo pero conserva su repositorio bare
+  hasta que lo borres.
 
 ## Autocompletado en el editor
 
