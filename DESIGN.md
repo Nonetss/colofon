@@ -3,20 +3,20 @@ name: stack
 description: A quiet-editorial technical console on monochrome paper with one warm accent.
 colors:
   primary: "oklch(0.6724 0.1308 38.7559)"
-  neutral-bg: "oklch(0.95 0.009 95.0986)"
-  neutral-fg: "oklch(0.3438 0.0269 95.7226)"
-  neutral-muted: "oklch(0.5341 0.0078 97.4503)"
+  neutral-bg: "oklch(0.9818 0.0054 95.0986)"
+  neutral-fg: "oklch(0.26 0.0269 95.7226)"
+  neutral-muted: "oklch(0.45 0.0078 97.4503)"
   neutral-card: "oklch(0.9665 0.0067 97.3521)"
   neutral-card-fg: "oklch(0.1908 0.002 106.5859)"
-  neutral-muted-surface: "oklch(0.92 0.0153 90.239)"
-  neutral-popover: "oklch(0.985 0.004 97.3521)"
-  neutral-border: "oklch(0.89 0.006 97.3627)"
-  neutral-input: "oklch(0.87 0.007 98.3528)"
+  neutral-muted-surface: "oklch(0.9341 0.0153 90.239)"
+  neutral-popover: "oklch(1 0 0)"
+  neutral-border: "oklch(0.94 0.003 97.3627)"
+  neutral-input: "oklch(0.92 0.004 98.3528)"
   destructive: "oklch(0.1908 0.002 106.5859)"
   destructive-fg: "oklch(1 0 0)"
   dark-bg: "oklch(0.2679 0.0036 106.6427)"
   dark-fg: "oklch(0.9576 0.0027 106.4494)"
-  dark-muted: "oklch(0.7713 0.0169 99.0657)"
+  dark-muted: "oklch(0.84 0.0169 99.0657)"
   dark-card: "oklch(0.2928 0.0018 106.5092)"
   dark-muted-surface: "oklch(0.2213 0.0038 106.707)"
   dark-popover: "oklch(0.3085 0.0035 106.6039)"
@@ -171,7 +171,7 @@ components:
     rounded: "{rounded.md}"
     height: "2rem"
   list-action-bar:
-    backgroundColor: "oklch(0.95 0.009 95.0986 / 0.95)"  # bg-background/95
+    backgroundColor: "oklch(0.9818 0.0054 95.0986 / 0.95)"  # bg-background/95
     padding: "0.75rem 1rem"
   list-action-bar-button:
     height: "2.75rem"          # h-11, 44px touch target
@@ -217,15 +217,15 @@ The palette is a single neutral ramp (paper → ink → mute → border) plus on
 
 ### Neutral
 
-- **Paper** (`oklch(0.95 0.009 95.0986)`): page background — `--background`. A warm, slightly toned paper, not white; the card and popover sit *lighter* than it.
-- **Ink** (`oklch(0.3438 0.0269 95.7226)`): body text — `--foreground`.
-- **Mute** (`oklch(0.5341 0.0078 97.4503)`): secondary text, descriptions, dates, hints, table headers — `--muted-foreground`.
+- **Paper** (`oklch(0.9818 0.0054 95.0986)`): page background — `--background`. A warm, near-white paper; the card sits one step *darker* than it and the popover is pure white, so menus lift off the page.
+- **Ink** (`oklch(0.26 0.0269 95.7226)`): body text — `--foreground`.
+- **Mute** (`oklch(0.45 0.0078 97.4503)`): secondary text, descriptions, dates, hints, table headers — `--muted-foreground`.
 - **Card** (`oklch(0.9665 0.0067 97.3521)`, used at 40% opacity via `bg-card/40`): the surface tint for table boxes, navigation tiles, and state blocks.
 - **Card Ink** (`oklch(0.1908 0.002 106.5859)`): high-contrast text on cards.
-- **Muted Surface** (`oklch(0.92 0.0153 90.239)`): the hover/fill tone — `bg-muted/40`–`/50` row hover, `bg-muted` tile hover, shortcut pills, keycaps, day-group rows at `/30`.
-- **Popover** (`oklch(0.985 0.004 97.3521)`): menus, popovers, the command dialog and the mobile nav sheet.
-- **Border** (`oklch(0.89 0.006 97.3627)`): all hairlines — table rules, list dividers, dialog headers/footers, fact rows, tile borders; also the scrollbar thumb.
-- **Input** (`oklch(0.87 0.007 98.3528)`): the resting line of text inputs and unselected picker cells.
+- **Muted Surface** (`oklch(0.9341 0.0153 90.239)`): the hover/fill tone — `bg-muted/40`–`/50` row hover, `bg-muted` tile hover, shortcut pills, keycaps, day-group rows at `/30`.
+- **Popover** (`oklch(1 0 0)`): menus, popovers, the command dialog and the mobile nav sheet.
+- **Border** (`oklch(0.94 0.003 97.3627)`): all hairlines — table rules, list dividers, dialog headers/footers, fact rows, tile borders; also the scrollbar thumb.
+- **Input** (`oklch(0.92 0.004 98.3528)`): the resting line of text inputs and unselected picker cells.
 
 Dark theme mirrors the same roles with a slightly warm dark surface (`oklch(0.2679 0.0036 106.6427)`, card one step lighter, muted surface one step darker, popover the lightest layer) and the accent stays Brand Terracotta — the warm accent survives the inversion.
 
