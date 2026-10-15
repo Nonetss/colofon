@@ -1,7 +1,7 @@
 import { createHighlighter } from "@tanstack/highlight/core"
 import { json } from "@tanstack/highlight/languages/json"
-import type { ReactNode } from "react"
 import { textVariants } from "@/components/shared/brand/typography"
+import { HighlightedTokens } from "@/components/shared/data-display/highlighted-tokens"
 import { cn } from "@/lib/utils"
 
 type JsonViewVariant = "boxed" | "flush"
@@ -62,28 +62,9 @@ export function JsonView({
 
   return (
     <pre id={id} className={preClass}>
-      {highlightJson(text)}
+      <HighlightedTokens
+        tokens={jsonHighlighter.tokenize(text, { lang: "json" }).tokens}
+      />
     </pre>
   )
-}
-
-/** Tokens become React spans, so no highlighter HTML is ever injected. */
-function highlightJson(text: string): ReactNode[] {
-  const nodes: ReactNode[] = []
-  let offset = 0
-
-  for (const token of jsonHighlighter.tokenize(text, { lang: "json" }).tokens) {
-    if (token.className) {
-      nodes.push(
-        <span key={offset} className={`th-token th-${token.className}`}>
-          {token.value}
-        </span>
-      )
-    } else {
-      nodes.push(token.value)
-    }
-    offset += token.value.length
-  }
-
-  return nodes
 }
