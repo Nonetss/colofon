@@ -95,7 +95,6 @@ export function NavbarAuthenticated({
           onOpenChange={setSearchOpen}
           isAdmin={isAdmin}
           currentPath={currentPath}
-          userId={user.id}
         />
       </QueryProvider>
     </header>

@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils"
 
 const SearchIcon = getIcon("views", "search")
 
-const SEARCH_LABEL = "Buscar páginas"
+const SEARCH_LABEL = "Buscar en la documentación"
 
 /** `⌘K` on Apple platforms, `Ctrl K` elsewhere. The navbar is client-only. */
 function shortcutLabel() {
