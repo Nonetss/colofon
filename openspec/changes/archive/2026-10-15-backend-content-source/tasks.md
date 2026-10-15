@@ -32,5 +32,5 @@
 ## 7. Verification
 
 - [x] 7.1 Run `bun run check-types`, `bunx biome check .` and `bun run test`, and report any failure that predates this change (the three `traces.search` tests) separately
-- [ ] 7.2 Ask the user to restart their dev stack with `CONTENT_DIR=../documentacion`, set `yaml.schemaStore.url` in their workspace, and confirm in Cursor that `catalogo/maquinas/*.yaml` completes `ubicacion` and that a new entity's id shows up (and after what: reopening the file or reloading the window); record the answer in `docs/human/`
+- [x] 7.2 Ask the user to restart their dev stack with `CONTENT_DIR=../documentacion`, set `yaml.schemaStore.url` in their workspace, and confirm in Cursor that `catalogo/maquinas/*.yaml` completes `ubicacion` and that a new entity's id shows up (and after what: reopening the file or reloading the window); record the answer in `docs/human/`
 - [x] 7.3 Hand the manual content-repository cleanup to the user (delete `.esquemas/` and the generated `yaml.schemas` in `../documentacion/.vscode/settings.json` and in the Cursor workspace, set `yaml.schemaStore.url`), since those files are outside this repo
