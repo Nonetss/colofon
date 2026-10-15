@@ -2,6 +2,8 @@
 // session: the router swaps pages in, so everything listens on the document
 // and rereads the page on `astro:page-load`.
 
+import { withOrigin } from "@/features/docs/page/model/full-links"
+
 const COPIED_MS = 1500
 
 /** The `pre` text of the code frame holding `button`. */
@@ -39,7 +41,7 @@ function pageMarkdown(): string {
   if (source === undefined || source === null || source === "") return ""
   const markdown: unknown = JSON.parse(source)
   if (typeof markdown !== "string") return ""
-  return markdown.replaceAll("](/", `](${window.location.origin}/`)
+  return withOrigin(markdown, window.location.origin)
 }
 
 function copiedLabel(done: boolean): string {

@@ -1,4 +1,5 @@
 export { useHasDocsSidebar } from "@/features/docs/shared/hooks/use-has-docs-sidebar"
+export { isMissing } from "@/features/docs/shared/model/missing"
 export {
   type DocsNav,
   type DocsNavNode,
