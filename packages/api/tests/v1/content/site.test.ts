@@ -104,6 +104,24 @@ describe("contentReader.site", () => {
     expect(pageWarnings).toHaveLength(1)
     expect(JSON.stringify(pageWarnings[0])).toContain("documentacion")
   })
+
+  test("a broken diagram is logged with the page problems, once per checkout", async () => {
+    const repository = storedRepository()
+    const { reader, logger } = await readerWith(
+      [repository],
+      inClone(repository.id, {
+        ...CONTENT_SITE,
+        "diagramas/red.yaml": "titulo: Red: la de casa\n",
+      })
+    )
+    await reader.site("documentacion")
+    await reader.site("documentacion")
+    const pageWarnings = logger.warn.mock.calls.filter((args: unknown[]) =>
+      args.includes("Content pages have problems")
+    )
+    expect(pageWarnings).toHaveLength(1)
+    expect(JSON.stringify(pageWarnings[0])).toContain("diagramas/red.yaml")
+  })
 })
 
 describe("readerRoutesOf", () => {

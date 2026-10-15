@@ -75,6 +75,8 @@ function oneSource(optional: boolean) {
 export const contentInput = {
   schemaCatalog: z.object({ repository }),
   configSchema: z.object({ repository }),
+  menuSchema: z.object({ repository }),
+  diagramSchema: z.object({ repository }),
   typeSchema: z.object({ repository }),
   entitySchema: z.object({
     repository,

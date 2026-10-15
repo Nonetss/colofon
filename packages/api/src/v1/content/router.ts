@@ -47,6 +47,36 @@ export const contentRouter = {
     .output(contentOutput.configSchema)
     .handler(({ input }) => contentHandler.configSchema({ input })),
 
+  menuSchema: publicProcedure
+    .meta(
+      openapi({
+        summary: "Schema of menu.yaml",
+        description:
+          "JSON Schema of a content repository's menu.yaml, listing the page paths, section folders and catalog paths an entry can name and the Lucide icon names.",
+        tags,
+        method: "GET",
+        path: "/v1/content/schemas/{repository}/menu",
+      })
+    )
+    .input(contentInput.menuSchema)
+    .output(contentOutput.menuSchema)
+    .handler(({ input }) => contentHandler.menuSchema({ input })),
+
+  diagramSchema: publicProcedure
+    .meta(
+      openapi({
+        summary: "Schema of a diagram",
+        description:
+          "JSON Schema of every diagramas/<id>.yaml of a content repository, listing the entities a node can stand for as <type>/<id> and the Lucide icon names.",
+        tags,
+        method: "GET",
+        path: "/v1/content/schemas/{repository}/diagram",
+      })
+    )
+    .input(contentInput.diagramSchema)
+    .output(contentOutput.diagramSchema)
+    .handler(({ input }) => contentHandler.diagramSchema({ input })),
+
   typeSchema: publicProcedure
     .meta(
       openapi({

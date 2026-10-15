@@ -199,7 +199,8 @@ export function createContentReader(
       declarations.config,
       declarations.index,
       catalog,
-      readerRoutesOf(repository.slug)
+      readerRoutesOf(repository.slug),
+      declarations.menu
     )
     if (built.problems.length > 0) {
       logger.warn(

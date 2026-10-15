@@ -84,12 +84,14 @@ async function setup(
 const input = { repository: repository.slug }
 
 describe("content.schemaCatalog", () => {
-  test("lists the config, the type and one schema per type, at absolute URLs under the repository's slug", async () => {
+  test("lists the config, the menu, diagrams, the type and one schema per type, at absolute URLs under the repository's slug", async () => {
     const { handler } = await setup()
     const catalog = await handler.schemaCatalog({ input })
     const base = `${testEnv.CORS_ORIGIN}${SCHEMAS_PATH}/documentacion`
     expect(catalog.schemas.map((schema) => schema.url)).toEqual([
       `${base}/config`,
+      `${base}/menu`,
+      `${base}/diagram`,
       `${base}/type`,
       `${base}/entities/maquinas`,
       `${base}/entities/ubicaciones`,
@@ -175,6 +177,8 @@ describe("content.entitySchema", () => {
     const all = [
       await handler.schemaCatalog({ input }),
       await handler.configSchema({ input }),
+      await handler.menuSchema({ input }),
+      await handler.diagramSchema({ input }),
       await handler.typeSchema({ input }),
       await handler.entitySchema({ input: { ...input, type: "maquinas" } }),
     ]
@@ -185,11 +189,21 @@ describe("content.entitySchema", () => {
   })
 })
 
-describe("content.configSchema / content.typeSchema", () => {
-  test("a repository without valid content has neither", async () => {
+describe("content.configSchema / menuSchema / diagramSchema / typeSchema", () => {
+  test("a repository without valid content has none", async () => {
     const { handler } = await setup([repository], {})
     await expectErrorCode(handler.configSchema({ input }), "NOT_FOUND")
+    await expectErrorCode(handler.menuSchema({ input }), "NOT_FOUND")
+    await expectErrorCode(handler.diagramSchema({ input }), "NOT_FOUND")
     await expectErrorCode(handler.typeSchema({ input }), "NOT_FOUND")
+  })
+
+  test("the menu schema lists the repository's paths and the diagram schema its entities", async () => {
+    const { handler } = await setup()
+    const menu = JSON.stringify(await handler.menuSchema({ input }))
+    expect(menu).toContain('"catalogo/maquinas"')
+    const diagram = JSON.stringify(await handler.diagramSchema({ input }))
+    expect(diagram).toContain('"maquinas/nas"')
   })
 })
 

@@ -3,11 +3,13 @@ import path from "node:path"
 import {
   CLONE_DIR,
   CONFIG_SCHEMA,
+  DIAGRAM_SCHEMA,
   ENTITY_SCHEMA_PREFIX,
   editorSchemas,
   HOSTED_DIR,
   hostedFolder,
   listRemoteBranches,
+  MENU_SCHEMA,
   publicUrl,
   readFile,
   readFolder,
@@ -182,6 +184,22 @@ export function createContentHandler(
       input: z.infer<typeof contentInput.configSchema>
     }): Promise<z.infer<typeof contentOutput.configSchema>> {
       return schemaNamed(input.repository, CONFIG_SCHEMA)
+    },
+
+    menuSchema({
+      input,
+    }: {
+      input: z.infer<typeof contentInput.menuSchema>
+    }): Promise<z.infer<typeof contentOutput.menuSchema>> {
+      return schemaNamed(input.repository, MENU_SCHEMA)
+    },
+
+    diagramSchema({
+      input,
+    }: {
+      input: z.infer<typeof contentInput.diagramSchema>
+    }): Promise<z.infer<typeof contentOutput.diagramSchema>> {
+      return schemaNamed(input.repository, DIAGRAM_SCHEMA)
     },
 
     typeSchema({

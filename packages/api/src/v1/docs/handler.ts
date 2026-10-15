@@ -1,7 +1,9 @@
 import { readFile as readBytes, realpath, stat } from "node:fs/promises"
 import path from "node:path"
 import {
+  type Breadcrumb,
   DOCS_DIR,
+  entityPath,
   type FieldDefinition,
   isImageFile,
   type NavEntry,
@@ -103,7 +105,9 @@ export function createDocsHandler({
         },
         tree: toWire(found.tree),
         headings: found.headings,
-        breadcrumbs: found.breadcrumbs.map((link) => withHref(link, routes)),
+        breadcrumbs: found.breadcrumbs.map((crumb) =>
+          breadcrumbOf(crumb, routes)
+        ),
         previous: linkOrNull(found.previous, routes),
         next: linkOrNull(found.next, routes),
         children: found.children.map((node) => navNodeOf(node, routes)),
@@ -184,11 +188,24 @@ function entryOf(entry: NavEntry, routes: SiteRoutes) {
 
 function navNodeOf(node: NavNode, routes: SiteRoutes): DocsNavNode {
   if (node.kind === "page") return { kind: "page", ...entryOf(node, routes) }
+  if (node.kind === "group")
+    return {
+      kind: "group",
+      title: node.title,
+      description: node.description,
+      icon: node.icon,
+      children: node.children.map((child) => navNodeOf(child, routes)),
+    }
   return {
     kind: "section",
     ...entryOf(node, routes),
     children: node.children.map((child) => navNodeOf(child, routes)),
   }
+}
+
+function breadcrumbOf(crumb: Breadcrumb, routes: SiteRoutes) {
+  if (crumb.path === null) return { ...crumb, href: null }
+  return { ...crumb, href: routes.routeOf(crumb.path) }
 }
 
 function withHref(link: PageLink, routes: SiteRoutes) {
@@ -234,6 +251,13 @@ function valuesOf(
   }
   if (field.tipo === "ficha" && typeof value === "string") {
     return [{ text: pageTitle(site, value), href: routes.routeOf(value) }]
+  }
+  if (field.tipo === "ref" && typeof value === "string") {
+    const entityPage = entityPath(field.a, value)
+    if (!site.pages.has(entityPage)) return [{ text: value, href: null }]
+    return [
+      { text: pageTitle(site, entityPage), href: routes.routeOf(entityPage) },
+    ]
   }
   if (typeof value === "object" && value !== null) {
     return [{ text: JSON.stringify(value), href: null }]

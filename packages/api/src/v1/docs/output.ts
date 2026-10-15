@@ -22,8 +22,27 @@ type NavEntry = {
 export type DocsNavNode =
   | ({ kind: "page" } & NavEntry)
   | ({ kind: "section"; children: DocsNavNode[] } & NavEntry)
+  | {
+      kind: "group"
+      title: string
+      description: string
+      icon: string | null
+      children: DocsNavNode[]
+    }
 
 const navPage = z.object({ kind: z.literal("page"), ...navEntry })
+
+const navGroup = z
+  .object({
+    kind: z.literal("group"),
+    title: z.string(),
+    description: z.string(),
+    icon: z.string().nullable().describe("Lucide icon name from menu.yaml"),
+    get children() {
+      return z.array(navNode)
+    },
+  })
+  .describe("A group of menu.yaml: a heading, not a route")
 
 const navSection = z.object({
   kind: z.literal("section"),
@@ -37,6 +56,7 @@ const navSection = z.object({
 const navNode: z.ZodType<DocsNavNode, DocsNavNode> = z.union([
   navPage,
   navSection,
+  navGroup,
 ])
 
 const pageLink = z.object({
@@ -44,6 +64,14 @@ const pageLink = z.object({
   href: z.string(),
   title: z.string(),
 })
+
+const breadcrumb = z
+  .object({
+    path: z.string().nullable(),
+    href: z.string().nullable(),
+    title: z.string(),
+  })
+  .describe("A section above the page, or a group of menu.yaml (no path)")
 
 const hastProperties = z.record(
   z.string(),
@@ -100,7 +128,10 @@ const problem = z.object({
 
 const headerValue = z.object({
   text: z.string(),
-  href: z.string().nullable().describe("Reader route for a `ficha` value"),
+  href: z
+    .string()
+    .nullable()
+    .describe("Reader route for a `ficha` value, or an entity's catalog page"),
 })
 
 export const docsOutput = {
@@ -130,8 +161,10 @@ export const docsOutput = {
     path: z.string(),
     href: z.string(),
     source: z
-      .enum(["file", "folder"])
-      .describe("`folder` for a section without index.mdx"),
+      .enum(["file", "folder", "generated"])
+      .describe(
+        "`folder` for a section without index.mdx; `generated` for a catalog page"
+      ),
     header: z.object({
       title: z.string(),
       description: z.string(),
@@ -151,7 +184,7 @@ export const docsOutput = {
         text: z.string(),
       })
     ),
-    breadcrumbs: z.array(pageLink),
+    breadcrumbs: z.array(breadcrumb),
     previous: pageLink.nullable(),
     next: pageLink.nullable(),
     children: z

@@ -70,6 +70,8 @@ export const contentOutput = {
     })
     .describe("Schema catalog in SchemaStore's format"),
   configSchema: jsonSchema,
+  menuSchema: jsonSchema,
+  diagramSchema: jsonSchema,
   typeSchema: jsonSchema,
   entitySchema: jsonSchema,
   listRepositories: z.array(repository),

@@ -38,6 +38,10 @@ const SITE: Record<string, string> = {
     "    tipo: lista",
     "    opcional: true",
     "    de: { tipo: ficha }",
+    "  maquinas:",
+    "    tipo: lista",
+    "    opcional: true",
+    "    de: { tipo: ref, a: maquinas }",
   ].join("\n"),
   "docs/index.mdx": "---\ntitulo: Inicio\ndescripcion: Portada\n---\n",
   "docs/red/index.mdx": "---\ntitulo: Red\ndescripcion: La red\n---\n",
@@ -46,6 +50,7 @@ const SITE: Record<string, string> = {
     "titulo: DNS",
     "descripcion: Nombres",
     "ver: [red/vpn]",
+    "maquinas: [nas]",
     "---",
     "",
     "## Zonas",
@@ -99,34 +104,33 @@ describe("docs.nav", () => {
       available: true,
       home: { path: "", href: "/casa", title: "Inicio" },
     })
-    expect(first?.nodes).toEqual([
-      {
-        kind: "section",
-        path: "red",
-        href: "/casa/red",
-        title: "Red",
-        description: "La red",
-        icon: null,
-        children: [
-          {
-            kind: "page",
-            path: "red/vpn",
-            href: "/casa/red/vpn",
-            title: "VPN",
-            description: "Túnel",
-            icon: null,
-          },
-          {
-            kind: "page",
-            path: "red/dns",
-            href: "/casa/red/dns",
-            title: "DNS",
-            description: "Nombres",
-            icon: null,
-          },
-        ],
-      },
-    ])
+    expect(first?.nodes.map((node) => node.title)).toEqual(["Red", "Catálogo"])
+    expect(first?.nodes[0]).toEqual({
+      kind: "section",
+      path: "red",
+      href: "/casa/red",
+      title: "Red",
+      description: "La red",
+      icon: null,
+      children: [
+        {
+          kind: "page",
+          path: "red/vpn",
+          href: "/casa/red/vpn",
+          title: "VPN",
+          description: "Túnel",
+          icon: null,
+        },
+        {
+          kind: "page",
+          path: "red/dns",
+          href: "/casa/red/dns",
+          title: "DNS",
+          description: "Nombres",
+          icon: null,
+        },
+      ],
+    })
     expect(second).toEqual({
       slug: "trabajo",
       name: "Trabajo",
@@ -155,6 +159,10 @@ describe("docs.page", () => {
       updated: null,
       fields: [
         { name: "ver", values: [{ text: "VPN", href: "/casa/red/vpn" }] },
+        {
+          name: "maquinas",
+          values: [{ text: "nas", href: "/casa/catalogo/maquinas/nas" }],
+        },
       ],
     })
     expect(page.headings).toEqual([{ depth: 2, id: "zonas", text: "Zonas" }])
@@ -185,7 +193,7 @@ describe("docs.page", () => {
     expect(page.problems).toEqual([
       {
         file: "docs/red/dns.mdx",
-        line: 9,
+        line: 10,
         message: "Enlace roto: falta.mdx no es ninguna ficha",
       },
     ])
@@ -230,6 +238,62 @@ describe("docs.page", () => {
       handler.page({ context, input: { repository: "casa", path: "red/no" } }),
       "NOT_FOUND"
     )
+  })
+})
+
+describe("docs with menu.yaml and the catalog", () => {
+  const MENU =
+    "secciones:\n  - titulo: Infra\n    icono: network\n    paginas: [red, catalogo]\n"
+
+  test("the navigation is the menu's groups and breadcrumbs carry the group without a link", async () => {
+    const { handler } = await setup(
+      [casa],
+      inClone(casa, { ...SITE, "menu.yaml": MENU })
+    )
+    const { repositories } = await handler.nav()
+    const [group] = repositories[0]?.nodes ?? []
+    expect(group).toMatchObject({
+      kind: "group",
+      title: "Infra",
+      icon: "network",
+      description: "",
+    })
+    const page = await handler.page({
+      context: userContext(),
+      input: { repository: "casa", path: "red/dns" },
+    })
+    expect(page.breadcrumbs).toEqual([
+      { path: null, href: null, title: "Infra" },
+      { path: "red", href: "/casa/red", title: "Red" },
+    ])
+  })
+
+  test("the generated catalog pages are served like pages", async () => {
+    const { handler } = await setup([casa], inClone(casa, SITE))
+    const nas = await handler.page({
+      context: userContext(),
+      input: { repository: "casa", path: "catalogo/maquinas/nas" },
+    })
+    expect(nas.source).toBe("generated")
+    expect(nas.href).toBe("/casa/catalogo/maquinas/nas")
+    expect(nas.header.title).toBe("nas")
+    expect(nas.previous).toBeNull()
+    expect(nas.tree).not.toBeNull()
+    expect(nas.breadcrumbs.map((crumb) => crumb.href)).toEqual([
+      "/casa/catalogo",
+      "/casa/catalogo/maquinas",
+    ])
+  })
+
+  test("an unknown entity or type of the catalog is NOT_FOUND", async () => {
+    const { handler } = await setup([casa], inClone(casa, SITE))
+    const context = userContext()
+    for (const path of ["catalogo/maquinas/old-01", "catalogo/servidores"]) {
+      await expectErrorCode(
+        handler.page({ context, input: { repository: "casa", path } }),
+        "NOT_FOUND"
+      )
+    }
   })
 })
 
