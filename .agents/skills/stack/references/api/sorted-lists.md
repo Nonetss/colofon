@@ -8,7 +8,7 @@ How a paginated `list` lets its caller choose the order. The frontend side (whic
 | --- | --- | --- |
 | A `(timestamp, id)` keyset | That timestamp, newest or oldest first | `withKeysetPagination`'s `direction` (`packages/db/src/keyset-pagination.ts`), cursor unchanged (`encodeKeysetCursor`/`decodeKeysetCursor`) |
 | A keyset, and the caller picks the column (`sessionHistory.list`, `adminUser.list`, `cron.listRuns`) | Several columns, either direction | `sortedKeyset` (`packages/db/src/sorted-keyset.ts`, re-exported by `packages/api/src/shared/sorted-keyset.ts`) + `cursorFor` (`packages/api/src/shared/sorted-keyset.ts`) with the `sortedCursor` codec (`packages/api/src/shared/pagination.ts`) |
-| An external store (Loki in `logs.query`) | Whatever the store supports (time only) | The store's own direction plus an opaque cursor the handler manages |
+| An external store | Whatever the store supports (time only) | The store's own direction plus an opaque cursor the handler manages |
 | Rows loaded at once | Any column | No server sort: the frontend sorts with `sortRows` |
 
 A procedure whose rows come whole (`organization.list`, `cron.list`…) gets no `sort` input.

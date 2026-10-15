@@ -4,7 +4,7 @@
 
 **Apps** use `@/` → their own `./src/*` (tsconfig `paths` in `apps/backend`; tsconfig `paths` + Vite `resolve.alias` in `apps/frontend`). App-internal only — never cross-package.
 
-**Shared packages** (`packages/api`, `cron`, `db`, `logger`, `telemetry`) use Node **subpath imports** (`#` prefix) declared in their own `package.json` `imports`. They resolve per-package in tsc, Bun, Vite and tsdown with no plugins. A shared `@/` would collide because these packages export raw TS consumed by other workspaces.
+**Shared packages** (`packages/api`, `content`, `cron`, `db`, `logger`) use Node **subpath imports** (`#` prefix) declared in their own `package.json` `imports`. They resolve per-package in tsc, Bun, Vite and tsdown with no plugins. A shared `@/` would collide because these packages export raw TS consumed by other workspaces.
 
 `packages/auth` uses `#auth/*` → `./src/*.ts` (plus one relative import, `./oauth`); `packages/env` and `packages/config` use neither.
 
@@ -13,7 +13,7 @@
 - General pattern: `"#*": "./src/*.ts"`. Resolvers don't search extensions on the target, so the `.ts` is load-bearing.
 - `packages/db` adds explicit entries before the wildcard: `#schema`, `#schema/*` (→ `./src/schema/*/index.ts`), `#seed`, `#seed/*`. Add any new directory that needs an `index.ts` target the same way (and mirror it in `exports` if other workspaces import it).
 - In `packages/api`, the single `#*` also covers versioned paths (`#v1/health/handler` → `./src/v1/health/handler.ts`); no separate `#v1/*` entry is needed.
-- Folders outside `src/` get their own entry before the wildcard, never a relative import: `"#tests/*": "./tests/*.ts"` in `packages/api`, `packages/content`, `packages/cron` and `packages/telemetry`, `"#testing/*": "./testing/*.ts"` in `packages/db`. No file uses `./` or `../` imports, tests included.
+- Folders outside `src/` get their own entry before the wildcard, never a relative import: `"#tests/*": "./tests/*.ts"` in `packages/api`, `packages/content` and `packages/cron`, `"#testing/*": "./testing/*.ts"` in `packages/db`. No file uses `./` or `../` imports, tests included.
 
 ### In practice
 

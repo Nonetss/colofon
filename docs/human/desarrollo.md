@@ -3,7 +3,7 @@
 ## Requisitos
 
 - [Bun](https://bun.sh) 1.4.2 (es a la vez runtime, gestor de paquetes y test runner).
-- Docker con Compose 2.23.1 o superior (para PostgreSQL, Loki, Tempo y el stack en contenedores).
+- Docker con Compose 2.23.1 o superior (para PostgreSQL y el stack en contenedores).
 - `openssl` (lo usan los scripts que generan secretos).
 
 ## Primera vez
@@ -33,15 +33,14 @@ bun run dev:down   # elimina los contenedores
 
 Levanta el frontend (`astro dev`, en `:4320`), el backend (`bun --hot`), el
 gateway (con `Caddyfile.dev`, que sirve la app en `https://localhost:4321`),
-PostgreSQL, Loki y Tempo con `compose.dev.yml`. Como en producción, **solo el
-gateway publica un puerto** (`https://localhost:4321`). Las apps, PostgreSQL,
-Loki y Tempo quedan en la red interna del stack y se encuentran por nombre de
-servicio: el compose sobrescribe `BACKEND_URL`, `DATABASE_URL`, `LOKI_URL`,
-`OTEL_EXPORTER_OTLP_ENDPOINT` y `TEMPO_URL`, y el resto sale del `.env` sin
-cambios. No se monta el repositorio: `docker compose watch` copia tus cambios
+y PostgreSQL con `compose.dev.yml`. Como en producción, **solo el
+gateway publica un puerto** (`https://localhost:4321`). Las apps y PostgreSQL
+quedan en la red interna del stack y se encuentran por nombre de servicio: el
+compose sobrescribe `BACKEND_URL` y `DATABASE_URL`, y el resto sale del `.env`
+sin cambios. No se monta el repositorio: `docker compose watch` copia tus cambios
 dentro de los contenedores. Solo hay volúmenes con nombre para la caché de
 Vite (`frontend_vite_cache`), la autoridad de certificación del gateway
-(`gateway_data`) y los datos (`db_data`, `loki_data`, `tempo_data`);
+(`gateway_data`) y los datos (`db_data`);
 `bun run dev:down -v` los borra.
 
 | Si editas… | Pasa esto |
@@ -56,8 +55,6 @@ Vite (`frontend_vite_cache`), la autoridad de certificación del gateway
 
 ```bash
 bun run postgres:start # solo PostgreSQL, en Docker, en 127.0.0.1:5432
-bun run loki:start  # solo Loki, en Docker, en 127.0.0.1:3100 (opcional)
-bun run tempo:start # solo Tempo, en Docker, en 127.0.0.1:4318 y :3200 (opcional)
 bun run gateway     # el gateway de desarrollo: https://localhost:4321
 bun run dev:local   # frontend y backend con Turbo
 ```

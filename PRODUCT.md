@@ -28,7 +28,6 @@ Capacidades confirmadas (todas con spec en `openspec/specs/`):
 - **Cron scheduling y management** (`/crons`, `/crons/[id]`) con un scheduler en el propio backend que ejecuta procedimientos de la API marcados como elegibles.
 - **RPC tipado** vía oRPC en `packages/api`, versionado (`src/<version>/`) por feature.
 - **Comentarios** sobre cualquier recurso; **iconos de entidad** personalizables.
-- **Registro de actividad** (`/admin/logs`) sobre Loki.
 - **Documentación HTTP** en `/scalar` y `/openapi.json`, protegida por sesión admin.
 - **Tema claro/oscuro/sistema** y **PWA** instalable.
 - **Structured logging** con pino.

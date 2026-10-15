@@ -1,6 +1,6 @@
 ---
 name: stack
-description: Map and conventions of the stack monorepo. Covers which workspace owns what (apps/frontend, apps/backend, apps/gateway, packages/api, auth, config, cron, db, env, logger, telemetry under the `@nonete/*` scope), path aliases (`@/` in apps, `#` subpath imports in packages), dependencies, root commands, env gotchas, tests and Docker (the hot-reloading dev stack with Loki and Tempo, native dev, the dev PostgreSQL, the production-like compose.yml and the registry compose.prod.yml); which unit tests a new or changed procedure, helper, hook or component needs and how to write them (the fake database, fixtures, recipes per suite); frontend structure (features and slices, barrels, pages, app-surfaces and site-nav, Astro layouts, typography with the `Text` roles, `Hint` bubbles on icon-only controls, container queries, entity icons, charts with TanStack Charts, data tables with sortable and configurable columns, data fetching with TanStack Query over oRPC: query keys, invalidation, optimistic mutations, server-pushed refetches); how to find an existing component, hook, helper or procedure before writing new code; packages/api layering (feature files, procedure builders, errors, pagination and caller-chosen sort orders, event streams, HTTP methods and status codes, free-text search, versions); cron scheduling with `cronMeta`; and the TypeScript code style (no casts, no `??` chains or inline ternaries). Use before any code change in this repo, after implementing an endpoint or other rule-holding code to write its unit tests, before choosing or writing a React/UI component, hook, helper or procedure, to find where code lives, which convention applies and how to validate it.
+description: Map and conventions of the stack monorepo. Covers which workspace owns what (apps/frontend, apps/backend, apps/gateway, packages/api, auth, config, content, cron, db, env, logger under the `@nonete/*` scope), path aliases (`@/` in apps, `#` subpath imports in packages), dependencies, root commands, env gotchas, tests and Docker (the hot-reloading dev stack, native dev, the dev PostgreSQL, the production-like compose.yml and the registry compose.prod.yml); which unit tests a new or changed procedure, helper, hook or component needs and how to write them (the fake database, fixtures, recipes per suite); frontend structure (features and slices, barrels, pages, app-surfaces and site-nav, Astro layouts, typography with the `Text` roles, `Hint` bubbles on icon-only controls, container queries, entity icons, charts with TanStack Charts, data tables with sortable and configurable columns, data fetching with TanStack Query over oRPC: query keys, invalidation, optimistic mutations, server-pushed refetches); how to find an existing component, hook, helper or procedure before writing new code; packages/api layering (feature files, procedure builders, errors, pagination and caller-chosen sort orders, event streams, HTTP methods and status codes, free-text search, versions); cron scheduling with `cronMeta`; and the TypeScript code style (no casts, no `??` chains or inline ternaries). Use before any code change in this repo, after implementing an endpoint or other rule-holding code to write its unit tests, before choosing or writing a React/UI component, hook, helper or procedure, to find where code lives, which convention applies and how to validate it.
 ---
 
 # Stack
@@ -15,18 +15,17 @@ browser ──▶ apps/gateway :80 (Caddy, only published port) ──rest──
                  │ (dev: astro dev's proxy does the same)                 │ (BACKEND_URL)
                  ▼                                                        ▼
           apps/backend (Hono + oRPC on Bun, HTTP :3000) ◀──────────────────┘
-           │  packages/api    (contract + handlers)
-           │  packages/auth   (Better Auth)
-           │  packages/cron   (in-process scheduler)
-           │  packages/db     (Drizzle) ──▶ PostgreSQL (`db` service in every compose file)
-           │  packages/logger (pino)    ──▶ Loki (optional, LOKI_URL)
-           │  packages/telemetry (OTel) ──▶ Tempo (optional, OTEL_EXPORTER_OTLP_ENDPOINT;
-           │                                read back for /admin/traces at TEMPO_URL)
+           │  packages/api     (contract + handlers)
+           │  packages/auth    (Better Auth)
+           │  packages/cron    (in-process scheduler)
+           │  packages/content (content source: CONTENT_DIR or a CONTENT_REPO clone)
+           │  packages/db      (Drizzle) ──▶ PostgreSQL (`db` service in every compose file)
+           │  packages/logger  (pino)    ──▶ stdout
 ```
 
-- `packages/api`, `auth`, `cron`, `db`, `env`, `logger` and `telemetry` are consumed as **raw TS source** (no build step; their `build` script is `true`).
+- `packages/api`, `auth`, `content`, `cron`, `db`, `env` and `logger` are consumed as **raw TS source** (no build step; their `build` script is `true`).
 - `apps/gateway` (one Caddy, one HTTP site) is the only routing map: `/rpc/*`, `/api/*`, `/scalar*` and `/openapi.json` go to the backend, `/health` answers `ok`, everything else goes to the frontend. Only the gateway publishes a port in `compose.yml` and `compose.prod.yml` (`${FRONTEND_PORT:-4444}:80`); a new public route goes in its `routes.caddy`, never as a `ports` entry on another service. In dev, the gateway (`Caddyfile.dev`) serves `https://localhost:4321` (HTTP/2, local CA) in front of `astro dev` on `:4320`.
-- Foundation features (admin/API-key/organization plugins, cron, comments, entity icons, activity log…) exist because they came with the foundation, not because the current task needs them.
+- Foundation features (admin/API-key/organization plugins, cron, comments, entity icons…) exist because they came with the foundation, not because the current task needs them.
 
 ## Where to look
 
@@ -37,7 +36,7 @@ Read only the references the task needs. A task crossing layers reads several (a
 | Task touches | Read |
 |---|---|
 | Which workspace owns something, entrypoints, ports, what git tracks | `references/workspaces.md` |
-| Running, building, type-checking, formatting, the dev database, Loki and Tempo, Docker scripts | `references/commands.md` |
+| Running, building, type-checking, formatting, the dev database, Docker scripts | `references/commands.md` |
 | Imports between files/packages (`@/`, `#…`), adding a dependency or workspace | `references/aliases-and-deps.md` |
 | Env vars, auth URLs, cookies, proxies, middleware gating, oRPC handler plugins (error logging, body limit, SSE keep-alive), request ids | `references/env.md` |
 | Which unit tests a new or changed procedure, helper, hook or component needs, and how to write them (recipes per suite, what to assert) | `references/writing-unit-tests.md` |
@@ -77,7 +76,7 @@ Read only the references the task needs. A task crossing layers reads several (a
 ## Always true
 
 ### Tooling
-- **Validation** is `check-types` + Biome; `bun run test` runs the unit suites (`bun test --only-failures` in `packages/api`, `packages/cron` and `apps/frontend`). Unit tests are hermetic: no database, network or running service; database code runs against the fake from `@nonete/db/testing`, and `packages/api`'s preload replaces `@nonete/db` and `@nonete/env/server` with shared fixtures (`references/testing.md`).
+- **Validation** is `check-types` + Biome; `bun run test` runs the unit suites (`bun test --only-failures` in `packages/api`, `packages/content`, `packages/cron` and `apps/frontend`). Unit tests are hermetic: no database, network or running service; database code runs against the fake from `@nonete/db/testing`, and `packages/api`'s preload replaces `@nonete/db` and `@nonete/env/server` with shared fixtures (`references/testing.md`).
 - **Code that holds a rule ships with its unit tests in the same change**: a new or changed procedure handler, shared helper, `src/lib` helper, React-only hook, shared component with logic, or `packages/cron` module isn't done until its test exists, has been seen failing, and `bun run test` passes; a bug fix starts with a test that fails without it. What needs a test, what doesn't, and the recipes: `references/writing-unit-tests.md`.
 - **Never** run `db:generate`/`db:push`/`db:migrate`, edit `packages/db/src/migrations/`, kill running processes, stop or restart the user's Docker stack, or probe the live app with curl or a browser unless the user asks in that moment. These rules live in `AGENTS.md`.
 - **Don't copy enumerations** (env vars, OpenSpec capabilities, procedures) — read their source files instead.

@@ -6,19 +6,19 @@ Which tests a change needs and how to write them: `references/writing-unit-tests
 
 1. `bun run --filter <workspace> check-types` for the workspaces touched (or `bun run check-types`).
 2. `bunx biome check <paths>` (or `bun run check`).
-3. `bun run test` when a workspace with a suite changed, or anything it imports. `turbo run test --filter=<workspace>` runs one suite (`@nonete/api`, `@nonete/content`, `@nonete/cron`, `@nonete/db`, `@nonete/telemetry`, `frontend`).
+3. `bun run test` when a workspace with a suite changed, or anything it imports. `turbo run test --filter=<workspace>` runs one suite (`@nonete/api`, `@nonete/content`, `@nonete/cron`, `frontend`).
 
 Live checks of `/scalar`, `/openapi.json`, `/rpc` or the UI happen only when the user explicitly asks. If runtime confirmation is needed, ask the user for a screenshot or a pasted response.
 
 ## Unit suites — `bun run test`
 
-`turbo test --log-order=grouped --ui=stream` runs every workspace `test` script and exits non-zero on any failure. Six workspaces have one, each run with `bun test --only-failures`: `packages/api`, `packages/content`, `packages/cron`, `packages/db`, `packages/telemetry` and `apps/frontend`.
+`turbo test --log-order=grouped --ui=stream` runs every workspace `test` script and exits non-zero on any failure. Four workspaces have one, each run with `bun test --only-failures`: `packages/api`, `packages/content`, `packages/cron` and `apps/frontend`.
 
 The run is kept quiet so a green run is a few lines per suite: Turbo prints each suite's output as one block instead of interleaving them, and `bun test` hides passing tests (failures still print with their diff, then the pass/fail counts). Running `bun test` directly inside a workspace lists every test.
 
 Every suite follows the same rules:
 
-- **Hermetic.** No database connection, network call or running service (backend, gateway, Postgres, Loki). A suite passes with nothing running and no `.env`, and gives the same results with a root `.env` present. Code that queries the database runs against the fake database (below), `fetch` is replaced with `spyOn(globalThis, "fetch")` (restored in `afterAll`), and anything that depends on the clock or timezone runs under `TZ=UTC` with `setSystemTime` or `jest.useFakeTimers()` from `bun:test`.
+- **Hermetic.** No database connection, network call or running service (backend, gateway, Postgres, a content remote). A suite passes with nothing running and no `.env`, and gives the same results with a root `.env` present. Code that queries the database runs against the fake database (below), `fetch` is replaced with `spyOn(globalThis, "fetch")` (restored in `afterAll`), and anything that depends on the clock or timezone runs under `TZ=UTC` with `setSystemTime` or `jest.useFakeTimers()` from `bun:test`.
 - **Tests live in `tests/` at the workspace root**, outside the runtime source (`src/`). Each workspace's `bunfig.toml` limits discovery to its tests (`apps/frontend`: `tests/unit/`). Tests are type-checked and linted with the rest of the workspace.
 - **No relative imports.** Packages reach their test files through a `"#tests/*": "./tests/*.ts"` entry in `package.json` `imports`, placed before `"#*"` (`#tests/fixtures/context`). The frontend uses `@/` for `src/`.
 - **Module mocks last for the whole run.** `mock.module(...)` in `bun test` replaces a module for every later file in the process. A specifier is mocked in one place (a preload, or a single file for a module only that file uses), and the fake behind it is shared and reset per test. Prefer a production injection point (`bindCronService`) or `spyOn` on a real object over `mock.module`.
@@ -34,10 +34,10 @@ It checks what the code reads and writes, not the SQL. Queue results in the orde
 
 ### `packages/api` — `bun test`
 
-- `tests/setup.ts` (preload) *overwrites* the server env with placeholders. `DATABASE_URL` points at a closed loopback port. The optional integration vars (`LOKI_URL`, `ADMIN_*`, `OIDC_*`, `SKIP_ENV_VALIDATION`) are set to `""`, not deleted: `@nonete/env/server` loads the root `.env` with dotenv, which refills unset vars but never overrides set ones, and `emptyStringAsUndefined` reads `""` as unset. When `packages/env/src/server.ts` gains a required var, add a placeholder there. Turbo passes the shell's env through to the task (`passThroughEnv` in `turbo.json`), which is why the preload overwrites instead of defaulting.
+- `tests/setup.ts` (preload) *overwrites* the server env with placeholders. `DATABASE_URL` points at a closed loopback port. The optional integration vars (`ADMIN_*`, `OIDC_*`, `CONTENT_*`, `SKIP_ENV_VALIDATION`) are set to `""`, not deleted: `@nonete/env/server` loads the root `.env` with dotenv, which refills unset vars but never overrides set ones, and `emptyStringAsUndefined` reads `""` as unset. When `packages/env/src/server.ts` gains a required var, add a placeholder there. Turbo passes the shell's env through to the task (`passThroughEnv` in `turbo.json`), which is why the preload overwrites instead of defaulting.
 - The same preload mocks two process-wide boundaries once, each backed by a fixture in `tests/fixtures/`:
   - `@nonete/db` → `fakeDb` (`db.ts`). Call `fakeDb.reset()` in `beforeEach`.
-  - `@nonete/env/server` → `testEnv` (`env.ts`), a mutable copy of the validated env. Integrations start off, so a root `.env` never re-enables one; a test turns one on (`testEnv.LOKI_URL = …`). Call `resetEnv()` in `beforeEach`.
+  - `@nonete/env/server` → `testEnv` (`env.ts`), a mutable copy of the validated env. Integrations start off, so a root `.env` never re-enables one; a test turns one on (`testEnv.CONTENT_DIR = …`). Call `resetEnv()` in `beforeEach`.
   The env fixture is imported dynamically in the preload, after the placeholders are set.
 - Layout mirrors `src/`:
   - `tests/index.test.ts` covers the procedure builders.
@@ -64,15 +64,6 @@ It checks what the code reads and writes, not the SQL. Queue results in the orde
 
 - No preload: nothing reads the env. Pure schema tests call `createMetaSchemas()`, `entitySchema()` and `schemaCatalog()` directly; `loadContent()` runs against a real temporary folder from `createContentDir(files)` (`tests/fixtures/content-dir.ts`, with `VALID_SITE` as the base site), removed in `afterEach`. `createRepoSync()` runs the real git CLI against a bare repository in a temp folder reached over `file://` (`tests/fixtures/git-remote.ts`), and an unreachable remote is `127.0.0.1:1`. The disk is local and private to the test and nothing touches the network, so this stays hermetic.
 - `packages/api`'s content handler tests (`tests/v1/content/`) build the handler over `createContentReader()` with a fake logger and temp content folders (`tests/fixtures/content.ts`); `resetEnv()` clears `CONTENT_DIR` and `CONTENT_REPO`.
-
-### `packages/db` — `bun test`
-
-- Only `pgTracing` (`tests/tracing.test.ts`) so far, and no preload: `src/tracing.ts` doesn't import `@nonete/env/server`. No database runs: `pg.Client.prototype.query` is stubbed with `spyOn` *before* the patch is applied, so the instrumentation wraps the stub as it wraps the real method, and restored in `afterEach`. Spans come from `startTestTracing()`.
-
-### `packages/telemetry` — `bun test`
-
-- No preload. Each test file that asserts on spans owns a real in-memory pipeline: `startTestTracing()` from `#testing` (`@nonete/telemetry/testing` for other suites) in `beforeAll`, `reset()` in `beforeEach` and `shutdown()` in `afterAll`. `startTelemetry` replaces whatever pipeline was registered before, so files never leak spans into each other.
-- Assert on `spans()` (`ReadableSpan`: `name`, `kind`, `attributes`, `status`, `events`, `links`, `parentSpanContext`), never on what reaches an exporter. For a span that ends after the call returns (a manual cron run), `await waitForSpan(name)`, never sleep. `packages/cron`'s `scheduler.test.ts` uses the same helper for its run spans.
 
 ### `apps/frontend` — `bun test`, `tests/unit/`
 

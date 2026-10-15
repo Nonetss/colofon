@@ -47,5 +47,5 @@ Steps:
    - The name used (`display`, `slug`, `db`) and the files that changed.
    - Whether `.env` was created (with the admin credentials) or kept.
    - That `origin` was removed.
-   - That, when they want, they bring it up themselves with `bun run dev`, which starts the Docker Compose development stack (`compose.dev.yml`, project `<slug>-dev`: frontend and backend with hot reload, PostgreSQL, Loki, Tempo and the Caddy gateway) at `https://localhost:4321`. Mention `bun install` first if `node_modules` is missing, and `bun run dev:cert` once the gateway is up to export the local certificate authority for the browser. These are for the user to run.
+   - That, when they want, they bring it up themselves with `bun run dev`, which starts the Docker Compose development stack (`compose.dev.yml`, project `<slug>-dev`: frontend and backend with hot reload, PostgreSQL and the Caddy gateway) at `https://localhost:4321`. Mention `bun install` first if `node_modules` is missing, and `bun run dev:cert` once the gateway is up to export the local certificate authority for the browser. These are for the user to run.
    - The changes are not committed.

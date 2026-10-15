@@ -15,7 +15,7 @@ Code that holds a rule ships with the unit tests that pin that rule, in the same
 | A helper in `apps/frontend/src/lib/` | `apps/frontend/tests/unit/lib/<file>.test.ts` | `frontend` |
 | A hook in `apps/frontend/src/hooks/` that depends only on React and the browser | `apps/frontend/tests/unit/hooks/<hook>.test.tsx` | `frontend` |
 | A component in `apps/frontend/src/components/shared/` with logic of its own (parsing, bounds, branches, callbacks) | `apps/frontend/tests/unit/components/<group>/<component>.test.tsx` | `frontend` |
-| A pure `model/` module of a frontend feature with logic of its own (tree building, grouping, defaults) | `apps/frontend/tests/unit/features/<feature path>/<module>.test.ts` | `frontend` |
+| A pure `model/` module of a frontend feature with logic of its own (grouping, defaults, derived state) | `apps/frontend/tests/unit/features/<feature path>/<module>.test.ts` | `frontend` |
 | A surface in `app-surfaces.ts` or a nav rule in `site-nav.ts` | the matching `tests/unit/lib/` test, when the change alters a lookup the tests assert | `frontend` |
 | A bug fix anywhere above | a test that fails without the fix, written first | the owning suite |
 
@@ -32,7 +32,7 @@ Assert the **rules the code decides**, not the library underneath. For each hand
 - **Nothing is written on rejection.** After a rejected call, `expect(fakeDb.calls("insert")).toEqual([])` (or `update`/`delete`).
 - **What is written on success.** The `values(...)`/`set(...)` arguments read with `stepArgs(call, "values")`, the number and order of writes, and whether they ran inside a `transaction`.
 - **What is returned.** The mapping to the output shape (ISO dates, `null` vs omitted, nested trees, labels), and the paging contract (page size, `nextCursor` only when more rows exist, decoding back to the last row).
-- **Integration failures.** What a disabled integration answers (`LOKI_URL` unset → an empty page, no `fetch` made), and a `fetch` rejection or non-OK response → `BAD_GATEWAY`.
+- **Integration failures.** What a disabled integration answers (no `CONTENT_DIR` or `CONTENT_REPO` → an empty schema catalog, `configSchema` `NOT_FOUND`), and an unreachable remote → `BAD_GATEWAY` (`tests/v1/content/handler.test.ts`).
 - **Edge cases and idempotent paths.** Empty lists, already-deleted rows, pagination cursors; a conflict or a repeated delete returns the existing state without a second write.
 
 Access that the builder enforces (`protectedProcedure`, `adminProcedure`…) is already covered by `tests/index.test.ts`; test it per procedure only when the handler adds its own check.
@@ -100,8 +100,8 @@ describe("comment.update", () => {
 Variations:
 
 - **The rule lives in the builder or a middleware** (access, `permissionProcedure`): call the procedure through the router with `call(procedure, input, { context })` from `@orpc/server`, which runs the middleware chain, as `tests/index.test.ts` does.
-- **Env-gated code** (`LOKI_URL`, `FRONTEND_URL`): set `testEnv.LOKI_URL = …` from `#tests/fixtures/env` in `beforeEach` or in the test; leave it unset to test the disabled branch.
-- **`fetch`**: `const fetchSpy = spyOn(globalThis, "fetch")` at the top, `fetchSpy.mockReset()` plus `fetchSpy.mockResolvedValue(Response.json(...))` in `beforeEach`, `fetchSpy.mockRestore()` in `afterAll`. See `tests/v1/logs/`.
+- **Env-gated code** (`CONTENT_DIR`, `CONTENT_REPO`): set `testEnv.CONTENT_DIR = …` from `#tests/fixtures/env` in `beforeEach` or in the test; leave it unset to test the disabled branch.
+- **`fetch`**: `const fetchSpy = spyOn(globalThis, "fetch")` at the top, `fetchSpy.mockReset()` plus `fetchSpy.mockResolvedValue(Response.json(...))` in `beforeEach`, `fetchSpy.mockRestore()` in `afterAll`.
 - **Better Auth**: `spyOn(auth.api, "<method>")` at the top of the file with the shapes in `tests/fixtures/auth.ts`, `mockReset()` in `afterEach`. See `tests/v1/api-key/`.
 - **Streaming handlers** (async generators, `cron.watchRuns`): collect with `for await` into an array; to assert a precondition error, `await expectErrorCode(generator.next(), "CODE")`. See `tests/v1/cron/watch-runs.test.ts`.
 - **A registry** (`entityIconTargets`): register a fake entry in `beforeEach` and delete it in `afterEach`.

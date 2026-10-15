@@ -8,7 +8,7 @@ conventions and visual system, so code can move between projects unchanged. It
 leaves out the original's Python services, gRPC and agent chat.
 
 A new project starts with a working foundation (auth, admin panel, typed API,
-cron scheduler, comments, entity icons, activity log, Docker) before any
+cron scheduler, comments, entity icons, Docker) before any
 product code exists. Those features are there because they come with the
 template, not because every product needs them: use what fits, and remove
 what doesn't on purpose.
@@ -60,8 +60,6 @@ git push -u origin main
 - **Drizzle + PostgreSQL**: schema per domain; committed migrations applied automatically when the backend starts
 - **Cron scheduler**: persistent jobs that run cron-eligible API procedures, managed at `/crons`
 - **Comments and entity icons**: threaded comments and custom icons over any resource
-- **Activity log**: pino logs shipped to Loki and browsable at `/admin/logs`
-- **Tracing**: OpenTelemetry spans (HTTP, oRPC, SQL, cron, SSR) stored in Grafana Tempo and browsable as a waterfall at `/admin/traces`
 - **PWA**: installable, with a web manifest and a service worker
 - **Bun + Turborepo**: package manager and monorepo task runner
 - **Biome**: linting and formatting
@@ -78,7 +76,7 @@ Every page except login and signup requires a session.
 | `/me` | The signed-in user's account: name, email, role, changing the name and password |
 | `/config/profile`, `/config/appearance` | Profile settings and theme |
 | `/crons`, `/crons/[id]` | Cron jobs: list, create and edit, run history with live updates, comments on runs |
-| `/admin/*` | Admin only: users, sessions, organizations, teams, API keys, Better Auth plugins and the activity log |
+| `/admin/*` | Admin only: users, sessions, organizations, teams, API keys and Better Auth plugins |
 | `/scalar` | Interactive API docs (admin session) |
 
 The navbar search (`⌘K` / `Ctrl+K`) jumps to any page and, once you type, to
@@ -98,7 +96,7 @@ individual records such as cron jobs.
 Each feature lives in `packages/api/src/v1/<feature>/` split into `input.ts`,
 `output.ts`, `handler.ts` and `router.ts`. The v1 features are `health`,
 `private`, `authConfig`, `apiKey`, `organization`, `plugins`,
-`sessionHistory`, `logs`, `cron`, `comment` and `entityIcon`.
+`sessionHistory`, `adminUser`, `cron`, `comment`, `entityIcon` and `content`.
 
 Every procedure is built from one of five builders, which decide who may call
 it: `publicProcedure`, `protectedProcedure` (any signed-in user),
@@ -139,22 +137,9 @@ The scheduler is single-instance by design: run one backend replica.
 
 `packages/logger` gives every workspace the same pino logger: pretty output in
 dev, JSON lines in production. Every HTTP request gets a request id that all
-its log lines carry. When `LOKI_URL` is set, backend API calls and frontend
-page views are also shipped to Loki and become browsable at `/admin/logs`.
-
-## Tracing
-
-`packages/telemetry` sets up OpenTelemetry tracing in both apps, without
-module patching, so it works on Bun and inside the bundled images. When
-`OTEL_EXPORTER_OTLP_ENDPOINT` is set, every backend request (with oRPC's own
-spans and one span per SQL query), every cron run and every server-rendered
-page is exported to Grafana Tempo. A page and the backend work it triggers
-share one trace, and log lines written inside a trace carry its `traceId`.
-With `TEMPO_URL` set, admins browse traces at `/admin/traces` (a waterfall per
-trace) and jump between a trace and its activity-log entry. The viewer's own calls
-aren't traced, the list shows the newest traces, and event-stream
-subscriptions are tagged and their waterfall scaled to the request. Without the endpoint nothing is traced.
-There is no separate observability UI.
+its log lines carry; the backend logs each one when it completes, with its
+status, latency and user. Logs go to stdout only: there is no log shipping,
+tracing or observability UI.
 
 ## Project Structure
 
@@ -172,8 +157,7 @@ stack/
 │   ├── cron/           # Scheduler and cron job service
 │   ├── db/             # Drizzle schema, migrations, seed
 │   ├── env/            # @t3-oss/env-core validated env access
-│   ├── logger/         # Shared pino logger (+ Loki stream)
-│   ├── telemetry/      # OpenTelemetry tracing (exports to Tempo)
+│   ├── logger/         # Shared pino logger
 │   └── config/         # Shared tsconfig base
 ├── docs/               # human/ guides (Spanish), diagrams/ HTML sources, img/ exported SVGs
 ├── openspec/           # Capability specs (openspec/specs) and change proposals
@@ -193,8 +177,8 @@ package's `package.json` `imports`) inside a package, and `@/…` inside an app.
 
 ## Getting Started
 
-Requirements: [Bun](https://bun.sh) 1.4.2, `openssl`, Docker (for Loki and the
-containerized stacks) and a PostgreSQL database for development (see
+Requirements: [Bun](https://bun.sh) 1.4.2, `openssl`, Docker (for the dev
+PostgreSQL and the containerized stacks) and a PostgreSQL database for development (see
 [Database](#database)).
 
 ```bash
@@ -223,9 +207,6 @@ that matter most:
 | `BACKEND_URL` | Where the frontend reaches the backend |
 | `ADMIN_EMAIL`, `ADMIN_PASSWORD` | The admin seeded on startup |
 | `OIDC_*` | Optional OIDC sign-in |
-| `LOKI_URL` | Optional activity log shipping |
-| `OTEL_EXPORTER_OTLP_ENDPOINT`, `OTEL_TRACES_SAMPLER_ARG` | Optional tracing: where spans go, and the share of new traces kept |
-| `TEMPO_URL` | Optional trace viewer at `/admin/traces` |
 
 `setup:dev` leaves an existing `.env` untouched unless you pass `--force`, and
 prints the admin credentials it generated.
@@ -247,9 +228,9 @@ restart the backend.
 ### Run everything
 
 ```bash
-bun run dev        # Docker dev stack with hot reload (PostgreSQL, Loki, Tempo and the gateway included); Ctrl+C stops
+bun run dev        # Docker dev stack with hot reload (PostgreSQL and the gateway included); Ctrl+C stops
 bun run dev:local  # the same apps natively through Turbo; also run `bun run gateway`
-                   # plus `bun run postgres:start` (and `loki:start` / `tempo:start` for logs and traces)
+                   # plus `bun run postgres:start`
 ```
 
 - App: [https://localhost:4321](https://localhost:4321), the dev gateway (HTTPS + HTTP/2) and the only port dev exposes. It routes `/rpc`, `/api`, `/scalar` and `/openapi.json` to the backend and everything else to `astro dev`, exactly like production.
@@ -282,11 +263,10 @@ bun run dev:down   # remove the dev containers
 
 `compose.dev.yml` runs the frontend (`astro dev` on `:4320`) and the backend
 (`bun --hot`) from `apps/*/Dockerfile.dev`, the gateway with
-`apps/gateway/Caddyfile.dev`, `db` (PostgreSQL), `loki` and `tempo`, so `/admin/logs` and
-`/admin/traces` work in development. As in production, **only the gateway publishes a port**
-(`https://localhost:4321`). The apps, PostgreSQL, Loki and Tempo stay on the stack's private
-network and reach each other by service name: compose overrides `BACKEND_URL`,
-`DATABASE_URL`, `LOKI_URL`, `OTEL_EXPORTER_OTLP_ENDPOINT` and `TEMPO_URL`, and everything else comes from the root `.env` unchanged.
+`apps/gateway/Caddyfile.dev` and `db` (PostgreSQL). As in production, **only the gateway publishes a port**
+(`https://localhost:4321`). The apps and PostgreSQL stay on the stack's private
+network and reach each other by service name: compose overrides `BACKEND_URL` and
+`DATABASE_URL`, and everything else comes from the root `.env` unchanged.
 `docker compose watch` copies your edits into the containers:
 
 | You edit | What happens |
@@ -298,13 +278,13 @@ network and reach each other by service name: compose overrides `BACKEND_URL`,
 
 - It publishes `4321`, which native dev's gateway also uses: run one or the other, not both.
 - The frontend's Vite dependency cache lives in the `frontend_vite_cache` volume, so restarts don't re-optimize; `bun run dev:down -v` resets it (and the gateway's CA).
-- Requires Docker Compose ≥ 2.23.1 (`watch`, and inline `configs` for Tempo).
+- Requires Docker Compose ≥ 2.23.1 (`watch`).
 
 ## Deployment
 
 ### Docker Compose (local, builds from source)
 
-- Config: `compose.yml` builds `frontend`, `backend` and `gateway` from their own `apps/*/Dockerfile`, and runs `db` (PostgreSQL), `loki` and `tempo`. Only the gateway publishes a port: the site is at `http://localhost:${FRONTEND_PORT:-4444}`.
+- Config: `compose.yml` builds `frontend`, `backend` and `gateway` from their own `apps/*/Dockerfile`, and runs `db` (PostgreSQL). Only the gateway publishes a port: the site is at `http://localhost:${FRONTEND_PORT:-4444}`.
 - Build images: `bun run docker:build`
 - Start: `bun run docker:up`
 - Logs: `bun run docker:logs`
@@ -316,7 +296,7 @@ overridden in the compose file.
 
 ### Docker Compose (production, prebuilt images)
 
-- Config: `compose.prod.yml` pulls the `ghcr.io/nonetss/stack-{frontend,backend,gateway}:main` images, plus `db` (Postgres), `loki` and `tempo`
+- Config: `compose.prod.yml` pulls the `ghcr.io/nonetss/stack-{frontend,backend,gateway}:main` images, plus `db` (Postgres)
 - Images are built by `.github/workflows/docker-build.yml` on pushes to `main`, which rebuilds only the images whose code changed and pushes them to the GitHub Container Registry. On the Gitea remote, `.gitea/workflows/docker-build.yml` does the same against the Gitea container registry (needs a `TOKEN` repo secret with `write:package`)
 - Only the gateway publishes a port (`FRONTEND_PORT`, default `4444`): it serves the site and the backend API on one origin. A reverse proxy in front of the stack targets that port
 - One `.env` next to `compose.prod.yml` supplies every service's configuration. It belongs to the deployment directory, not to a dev checkout
@@ -351,9 +331,7 @@ There are no git hooks.
 - `bun run dev:cert`: Export the dev gateway's local CA root to `caddy-local-root.crt`, to trust in the browser
 - `bun run build`: Build all applications
 - `bun run setup:dev`: Generate the local root `.env`
-- `bun run loki:start` / `loki:stop`: Only the dev Loki container on `127.0.0.1:3100` (`loki-native`), for native dev
 - `bun run postgres:start` / `postgres:stop`: Only the dev PostgreSQL container on `127.0.0.1:5432` (`db-native`), for native dev
-- `bun run tempo:start` / `tempo:stop`: Only the dev Tempo container, OTLP on `127.0.0.1:4318` and its query API on `127.0.0.1:3200` (`tempo-native`), for native dev
 - `bun run db:push` / `db:generate` / `db:migrate` / `db:studio`: Drizzle schema commands
 - `bun run icons:catalog`: Regenerate the Lucide icon catalog used by the entity icon picker
 - `bun run check` / `bun run format`: Biome formatting and linting

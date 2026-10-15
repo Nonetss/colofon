@@ -9,8 +9,7 @@
   <title id="arquitectura-title">Arquitectura de stack</title>
   <desc id="arquitectura-desc">
     El navegador solo habla con el gateway Caddy, que envía las rutas de la API
-    al backend y el resto al frontend; el backend usa PostgreSQL y ambas apps
-    pueden enviar logs a Loki.
+    al backend y el resto al frontend; el backend usa PostgreSQL.
   </desc>
   <defs>
     <style>
@@ -168,26 +167,6 @@
     marker-end="url(#arquitectura-arrow)"
     style="stroke: var(--muted-foreground)"
   />
-  <!-- Frontend -> Loki (page views, optional) -->
-  <line
-    x1="696"
-    y1="128"
-    x2="768"
-    y2="128"
-    stroke-width="1"
-    stroke-dasharray="4,3"
-    marker-end="url(#arquitectura-arrow)"
-    style="stroke: var(--muted-foreground)"
-  />
-  <!-- Backend -> Loki (API calls, optional) -->
-  <path
-    d="M 656,288 V 248 Q 656,240 664,240 H 824 Q 832,240 832,232 V 160"
-    fill="none"
-    stroke-width="1"
-    stroke-dasharray="4,3"
-    marker-end="url(#arquitectura-arrow)"
-    style="stroke: var(--muted-foreground)"
-  />
 
   <!-- Arrow labels (masks with a gap from their stroke) -->
   <rect
@@ -293,48 +272,6 @@
     style="fill: var(--muted-foreground)"
   >
     SQL
-  </text>
-
-  <rect
-    x="704"
-    y="108"
-    width="56"
-    height="12"
-    rx="2"
-    style="fill: var(--surface)"
-  />
-  <text
-    x="732"
-    y="117"
-    font-size="8"
-    font-family="'Space Grotesk', sans-serif"
-    text-anchor="middle"
-    letter-spacing="0.12em"
-    font-weight="500"
-    style="fill: var(--muted-foreground)"
-  >
-    VISITAS
-  </text>
-
-  <rect
-    x="704"
-    y="220"
-    width="80"
-    height="12"
-    rx="2"
-    style="fill: var(--surface)"
-  />
-  <text
-    x="744"
-    y="229"
-    font-size="8"
-    font-family="'Space Grotesk', sans-serif"
-    text-anchor="middle"
-    letter-spacing="0.12em"
-    font-weight="500"
-    style="fill: var(--muted-foreground)"
-  >
-    LLAMADAS API
   </text>
 
   <!-- Node: Browser (input) -->
@@ -589,70 +526,6 @@
     Hono + oRPC · :3000
   </text>
 
-  <!-- Node: Loki (optional) -->
-  <rect
-    x="768"
-    y="96"
-    width="128"
-    height="64"
-    rx="6"
-    style="fill: var(--background)"
-  />
-  <rect
-    x="768"
-    y="96"
-    width="128"
-    height="64"
-    rx="6"
-    stroke-width="1"
-    stroke-dasharray="4,3"
-    style="fill: var(--surface); stroke: color-mix(in oklch, var(--foreground) 30%, transparent)"
-  />
-  <rect
-    x="776"
-    y="104"
-    width="28"
-    height="12"
-    rx="2"
-    fill="none"
-    stroke-width="0.8"
-    style="stroke: color-mix(in oklch, var(--foreground) 25%, transparent)"
-  />
-  <text
-    x="790"
-    y="113"
-    font-size="7"
-    font-family="'Space Grotesk', sans-serif"
-    text-anchor="middle"
-    letter-spacing="0.12em"
-    font-weight="500"
-    style="fill: var(--muted-foreground)"
-  >
-    LOG
-  </text>
-  <text
-    x="832"
-    y="132"
-    font-size="12"
-    font-weight="500"
-    font-family="'Space Grotesk', sans-serif"
-    text-anchor="middle"
-    letter-spacing="-0.025em"
-    style="fill: var(--foreground)"
-  >
-    Loki
-  </text>
-  <text
-    x="832"
-    y="148"
-    font-size="9"
-    font-family="'Space Mono', monospace"
-    text-anchor="middle"
-    style="fill: var(--muted-foreground)"
-  >
-    opcional
-  </text>
-
   <!-- Node: PostgreSQL (store) -->
   <rect
     x="768"
@@ -794,37 +667,17 @@
     Almacén
   </text>
 
-  <rect
-    x="368"
-    y="436"
-    width="14"
-    height="10"
-    rx="2"
-    stroke-width="1"
-    stroke-dasharray="4,3"
-    style="fill: var(--surface); stroke: color-mix(in oklch, var(--foreground) 30%, transparent)"
-  />
-  <text
-    x="388"
-    y="444"
-    font-size="8.5"
-    font-family="'Space Grotesk', sans-serif"
-    style="fill: var(--muted-foreground)"
-  >
-    Opcional
-  </text>
-
   <line
-    x1="468"
+    x1="368"
     y1="442"
-    x2="496"
+    x2="396"
     y2="442"
     stroke-width="1.2"
     marker-end="url(#arquitectura-arrow-link)"
     style="stroke: var(--foreground)"
   />
   <text
-    x="504"
+    x="404"
     y="444"
     font-size="8.5"
     font-family="'Space Grotesk', sans-serif"
@@ -834,41 +687,21 @@
   </text>
 
   <line
-    x1="640"
+    x1="540"
     y1="442"
-    x2="668"
+    x2="568"
     y2="442"
     stroke-width="1.4"
     marker-end="url(#arquitectura-arrow-accent)"
     style="stroke: var(--primary)"
   />
   <text
-    x="676"
+    x="576"
     y="444"
     font-size="8.5"
     font-family="'Space Grotesk', sans-serif"
     style="fill: var(--muted-foreground)"
   >
     Llamada a la API
-  </text>
-
-  <line
-    x1="788"
-    y1="442"
-    x2="816"
-    y2="442"
-    stroke-width="1"
-    stroke-dasharray="4,3"
-    marker-end="url(#arquitectura-arrow)"
-    style="stroke: var(--muted-foreground)"
-  />
-  <text
-    x="824"
-    y="444"
-    font-size="8.5"
-    font-family="'Space Grotesk', sans-serif"
-    style="fill: var(--muted-foreground)"
-  >
-    Envío de logs
   </text>
 </svg>

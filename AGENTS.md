@@ -13,7 +13,7 @@ Monorepo `stack`: Astro + Hono + oRPC + Better Auth + Drizzle/PostgreSQL on Bun,
 
 ## Base philosophy
 
-This repo was started from a **template**, so it ships with a lot of features (Better Auth with the `admin()`, API-key and organization plugins, oRPC contract layer, cron scheduler, comments, entity icons, activity log, Docker + Caddy + compose, OpenSpec workflow, multiple workspaces, etc.) that the product's actual requirements may or may not need.
+This repo was started from a **template**, so it ships with a lot of features (Better Auth with the `admin()`, API-key and organization plugins, oRPC contract layer, cron scheduler, comments, entity icons, Docker + Caddy + compose, OpenSpec workflow, multiple workspaces, etc.) that the product's actual requirements may or may not need.
 
 - Don't assume that any feature present in the base is **required** for the current task. If a request seems to call for one of them, ask the user before wiring it in.
 - Don't infer complexity from the repo's size. A small, simple ask can still be a small, simple change.
@@ -25,7 +25,7 @@ This repo was started from a **template**, so it ships with a lot of features (B
 - `apps/frontend` — Astro 7 SSR + React 19 islands + Tailwind v4 + shadcn/ui (`base-nova` on Base UI) + TanStack Table and Charts; dev at `https://localhost:4321` through the dev gateway (HTTP/2), with `astro dev` behind it on `:4320`; served through `apps/gateway` in Docker.
 - `apps/backend` — Hono + oRPC on Bun; HTTP `:3000`; applies migrations, seeds the admin and runs the cron scheduler.
 - `apps/gateway` — Caddy (Docker assets only, not a workspace) and the only place that maps requests to apps: the public HTTP entry point (backend API + frontend on one origin, the only published port).
-- `packages/api` (oRPC contract + handlers), `packages/db` (Drizzle schema, seed, migrations), `packages/auth` (Better Auth), `packages/cron`, `packages/content` (content contract: meta-schema, catalog loader, editor schemas, content source from `CONTENT_DIR` or a `CONTENT_REPO` clone), `packages/logger`, `packages/telemetry` (OpenTelemetry tracing), `packages/env`, `packages/config`.
+- `packages/api` (oRPC contract + handlers), `packages/db` (Drizzle schema, seed, migrations), `packages/auth` (Better Auth), `packages/cron`, `packages/content` (content contract: meta-schema, catalog loader, editor schemas, content source from `CONTENT_DIR` or a `CONTENT_REPO` clone), `packages/logger`, `packages/env`, `packages/config`.
 
 Details and conventions: `stack` skill.
 
@@ -77,7 +77,7 @@ Before writing a new React/UI component, hook, client-side helper or `packages/a
 
 ## Validation
 
-- Agent validation is `check-types` + Biome, plus `bun run test` (the hermetic `bun test --only-failures` suites in `packages/api`, `packages/cron` and `apps/frontend`).
+- Agent validation is `check-types` + Biome, plus `bun run test` (the hermetic `bun test --only-failures` suites in `packages/api`, `packages/content`, `packages/cron` and `apps/frontend`).
 - Implementing includes the unit tests: a new or changed procedure, helper, hook or shared component ships with its tests in the same change (`stack` skill, `references/writing-unit-tests.md`). Live checks of `/scalar`, `/openapi.json`, `/rpc` or the UI happen only when the user explicitly asks.
 - Biome 2.5.15 (root `biome.json`): 2-space indent, double quotes, no semicolons, 80-col, organize imports on, experimental HTML formatting, Tailwind CSS directives. One override: `**/*.svelte|astro|vue` disables `useConst`, `useImportType`, unused-vars/imports.
 - Tailwind classes: `tailwint` (`bun run tailwind:check`).

@@ -59,8 +59,6 @@ idempotente: reiniciar no lo duplica ni le cambia la contraseña.
 - Si no puede consultar la sesión (backend caído), responde 503.
 - Si alguien sin rol `admin` entra en `/admin`, lo redirige a `/`.
 - Reenvía las cookies de sesión renovadas.
-- Registra cada página vista por un usuario con sesión (salvo las precargas)
-  para el registro de actividad.
 
 ## Protección CSRF
 

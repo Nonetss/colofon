@@ -1,7 +1,7 @@
 # Arquitectura
 
 stack es un monorepo de TypeScript que corre sobre Bun. Tiene tres
-aplicaciones y siete librerías compartidas, y todo se coordina con Turborepo.
+aplicaciones y ocho librerías compartidas, y todo se coordina con Turborepo.
 
 ## Las piezas
 
@@ -29,8 +29,8 @@ aplicaciones y siete librerías compartidas, y todo se coordina con Turborepo.
 | `@nonete/auth` | La configuración de Better Auth (plugins, roles, permisos de organización). |
 | `@nonete/db` | El esquema de la base de datos con Drizzle, las migraciones y el seed del admin. |
 | `@nonete/cron` | El planificador que ejecuta tareas programadas dentro del backend. |
-| `@nonete/logger` | El logger compartido (pino), con envío opcional a Loki. |
-| `@nonete/telemetry` | Las trazas de OpenTelemetry, con envío opcional a Tempo. |
+| `@nonete/content` | La lectura y validación del repositorio de contenido (ver [Contenido](contenido.md)). |
+| `@nonete/logger` | El logger compartido (pino), que escribe en la salida estándar. |
 | `@nonete/env` | La lectura y validación de variables de entorno. |
 | `@nonete/config` | El `tsconfig` base que heredan todos. |
 
@@ -47,7 +47,7 @@ Ejemplo: abres `/crons` en el navegador.
 2. **El middleware del frontend** (`apps/frontend/src/middleware.ts`) pregunta
    al backend por la sesión usando la cookie. Si no hay sesión, redirige a
    `/login`. Si la página es de `/admin` y el usuario no es admin, lo manda a
-   `/`. Si todo va bien, registra la visita para el registro de actividad.
+   `/`.
 3. **Astro renderiza** la página. La parte interactiva es una isla React que
    se monta solo en el navegador (`client:only="react"`).
 4. **La isla pide los datos** con `orpc.v1.cron.list`, que sale como
@@ -122,9 +122,7 @@ Todos los workspaces usan el mismo logger (`packages/logger`, sobre pino):
   según la causa: `warn` si es un rechazo deliberado (un 4xx), `error` si es un
   fallo del servidor (5xx o una excepción inesperada) e `info` si el cliente
   canceló la petición.
-- Si `LOKI_URL` está definido, los logs también se envían a Loki y alimentan
-  el registro de actividad de `/admin/logs` (ver
-  [Funcionalidades transversales](transversales.md)).
-- Si `OTEL_EXPORTER_OTLP_ENDPOINT` está definido, cada petición se traza y
-  sus líneas de log llevan también el `traceId`, que enlaza con su cascada en
-  `/admin/traces`.
+- Al terminar cada petición, el backend escribe una línea con su estado, lo
+  que tardó y el usuario, si lo hay.
+- Los logs solo salen por la salida estándar: no se envían a ningún sitio, no
+  hay trazas ni una interfaz para consultarlos.

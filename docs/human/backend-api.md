@@ -29,8 +29,8 @@ metadatos (`cronMeta`…), `context.ts` lo que recibe cada procedimiento
 Además, `src/router.ts` monta cada versión de la API bajo su clave (`v1`).
 
 Las features de v1 son `health`, `private`, `authConfig`, `apiKey`,
-`organization`, `plugins`, `sessionHistory`, `adminUser`, `logs`, `traces`,
-`cron`, `comment` y `entityIcon`.
+`organization`, `plugins`, `sessionHistory`, `adminUser`, `cron`, `comment`,
+`entityIcon` y `content`.
 
 ### Separación entre router y handler
 
@@ -80,7 +80,7 @@ handler, no por su nombre:
 
 | El handler… | Método | Ejemplos |
 | --- | --- | --- |
-| Solo lee, y su entrada cabe en una query string | `GET` | `cron.list`, `organization.search`, `logs.query` |
+| Solo lee, y su entrada cabe en una query string | `GET` | `cron.list`, `organization.search`, `comment.list` |
 | Solo lee, pero su entrada es una lista de objetos | `QUERY` | `comment.counts`, `entityIcon.getMany` |
 | Crea algo nuevo cuyo id asigna el servidor | `POST` + estado `201` | `comment.create`, `cron.create` |
 | Ejecuta una acción que no es un CRUD | `POST` | `cron.runNow` |
@@ -121,7 +121,7 @@ El código tiene que decir **cuál es la causa**:
 | `NOT_FOUND` 404 | No existe, **o es privado de otra persona**. |
 | `CONFLICT` 409 | La entrada es válida y el usuario podría, pero el estado o el tipo del objetivo lo impide para todo el mundo (un slug duplicado, un cron declarado en código). |
 | `INTERNAL_SERVER_ERROR` 500 | El servidor rompió algo que debería cumplirse siempre. |
-| `BAD_GATEWAY` 502 / `SERVICE_UNAVAILABLE` 503 | Falla un servicio externo o no está configurado (Loki o Tempo caídos; `traces.get` sin `TEMPO_URL`). |
+| `BAD_GATEWAY` 502 / `SERVICE_UNAVAILABLE` 503 | Falla un servicio externo o no está configurado (por ejemplo, `content.sync` no puede traer el repositorio de contenido). |
 
 Dos distinciones que se confunden a menudo:
 

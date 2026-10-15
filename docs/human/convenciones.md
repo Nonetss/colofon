@@ -66,7 +66,7 @@ reutiliza.
 ## Las funcionalidades de la plantilla
 
 El proyecto trae muchas cosas de serie (admin, organizaciones, API keys, crons,
-comentarios, iconos de entidad, registro de actividad…). Que existan no
+comentarios, iconos de entidad…). Que existan no
 significa que el producto las necesite:
 
 - No se da por hecho que una tarea requiere una de ellas.
