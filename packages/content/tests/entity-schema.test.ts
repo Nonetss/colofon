@@ -8,6 +8,7 @@ const index: CatalogIndex = {
     ["vacio", []],
   ]),
   pagePaths: ["red", "red/dns"],
+  folderPaths: ["red"],
 }
 
 const machine: TypeDefinition = {

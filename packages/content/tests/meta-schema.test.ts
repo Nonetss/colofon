@@ -108,6 +108,17 @@ describe("typeDefinition", () => {
     })
     expect(result.success).toBe(false)
   })
+
+  test("icono is a Lucide icon name", () => {
+    expect(
+      meta.typeDefinition.safeParse({ ...type, icono: "map-pin" }).success
+    ).toBe(true)
+    const result = meta.typeDefinition.safeParse({ ...type, icono: "cohete" })
+    expect(result.error?.issues.map((issue) => issue.path)).toEqual([["icono"]])
+    expect(messages(result)[0]).toStartWith(
+      "`cohete` no es un nombre de icono de Lucide"
+    )
+  })
 })
 
 describe("siteConfig", () => {

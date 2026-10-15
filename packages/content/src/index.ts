@@ -16,9 +16,11 @@ export {
 } from "#catalog"
 export {
   CONFIG_SCHEMA,
+  DIAGRAM_SCHEMA,
   type EditorSchema,
   ENTITY_SCHEMA_PREFIX,
   editorSchemas,
+  MENU_SCHEMA,
   type SchemaCatalog,
   schemaCatalog,
   TYPE_SCHEMA,
@@ -32,6 +34,7 @@ export {
   HOSTED_DIR,
   hostedFolder,
 } from "#hosting"
+export { iconName, LUCIDE_ICON_NAMES } from "#icon-name"
 export {
   type ContentDeclarations,
   type ContentProblem,
@@ -46,8 +49,10 @@ export {
   type SiteConfig,
   type TypeDefinition,
 } from "#meta-schema"
+export { entityPath, isCatalogPath } from "#pages/catalog-paths"
 export { type HeaderSchema, headerSchema, readHeader } from "#pages/header"
 export {
+  type Breadcrumb,
   type NavEntry,
   type NavNode,
   type PageLink,

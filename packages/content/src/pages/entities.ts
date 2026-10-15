@@ -1,11 +1,17 @@
 import type { Element, ElementContent } from "hast"
 import type { MdxJsxFlowElement } from "mdast-util-mdx"
-import { type Catalog, type Entity, labelField } from "#catalog"
+import {
+  type Catalog,
+  type CatalogType,
+  type Entity,
+  labelField,
+} from "#catalog"
 import {
   type FieldDefinition,
   ID_COLUMN,
   type TypeDefinition,
 } from "#meta-schema"
+import { entityPath } from "#pages/catalog-paths"
 
 // `<Entities type="…" columns="…" group="…" />`: a table of the valid
 // entities of one catalog type, built as hast so cells can hold links and
@@ -108,6 +114,28 @@ export function entitiesTable(
     element: element("div", { className: ["doc-entities"] }, children),
     problems,
   }
+}
+
+/**
+ * The table of some entities of a type, with the type's default columns
+ * (`vista.columnas`, or the label and every field), ordered by label.
+ */
+export function typeTable(
+  type: CatalogType,
+  entities: readonly Entity[],
+  context: EntitiesContext
+): Element {
+  const label = labelField(type.definition)
+  const columns = columnsOf(null, type.definition, label).filter(
+    (name) => name === ID_COLUMN || name in type.definition.campos
+  )
+  const sorted = [...entities].sort((a, b) =>
+    collator.compare(a.label, b.label)
+  )
+  const shown = { fields: type.definition.campos, label, context }
+  return element("div", { className: ["doc-entities"] }, [
+    table(columns, sorted, shown),
+  ])
 }
 
 function notice(message: string): Element {
@@ -218,17 +246,25 @@ function cellOf(
   return shownValue(entity.values[column], field, shown.context)
 }
 
-/** An entity's label, linked to its page when it has one. */
-function entityName(
+/**
+ * Where an entity links: its page (the first `ficha` field set) or, when it
+ * has none, its generated catalog page.
+ */
+export function entityPagePath(entity: Entity): string {
+  if (entity.page !== null) return entity.page
+  return entityPath(entity.type, entity.id)
+}
+
+/** An entity's label, linked to its page or its catalog page. */
+export function entityName(
   entity: Entity,
-  context: EntitiesContext
+  context: Pick<EntitiesContext, "routeOf">
 ): ElementContent[] {
-  if (entity.page === null) return [text(entity.label)]
-  return [link(context.routeOf(entity.page), [text(entity.label)])]
+  return [link(context.routeOf(entityPagePath(entity)), [text(entity.label)])]
 }
 
 /** A value shown by its field kind; nothing for an absent one. */
-function shownValue(
+export function shownValue(
   value: unknown,
   field: FieldDefinition,
   context: EntitiesContext

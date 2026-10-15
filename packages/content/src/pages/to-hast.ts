@@ -54,8 +54,21 @@ export const SANITIZE_SCHEMA: Schema = {
   // Heading ids must match the table of contents and the links that point
   // at them; footnote ids already come prefixed by mdast-util-to-hast.
   clobber: ["name"],
+  tagNames: [...(defaultSchema.tagNames ?? []), "figure", "figcaption"],
   attributes: {
     ...defaultSchema.attributes,
+    figure: [["className", "doc-diagram"], "dataDiagram"],
+    ul: [
+      "ariaDescribedBy",
+      "ariaLabel",
+      "ariaLabelledBy",
+      [
+        "className",
+        "contains-task-list",
+        "doc-diagram-zones",
+        "doc-diagram-connections",
+      ],
+    ],
     h2: [...(defaultSchema.attributes?.h2 ?? []), "id"],
     h3: ["id"],
     h4: ["id"],

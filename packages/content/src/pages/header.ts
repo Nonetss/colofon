@@ -1,6 +1,7 @@
 import { isNode, parseDocument } from "yaml"
 import { type ZodType, z } from "zod"
 import { type CatalogIndex, objectShape } from "#entity-schema"
+import { iconName } from "#icon-name"
 import { yamlErrorReason } from "#load"
 import type { SiteConfig } from "#meta-schema"
 import type { PageHeader, PageProblem } from "#pages/types"
@@ -13,9 +14,6 @@ import type { PageHeader, PageProblem } from "#pages/types"
 const spanishErrors = z.locales.es().localeError
 
 const DATE_ERROR = "Una fecha AAAA-MM-DD (2026-10-15)"
-
-/** Lucide names are kebab-case (`hard-drive`, `git-branch`). */
-const ICON_PATTERN = /^[a-z0-9]+(-[a-z0-9]+)*$/
 
 /** The checks of one header, built once per repository. */
 export type HeaderSchema = {
@@ -33,12 +31,7 @@ export function headerSchema(
   const shape: Record<string, ZodType> = {
     titulo: z.string().min(1),
     descripcion: z.string().min(1),
-    icono: z
-      .string()
-      .regex(ICON_PATTERN, {
-        error: "Un nombre de icono de Lucide en minúsculas y con guiones",
-      })
-      .optional(),
+    icono: iconName.optional(),
     orden: z.number().optional(),
     actualizado: z.iso.date({ error: DATE_ERROR }).optional(),
     ...extraShape,

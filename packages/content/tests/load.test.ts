@@ -109,4 +109,83 @@ describe("loadContent", () => {
       "catalogo/maquinas/vps.yml",
     ])
   })
+
+  test("folder paths list every folder holding a page; docs/catalogo is left out", async () => {
+    const result = await load({
+      ...VALID_SITE,
+      "docs/contenedores/komodo/nuevo-stack.mdx": "---\ntitulo: Nuevo\n---\n",
+      "docs/catalogo/index.mdx": "---\ntitulo: Mío\n---\n",
+    })
+    if (!result.ok) throw new Error(JSON.stringify(result.problems))
+    expect(result.content.index.folderPaths).toEqual([
+      "contenedores",
+      "contenedores/komodo",
+      "red",
+    ])
+    expect(result.content.index.pagePaths).not.toContain("catalogo")
+  })
+})
+
+describe("menu.yaml", () => {
+  const MENU = [
+    "secciones:",
+    "  - titulo: Red",
+    "    icono: network",
+    "    descripcion: El DNS",
+    "    paginas:",
+    "      - red",
+    "      - { ruta: red/dns, titulo: Nombres, icono: globe }",
+  ].join("\n")
+
+  test("a valid menu is read as written", async () => {
+    const result = await load({ ...VALID_SITE, "menu.yaml": MENU })
+    if (!result.ok) throw new Error(JSON.stringify(result.problems))
+    expect(result.content.menu).toEqual({
+      secciones: [
+        {
+          titulo: "Red",
+          icono: "network",
+          descripcion: "El DNS",
+          paginas: [
+            "red",
+            { ruta: "red/dns", titulo: "Nombres", icono: "globe" },
+          ],
+        },
+      ],
+    })
+  })
+
+  test("without menu.yaml the menu is null and nothing is reported", async () => {
+    const result = await load(VALID_SITE)
+    if (!result.ok) throw new Error(JSON.stringify(result.problems))
+    expect(result.content.menu).toBeNull()
+  })
+
+  test("an unknown key and a bad icon make the declarations invalid, with their paths", async () => {
+    const result = await load({
+      ...VALID_SITE,
+      "menu.yaml": [
+        "secciones:",
+        "  - titulo: Red",
+        "    icono: netwrok",
+        "    orden: 2",
+        "    paginas: [red]",
+      ].join("\n"),
+    })
+    expect(result.ok).toBe(false)
+    const messages = problemsOf(result).map((problem) => problem.message)
+    expect(messages).toContain(
+      "secciones.0.icono: `netwrok` no es un nombre de icono de Lucide (server, map-pin, network…)"
+    )
+    expect(messages.some((message) => message.includes("orden"))).toBe(true)
+    expect(problemsOf(result).every((p) => p.file === "menu.yaml")).toBe(true)
+  })
+
+  test("a path that names no page is not a declaration problem", async () => {
+    const result = await load({
+      ...VALID_SITE,
+      "menu.yaml": "secciones:\n  - titulo: Red\n    paginas: [red/vpn]\n",
+    })
+    expect(result.ok).toBe(true)
+  })
 })

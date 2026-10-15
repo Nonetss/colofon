@@ -1,5 +1,6 @@
 import { z } from "zod"
 import { enumOf } from "#enum-of"
+import { iconName } from "#icon-name"
 
 // The meta-schema: what a content repository may declare. The platform
 // knows nothing about the domain (machines, fruits…); it only fixes the
@@ -62,6 +63,12 @@ export type MetaSchemaOptions = {
    * passes and the loader checks the references afterwards.
    */
   typeIds?: readonly string[] | undefined
+  /**
+   * What a `menu.yaml` entry can name. When given, an entry's path must be
+   * one of them, which is what lets the editor suggest them; without it any
+   * text passes and the site checks the paths against the pages.
+   */
+  menuPaths?: readonly string[] | undefined
 }
 
 const fieldName = z.string().regex(/^[a-z][a-z0-9_]*$/, {
@@ -72,6 +79,11 @@ const fieldName = z.string().regex(/^[a-z][a-z0-9_]*$/, {
 function typeIdSchema(typeIds: readonly string[] | undefined) {
   if (typeIds === undefined) return z.string().min(1)
   return enumOf(typeIds, "No hay ningún tipo en catalogo/")
+}
+
+function menuPathSchema(menuPaths: readonly string[] | undefined) {
+  if (menuPaths === undefined) return z.string().min(1)
+  return enumOf(menuPaths, "No hay ninguna página en docs/")
 }
 
 function rejectNames(reserved: readonly string[], reason: string) {
@@ -174,9 +186,7 @@ export function createMetaSchemas(options: MetaSchemaOptions = {}) {
       plural: z.string().min(1).meta({
         description: "Nombre del tipo en plural (Máquinas)",
       }),
-      icono: z.string().min(1).optional().meta({
-        description: "Icono de Lucide (server, box, map-pin…)",
-      }),
+      icono: iconName.optional(),
       descripcion: z.string().min(1).optional().meta({
         description: "Qué entra en este tipo y qué no",
       }),
@@ -246,7 +256,45 @@ export function createMetaSchemas(options: MetaSchemaOptions = {}) {
       }),
   })
 
-  return { fieldDefinition, typeDefinition, siteConfig }
+  const menuPath = menuPathSchema(options.menuPaths).meta({
+    description:
+      "Una página o carpeta de docs/ (network, network/dns), el catálogo (catalogo) o un tipo (catalogo/machines)",
+  })
+
+  const menuEntry = z.union([
+    menuPath,
+    z.strictObject({
+      ruta: menuPath,
+      titulo: z.string().min(1).optional().meta({
+        description:
+          "El título en el menú y en la página. Manda sobre el de su cabecera",
+      }),
+      icono: iconName.optional().meta({
+        description: "Icono de Lucide. Manda sobre el `icono` de su cabecera",
+      }),
+    }),
+  ])
+
+  const menu = z.strictObject({
+    secciones: z
+      .array(
+        z.strictObject({
+          titulo: z.string().min(1).meta({ description: "Título del grupo" }),
+          icono: iconName.optional(),
+          descripcion: z.string().min(1).optional().meta({
+            description: "Una frase con lo que hay en el grupo",
+          }),
+          paginas: z.array(menuEntry).min(1).meta({
+            description:
+              "Lo que muestra el grupo, en orden: páginas, carpetas (con todas sus páginas), catalogo o catalogo/<tipo>",
+          }),
+        })
+      )
+      .min(1)
+      .meta({ description: "Los grupos del menú, en orden" }),
+  })
+
+  return { fieldDefinition, typeDefinition, siteConfig, menu }
 }
 
 type MetaSchemas = ReturnType<typeof createMetaSchemas>
@@ -256,3 +304,9 @@ export type TypeDefinition = z.output<MetaSchemas["typeDefinition"]>
 
 /** A parsed `doc.config.yaml`. */
 export type SiteConfig = z.output<MetaSchemas["siteConfig"]>
+
+/** A parsed `menu.yaml`. */
+export type Menu = z.output<MetaSchemas["menu"]>
+
+/** One entry of a `menu.yaml` group, written as a path or as an object. */
+export type MenuEntry = Menu["secciones"][number]["paginas"][number]

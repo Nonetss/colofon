@@ -2,22 +2,33 @@ import { z } from "zod"
 import { entitySchema } from "#entity-schema"
 import {
   CATALOG_DIR,
+  CATALOG_PATH,
   CONFIG_FILE,
   type ContentDeclarations,
+  DIAGRAMS_DIR,
+  MENU_FILE,
   TYPE_FILE,
 } from "#load"
 import { createMetaSchemas } from "#meta-schema"
+import { catalogTypePath } from "#pages/catalog-paths"
+import { diagramSchemas } from "#pages/diagrams"
 
 // JSON Schemas for the editor: the YAML language server (Red Hat's YAML
 // extension) completes, validates and documents a file once a schema is
-// associated with it. The meta-schema covers doc.config.yaml and each
-// _tipo.yaml; each catalog type gets its own schema, generated from its
-// _tipo.yaml, with the ids its `ref` fields can take. The editor finds them
+// associated with it. The meta-schema covers doc.config.yaml, menu.yaml
+// (with the paths an entry can name) and each _tipo.yaml; diagrams get one
+// schema with the entities a node can be; each catalog type gets its own
+// schema, generated from its _tipo.yaml, with the ids its `ref` fields can
+// take. Every `icono` lists the Lucide names. The editor finds them
 // through a catalog in SchemaStore's format (`schemaCatalog`), set once as
 // its `yaml.schemaStore.url`.
 
 /** Name of the schema of `doc.config.yaml`. */
 export const CONFIG_SCHEMA = "config"
+/** Name of the schema of `menu.yaml`. */
+export const MENU_SCHEMA = "menu"
+/** Name of the schema of every diagram file. */
+export const DIAGRAM_SCHEMA = "diagram"
 /** Name of the schema of every `_tipo.yaml`. */
 export const TYPE_SCHEMA = "type"
 /** Prefix of the name of each catalog type's entity schema. */
@@ -37,7 +48,12 @@ export type EditorSchema = {
 export function editorSchemas(
   declarations: ContentDeclarations
 ): EditorSchema[] {
-  const meta = createMetaSchemas({ typeIds: [...declarations.types.keys()] })
+  const typeIds = [...declarations.types.keys()]
+  const meta = createMetaSchemas({
+    typeIds,
+    menuPaths: menuPathsOf(declarations),
+  })
+  const diagram = diagramSchemas(entityKeysOf(declarations))
   const schemas: EditorSchema[] = [
     {
       name: CONFIG_SCHEMA,
@@ -45,6 +61,20 @@ export function editorSchemas(
       description: `El ${CONFIG_FILE} del repositorio de contenido`,
       patterns: [CONFIG_FILE],
       schema: toJsonSchema(meta.siteConfig, "Configuración del sitio"),
+    },
+    {
+      name: MENU_SCHEMA,
+      title: "Menú",
+      description: `El ${MENU_FILE}: los grupos de la barra lateral`,
+      patterns: [MENU_FILE],
+      schema: toJsonSchema(meta.menu, "Menú"),
+    },
+    {
+      name: DIAGRAM_SCHEMA,
+      title: "Diagrama",
+      description: `Cada diagrama de ${DIAGRAMS_DIR}/`,
+      patterns: [`${DIAGRAMS_DIR}/*.yaml`],
+      schema: toJsonSchema(diagram.file, "Diagrama"),
     },
     {
       name: TYPE_SCHEMA,
@@ -67,6 +97,23 @@ export function editorSchemas(
     })
   }
   return schemas
+}
+
+/** What a menu entry can name: pages, folders, the catalog and its types. */
+function menuPathsOf(declarations: ContentDeclarations): string[] {
+  const { pagePaths, folderPaths } = declarations.index
+  const typePaths = [...declarations.types.keys()].map(catalogTypePath)
+  return [
+    ...new Set([...folderPaths, ...pagePaths, CATALOG_PATH, ...typePaths]),
+  ].sort()
+}
+
+/** Every entity of the catalog as `<type>/<id>`, for a diagram node. */
+function entityKeysOf(declarations: ContentDeclarations): string[] {
+  const keys: string[] = []
+  for (const [typeId, ids] of declarations.index.entityIds)
+    for (const id of ids) keys.push(`${typeId}/${id}`)
+  return keys.sort()
 }
 
 function toJsonSchema(

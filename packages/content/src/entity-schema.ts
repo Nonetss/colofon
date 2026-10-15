@@ -8,6 +8,8 @@ export type CatalogIndex = {
   entityIds: ReadonlyMap<string, readonly string[]>
   /** The pages of docs/ a `ficha` field can name (`contenedores/komodo`). */
   pagePaths: readonly string[]
+  /** Every folder of docs/ that holds a page (`contenedores`, `contenedores/komodo`). */
+  folderPaths: readonly string[]
 }
 
 /** The schema of one field's value, with its description attached. */

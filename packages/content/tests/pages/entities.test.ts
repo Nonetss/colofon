@@ -163,12 +163,14 @@ describe("entitiesTable", () => {
     expect(html).toContain("<th>name</th><th>machine</th>")
   })
 
-  test("the entity with a page links to it; one without is plain text", () => {
+  test("the entity with a page links to it; one without links to its catalog page", () => {
     const { html } = render({ type: "services", columns: "name" })
     expect(html).toContain(
       '<td><a href="/casa/containers/komodo">Komodo</a></td>'
     )
-    expect(html).toContain("<td>AdGuard</td>")
+    expect(html).toContain(
+      '<td><a href="/casa/catalogo/services/adguard">AdGuard</a></td>'
+    )
   })
 
   test("cells by kind: url, ficha, booleano and lista", () => {

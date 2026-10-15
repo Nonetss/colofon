@@ -137,7 +137,7 @@ describe("accepted MDX", () => {
     )
     expect(found.problems).toEqual([])
     expect(htmlOf(found.tree)).toBe(
-      '<p>Antes</p>\n<div class="doc-entities"><table><thead><tr><th>id</th><th>ip</th></tr></thead><tbody><tr><td>nas</td><td>192.168.1.30</td></tr></tbody></table></div>\n<p>Después</p>'
+      '<p>Antes</p>\n<div class="doc-entities"><table><thead><tr><th>id</th><th>ip</th></tr></thead><tbody><tr><td><a href="/casa/catalogo/maquinas/nas">nas</a></td><td>192.168.1.30</td></tr></tbody></table></div>\n<p>Después</p>'
     )
   })
 
@@ -323,10 +323,20 @@ describe("links and images", () => {
       expect(htmlOf(found.tree)).toBe('<p><a href="/casa/red/dns">NAS</a></p>')
     })
 
-    test("an entity without a page is plain text, without a problem", async () => {
+    test("an entity without a page links to its catalog page, without a problem", async () => {
       const found = await notasWith("[pve-01](catalogo:maquinas/pve-01)")
       expect(found.problems).toEqual([])
-      expect(htmlOf(found.tree)).toBe("<p><span>pve-01</span></p>")
+      expect(htmlOf(found.tree)).toBe(
+        '<p><a href="/casa/catalogo/maquinas/pve-01">pve-01</a></p>'
+      )
+    })
+
+    test("a type links to its catalog page", async () => {
+      const found = await notasWith("[Máquinas](catalogo:maquinas)")
+      expect(found.problems).toEqual([])
+      expect(htmlOf(found.tree)).toBe(
+        '<p><a href="/casa/catalogo/maquinas">Máquinas</a></p>'
+      )
     })
 
     test("a missing entity or type is a broken link", async () => {

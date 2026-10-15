@@ -1,7 +1,9 @@
 import path from "node:path"
 import GithubSlugger from "github-slugger"
+import type { Element } from "hast"
 import type {
   Blockquote,
+  Code,
   Definition,
   Image,
   Link,
@@ -13,15 +15,19 @@ import type {} from "mdast-util-to-hast"
 import { toString as textOf } from "mdast-util-to-string"
 import { SKIP, visit } from "unist-util-visit"
 import type { Catalog } from "#catalog"
-import { ENTITIES, entitiesTable } from "#pages/entities"
+import { catalogTypePath, entityPath } from "#pages/catalog-paths"
+import { type DiagramFile, diagramFigure } from "#pages/diagrams"
+import { ENTITIES, entitiesTable, entityPagePath } from "#pages/entities"
 import type { PageHeading, PageProblem } from "#pages/types"
 
 // Walks a page's syntax tree before it becomes HTML: reports what a page
 // cannot use, gives headings their ids, turns `[!KIND]` blockquotes into
 // alerts and points links and images at the reader's routes. The platform's
-// components are replaced here: `<Callout>` by an alert and `<Entities>` by
-// its catalog table (`entities.ts`); other MDX nodes are left in place and
-// `to-hast.ts` drops them or renders them as notices.
+// components are replaced here: `<Callout>` by an alert, `<Entities>` by its
+// catalog table (`entities.ts`) and `<Diagram>` by its figure
+// (`diagrams.ts`); a ```diagram block, which belongs in diagramas/, by a
+// notice. Other MDX nodes are left in place and `to-hast.ts` drops them or
+// renders them as notices.
 
 /** Image files a page can show, by extension. */
 export const IMAGE_EXTENSIONS = [
@@ -51,6 +57,8 @@ export type TransformContext = {
   catalog: Catalog
   /** The title of a page path, for links that show it. */
   titleOf: (pagePath: string) => string
+  /** The diagrams `<Diagram>` shows, by id. */
+  diagrams: ReadonlyMap<string, DiagramFile>
 }
 
 const ALERT_TITLES = {
@@ -65,6 +73,9 @@ type AlertKind = keyof typeof ALERT_TITLES
 
 /** The component pages may use, rendered as an alert. */
 export const CALLOUT = "Callout"
+
+/** The component that shows a diagram of diagramas/. */
+export const DIAGRAM = "Diagram"
 
 /** `<Callout type="…">`: the alert kind and default title of each type. */
 const CALLOUT_TYPES = {
@@ -85,8 +96,18 @@ const SCHEME = /^[a-z][a-z0-9+.-]*:/i
 
 export function transformPage(
   tree: Root,
-  context: TransformContext
-): { headings: PageHeading[]; problems: PageProblem[] } {
+  pageContext: TransformContext
+): {
+  headings: PageHeading[]
+  problems: PageProblem[]
+  /** The generated pages of the entities its `catalogo:` links name. */
+  citations: string[]
+} {
+  const citations = new Set<string>()
+  const context: LinkContext = {
+    ...pageContext,
+    cite: (entityKey) => citations.add(entityKey),
+  }
   const problems: PageProblem[] = []
   const headings: PageHeading[] = []
   const slugger = new GithubSlugger()
@@ -96,6 +117,7 @@ export function transformPage(
   // A callout is visited next for the links inside; a table needs nothing.
   const toBlock = (node: MdxJsxFlowElement, line: number | null) => {
     if (node.name === ENTITIES) return toEntities(node, context, line, report)
+    if (node.name === DIAGRAM) return toDiagram(node, context, line, report)
     return toCallout(node, line, report)
   }
 
@@ -155,6 +177,20 @@ export function transformPage(
       case "blockquote":
         toAlert(node)
         return
+      case "code":
+        if (
+          node.lang !== "diagram" ||
+          parent === undefined ||
+          index === undefined
+        )
+          return
+        report(line, DIAGRAM_FENCE_MESSAGE)
+        parent.children.splice(
+          index,
+          1,
+          noticeBlock(DIAGRAM_FENCE_MESSAGE, node)
+        )
+        return SKIP
       case "link":
         resolveLink(node, context, line, report)
         return
@@ -167,8 +203,11 @@ export function transformPage(
     }
   })
 
-  return { headings, problems }
+  return { headings, problems, citations: [...citations] }
 }
+
+/** A page's context while its links are resolved, noting the entities cited. */
+type LinkContext = TransformContext & { cite: (entityKey: string) => void }
 
 function isCommentOnly(statements: number | undefined): boolean {
   return statements === 0
@@ -180,7 +219,102 @@ function esmMessage(value: string): string {
 }
 
 /** The components the platform provides, each written as a block. */
-const BLOCK_COMPONENTS: ReadonlySet<string> = new Set([CALLOUT, ENTITIES])
+const BLOCK_COMPONENTS: ReadonlySet<string> = new Set([
+  CALLOUT,
+  ENTITIES,
+  DIAGRAM,
+])
+
+/** What a ```diagram block is told: diagrams live in their own files. */
+const DIAGRAM_FENCE_MESSAGE =
+  'Los diagramas van en diagramas/<id>.yaml y se muestran con <Diagram id="…" />'
+
+/** A block that renders as the platform's notice, holding `message`. */
+function noticeBlock(message: string, node: Code): Blockquote {
+  return {
+    type: "blockquote",
+    children: [],
+    position: node.position,
+    data: {
+      hName: "div",
+      hProperties: { className: ["doc-component-notice"] },
+      hChildren: [{ type: "text", value: message }],
+    },
+  }
+}
+
+/** A `<Diagram id="…">` as a node that becomes its figure, or its notice. */
+function toDiagram(
+  node: MdxJsxFlowElement,
+  context: LinkContext,
+  line: number | null,
+  report: Report
+): Blockquote {
+  const { element, problems } = diagramElement(node.attributes, context)
+  for (const message of problems) report(line, message)
+  return {
+    type: "blockquote",
+    children: [],
+    position: node.position,
+    data: {
+      hName: element.tagName,
+      hProperties: element.properties,
+      hChildren: element.children,
+    },
+  }
+}
+
+/** The figure of the diagram `<Diagram>` names, or a notice saying why not. */
+function diagramElement(
+  attributes: MdxJsxFlowElement["attributes"],
+  context: LinkContext
+): { element: Element; problems: string[] } {
+  const problems: string[] = []
+  let id: string | null = null
+  for (const attribute of attributes) {
+    if (attribute.type !== "mdxJsxAttribute") {
+      problems.push(`<${DIAGRAM}> no admite atributos entre llaves {…}`)
+      continue
+    }
+    if (attribute.name !== "id") {
+      problems.push(`<${DIAGRAM}> no tiene el atributo ${attribute.name}`)
+      continue
+    }
+    if (typeof attribute.value !== "string") {
+      problems.push(`El atributo id de <${DIAGRAM}> va entre comillas`)
+      continue
+    }
+    id = attribute.value
+  }
+  const known = [...context.diagrams.keys()].join(", ")
+  if (id === null) {
+    const message = `<${DIAGRAM}> necesita id, el nombre de un fichero de diagramas/ (hay: ${known})`
+    return { element: diagramNotice(message), problems: [...problems, message] }
+  }
+  const found = context.diagrams.get(id)
+  if (found === undefined || found.diagram === null) {
+    const message = `<${DIAGRAM} id="${id}">: no hay ningún diagramas/${id}.yaml que se pueda leer (hay: ${known})`
+    const fileProblems = (found?.problems ?? []).map(
+      (problem) => `${problem.file}: ${problem.message}`
+    )
+    return {
+      element: diagramNotice(message),
+      problems: [...problems, message, ...fileProblems],
+    }
+  }
+  for (const problem of found.problems)
+    problems.push(`${problem.file}: ${problem.message}`)
+  return { element: diagramFigure(found.diagram, context.routeOf), problems }
+}
+
+function diagramNotice(message: string): Element {
+  return {
+    type: "element",
+    tagName: "div",
+    properties: { className: ["doc-component-notice"], dataComponent: DIAGRAM },
+    children: [{ type: "text", value: message }],
+  }
+}
 
 function isBlockComponent(name: string | null): name is string {
   return name !== null && BLOCK_COMPONENTS.has(name)
@@ -188,7 +322,7 @@ function isBlockComponent(name: string | null): name is string {
 
 /** Where the visit goes on after a component is replaced by its block. */
 function nextIndex(node: MdxJsxFlowElement, index: number): number {
-  if (node.name === ENTITIES) return index + 1
+  if (node.name === ENTITIES || node.name === DIAGRAM) return index + 1
   return index
 }
 
@@ -361,29 +495,32 @@ type Report = (line: number | null, message: string) => void
 type Target =
   | { kind: "keep" }
   | { kind: "url"; url: string }
-  | { kind: "text" }
   | { kind: "broken"; message: string }
 
 const CATALOG_SCHEME = "catalogo:"
 
-/** `catalogo:<type>/<id>`: the entity's page, or its text when it has none. */
-function entityTarget(url: string, context: TransformContext): Target {
-  const [typeId = "", id = "", ...rest] = url
-    .slice(CATALOG_SCHEME.length)
-    .split("/")
-  const entity = context.catalog.get(typeId)?.entities.get(id)
+/**
+ * `catalogo:<type>/<id>`: the entity's page, or its generated catalog page
+ * when it has none. `catalogo:<type>`: the type's generated page.
+ */
+function entityTarget(url: string, context: LinkContext): Target {
+  const [typeId = "", id, ...rest] = url.slice(CATALOG_SCHEME.length).split("/")
+  const type = context.catalog.get(typeId)
+  if (rest.length === 0 && id === undefined && type !== undefined)
+    return { kind: "url", url: context.routeOf(catalogTypePath(typeId)) }
+  const entity = type?.entities.get(id ?? "")
   if (rest.length > 0 || entity === undefined)
     return {
       kind: "broken",
       message: `${url} no es ninguna entidad del catálogo`,
     }
-  if (entity.page === null) return { kind: "text" }
-  return { kind: "url", url: context.routeOf(entity.page) }
+  context.cite(entityPath(typeId, entity.id))
+  return { kind: "url", url: context.routeOf(entityPagePath(entity)) }
 }
 
 function resolveTarget(
   url: string,
-  context: TransformContext,
+  context: LinkContext,
   imagesOnly: boolean
 ): Target {
   if (url === "" || url.startsWith("#") || url.startsWith("/"))
@@ -420,7 +557,7 @@ function resolveTarget(
 
 function resolveLink(
   node: Link,
-  context: TransformContext,
+  context: LinkContext,
   line: number | null,
   report: Report
 ) {
@@ -431,10 +568,6 @@ function resolveLink(
     return
   }
   node.url = ""
-  if (target.kind === "text") {
-    node.data = { ...node.data, hName: "span" }
-    return
-  }
   report(line, `Enlace roto: ${target.message}`)
   node.data = {
     ...node.data,
@@ -445,7 +578,7 @@ function resolveLink(
 
 function resolveDefinition(
   node: Definition,
-  context: TransformContext,
+  context: LinkContext,
   line: number | null,
   report: Report
 ) {
@@ -456,13 +589,12 @@ function resolveDefinition(
     return
   }
   node.url = ""
-  if (target.kind === "text") return
   report(line, `Enlace roto: ${target.message}`)
 }
 
 function resolveImage(
   node: Image,
-  context: TransformContext,
+  context: LinkContext,
   line: number | null,
   report: Report
 ) {
@@ -472,7 +604,6 @@ function resolveImage(
     node.url = target.url
     return
   }
-  if (target.kind === "text") return
   report(line, `Imagen rota: ${target.message}`)
   node.url = ""
   node.data = {

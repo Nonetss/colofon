@@ -24,6 +24,19 @@ describe("page header", () => {
     expect(dns.tree).not.toBeNull()
   })
 
+  test("icono is a Lucide icon name: an unknown one is reported and dropped", async () => {
+    const site = await siteOf({
+      "docs/red/index.mdx": page("Red", "", "icono: netwrok\n"),
+      "docs/red/dns.mdx": page("DNS", "", "icono: network\n"),
+    })
+    const red = pageAt(site, "red")
+    expect(red.header.icono).toBeNull()
+    expect(messagesOf(red)).toEqual([
+      "icono: `netwrok` no es un nombre de icono de Lucide (server, map-pin, network…)",
+    ])
+    expect(pageAt(site, "red/dns").header.icono).toBe("network")
+  })
+
   test("a valid site field is kept in campos", async () => {
     const site = await siteOf({
       "docs/red/dns.mdx": page("DNS", "", "maquinas: [nas]\n"),

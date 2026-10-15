@@ -48,7 +48,8 @@ export async function siteOf(files: Record<string, string>): Promise<Site> {
       loaded.content.config,
       loaded.content.index,
       await readCatalog(dir.root, loaded.content),
-      ROUTES
+      ROUTES,
+      loaded.content.menu
     )
   } finally {
     await dir.remove()

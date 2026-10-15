@@ -28,7 +28,7 @@ const SITE = {
 describe("readSite", () => {
   test("pages are ordered by orden, those without one last, then by title", async () => {
     const site = await siteOf(SITE)
-    expect(titles(site.nav)).toEqual(["Red", "Suelta", "varios"])
+    expect(titles(site.nav)).toEqual(["Red", "Suelta", "varios", "Catálogo"])
     expect(titles(section(site.nav, "Red").children)).toEqual([
       "VPN",
       "DNS",
@@ -89,7 +89,7 @@ describe("readSite", () => {
     const home = pageAt(withoutHome, "")
     expect(home.source).toBe("folder")
     expect(home.header.titulo).toBe("Casa")
-    expect(titles(home.children)).toEqual(["red"])
+    expect(titles(home.children)).toEqual(["red", "Catálogo"])
   })
 
   test("problems of one page don't stop the others, and every problem is listed", async () => {
@@ -103,9 +103,239 @@ describe("readSite", () => {
     expect(site.problems).toHaveLength(2)
   })
 
-  test("a repository without docs/ has only its home", async () => {
+  test("a repository without docs/ has its home and the catalog", async () => {
     const site = await siteOf({})
-    expect(site.nav).toEqual([])
-    expect([...site.pages.keys()]).toEqual([""])
+    expect(titles(site.nav)).toEqual(["Catálogo"])
+    expect([...site.pages.keys()].sort()).toEqual([
+      "",
+      "catalogo",
+      "catalogo/maquinas",
+      "catalogo/maquinas/nas",
+    ])
+  })
+
+  test("without menu.yaml the catalog section lists every type and its pages have no previous or next", async () => {
+    const site = await siteOf(SITE)
+    expect(titles(section(site.nav, "Catálogo").children)).toEqual(["Máquinas"])
+    const machines = pageAt(site, "catalogo/maquinas")
+    expect(machines.source).toBe("generated")
+    expect(machines.previous).toBeNull()
+    expect(machines.next).toBeNull()
+    expect(machines.breadcrumbs).toEqual([
+      { path: "catalogo", title: "Catálogo" },
+    ])
+    expect(pageAt(site, "catalogo/maquinas/nas").breadcrumbs).toEqual([
+      { path: "catalogo", title: "Catálogo" },
+      { path: "catalogo/maquinas", title: "Máquinas" },
+    ])
+  })
+
+  test("a page under docs/catalogo is reported on the home and not served", async () => {
+    const site = await siteOf({
+      ...SITE,
+      "docs/catalogo/index.mdx": page("Mío"),
+    })
+    expect(pageAt(site, "catalogo").source).toBe("generated")
+    expect(pageAt(site, "catalogo").header.titulo).toBe("Catálogo")
+    expect(pageAt(site, "").problems.map((p) => p.file)).toEqual([
+      "docs/catalogo/index.mdx",
+    ])
+  })
+})
+
+/** A menu.yaml from its groups: `[titulo, extra lines, entries]`. */
+function menuOf(...groups: [string, string[]][]): string {
+  const lines = ["secciones:"]
+  for (const [titulo, entries] of groups) {
+    lines.push(`  - titulo: ${titulo}`, "    paginas:")
+    for (const entry of entries) lines.push(`      - ${entry}`)
+  }
+  return lines.join("\n")
+}
+
+function group(nodes: NavNode[], title: string) {
+  const found = nodes.find((node) => node.title === title)
+  if (found === undefined || found.kind !== "group")
+    throw new Error(`No group "${title}"`)
+  return found
+}
+
+describe("readSite with menu.yaml", () => {
+  test("groups show folders and pages from anywhere, keeping each folder's order and the file paths", async () => {
+    const site = await siteOf({
+      ...SITE,
+      "menu.yaml": menuOf(
+        ["Básico", ["suelta", "red"]],
+        ["Resto", ["varios", "catalogo"]]
+      ),
+    })
+    expect(titles(site.nav)).toEqual(["Básico", "Resto"])
+    expect(titles(group(site.nav, "Básico").children)).toEqual([
+      "Suelta",
+      "Red",
+    ])
+    expect(
+      titles(section(group(site.nav, "Básico").children, "Red").children)
+    ).toEqual(["VPN", "DNS", "Anexo"])
+    expect(titles(group(site.nav, "Resto").children)).toEqual([
+      "varios",
+      "Catálogo",
+    ])
+    expect(pageAt(site, "red/dns").path).toBe("red/dns")
+    expect(pageAt(site, "").problems).toEqual([])
+  })
+
+  test("breadcrumbs start with the group, as text", async () => {
+    const site = await siteOf({
+      ...SITE,
+      "menu.yaml": menuOf(
+        ["Críticas", ["red"]],
+        ["Resto", ["varios", "suelta", "catalogo"]]
+      ),
+    })
+    expect(pageAt(site, "red/dns").breadcrumbs).toEqual([
+      { path: null, title: "Críticas" },
+      { path: "red", title: "Red" },
+    ])
+    expect(pageAt(site, "catalogo/maquinas/nas").breadcrumbs).toEqual([
+      { path: null, title: "Resto" },
+      { path: "catalogo", title: "Catálogo" },
+      { path: "catalogo/maquinas", title: "Máquinas" },
+    ])
+  })
+
+  test("the reading order follows the menu across groups", async () => {
+    const site = await siteOf({
+      ...SITE,
+      "menu.yaml": menuOf(
+        ["Uno", ["suelta"]],
+        ["Dos", ["red", "varios", "catalogo"]]
+      ),
+    })
+    expect(pageAt(site, "").next).toEqual({ path: "suelta", title: "Suelta" })
+    expect(pageAt(site, "suelta").next).toEqual({ path: "red", title: "Red" })
+    expect(pageAt(site, "red").previous).toEqual({
+      path: "suelta",
+      title: "Suelta",
+    })
+  })
+
+  test("entries naming nothing, the home or what an earlier entry shows are reported on menu.yaml and skipped", async () => {
+    const site = await siteOf({
+      ...SITE,
+      "menu.yaml": menuOf(
+        ["Red", ["red", "red/vpnn", "index"]],
+        ["Más", ["red/dns", "varios", "suelta", "catalogo"]]
+      ),
+    })
+    expect(titles(group(site.nav, "Red").children)).toEqual(["Red"])
+    expect(titles(group(site.nav, "Más").children)).toEqual([
+      "varios",
+      "Suelta",
+      "Catálogo",
+    ])
+    expect(pageAt(site, "").problems).toEqual([
+      {
+        file: "menu.yaml",
+        line: null,
+        message:
+          "secciones.0.paginas.1: `red/vpnn` no es ninguna página ni carpeta de docs/, ni catalogo, ni un tipo del catálogo",
+      },
+      {
+        file: "menu.yaml",
+        line: null,
+        message:
+          "secciones.0.paginas.2: la portada no va en el menú: sale siempre como «Inicio»",
+      },
+      {
+        file: "menu.yaml",
+        line: null,
+        message:
+          "secciones.1.paginas.0: `red/dns` ya sale en el menú con `red`",
+      },
+    ])
+  })
+
+  test("what no entry shows goes to «Otros», each page with a problem, and is still served", async () => {
+    const site = await siteOf({
+      ...SITE,
+      "menu.yaml": menuOf(["Red", ["red"]]),
+    })
+    const others = group(site.nav, "Otros")
+    expect(titles(others.children)).toEqual(["Suelta", "varios", "Catálogo"])
+    expect(pageAt(site, "varios/alfa").problems).toEqual([
+      {
+        file: "docs/varios/alfa.mdx",
+        line: null,
+        message: "Esta página no está en menu.yaml: sale en «Otros»",
+      },
+    ])
+    expect(pageAt(site, "catalogo/maquinas").problems[0]?.file).toBe(
+      "catalogo/maquinas"
+    )
+    expect(pageAt(site, "red/dns").problems).toEqual([])
+  })
+
+  test("with every page shown there is no «Otros» group", async () => {
+    const site = await siteOf({
+      ...SITE,
+      "menu.yaml": menuOf([
+        "Todo",
+        ["red", "varios", "suelta", "catalogo/maquinas"],
+      ]),
+    })
+    expect(titles(site.nav)).toEqual(["Todo"])
+  })
+
+  test("the menu's title and icon win over the header's, which is reported when it differs", async () => {
+    const site = await siteOf({
+      ...SITE,
+      "docs/red/index.mdx": page("Red", "", "icono: box\n"),
+      "docs/varios/zeta.mdx": page("Zeta", "", "icono: globe\n"),
+      "menu.yaml": menuOf([
+        "Todo",
+        [
+          "{ ruta: red, icono: layers, titulo: Redes }",
+          "varios",
+          "suelta",
+          "{ ruta: catalogo, titulo: Datos }",
+        ],
+      ]),
+    })
+    const red = pageAt(site, "red")
+    expect(red.header.icono).toBe("layers")
+    expect(red.header.titulo).toBe("Redes")
+    expect(section(group(site.nav, "Todo").children, "Redes").icon).toBe(
+      "layers"
+    )
+    expect(pageAt(site, "red/dns").breadcrumbs).toEqual([
+      { path: null, title: "Todo" },
+      { path: "red", title: "Redes" },
+    ])
+    expect(red.problems.map((problem) => problem.message)).toEqual([
+      "titulo: la cabecera dice «Red», pero manda menu.yaml («Redes»)",
+      "icono: la cabecera dice `box`, pero manda menu.yaml (`layers`)",
+    ])
+    expect(pageAt(site, "varios/zeta").header.icono).toBe("globe")
+    expect(pageAt(site, "varios/zeta").problems).toEqual([])
+    expect(pageAt(site, "catalogo").header.titulo).toBe("Datos")
+  })
+
+  test("a folder without index takes the menu's title and icon", async () => {
+    const site = await siteOf({
+      ...SITE,
+      "menu.yaml": menuOf([
+        "Todo",
+        [
+          "red",
+          "{ ruta: varios, titulo: Varios, icono: box }",
+          "suelta",
+          "catalogo",
+        ],
+      ]),
+    })
+    const varios = section(group(site.nav, "Todo").children, "Varios")
+    expect(varios.icon).toBe("box")
+    expect(pageAt(site, "varios").header.titulo).toBe("Varios")
   })
 })

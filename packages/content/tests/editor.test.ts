@@ -1,5 +1,9 @@
 import { afterEach, describe, expect, test } from "bun:test"
-import { editorSchemas, schemaCatalog } from "#editor-schemas"
+import {
+  type EditorSchema,
+  editorSchemas,
+  schemaCatalog,
+} from "#editor-schemas"
 import { type ContentDeclarations, loadContent } from "#load"
 import {
   type ContentDir,
@@ -14,6 +18,12 @@ afterEach(async () => {
   dir = undefined
 })
 
+function schemaNamed(schemas: EditorSchema[], name: string) {
+  const found = schemas.find((schema) => schema.name === name)
+  if (found === undefined) throw new Error(`No schema "${name}"`)
+  return found
+}
+
 async function loadSite(): Promise<ContentDeclarations> {
   dir = await createContentDir(VALID_SITE)
   const result = await loadContent(dir.root)
@@ -22,10 +32,12 @@ async function loadSite(): Promise<ContentDeclarations> {
 }
 
 describe("editorSchemas", () => {
-  test("one schema for the config, one for _tipo.yaml and one per type, by stable name", async () => {
+  test("one schema for the config, the menu, diagrams, _tipo.yaml and one per type, by stable name", async () => {
     const schemas = editorSchemas(await loadSite())
     expect(schemas.map((schema) => schema.name)).toEqual([
       "config",
+      "menu",
+      "diagram",
       "type",
       "entities/maquinas",
       "entities/ubicaciones",
@@ -34,15 +46,18 @@ describe("editorSchemas", () => {
 
   test("a type's schema applies to its entities and leaves its _tipo.yaml out", async () => {
     const schemas = editorSchemas(await loadSite())
-    expect(schemas[2]?.patterns).toEqual([
+    expect(schemaNamed(schemas, "entities/maquinas").patterns).toEqual([
       "catalogo/maquinas/*.yaml",
       "!catalogo/maquinas/_*.yaml",
     ])
   })
 
   test("ref and ficha fields list the ids and pages to choose from", async () => {
-    const [, , machines] = editorSchemas(await loadSite())
-    expect(machines?.schema).toMatchObject({
+    const machines = schemaNamed(
+      editorSchemas(await loadSite()),
+      "entities/maquinas"
+    )
+    expect(machines.schema).toMatchObject({
       title: "Máquina",
       properties: {
         ubicacion: { enum: ["casa"] },
@@ -53,10 +68,35 @@ describe("editorSchemas", () => {
   })
 
   test("in the meta-schema, `a` lists the types that exist", async () => {
-    const [, type] = editorSchemas(await loadSite())
-    expect(JSON.stringify(type?.schema)).toContain(
+    const type = schemaNamed(editorSchemas(await loadSite()), "type")
+    expect(JSON.stringify(type.schema)).toContain(
       '"enum":["maquinas","ubicaciones"]'
     )
+  })
+
+  test("a menu path lists the pages, folders, the catalog and its types", async () => {
+    const menu = schemaNamed(editorSchemas(await loadSite()), "menu")
+    expect(menu.patterns).toEqual(["menu.yaml"])
+    expect(JSON.stringify(menu.schema)).toContain(
+      '"enum":["catalogo","catalogo/maquinas","catalogo/ubicaciones","red","red/dns"]'
+    )
+  })
+
+  test("a diagram node's entidad lists every entity as <type>/<id>", async () => {
+    const diagram = schemaNamed(editorSchemas(await loadSite()), "diagram")
+    expect(diagram.patterns).toEqual(["diagramas/*.yaml"])
+    expect(JSON.stringify(diagram.schema)).toContain(
+      '"enum":["maquinas/nas","maquinas/pve-01","ubicaciones/casa"]'
+    )
+  })
+
+  test("every icono lists the Lucide names, so a wrong one is marked", async () => {
+    const schemas = editorSchemas(await loadSite())
+    for (const name of ["type", "menu", "diagram"]) {
+      const text = JSON.stringify(schemaNamed(schemas, name).schema)
+      expect(text).toContain('"server"')
+      expect(text).not.toContain('"servr"')
+    }
   })
 
   test("no schema carries an entity's field values, only ids", async () => {
@@ -75,11 +115,13 @@ describe("schemaCatalog", () => {
     expect(catalog.version).toBe(1)
     expect(catalog.schemas.map((schema) => schema.url)).toEqual([
       "https://doc.example/api/v1/content/schemas/config",
+      "https://doc.example/api/v1/content/schemas/menu",
+      "https://doc.example/api/v1/content/schemas/diagram",
       "https://doc.example/api/v1/content/schemas/type",
       "https://doc.example/api/v1/content/schemas/entities/maquinas",
       "https://doc.example/api/v1/content/schemas/entities/ubicaciones",
     ])
-    expect(catalog.schemas[1]).toMatchObject({
+    expect(catalog.schemas[3]).toMatchObject({
       name: "Tipo del catálogo",
       fileMatch: ["catalogo/*/_tipo.yaml"],
     })

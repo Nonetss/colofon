@@ -19,6 +19,8 @@ import { ID_COLUMN, type TypeDefinition } from "#meta-schema"
 /** One valid entity of the catalog. */
 export type Entity = {
   id: string
+  /** The id of its catalog type. */
+  type: string
   /** Its `etiqueta` value, or its id when the type has none or it is left out. */
   label: string
   /** The value of the first `ficha` field its type declares, if any. */
@@ -62,6 +64,7 @@ export async function readCatalog(
       }
       entities.set(id, {
         id,
+        type: typeId,
         label: labelOf(definition, id, result.data),
         page: pageOf(definition, result.data),
         values: result.data,

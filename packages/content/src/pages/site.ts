@@ -1,45 +1,68 @@
 import type { Dirent } from "node:fs"
 import { readdir, readFile } from "node:fs/promises"
 import path from "node:path"
+import type { Element } from "hast"
 import type { Catalog } from "#catalog"
 import type { CatalogIndex } from "#entity-schema"
-import type { SiteConfig } from "#meta-schema"
+import { DOCS_DIR, isReservedDocsPath } from "#load"
+import type { Menu, SiteConfig } from "#meta-schema"
+import {
+  type CatalogBodyContext,
+  catalogPages,
+  withCatalogBody,
+} from "#pages/catalog-pages"
+import { entityPath, isCatalogPath } from "#pages/catalog-paths"
+import {
+  type DiagramFile,
+  diagramFigure,
+  diagramsByEntity,
+  readDiagrams,
+} from "#pages/diagrams"
 import { type HeaderSchema, headerSchema, readHeader } from "#pages/header"
+import {
+  folderNav,
+  joinPath,
+  type MenuOverride,
+  type MenuTargets,
+  menuNav,
+  type NavEntry,
+  type NavNode,
+  type NavSource,
+  OTHERS_TITLE,
+  type ResolvedMenu,
+  resolveMenu,
+} from "#pages/nav"
 import { type ParsedPage, parsePage } from "#pages/parse"
+import { refsIn, reverseRefs } from "#pages/references"
 import { pageToHast } from "#pages/to-hast"
 import { pagePathOf, transformPage } from "#pages/transform"
 import type { Page, PageHeader, PageProblem } from "#pages/types"
 
-// Reads every page of a repository's docs/ and arranges them: the home
-// (docs/index.mdx), one section per folder holding pages, and each page in
-// its folder's section, ordered by `orden` and then by title. The reading
-// order (home, then each section's index before its pages and subsections,
-// depth first) gives every page its previous and next page. Pages are read
-// in two passes: every header first, so a page can show another page's
-// title (a `ficha` cell of `<Entities>`), then every body.
+// Reads every page of a repository's docs/, adds the generated catalog pages
+// and arranges them: the home (docs/index.mdx), then the navigation (the
+// groups of menu.yaml, or the folders and the catalog without one). The
+// reading order (depth first, each section's index before its pages) gives
+// every page its previous and next page; catalog pages are left out of it.
+// Pages are read in two passes: every header first, with what menu.yaml says
+// about it applied (the YAML wins), so a page can show another page's title,
+// then every body.
 
-const DOCS_DIR = "docs"
+export type { NavEntry, NavNode } from "#pages/nav"
 
-/** A page or section as the navigation lists it. */
-export type NavEntry = {
-  path: string
-  title: string
-  description: string
-  icon: string | null
-}
-
-export type NavNode =
-  | ({ kind: "page" } & NavEntry)
-  | ({ kind: "section"; children: NavNode[] } & NavEntry)
-
-/** A page as a link: previous/next and breadcrumbs. */
+/** A page as a link: previous and next page. */
 export type PageLink = { path: string; title: string }
 
+/** A step of a page's breadcrumbs; a group of the menu has no path. */
+export type Breadcrumb = { path: string | null; title: string }
+
 export type SitePage = Page & {
-  /** `file` for an `.mdx`; `folder` for a section without `index.mdx`. */
-  source: "file" | "folder"
-  /** The sections above the page, outermost first. */
-  breadcrumbs: PageLink[]
+  /**
+   * `file` for an `.mdx`; `folder` for a section without `index.mdx`;
+   * `generated` for a catalog page.
+   */
+  source: "file" | "folder" | "generated"
+  /** The groups and sections above the page, outermost first. */
+  breadcrumbs: Breadcrumb[]
   previous: PageLink | null
   next: PageLink | null
   /** A section's pages and subsections; empty for a page. */
@@ -47,7 +70,7 @@ export type SitePage = Page & {
 }
 
 export type Site = {
-  /** The home, then the top-level sections and pages in order. */
+  /** The home, then the top-level groups, sections and pages in order. */
   home: NavEntry
   nav: NavNode[]
   /** Every page and section by path (`""` is the home). */
@@ -69,22 +92,49 @@ export async function readSite(
   config: SiteConfig,
   index: CatalogIndex,
   catalog: Catalog,
-  routes: SiteRoutes
+  routes: SiteRoutes,
+  menu: Menu | null
 ): Promise<Site> {
   const docsRoot = path.join(root, DOCS_DIR)
   const files = await listFiles(docsRoot)
   const fileSet = new Set(files)
-  const mdxFiles = files.filter((file) => file.endsWith(".mdx"))
+  const siteProblems: PageProblem[] = []
+  const mdxFiles: string[] = []
+  for (const file of files) {
+    if (!file.endsWith(".mdx")) continue
+    if (isReservedDocsPath(file)) {
+      siteProblems.push(reservedProblem(file))
+      continue
+    }
+    mdxFiles.push(file)
+  }
   const pagePaths = new Set(mdxFiles.map(pagePathOf))
-  for (const folder of foldersWithPages(mdxFiles)) pagePaths.add(folder)
+  const folders = foldersWithPages(mdxFiles)
+  for (const folder of folders) pagePaths.add(folder)
   pagePaths.add("")
+
+  const typeIds = [...catalog.keys()]
+  const resolved = resolveMenuOf(menu, {
+    pages: pagePaths,
+    folders,
+    types: typeIds,
+  })
+  siteProblems.push(...resolved.problems)
+
+  const diagramRead = await readDiagrams(root, catalog)
+  siteProblems.push(...diagramRead.problems)
+  const { diagrams } = diagramRead
 
   const schema = headerSchema(config, index)
   const headed: HeadedPage[] = []
   for (const file of mdxFiles) {
     const source = await readFile(path.join(docsRoot, file), "utf8")
-    headed.push(headPage(source, file, schema))
+    headed.push(withOverride(headPage(source, file, schema), resolved))
   }
+  const generated = catalogPages(catalog)
+  for (const [pagePath, page] of generated)
+    generated.set(pagePath, overridden(page, resolved.overrides))
+
   const titles = new Map(headed.map((page) => [page.path, page.header.titulo]))
   const context: BuildContext = {
     pages: pagePaths,
@@ -92,13 +142,129 @@ export async function readSite(
     catalog,
     routes,
     titleOf: (pagePath) => titleOr(titles.get(pagePath), pagePath),
+    diagrams,
   }
   const read = new Map<string, Page>()
-  for (const page of headed) read.set(page.path, buildPage(page, context))
+  const cited = new Map<string, string[]>()
+  for (const page of headed) {
+    const built = buildPage(page, context)
+    read.set(page.path, built.page)
+    const headerRefs = refsIn(page.header.campos, config.cabecera ?? {}).map(
+      (ref) => entityPath(ref.type, ref.id)
+    )
+    cited.set(page.path, [...new Set([...headerRefs, ...built.cited])])
+  }
+  for (const [pagePath, page] of generated) read.set(pagePath, page)
 
-  const tree = buildTree("", read, mdxFiles)
-  const home = entryOf("", read, config.nombre)
-  return arrange(home, tree, read)
+  const source = {
+    read,
+    mdxFiles,
+    typeIds,
+    overrides: resolved.overrides,
+  }
+  const home = homeEntry(read, config.nombre)
+  const nav = navOf(menu, resolved, source)
+
+  const bodyContext: CatalogBodyContext = {
+    catalog,
+    routeOf: routes.routeOf,
+    titleOf: context.titleOf,
+    citations: citationsByEntity(readingPaths(nav), cited),
+    reverse: reverseRefs(catalog),
+    diagramsOf: diagramFiguresOf(diagrams, routes.routeOf),
+  }
+  for (const [pagePath] of generated) {
+    const page = read.get(pagePath)
+    if (page !== undefined)
+      read.set(pagePath, withCatalogBody(page, bodyContext))
+  }
+  return arrange(home, nav, read, siteProblems)
+}
+
+/**
+ * The navigation: the menu's groups (each page it leaves out reported), or
+ * the folders and the catalog without a menu.
+ */
+function navOf(
+  menu: Menu | null,
+  resolved: ResolvedMenu,
+  source: NavSource & { read: Map<string, Page> }
+): NavNode[] {
+  if (menu === null) return folderNav(source)
+  const { nav, leftOut } = menuNav(resolved, source)
+  for (const left of leftOut) {
+    const page = source.read.get(left.path)
+    if (page !== undefined)
+      source.read.set(left.path, withLeftOutProblem(page, left.file))
+  }
+  return nav
+}
+
+/** The rendered diagrams each entity is a node of, by its page path. */
+function diagramFiguresOf(
+  diagrams: ReadonlyMap<string, DiagramFile>,
+  routeOf: (pagePath: string) => string
+): (entityPagePath: string) => Element[] {
+  const byEntity = diagramsByEntity(diagrams)
+  return (entityPagePath) => {
+    const figures: Element[] = []
+    for (const id of byEntity.get(entityPagePath) ?? []) {
+      const diagram = diagrams.get(id)?.diagram
+      if (diagram !== undefined && diagram !== null)
+        figures.push(diagramFigure(diagram, routeOf))
+    }
+    return figures
+  }
+}
+
+/** The page paths of the navigation, depth first, the home first. */
+function readingPaths(nav: readonly NavNode[]): string[] {
+  const paths = [""]
+  const walk = (nodes: readonly NavNode[]) => {
+    for (const node of nodes) {
+      if (node.kind !== "group") paths.push(node.path)
+      if (node.kind !== "page") walk(node.children)
+    }
+  }
+  walk(nav)
+  return paths
+}
+
+/** For each entity's page path, the pages citing it, in reading order. */
+function citationsByEntity(
+  order: readonly string[],
+  cited: ReadonlyMap<string, readonly string[]>
+): Map<string, string[]> {
+  const citations = new Map<string, string[]>()
+  const seen = new Set<string>()
+  const add = (pagePath: string) => {
+    if (seen.has(pagePath)) return
+    seen.add(pagePath)
+    for (const entity of cited.get(pagePath) ?? []) {
+      const list = citations.get(entity)
+      if (list === undefined) citations.set(entity, [pagePath])
+      else list.push(pagePath)
+    }
+  }
+  for (const pagePath of order) add(pagePath)
+  for (const pagePath of cited.keys()) add(pagePath)
+  return citations
+}
+
+function resolveMenuOf(menu: Menu | null, targets: MenuTargets): ResolvedMenu {
+  if (menu === null) return { groups: [], overrides: new Map(), problems: [] }
+  const pages = new Set(targets.pages)
+  pages.delete("")
+  return resolveMenu(menu, { ...targets, pages })
+}
+
+function reservedProblem(file: string): PageProblem {
+  return {
+    file: `${DOCS_DIR}/${file}`,
+    line: null,
+    message:
+      "docs/catalogo/ está reservada para las páginas que la plataforma hace del catálogo: esta ficha no se publica",
+  }
 }
 
 /** A page with its header read and its body parsed, not yet transformed. */
@@ -117,6 +283,7 @@ type BuildContext = {
   catalog: Catalog
   routes: SiteRoutes
   titleOf: (pagePath: string) => string
+  diagrams: ReadonlyMap<string, DiagramFile>
 }
 
 function titleOr(title: string | undefined, pagePath: string): string {
@@ -141,7 +308,84 @@ function headPage(
   return { path: pagePath, file, contentFile, parsed, header, problems }
 }
 
-function buildPage(page: HeadedPage, context: BuildContext): Page {
+/**
+ * A page with the title and icon its menu entry gives (the YAML wins), and a
+ * problem for each header value the menu overrides with another one.
+ */
+function withOverride(page: HeadedPage, menu: ResolvedMenu): HeadedPage {
+  const override = menu.overrides.get(page.path)
+  if (override === undefined) return page
+  const problems = [...page.problems]
+  const report = (message: string) =>
+    problems.push({ file: page.contentFile, line: null, message })
+  const { header } = page
+  if (
+    override.title !== null &&
+    header.titulo !== override.title &&
+    header.titulo !== fallbackTitleOf(page.path)
+  )
+    report(
+      `titulo: la cabecera dice «${header.titulo}», pero manda menu.yaml («${override.title}»)`
+    )
+  if (
+    override.icon !== null &&
+    header.icono !== null &&
+    header.icono !== override.icon
+  )
+    report(
+      `icono: la cabecera dice \`${header.icono}\`, pero manda menu.yaml (\`${override.icon}\`)`
+    )
+  return { ...page, header: applyOverride(header, override), problems }
+}
+
+function overridden(
+  page: Page,
+  overrides: ReadonlyMap<string, MenuOverride>
+): Page {
+  const override = overrides.get(page.path)
+  if (override === undefined) return page
+  return { ...page, header: applyOverride(page.header, override) }
+}
+
+function applyOverride(header: PageHeader, override: MenuOverride): PageHeader {
+  return {
+    ...header,
+    titulo: overriddenTitle(header, override),
+    icono: overriddenIcon(header, override),
+  }
+}
+
+function overriddenTitle(header: PageHeader, override: MenuOverride): string {
+  if (override.title === null) return header.titulo
+  return override.title
+}
+
+function overriddenIcon(
+  header: PageHeader,
+  override: MenuOverride
+): string | null {
+  if (override.icon === null) return header.icono
+  return override.icon
+}
+
+function withLeftOutProblem(page: Page, file: string): Page {
+  return {
+    ...page,
+    problems: [
+      ...page.problems,
+      {
+        file,
+        line: null,
+        message: `Esta página no está en menu.yaml: sale en «${OTHERS_TITLE}»`,
+      },
+    ],
+  }
+}
+
+/** A page with its body transformed, and the entities its links cite. */
+type BuiltPage = { page: Page; cited: string[] }
+
+function buildPage(page: HeadedPage, context: BuildContext): BuiltPage {
   const { path: pagePath, file, contentFile, parsed, header } = page
   const problems = [...page.problems]
   if (!parsed.ok) {
@@ -150,7 +394,10 @@ function buildPage(page: HeadedPage, context: BuildContext): Page {
       line: parsed.line,
       message: `La ficha no se puede leer: ${parsed.message}`,
     })
-    return { path: pagePath, header, tree: null, headings: [], problems }
+    return {
+      page: { path: pagePath, header, tree: null, headings: [], problems },
+      cited: [],
+    }
   }
   const transformed = transformPage(parsed.tree, {
     file: contentFile,
@@ -161,15 +408,19 @@ function buildPage(page: HeadedPage, context: BuildContext): Page {
     routeOf: context.routes.routeOf,
     fileUrlOf: context.routes.fileUrlOf,
     titleOf: context.titleOf,
+    diagrams: context.diagrams,
   })
   problems.push(...transformed.problems)
   problems.sort(byLine)
   return {
-    path: pagePath,
-    header,
-    tree: pageToHast(parsed.tree),
-    headings: transformed.headings,
-    problems,
+    page: {
+      path: pagePath,
+      header,
+      tree: pageToHast(parsed.tree),
+      headings: transformed.headings,
+      problems,
+    },
+    cited: transformed.citations,
   }
 }
 
@@ -208,99 +459,36 @@ function foldersWithPages(mdxFiles: readonly string[]): Set<string> {
   return folders
 }
 
-function entryOf(
-  pagePath: string,
+function homeEntry(
   read: ReadonlyMap<string, Page>,
-  fallbackTitle: string
+  siteName: string
 ): NavEntry {
-  const page = read.get(pagePath)
+  const page = read.get("")
   if (page === undefined)
-    return { path: pagePath, title: fallbackTitle, description: "", icon: null }
+    return { path: "", title: siteName, description: "", icon: null }
   return {
-    path: pagePath,
+    path: "",
     title: page.header.titulo,
     description: page.header.descripcion,
     icon: page.header.icono,
   }
 }
 
-/** The sections and pages directly in `folder`, ordered. */
-function buildTree(
-  folder: string,
-  read: ReadonlyMap<string, Page>,
-  mdxFiles: readonly string[]
-): NavNode[] {
-  const nodes: { node: NavNode; order: number | null }[] = []
-  const subfolders = new Set<string>()
-  for (const file of mdxFiles) {
-    const relative = relativeTo(folder, file)
-    if (relative === undefined) continue
-    const [first = "", ...rest] = relative.split("/")
-    if (rest.length > 0) {
-      subfolders.add(first)
-      continue
-    }
-    if (first === "index.mdx") continue
-    const pagePath = pagePathOf(file)
-    nodes.push({
-      node: { kind: "page", ...entryOf(pagePath, read, pagePath) },
-      order: orderOf(read.get(pagePath)),
-    })
-  }
-  for (const name of subfolders) {
-    const sectionPath = joinPath(folder, name)
-    nodes.push({
-      node: {
-        kind: "section",
-        ...entryOf(sectionPath, read, name),
-        children: buildTree(sectionPath, read, mdxFiles),
-      },
-      order: orderOf(read.get(sectionPath)),
-    })
-  }
-  return nodes.sort(byOrderThenTitle).map((entry) => entry.node)
-}
-
-function relativeTo(folder: string, file: string): string | undefined {
-  if (folder === "") return file
-  if (!file.startsWith(`${folder}/`)) return undefined
-  return file.slice(folder.length + 1)
-}
-
-function joinPath(folder: string, name: string): string {
-  if (folder === "") return name
-  return `${folder}/${name}`
-}
-
-function orderOf(page: Page | undefined): number | null {
-  if (page === undefined) return null
-  return page.header.orden
-}
-
-const collator = new Intl.Collator("es", { numeric: true })
-
-function byOrderThenTitle(
-  a: { node: NavNode; order: number | null },
-  b: { node: NavNode; order: number | null }
-): number {
-  if (a.order !== b.order) {
-    if (a.order === null) return 1
-    if (b.order === null) return -1
-    return a.order - b.order
-  }
-  return collator.compare(a.node.title, b.node.title)
-}
-
-type Visit = { entry: NavEntry; breadcrumbs: PageLink[]; children: NavNode[] }
+type Visit = { entry: NavEntry; breadcrumbs: Breadcrumb[]; children: NavNode[] }
 
 function arrange(
   home: NavEntry,
   nav: NavNode[],
-  read: ReadonlyMap<string, Page>
+  read: ReadonlyMap<string, Page>,
+  siteProblems: readonly PageProblem[]
 ): Site {
-  const order: Visit[] = [{ entry: home, breadcrumbs: [], children: nav }]
-  const walk = (nodes: NavNode[], breadcrumbs: PageLink[]) => {
+  const visits: Visit[] = [{ entry: home, breadcrumbs: [], children: nav }]
+  const walk = (nodes: NavNode[], breadcrumbs: Breadcrumb[]) => {
     for (const node of nodes) {
+      if (node.kind === "group") {
+        walk(node.children, [...breadcrumbs, { path: null, title: node.title }])
+        continue
+      }
       const entry = {
         path: node.path,
         title: node.title,
@@ -308,10 +496,10 @@ function arrange(
         icon: node.icon,
       }
       if (node.kind === "page") {
-        order.push({ entry, breadcrumbs, children: [] })
+        visits.push({ entry, breadcrumbs, children: [] })
         continue
       }
-      order.push({ entry, breadcrumbs, children: node.children })
+      visits.push({ entry, breadcrumbs, children: node.children })
       walk(node.children, [
         ...breadcrumbs,
         { path: node.path, title: node.title },
@@ -320,25 +508,73 @@ function arrange(
   }
   walk(nav, [])
 
+  // Catalog pages are reference, not reading: no previous or next page.
+  const reading = visits.filter((visit) => !isCatalogPath(visit.entry.path))
   const pages = new Map<string, SitePage>()
   const problems: PageProblem[] = []
-  order.forEach((visit, at) => {
+  for (const visit of visits) {
     const page = read.get(visit.entry.path)
-    const base = pageOrFolder(page, visit.entry)
+    const base = withSiteProblems(pageOrFolder(page, visit.entry), siteProblems)
     problems.push(...base.problems)
+    const at = reading.indexOf(visit)
     pages.set(visit.entry.path, {
       ...base,
-      source: sourceOf(page),
+      source: sourceOf(page, visit.entry.path),
       breadcrumbs: visit.breadcrumbs,
-      previous: linkAt(order, at - 1),
-      next: linkAt(order, at + 1),
+      previous: linkAt(reading, at, -1),
+      next: linkAt(reading, at, 1),
       children: visit.children,
     })
-  })
+  }
+
+  // Pages outside the navigation (an entity, the catalog when the menu only
+  // shows some types) hang from the closest page above them.
+  for (const [pagePath, page] of read) {
+    if (pages.has(pagePath)) continue
+    problems.push(...page.problems)
+    pages.set(pagePath, {
+      ...page,
+      source: sourceOf(page, pagePath),
+      breadcrumbs: breadcrumbsAbove(pagePath, pages),
+      previous: null,
+      next: null,
+      children: [],
+    })
+  }
   return { home, nav, pages, problems }
 }
 
-function sourceOf(page: Page | undefined): SitePage["source"] {
+/** The site's own problems (menu.yaml, reserved files) go on the home. */
+function withSiteProblems(
+  page: Page,
+  siteProblems: readonly PageProblem[]
+): Page {
+  if (page.path !== "" || siteProblems.length === 0) return page
+  return { ...page, problems: [...siteProblems, ...page.problems] }
+}
+
+function breadcrumbsAbove(
+  pagePath: string,
+  pages: ReadonlyMap<string, SitePage>
+): Breadcrumb[] {
+  let parent = path.posix.dirname(pagePath)
+  while (parent !== ".") {
+    const above = pages.get(parent)
+    if (above !== undefined)
+      return [
+        ...above.breadcrumbs,
+        { path: parent, title: above.header.titulo },
+      ]
+    parent = path.posix.dirname(parent)
+  }
+  return []
+}
+
+function sourceOf(
+  page: Page | undefined,
+  pagePath: string
+): SitePage["source"] {
+  if (isCatalogPath(pagePath)) return "generated"
   if (page === undefined) return "folder"
   return "file"
 }
@@ -358,15 +594,20 @@ function folderHeader(entry: NavEntry): PageHeader {
   return {
     titulo: entry.title,
     descripcion: "",
-    icono: null,
+    icono: entry.icon,
     orden: null,
     actualizado: null,
     campos: {},
   }
 }
 
-function linkAt(order: readonly Visit[], at: number): PageLink | null {
-  const visit = order[at]
+function linkAt(
+  reading: readonly Visit[],
+  at: number,
+  step: number
+): PageLink | null {
+  if (at === -1) return null
+  const visit = reading[at + step]
   if (visit === undefined) return null
   return { path: visit.entry.path, title: visit.entry.title }
 }

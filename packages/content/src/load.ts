@@ -7,24 +7,33 @@ import type { CatalogIndex } from "#entity-schema"
 import {
   createMetaSchemas,
   type FieldDefinition,
+  type Menu,
   type SiteConfig,
   type TypeDefinition,
 } from "#meta-schema"
 
-// Reads the declarations of a content repository: doc.config.yaml, each
-// catalog type and the ids and pages its fields can point at. Entity files
-// are listed, not read: their contents are the validator's job.
+// Reads the declarations of a content repository: doc.config.yaml, the
+// optional menu.yaml, each catalog type and the ids and pages its fields can
+// point at. Entity files are listed, not read: their contents are the
+// validator's job. Whether the menu's paths exist is checked with the pages,
+// so a renamed page never throws the whole menu away.
 
 export const CONFIG_FILE = "doc.config.yaml"
 export const CATALOG_DIR = "catalogo"
 export const DOCS_DIR = "docs"
 export const TYPE_FILE = "_tipo.yaml"
+export const MENU_FILE = "menu.yaml"
+export const DIAGRAMS_DIR = "diagramas"
+/** The page path the generated catalog pages own; docs/ can't use it. */
+export const CATALOG_PATH = "catalogo"
 
 /** A problem in one file, with a path relative to the content root. */
 export type ContentProblem = { file: string; message: string }
 
 export type ContentDeclarations = {
   config: SiteConfig
+  /** The parsed `menu.yaml`, `null` when the repository has none. */
+  menu: Menu | null
   /** Each catalog type by id (its folder name), sorted by id. */
   types: ReadonlyMap<string, TypeDefinition>
   index: CatalogIndex
@@ -53,6 +62,13 @@ export async function loadContent(root: string): Promise<LoadResult> {
 
   // A type exists when its folder does, even if its _tipo.yaml is broken:
   // refs to it are not reported again on top of that file's own problem.
+  const menu = await readOptionalDeclaration(
+    root,
+    MENU_FILE,
+    meta.menu,
+    problems
+  )
+
   const typeIds = await catalogTypeIds(root, problems)
   const types = new Map<string, TypeDefinition>()
   const entityIds = new Map<string, string[]>()
@@ -76,13 +92,34 @@ export async function loadContent(root: string): Promise<LoadResult> {
     checkRefs(type.campos, file, typeIds, problems)
   }
 
-  if (config === undefined || problems.length > 0)
+  if (config === undefined || menu === undefined || problems.length > 0)
     return { ok: false, problems }
-  const pagePaths = await docPagePaths(root)
+  const docFiles = await docMdxFiles(root)
   return {
     ok: true,
-    content: { config, types, index: { entityIds, pagePaths } },
+    content: {
+      config,
+      menu,
+      types,
+      index: {
+        entityIds,
+        pagePaths: docPagePaths(docFiles),
+        folderPaths: docFolderPaths(docFiles),
+      },
+    },
   }
+}
+
+/** Like `readDeclaration`, but a missing file is `null`, not a problem. */
+async function readOptionalDeclaration<T>(
+  root: string,
+  file: string,
+  schema: ZodType<T>,
+  problems: ContentProblem[]
+): Promise<T | null | undefined> {
+  const text = await readText(path.join(root, file))
+  if (text === undefined) return null
+  return parseDeclaration(text, file, schema, problems)
 }
 
 async function readDeclaration<T>(
@@ -96,6 +133,15 @@ async function readDeclaration<T>(
     problems.push({ file, message: "No existe" })
     return undefined
   }
+  return parseDeclaration(text, file, schema, problems)
+}
+
+function parseDeclaration<T>(
+  text: string,
+  file: string,
+  schema: ZodType<T>,
+  problems: ContentProblem[]
+): T | undefined {
   const data = parseYaml(text, file, problems)
   if (data === undefined) return undefined
   const result = schema.safeParse(data, { error: spanishErrors })
@@ -254,16 +300,39 @@ function checkFieldRefs(
   }
 }
 
+/** Whether a docs/ path is under the reserved `catalogo` folder. */
+export function isReservedDocsPath(docsPath: string): boolean {
+  return docsPath === CATALOG_PATH || docsPath.startsWith(`${CATALOG_PATH}/`)
+}
+
+/** The `.mdx` files of docs/, with `/` separators, outside `catalogo/`. */
+async function docMdxFiles(root: string): Promise<string[]> {
+  const entries = await listDocFiles(path.join(root, DOCS_DIR))
+  return entries
+    .map((entry) => entry.split(path.sep).join("/"))
+    .filter((file) => file.endsWith(".mdx") && !isReservedDocsPath(file))
+}
+
 /** Pages a `ficha` field can name: paths in docs/ without `.mdx`, a folder's `index.mdx` as the folder. */
-async function docPagePaths(root: string): Promise<string[]> {
-  const dir = path.join(root, DOCS_DIR)
-  const entries = await listDocFiles(dir)
+function docPagePaths(files: readonly string[]): string[] {
   const paths: string[] = []
-  for (const entry of entries) {
-    const page = pagePathOf(entry.split(path.sep).join("/"))
+  for (const file of files) {
+    const page = pagePathOf(file)
     if (page !== undefined) paths.push(page)
   }
   return paths.sort()
+}
+
+/** Every folder of docs/ that holds a page, at any depth (`containers/komodo`). */
+function docFolderPaths(files: readonly string[]): string[] {
+  const folders = new Set<string>()
+  for (const file of files) {
+    const parts = file.split("/").slice(0, -1)
+    for (let depth = 1; depth <= parts.length; depth++) {
+      folders.add(parts.slice(0, depth).join("/"))
+    }
+  }
+  return [...folders].sort()
 }
 
 async function listDocFiles(dir: string): Promise<string[]> {
