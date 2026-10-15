@@ -15,7 +15,7 @@ están en la spec `content-contract` y en `packages/content`.
 | `docs/` | Las fichas `.mdx`. Cada carpeta es una sección y lleva su `index.mdx`. `docs/catalogo/` está reservada. |
 | `catalogo/<tipo>/_tipo.yaml` | El esquema de un tipo: sus campos y cómo se muestra. El nombre de la carpeta es el id del tipo. |
 | `catalogo/<tipo>/<id>.yaml` | Una entidad. El nombre del fichero es su id. |
-| `diagramas/<id>.yaml` | Opcional. Un diagrama, que las fichas muestran con `<Diagram id="<id>" />` (ver [Diagramas](#diagramas)). |
+| `diagramas/<id>.json` | Opcional. Un diagrama, en JSON, que las fichas muestran con `<Diagram id="<id>" />` (ver [Diagramas](#diagramas)). |
 | `skills/<nombre>/SKILL.md` | Skills para los agentes: cómo trabajar con este sitio. |
 
 **Lo que dice un YAML manda sobre lo que dice la cabecera de una ficha.** Si
@@ -25,7 +25,7 @@ el YAML no dice, y si dice otra cosa se avisa como problema.
 
 **Todo `icono` es un nombre de icono de Lucide** (`server`, `map-pin`,
 `network`), el de la versión que dibuja el lector: en `_tipo.yaml`, en
-`menu.yaml`, en las cabeceras y en los nodos de los diagramas. El editor los
+`menu.yaml` y en las cabeceras (las cajas de los diagramas no llevan icono). El editor los
 sugiere y marca los que no existen. La lista sale de `lucide-react` con `bun
 run icons:catalog`.
 
@@ -143,31 +143,87 @@ no salen en el menú. Tienen su `llm.txt` como cualquier ficha. Por eso
 
 ## Diagramas
 
-Un diagrama es un fichero `diagramas/<id>.yaml` que se declara, no se dibuja:
+Un diagrama es un fichero `diagramas/<id>.json` con el formato de los esquemas
+de doc-sjd (`site/esquemas/lib.mjs`): el contenido coloca cada caja, flecha y
+zona, y la plataforma lo dibuja con ese aspecto (cajas con etiqueta, una pieza
+central, zonas con color, flechas en ángulo recto con su etiqueta, insignias,
+tablas y la leyenda debajo).
 
-```yaml
-titulo: Cómo despliega Komodo
-descripcion: Komodo manda a Periphery, que levanta los stacks
-direccion: derecha            # o abajo
-nodos:
-  komodo: { entidad: services/komodo }        # una entidad del catálogo
-  periphery: { nombre: Periphery, sub: agente en cada servidor, tipo: entrada }
-  stacks: Stacks                              # solo un nombre
-conexiones:
-  - komodo -> periphery: deploy
-  - periphery -> stacks
-zonas:
-  casa: { titulo: Casa, nodos: [komodo, periphery] }
+```json
+{
+  "title": "Cómo despliega Komodo",
+  "desc": "Komodo manda a Periphery, que levanta los stacks",
+  "width": 640,
+  "height": 200,
+  "zones": [
+    { "id": "casa", "x": 16, "y": 16, "w": 420, "h": 120, "label": "CASA", "hue": "teal" }
+  ],
+  "nodes": [
+    { "id": "komodo", "entity": "services/komodo", "kind": "focal", "tag": "Core",
+      "x": 24, "y": 40, "w": 160, "h": 72, "zone": "casa", "info": "Despliega los stacks" },
+    { "id": "periphery", "name": "Periphery", "sub": "agente", "kind": "input",
+      "x": 264, "y": 40, "w": 160, "h": 72, "zone": "casa", "needs": ["komodo"] },
+    { "id": "stacks", "name": "Stacks", "page": "contenedores/stacks",
+      "x": 480, "y": 40, "w": 140, "h": 72 }
+  ],
+  "edges": [
+    { "from": "komodo", "to": "periphery", "points": [[184, 76], [264, 76]],
+      "label": "DEPLOY", "at": [224, 66] },
+    { "from": "periphery", "to": "stacks", "kind": "accent",
+      "points": [[424, 76], [480, 76]] }
+  ]
+}
+```
+
+- **Cajas** (`nodes`): `x`, `y`, `w`, `h` (una tabla no lleva `h`), y si
+  hace falta `id`, `kind` (`focal`, `service`, `store`, `input`,
+  `external`, `optional`), `tag`, `name`, `sub` (texto o lista), `shape`
+  (`pill`, `cylinder`), `hue` (`rose`, `blue`, `cyan`, `violet`, `green`,
+  `indigo`, `fuchsia`, `slate`, `teal`, `lime`; sin él, el de su zona),
+  `zone`, `info` (lo que dice la tarjeta), `trace` (ilumina el camino
+  principal), `needs` (de qué depende: la tarjeta dice qué cae con ella) y
+  `entity` (`<tipo>/<id>`, que le da nombre y enlace) o `page` (una ficha a
+  la que enlaza). Una tabla lleva `rows` (`key`, `name`, `type`) y `more`.
+- **Flechas** (`edges`): `points` en tramos horizontales o verticales,
+  `from`, `to` o `toZone`, `kind` (`default`, `accent`, `dash`), `label`
+  con `at` (dónde va) y `anchor`, `hue`, `info`, `noHead`. Con `badge` no
+  hay línea: es una insignia en la caja `from`, del color de la caja `to`.
+- **Zonas** (`zones`, con `x`, `y`, `w`, `h`, `label`, `id` y `hue`),
+  **notas** (`notes`, texto suelto con `x`, `y`, `text`) y la leyenda, que
+  se puede nombrar por diagrama con `kindNames`, `edgeNames` y `badgeName`.
+  `shapes` da forma a todas las cajas de un tipo y `colorEdges` colorea
+  cada flecha como la caja de la que sale.
+
+Para una fila de cajas sin coordenadas está la **cadena**: `items` (cajas
+sin `x`/`y`, cada una tan ancha como su línea más larga), `links` (la
+etiqueta de cada flecha o `null`), `accent` y `dash` (qué flechas, 0 la
+primera), `y` y `h`.
+
+```json
+{
+  "title": "Copias",
+  "desc": "De la máquina al PBS y a la nube",
+  "items": [{ "id": "vm", "name": "VM" }, { "id": "pbs", "name": "PBS", "kind": "store" }, { "id": "nube", "name": "Nube", "kind": "external" }],
+  "links": ["SNAPSHOT", null],
+  "accent": [0]
+}
 ```
 
 Cualquier ficha lo muestra con `<Diagram id="komodo" />`, y varias pueden
-mostrar el mismo. Se valida contra el catálogo: una entidad que no existe,
-una conexión a un nodo que no está o un nodo en dos zonas se avisan en el
-fichero y en cada ficha que lo muestra, y lo que es válido se muestra igual.
-Un bloque ` ```diagram ` dentro de una ficha se avisa y se muestra como un
-aviso: los diagramas van en `diagramas/`. Hasta que la plataforma los dibuje,
-un diagrama se ve como texto: su título y descripción, sus zonas y una línea
-por conexión ("Komodo → Periphery: deploy").
+mostrar el mismo. Se valida contra el catálogo y las fichas: una entidad o
+una ficha que no existe, una flecha a una caja que no está, un tramo en
+diagonal, una etiqueta sin `at`, un id repetido o un texto que no cabe en su
+caja se avisan en el fichero (con la ruta del campo, `nodes.3.entity`) y en
+cada ficha que lo muestra, y lo que es válido se dibuja igual. Un
+`diagramas/<id>.yaml` se avisa: ahora es `.json`. Un bloque ` ```diagram `
+dentro de una ficha se avisa y se muestra como un aviso.
+
+En el lector, al pasar por una caja, una flecha, una insignia o el título de
+una zona se ilumina lo que toca y una tarjeta dice qué es, sus conexiones, el
+camino principal y qué cae con ella; en el móvil, el primer toque lo muestra y
+el segundo sigue el enlace. Para lectores de pantalla y para `llm.txt` el
+diagrama queda como texto: su título y descripción, sus zonas y una línea por
+conexión ("Komodo → Periphery: DEPLOY").
 
 ## Cómo se escriben las fichas
 
@@ -345,8 +401,7 @@ La extensión YAML de Red Hat (`redhat.vscode-yaml`, en VS Code y Cursor) lo
 usa para autocompletar, validar y documentar cada YAML del contenido: los
 campos de cada tipo con su descripción, los valores de cada `enum`, los ids
 que acepta cada referencia, las rutas de las fichas, lo que puede nombrar una
-entrada de `menu.yaml`, las entidades que puede ser un nodo de un diagrama y
-los nombres de los iconos. Basta **un ajuste**; la
+entrada de `menu.yaml` y los nombres de los iconos. Basta **un ajuste**; la
 URL exacta de cada repositorio se copia desde su fila en `/admin/content`:
 
 ```json
@@ -363,6 +418,23 @@ Dónde va depende de qué tengas abierto:
 - **Un workspace con varias carpetas** (por ejemplo la plataforma y el
   contenido): en los ajustes **del workspace**. La extensión YAML solo lee
   este ajuste del workspace, nunca del `.vscode/` de cada carpeta.
+
+Los diagramas son JSON, que esa extensión no lee: el editor de JSON de VS Code
+(sin extensión) toma su esquema con otro ajuste, en el mismo sitio, y sugiere
+las entidades y fichas a las que puede enlazar una caja, los tipos, formas y
+colores. También vale poner `"$schema"` con esa URL como primera clave de un
+diagrama.
+
+```json
+{
+  "json.schemas": [
+    {
+      "fileMatch": ["/diagramas/*.json"],
+      "url": "https://<sitio>/api/v1/content/schemas/<slug>/diagram"
+    }
+  ]
+}
+```
 
 Nadie genera ni commitea schemas: un tipo, una entidad o una ficha nuevos
 salen en el catálogo después de la sincronización que los trae.

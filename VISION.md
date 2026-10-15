@@ -139,22 +139,26 @@ Pendiente:
 - **Si un commit rompe el contenido**, el sitio sigue sirviendo la última
   versión válida y muestra los errores a los administradores.
 
-### Diagramas (pendiente)
+### Diagramas
 
-En la documentación anterior cada caja de un diagrama lleva sus coordenadas a
-mano, y solo el mapa de la portada es interactivo. Aquí:
+Siguen el formato de los esquemas de la documentación anterior
+(`site/esquemas/lib.mjs`), que ya se veían bien. Aquí:
 
-- Se declaran **solo nodos, flechas y zonas**, en un bloque ` ```diagrama ` de
-  YAML dentro de la propia ficha.
-- El **layout es automático** (ELK): capas, flechas ortogonales que no cruzan
-  cajas y zonas anidadas.
+- Cada diagrama es un **fichero JSON** en `diagramas/`, con las mismas claves
+  que `lib.mjs`: **las coordenadas las pone el contenido** (cada caja, cada
+  tramo de flecha, cada zona), así un esquema de la documentación anterior se
+  pasa casi copiando. Para una fila simple está la cadena, que se coloca sola.
 - Se generan como **SVG en el servidor** (visibles sin JavaScript, en claro y
   oscuro) y **todos son interactivos**: resaltar al pasar el ratón, trazar el
-  camino desde un origen y una tarjeta con las conexiones de cada caja.
-- Un nodo puede ser **una entidad del catálogo** (`entidad: maquinas/nas`) y
-  coge de ella el nombre, el icono y el enlace.
+  camino desde un origen, qué cae si cae una pieza y una tarjeta con las
+  conexiones de cada caja.
+- Una caja puede ser **una entidad del catálogo** (`"entity": "maquinas/nas"`)
+  y coge de ella el nombre y el enlace.
 - Más adelante, **diagramas derivados** que salen solos de las relaciones del
   catálogo.
+
+Se probó el layout automático (ELK) y se dejó: no daba el control del
+dibujo que tenían los esquemas hechos a mano.
 
 Descartados: Mermaid (poco control sobre el estilo y la interacción) y D2 (es
 un binario de Go, y la interacción habría que añadirla encima).
