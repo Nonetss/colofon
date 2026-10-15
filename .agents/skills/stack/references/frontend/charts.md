@@ -1,6 +1,6 @@
 # Charts (`Chart`, TanStack Charts)
 
-Every chart in `apps/frontend` is a [TanStack Charts](https://tanstack.com/charts/latest/docs) definition rendered through `Chart` (`apps/frontend/src/components/ui/chart.tsx`). The shadcn `chart` component and Recharts are not installed and don't get added, and a feature never draws chart marks by hand (styled `div`/`span` bars, ad-hoc `<svg>`). The first production consumer is the cron detail page's "Pulso" strip (`features/crons/detail/components/cron-run-pulse.tsx`).
+Every chart in `apps/frontend` is a [TanStack Charts](https://tanstack.com/charts/latest/docs) definition rendered through `Chart` (`apps/frontend/src/components/ui/chart.tsx`). The shadcn `chart` component and Recharts are not installed and don't get added, and a feature never draws chart marks by hand (styled `div`/`span` bars, ad-hoc `<svg>`). There is no production consumer right now (the cron detail page's pulse strip, the first one, left with `/crons`); the wrapper stays for the next chart.
 
 ```tsx
 import { barY, defineChart } from "@tanstack/charts"

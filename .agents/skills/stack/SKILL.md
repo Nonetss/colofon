@@ -18,7 +18,7 @@ browser ──▶ apps/gateway :80 (Caddy, only published port) ──rest──
            │  packages/api     (contract + handlers)
            │  packages/auth    (Better Auth)
            │  packages/cron    (in-process scheduler)
-           │  packages/content (content contract; clones of the repositories in the DB; git server of the hosted ones)
+           │  packages/content (content contract; clones of the repositories in the DB; git server of the hosted ones; page parser)
            │  packages/db      (Drizzle) ──▶ PostgreSQL (`db` service in every compose file)
            │  packages/logger  (pino)    ──▶ stdout
 ```
@@ -49,7 +49,7 @@ Read only the references the task needs. A task crossing layers reads several (a
 | Task | Read |
 |---|---|
 | Adding or moving a feature, slice, component, hook, model or definition; imports and barrels; `public.ts`; `*-page.tsx` / `*-content.tsx`; `components/ui` vs `components/shared`; providers; finding an existing component, hook or `src/lib` helper before writing one | `references/frontend/feature-structure.md` |
-| Adding a route or navigation entry; `app-surfaces.ts` / `site-nav.ts`; the navbar surface search; choosing the Astro layout | `references/frontend/navigation-and-layouts.md` |
+| Adding a route or navigation entry; `app-surfaces.ts` / `site-nav.ts`; the navbar surface search; choosing the Astro layout; the documentation reader (`Docs.astro`, its sidebar and repository scope) | `references/frontend/navigation-and-layouts.md` |
 | Styling text: headings, labels, secondary copy, state tags, monospace data; the `Text` roles and tones, type tokens, adding a role | `references/frontend/typography.md` |
 | Naming an icon-only button, link or menu trigger with a hover bubble; replacing a native `title` attribute | `references/frontend/hints.md` |
 | Rendering a resource list as a table: column definitions, sortable/resizable/reorderable/hideable columns, saved column layout, URL vs local sort, browser vs server sort, row actions, expandable and heading rows, the compact layout (`DataTableView`, `useDataTable`), where TanStack Table v9's own docs and skills live | `references/frontend/data-tables.md` |
@@ -71,7 +71,7 @@ Read only the references the task needs. A task crossing layers reads several (a
 
 | Task | Read |
 |---|---|
-| Making a procedure cron-eligible or giving it a code-declared `cron.schedule`, the scheduler, job/run storage, cron endpoints, `/crons` frontend | `references/cron-and-mcp/cron.md` |
+| Making a procedure cron-eligible or giving it a code-declared `cron.schedule`, the scheduler, job/run storage, cron endpoints (no frontend: `/crons` was removed) | `references/cron-and-mcp/cron.md` |
 
 ## Always true
 

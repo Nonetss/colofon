@@ -6,7 +6,7 @@ Tailwind v4 has container queries built in. `@container` on an element makes it 
 
 | Use | For | Why |
 | --- | --- | --- |
-| **Container variants** (`@container` + `@md:`…) | Content laid out inside a page: card grids, metadata grids, filter field grids, list row layouts, form field grids, any reusable component that arranges its own children | The space a page body gets is not the viewport: the section sidebar takes up to 16rem (open or collapsed), `PageShell` caps at 80 % from `lg`, a dialog column can be half the dialog. A component reused in a full page and in a narrow panel must lay out for the width it actually has. |
+| **Container variants** (`@container` + `@md:`…) | Content laid out inside a page: card grids, metadata grids, filter field grids, list row layouts, form field grids, any reusable component that arranges its own children | The space a page body gets is not the viewport: a sidebar (the documentation reader's or the admin shell's) takes up to 18rem, `PageShell` caps at 80 % from `lg`, a dialog column can be half the dialog. A component reused in a full page and in a narrow panel must lay out for the width it actually has. |
 | **Viewport variants** (`sm:`, `md:`, `lg:`…) | App chrome (navbar, sidebars, mobile filter `ListActionBar` and bottom sheet, scroll-to-top), the size of overlays (`sm:max-w-xl` on dialogs, sheets, popovers), page-level padding, and layouts inside a dialog whose width is itself set from the viewport | These really follow the browser window; specs pin some of them to viewport breakpoints (e.g. the filter bar below 768 px). |
 
 If in doubt: would this layout look wrong when the sidebar opens or when the component is dropped into a narrower box? Then it needs a container query.
@@ -48,4 +48,4 @@ Keep full literal strings in lookups (`{ 2: "grid-cols-1 @lg:grid-cols-2" }`). T
 
 ## Components that already own a container
 
-`SurfaceCardGrid`, `MetadataList` / `MetadataDefinitionList`, `CollapsibleFilters` (field grid), `DataTableView` (table vs compact layout, compact field grid), `EntityList` (rows and metadata), `CronScheduleBuilder`, `ui/card` (`@container/card-header`).
+`SurfaceCardGrid`, `MetadataList` / `MetadataDefinitionList`, `CollapsibleFilters` (field grid), `DataTableView` (table vs compact layout, compact field grid), `EntityList` (rows and metadata), `ui/card` (`@container/card-header`).
