@@ -1,11 +1,14 @@
 import type { Dirent } from "node:fs"
 import { readdir, readFile } from "node:fs/promises"
 import path from "node:path"
+// jsonc-parser's `main` is a UMD build whose `require`s of its own files the
+// backend bundle cannot follow (it fails at start with "Cannot find module
+// './impl/format'"), so the ESM build is imported directly.
 import {
   type ParseError,
   parse as parseJsonText,
   printParseErrorCode,
-} from "jsonc-parser"
+} from "jsonc-parser/lib/esm/main.js"
 import { parse, YAMLParseError } from "yaml"
 import { type ZodType, z } from "zod"
 import type { CatalogIndex } from "#entity-schema"
