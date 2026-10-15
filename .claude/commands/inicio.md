@@ -1,46 +1,51 @@
 ---
-description: Set up a fresh checkout for development (prerequisites, root .env, dependencies) and optionally start the dev stack
-argument-hint: "[docker|local|none] [--force]"
+description: Start a new project from this template — generate the .env, rename the app in Docker Compose and the frontend, and detach the template's git remote
+argument-hint: "[app name]"
 ---
 
-Set up this checkout for local development, end to end, following the README's "Getting Started" section and the `stack` skill (`references/commands.md`, `references/env.md`, `references/docker.md`).
+Turn this checkout of the `stack` template into a new project.
 
 **Arguments:** $ARGUMENTS
 
-- `docker` → start the Docker dev stack at the end; `local` → start native dev; `none` → stop after installing. With no mode, ask the user (step 5).
-- `--force` → pass `--force` to `scripts/setup-dev.sh`, overwriting the existing `.env`. Never add `--force` on your own: the current `.env` holds the user's secrets.
-
-**Hard rules (from `AGENTS.md`):** never kill, stop or restart a running process or container; never generate, push or run migrations (the backend applies the committed ones on boot); never `curl` or browser-probe the running app; never commit the generated `.env` or `caddy-local-root.crt`.
+**Hard rules:** this command starts nothing — bringing the app up is the user's job. Never run `bun run dev`, `dev:local`, `dev:cert`, `gateway`, any `*:start`, `bun install` or any `docker`/`docker compose` command, not even to check the running state. Never kill or stop a process; never generate, push or run migrations; never commit.
 
 Steps:
 
-1. **Prerequisites.** Check, and report a table of found/missing with versions:
-   - `bun --version` against `packageManager` in the root `package.json` (warn on a mismatch, don't fail).
-   - `openssl version` (required by `setup-dev.sh`).
-   - `docker --version` and `docker compose version` (needed for the dev stack, PostgreSQL, Loki, Tempo and the gateway).
-   If `bun` or `openssl` is missing, stop and tell the user how to install it. If Docker is missing, continue but warn that only `none` is possible.
+1. **App name.** If no name was passed in the arguments, ask the user for it with AskUserQuestion (header "Nombre"; offer a couple of example names and let them type their own through "Other"). Derive:
+   - `slug`: lowercase kebab-case (`[a-z0-9-]`, starts with a letter), used in Docker names. Example: "Mi Tienda" → `mi-tienda`.
+   - `db`: the slug with `-` replaced by `_`, used as the PostgreSQL database name. Example: `mi_tienda`.
+   - `display`: the name as the user wrote it, for the UI. `DISPLAY` is its uppercase form, for the places that show `STACK` today.
+   Confirm the derived values in one line before editing.
 
-2. **Root `.env`.** Run `bun run setup:dev` (plus `--force` only if passed in the arguments).
-   - If it skipped because `.env` already exists, say so and continue with the existing file.
-   - If it created the file, show the user the admin email and password it printed, and stress that the password is not stored anywhere else except in `.env`.
+2. **Rename in Docker Compose.** Search first (`grep -n stack compose*.yml`) and replace only the app name, never the word in comments that describe the "dev stack":
+   - `compose.yml`: `name: stack` → `name: <slug>`, every `container_name: stack-*` → `<slug>-*`.
+   - `compose.dev.yml`: `name: stack-dev` → `name: <slug>-dev`, every `container_name: stack-dev-*` → `<slug>-dev-*`.
+   - `compose.prod.yml`: `name: stack`, every `container_name: stack-*` and the `stack` network (its definition and every service's `networks:` entry) → `<slug>`. Leave the `ghcr.io/nonetss/stack-*` images alone: CI names them after the GitHub repository (`.github/workflows/docker-build.yml`), so tell the user to update them once the new repo exists.
+   - In all three: `POSTGRES_DB: stack`, `pg_isready -U postgres -d stack` and the `@db:5432/stack` in `DATABASE_URL` → `<db>`.
+   - Named volumes (`db_data`, `gateway_data`, …) need no edit: Compose prefixes them with the project name, so they become `<slug>-dev_db_data` and so on.
+   - Root `package.json`: `"name": "stack"` → `"name": "<slug>"`, and the `stack-dev_gateway_data` volume in the `dev:cert` script → `<slug>-dev_gateway_data`.
+   - `.env.example`: the `@db:5432/stack` database → `<db>` and `admin@stack.local` → `admin@<slug>.local`.
+   - `scripts/setup-dev.sh`: `ADMIN_EMAIL="admin@stack.local"` → `admin@<slug>.local`.
+
+3. **Rename in the frontend and the API docs.** Search `apps/frontend/src`, `apps/frontend/public` and `apps/backend/src` for `STACK`, `Stack` and `stack-` (skip `TanStack`/`TANSTACK`) and replace the app name:
+   - `nameApp="STACK"` in `src/layouts/Layout.astro` and `src/layouts/Admin.astro`, the `STACK` texts and `aria-label` in `features/app-shell/guest/components/site-footer.astro`, `STACK · Acceso` in `features/auth/sign-in/components/sign-in-content.tsx` → `DISPLAY`.
+   - `<title>STACK</title>` in `src/assets/logo.svg` and `public/logo.svg` → `DISPLAY`. Leave the `.stack-ink` CSS class as is.
+   - `public/manifest.webmanifest`: `name`, `short_name` and `description` → `display`.
+   - The service worker cache `stack-shell-v1` in `public/sw.js` and `src/layouts/service-worker.astro` → `<slug>-shell-v1`. Change both together: the layout deletes the cache that the worker creates.
+   - `apps/backend/src/routers/docs.ts`: `Stack API` → `<display> API` (title and description).
+   Don't touch docs, `AGENTS.md`, the `stack` skill or OpenSpec: there `stack` names the template and its skill, not the app.
+   Then run `bunx biome check` on the edited files and `bun run check-types` to confirm nothing broke.
+
+4. **Generate the `.env`.** Run `bash scripts/setup-dev.sh` now that `.env.example` carries the new database name. Don't pass `--force`.
+   - If it created the file, show the admin email and password it printed, and stress that the password is stored only in `.env`.
+   - If it skipped because `.env` already exists, replace the `/stack` database in its `DATABASE_URL` with `/<db>` so it matches the compose files, and say so. Don't change anything else in it.
    - Relay any warning about leftover `apps/*/.env` files; never delete them.
 
-3. **Dependencies.** Run `bun install` at the repo root.
+5. **Detach from the template.** Show `git remote -v`, then run `git remote rm origin`. If there is no `origin`, say so and move on. Tell the user to add their own remote with `git remote add origin <url>` when they have the repo.
 
-4. **Running state (read-only).** Run `docker compose -f compose.dev.yml ps` and check whether ports `4321`, `3000`, `4320` or `5432` are already in use (`ss -ltnp`). If something is already running, report it and do **not** start another stack on top of it; skip to step 7.
-
-5. **Choose how to run.** If no mode was passed, ask the user with AskUserQuestion:
-   - **Docker dev stack (Recommended)** — `bun run dev`: hot reload, PostgreSQL, Loki, Tempo and the gateway included.
-   - **Native** — `bun run postgres:start`, `bun run loki:start`, `bun run tempo:start`, `bun run gateway` and `bun run dev:local`.
-   - **Nothing** — stop here and print the commands.
-
-6. **Start it.** Long-running commands (`bun run dev`, `bun run gateway`, `bun run dev:local`) go with `run_in_background`; the `*:start` ones are detached already.
-   - Wait for the stack to come up by watching the output (Monitor or the background task output), not by probing the app. The backend applies migrations and seeds the admin on its first boot: confirm it from its logs.
-   - Once the gateway has started, run `bun run dev:cert` and tell the user to import `caddy-local-root.crt` as a trusted certificate authority in the browser (Chrome: `chrome://certificate-manager`; Firefox: Settings → Privacy & Security → Certificates → Authorities → Import). This is needed only once per gateway volume.
-   - If a step fails (port in use, image build error, env validation error on boot), stop and report the exact error; don't try to work around it by stopping other processes.
-
-7. **Summary.** End with a short report:
-   - What was done (prerequisites, `.env` created or kept, install, what is running and as which background task).
-   - The app URL `https://localhost:4321` and the API docs at `https://localhost:4321/scalar` (admin session).
-   - The admin credentials if they were generated in this run.
-   - How to stop it: `bun run dev:down` for the Docker stack; for native, stopping the background tasks plus `bun run postgres:stop`, `loki:stop` and `tempo:stop`. Don't run them.
+6. **Summary.** End with a short report in Spanish:
+   - The name used (`display`, `slug`, `db`) and the files that changed.
+   - Whether `.env` was created (with the admin credentials) or kept.
+   - That `origin` was removed.
+   - That, when they want, they bring it up themselves with `bun run dev`, which starts the Docker Compose development stack (`compose.dev.yml`, project `<slug>-dev`: frontend and backend with hot reload, PostgreSQL, Loki, Tempo and the Caddy gateway) at `https://localhost:4321`. Mention `bun install` first if `node_modules` is missing, and `bun run dev:cert` once the gateway is up to export the local certificate authority for the browser. These are for the user to run.
+   - The changes are not committed.

@@ -202,9 +202,11 @@ bun install
 bun run setup:dev   # writes the root .env with real secrets and the admin seed
 ```
 
-In Claude Code, `/inicio` (`.claude/commands/inicio.md`) runs these steps,
-checks the prerequisites and can start the dev stack and export its
-certificate.
+In Claude Code, `/inicio` (`.claude/commands/inicio.md`) turns a fresh clone
+into a new project: it asks for the app name, renames the Docker Compose
+project, containers and database and the frontend branding, runs
+`scripts/setup-dev.sh` and removes the template's `origin` remote. It starts
+nothing: `bun run dev` brings up the Docker dev stack afterwards.
 
 ### Configuration
 
