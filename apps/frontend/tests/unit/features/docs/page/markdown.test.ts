@@ -69,6 +69,31 @@ describe("pageMarkdown", () => {
     expect(markdown).toContain("| dns-01 |")
   })
 
+  test("an entities block becomes its group label and a GFM table", () => {
+    const markdown = pageMarkdown({
+      title: "T",
+      description: "",
+      tree: root(
+        el("div", { className: ["doc-entities"] }, [
+          el("p", { className: ["doc-entities-group"] }, [text("network")]),
+          el("table", {}, [
+            el("thead", {}, [el("tr", {}, [el("th", {}, [text("name")])])]),
+            el("tbody", {}, [
+              el("tr", {}, [
+                el("td", {}, [
+                  el("a", { href: "/casa/network/dns" }, [text("AdGuard")]),
+                ]),
+              ]),
+            ]),
+          ]),
+        ])
+      ),
+    })
+    expect(markdown).toBe(
+      "# T\n\nnetwork\n\n| name                         |\n| ---------------------------- |\n| [AdGuard](/casa/network/dns) |\n"
+    )
+  })
+
   test("drops the notices of components the platform doesn't provide", () => {
     const markdown = pageMarkdown({
       title: "T",

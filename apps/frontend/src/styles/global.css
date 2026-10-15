@@ -1005,6 +1005,37 @@ html.theme-transitioning::view-transition-new(root) {
     color: var(--color-destructive);
   }
 
+  /* `<Entities>`: a catalog table, split into blocks with a micro-caps label
+     over each when it is grouped. */
+  .doc :where(.doc-entities) {
+    margin-block-start: var(--typeset-flow);
+  }
+
+  .doc :where(.doc-entities > .typeset-scroll) {
+    margin-block-start: 0;
+  }
+
+  .doc :where(.doc-entities-group) {
+    margin-block-start: 1.5em;
+    color: var(--color-muted-foreground);
+    font-size: var(--font-size-label);
+    font-weight: 500;
+    letter-spacing: var(--tracking-caps);
+    text-transform: uppercase;
+  }
+
+  .doc :where(.doc-entities-group:first-child) {
+    margin-block-start: 0;
+  }
+
+  .doc :where(.doc-entities-group + .typeset-scroll) {
+    margin-block-start: 0.5em;
+  }
+
+  .doc :where(.doc-entities-empty) {
+    color: var(--color-muted-foreground);
+  }
+
   .doc :where(div.doc-component-notice) {
     margin-block-start: var(--typeset-flow);
     border: 1px dashed var(--color-border);
