@@ -128,7 +128,7 @@ export function ContentContent() {
           <div className="@container">
             <ul
               aria-label="Repositorios de contenido"
-              className="grid gap-4 @3xl:grid-cols-2 @6xl:grid-cols-3"
+              className="grid gap-4 @3xl:grid-cols-2 @5xl:grid-cols-3"
             >
               {data.map((repository) => (
                 <li key={repository.id} className="flex min-w-0">
