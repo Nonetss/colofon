@@ -156,9 +156,9 @@
 
 /* Syntax highlighting — token colours for @tanstack/highlight, which marks
    tokens with `th-<kind>` classes and leaves every colour to the app. Shared
-   by the chat's fenced code blocks and JsonView. Its stock theme CSS is not
-   used: the typeset engine already styles `pre`, so only the tokens are
-   coloured here. Unlisted kinds (operators, punctuation) keep the text
+   by the chat's fenced code blocks, JsonView and the git file viewer. Its
+   stock theme CSS is not used: the typeset engine already styles `pre`, so
+   only the tokens are coloured here. Unlisted kinds (operators, punctuation) keep the text
    colour. */
 :root {
   --th-keyword: oklch(0.491 0.27 292.581);

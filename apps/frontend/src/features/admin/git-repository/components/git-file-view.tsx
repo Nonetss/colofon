@@ -1,4 +1,7 @@
+import { useMemo } from "react"
 import { Text, textVariants } from "@/components/shared/brand/typography"
+import { HighlightedTokens } from "@/components/shared/data-display/highlighted-tokens"
+import { fileTokens } from "@/features/admin/git-repository/model/file-highlight"
 import {
   formatBytes,
   lineCount,
@@ -15,7 +18,13 @@ function unshownReason(file: RepositoryFile): string {
 
 /** A file's text with line numbers, or why it isn't shown. */
 export function GitFileView({ file }: { file: RepositoryFile }) {
-  if (file.content === null) {
+  const { content, path } = file
+  const tokens = useMemo(() => {
+    if (content === null) return []
+    return fileTokens(content, path)
+  }, [content, path])
+
+  if (content === null) {
     return (
       <div className="rounded-md border px-4 py-6">
         <Text as="p" variant="compact" tone="muted">
@@ -25,7 +34,7 @@ export function GitFileView({ file }: { file: RepositoryFile }) {
     )
   }
 
-  const lines = lineCount(file.content)
+  const lines = lineCount(content)
   const linesLabel = lines === 1 ? "línea" : "líneas"
   const numbers = Array.from({ length: lines }, (_, index) => index + 1)
   const code = cn(
@@ -53,7 +62,9 @@ export function GitFileView({ file }: { file: RepositoryFile }) {
         >
           {numbers.join("\n")}
         </pre>
-        <pre className={cn(code, "px-4")}>{file.content}</pre>
+        <pre className={cn(code, "px-4")}>
+          <HighlightedTokens tokens={tokens} />
+        </pre>
       </div>
     </div>
   )
