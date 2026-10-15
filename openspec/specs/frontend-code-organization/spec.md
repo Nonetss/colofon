@@ -131,10 +131,10 @@ relative paths.
 #### Scenario: A route renders one slice of a multi-slice domain
 
 - **WHEN** an Astro route renders a page owned by one use-case slice of a domain
-  with several slices (such as `crons/overview` and `crons/detail`, or
+  with several slices (such as `admin/users` and `admin/content`, or
   `auth/sign-in` and `auth/sign-up`)
 - **THEN** it SHALL import the page from that slice's `index.ts` (for example
-  `@/features/crons/overview` or `@/features/auth/sign-in`), so the route does
+  `@/features/admin/users` or `@/features/auth/sign-in`), so the route does
   not bundle or hydrate the sibling slices
 
 #### Scenario: One feature needs another feature's type

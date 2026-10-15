@@ -26,8 +26,8 @@ A mutation SHALL invalidate every cached read that shows the entity it changed: 
 
 #### Scenario: A role change reaches the user lookups
 
-- **WHEN** an administrator changes a user's role and then opens a cron that runs as that user
-- **THEN** the cron detail SHALL show the new role without a page reload
+- **WHEN** an administrator changes a user's role and then opens a page that shows that user
+- **THEN** the page SHALL show the new role without a page reload
 
 #### Scenario: A new user is searchable at once
 
@@ -62,11 +62,11 @@ A read that fails with a client error (an HTTP status from 400 to 499 other than
 - **WHEN** a read fails with a 5xx status, a 429 or a network failure
 - **THEN** it SHALL be retried before the error state is shown
 
-### Requirement: Reads that wait on a value are skipped
+### Requirement: Reads wait for the value they need
 
 A read that cannot run until some value exists (a selected id, an open entity) SHALL be skipped while the value is missing. It SHALL NOT send a request, and SHALL NOT be keyed with a stand-in value (an all-zero id, an empty string) in its place.
 
-#### Scenario: No cron selected
+#### Scenario: No branch known yet
 
-- **WHEN** the cron detail renders without a job id
-- **THEN** no cron read SHALL be sent and no cache entry SHALL be keyed with a stand-in id
+- **WHEN** `/admin/git/<slug>` renders before the repository's branch is known
+- **THEN** no folder read SHALL be sent and no cache entry SHALL be keyed with a stand-in branch

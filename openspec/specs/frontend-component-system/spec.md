@@ -433,13 +433,12 @@ dialogs, sheets and popovers, and page-level padding.
 At least `SurfaceCardGrid`, `MetadataList`, `MetadataDefinitionList`, the
 `CollapsibleFilters` field grid, the `EntityList` row and metadata layout, the
 data table's switch between its table and compact layouts and the compact
-rows' field grid, the theme mode selector and the cron schedule builder SHALL
-follow this rule.
+rows' field grid and the theme mode selector SHALL follow this rule.
 
 #### Scenario: Sidebar open narrows a card grid
 
 - **WHEN** a section overview with `SurfaceCardGrid` is shown on a 1280 px wide
-  window with the section sidebar open, so the grid itself is about 800 px wide
+  window with the admin sidebar open, so the grid itself is about 800 px wide
 - **THEN** the grid SHALL lay out the columns that fit 800 px (two), not the
   three a 1280 px viewport breakpoint would give
 
@@ -453,7 +452,7 @@ follow this rule.
 #### Scenario: Chrome keeps viewport breakpoints
 
 - **WHEN** the viewport is narrower than the medium breakpoint
-- **THEN** the filter action bar, the navbar's collapsed menu and dialog widths
+- **THEN** the filter action bar, the navbar's search trigger and dialog widths
   SHALL still switch on the viewport width, independently of any container
 
 #### Scenario: Override through className
@@ -465,7 +464,7 @@ follow this rule.
 
 #### Scenario: A data table switches layout with its container
 
-- **WHEN** `/admin/users` is shown on a 1280 px wide window whose section
+- **WHEN** `/admin/users` is shown on a 1280 px wide window whose admin
   sidebar leaves the table's container narrower than the table layout needs
 - **THEN** the table SHALL render its compact layout, not the table layout a
   1280 px viewport breakpoint would give

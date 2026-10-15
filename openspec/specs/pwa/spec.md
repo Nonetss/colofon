@@ -3,7 +3,9 @@
 ## Purpose
 
 Makes the frontend an installable progressive web app through a web app manifest, head tags, service worker registration and a network-first service worker whose assets are reachable without a session.
+
 ## Requirements
+
 ### Requirement: Web app manifest
 
 The frontend SHALL ship `apps/frontend/public/manifest.webmanifest` declaring `name` and `short_name` "Stack", `description` "Stack", `start_url` `/`, `scope` `/`, `display` `standalone`, `background_color` and `theme_color` `#262624`, `lang` `es`, and these icons: `/pwa/icon-192.png` (192x192, PNG, purpose `any`), `/pwa/icon-512.png` (512x512, PNG, purpose `any`) and `/pwa/maskable-512.png` (512x512, PNG, purpose `maskable`). Every icon file the manifest references SHALL exist under `apps/frontend/public/pwa/` with the declared dimensions.
@@ -51,7 +53,7 @@ Both root layouts SHALL include `src/layouts/service-worker.astro`. In productio
 
 #### Scenario: Online navigation
 
-- **WHEN** the network is available and the user navigates to `/crons`
+- **WHEN** the network is available and the user navigates to `/me`
 - **THEN** the page SHALL come from the network and a copy SHALL be stored in `stack-shell-v1`
 
 #### Scenario: Offline navigation
@@ -77,4 +79,3 @@ The manifest, the service worker, the apple-touch icon and the `/pwa/*` icons SH
 
 - **WHEN** a browser without a session requests `/logo.svg`
 - **THEN** the middleware SHALL let it through as a public exact path and the SVG SHALL be returned
-
