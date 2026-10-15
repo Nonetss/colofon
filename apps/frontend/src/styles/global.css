@@ -1207,6 +1207,11 @@ html.theme-transitioning::view-transition-new(root) {
     color: var(--alert);
   }
 
+  /* The title opens the card: no flow margin above it. */
+  .doc :where(.doc-alert > :first-child) {
+    margin-block-start: 0;
+  }
+
   .doc :where(.doc-alert-warning, .doc-alert-important) {
     --alert: var(--color-primary);
     border-inline-start-color: var(--alert);
