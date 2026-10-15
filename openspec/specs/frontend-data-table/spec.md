@@ -8,7 +8,7 @@ Lets users read every resource list of the application as a table they can shape
 
 ### Requirement: Resource lists render as data tables
 
-The application's resource lists SHALL render as data tables: the API keys, users, organizations, teams, plugins and sessions pages under `/admin`, the members, pending invitations, teams and custom roles of the organization detail view, the team member-management view, the `/crons` job list and the run history of `/crons/{id}`. Each table SHALL keep the data, actions, links, filters, dialogs, permissions and live updates its list offered before, and its rows SHALL keep their muted and disabled treatments. A muted row (a paused or read-only job) SHALL show its text in the muted tone over the normal row background, never dimmed as a whole.
+The application's resource lists SHALL render as data tables: the API keys and users pages under `/admin`, the `/crons` job list and the run history of `/crons/{id}`. Each table SHALL keep the data, actions, links, filters, dialogs, permissions and live updates its list offered before, and its rows SHALL keep their muted and disabled treatments. A muted row (a paused or read-only job) SHALL show its text in the muted tone over the normal row background, never dimmed as a whole.
 
 A row whose list opened it (a detail link or a detail view) SHALL keep that open control on its identifying cell. A row with actions SHALL keep them in a trailing actions column whose menu is named after the row, with destructive actions marked as such.
 
@@ -73,7 +73,7 @@ A row's full-width content (an expanded detail row, a group heading row) SHALL s
 
 #### Scenario: An expanded row spans the visible columns
 
-- **WHEN** a column is hidden and the user expands a session or log row
+- **WHEN** a column is hidden and the user expands a row that has an expanded detail
 - **THEN** the expanded detail SHALL span the full width of the visible columns
 
 #### Scenario: A table without hidden columns has no menu
@@ -148,8 +148,8 @@ When a table's rows are all loaded at once, the sort SHALL be applied in the bro
 
 #### Scenario: A client-sorted table applies its filters first
 
-- **WHEN** the user filters `/admin/teams` by an organization and sorts by member count, descending
-- **THEN** the table SHALL list only that organization's teams, largest first
+- **WHEN** the user filters `/crons` by a tag and sorts by name, descending
+- **THEN** the table SHALL list only that tag's jobs, from Z to A
 
 #### Scenario: Rows without a value come last
 
@@ -158,8 +158,8 @@ When a table's rows are all loaded at once, the sort SHALL be applied in the bro
 
 #### Scenario: A server-sorted table restarts from the first page
 
-- **WHEN** `/admin/sessions` has loaded several pages and the user sorts by IP address
-- **THEN** the table SHALL request the first page ordered by IP address instead of reordering the loaded rows
+- **WHEN** `/admin/users` has loaded several pages and the user sorts by email
+- **THEN** the table SHALL request the first page ordered by email instead of reordering the loaded rows
 
 ### Requirement: The sort is kept with the list state and starts from today's order
 
@@ -167,7 +167,7 @@ A table rendered in a page (a list page, or the run history of a job's detail pa
 
 #### Scenario: Reloading keeps the sort
 
-- **WHEN** the user sorts `/admin/organizations` by name and reloads the page
+- **WHEN** the user sorts `/admin/api-keys` by name and reloads the page
 - **THEN** the table SHALL still be sorted by name
 
 #### Scenario: Default order is unchanged
@@ -177,66 +177,8 @@ A table rendered in a page (a list page, or the run history of a job's detail pa
 
 #### Scenario: A sheet does not write the URL
 
-- **WHEN** the user sorts the members of an organization in its detail view
+- **WHEN** the user sorts a table shown inside a sheet
 - **THEN** the page URL SHALL NOT change
-
-### Requirement: Column preferences are remembered per table in the browser
-
-The visibility, order and widths of a table's columns SHALL be saved in the browser's local storage under a key unique to that table kind, and SHALL be restored when the table is shown again, including after a reload or in another tab of the same browser. A table shown once per entity (the members of any organization) SHALL save one layout for the table kind, not one per entity. The columns menu SHALL offer a reset that restores every column's default visibility, order and width and clears the saved preferences.
-
-Saved preferences SHALL be read defensively: a column the saved preferences do not mention SHALL take its default visibility, width and position; a saved entry for a column that no longer exists SHALL be ignored; a saved order SHALL be completed with any missing columns; a width SHALL be clamped to the column's current limits; and unreadable or malformed saved data, or storage that is unavailable, SHALL fall back to the defaults without an error.
-
-#### Scenario: Preferences survive a reload
-
-- **WHEN** the user hides a column, widens another and moves a third, then reloads the page
-- **THEN** the table SHALL show the same visibility, widths and order
-
-#### Scenario: The layout follows the user to another organization
-
-- **WHEN** the user widens the email column of one organization's members and opens another organization's detail view
-- **THEN** that organization's members table SHALL show the same width
-
-#### Scenario: Resetting the columns
-
-- **WHEN** the user chooses to reset the columns from the columns menu
-- **THEN** every column SHALL return to its default visibility, position and width
-- **AND** the saved preferences for that table SHALL be cleared
-
-#### Scenario: A new column appears after a release
-
-- **WHEN** saved preferences exist and the table gains a column they do not mention
-- **THEN** the new column SHALL appear with its default visibility and width, at its default position relative to its neighbours
-
-#### Scenario: Corrupt saved preferences
-
-- **WHEN** the saved preferences for a table cannot be parsed
-- **THEN** the table SHALL render with its default column layout
-- **AND** SHALL NOT show an error
-
-#### Scenario: Storage is unavailable
-
-- **WHEN** local storage cannot be read or written (private mode, blocked site data)
-- **THEN** the column controls SHALL still work for the current visit
-
-### Requirement: Columns can start hidden
-
-A column SHALL be able to declare that it starts hidden. A hideable column declared hidden by default SHALL be hidden when the table has no saved preferences, SHALL be listed unchecked in the columns menu, and SHALL be hidden again after the user resets the columns. Saved preferences SHALL override the default for a column they mention. The session history's technical fields — the ones its rows kept behind "Ver información técnica": user agent, session id, user id, last update, expiry, active organization and active team — SHALL be columns hidden by default, and an expanded session row SHALL still show all of them.
-
-#### Scenario: Technical session fields start hidden
-
-- **WHEN** an administrator opens `/admin/sessions` with no saved preferences
-- **THEN** the table SHALL NOT show the user-agent column
-- **AND** the columns menu SHALL list it unchecked
-
-#### Scenario: The user shows a column hidden by default
-
-- **WHEN** the user checks a column that is hidden by default and reloads the page
-- **THEN** the table SHALL still show that column
-
-#### Scenario: Reset hides it again
-
-- **WHEN** the user resets the columns
-- **THEN** every column declared hidden by default SHALL be hidden again
 
 ### Requirement: Columns can be filtered by value from their header
 
@@ -283,12 +225,12 @@ When a table shows its rows under heading rows in a single body (the run history
 
 ### Requirement: A table without a compact layout keeps its controls at every width
 
-A table inside a sheet (the organization detail view's sections and the team member-management view) SHALL have no compact layout: its header sorting, resizing and reordering SHALL be available at every width, its columns SHALL NOT be hidden or folded into other cells by breakpoint, and when its columns do not fit the table SHALL scroll horizontally inside its own container.
+A table inside a sheet SHALL have no compact layout: its header sorting, resizing and reordering SHALL be available at every width, its columns SHALL NOT be hidden or folded into other cells by breakpoint, and when its columns do not fit the table SHALL scroll horizontally inside its own container.
 
 #### Scenario: A narrow sheet scrolls its table
 
-- **WHEN** the organization detail view is open on a phone-sized viewport
-- **THEN** the members table SHALL keep every column and scroll horizontally within its container
+- **WHEN** a sheet holding a table is open on a phone-sized viewport
+- **THEN** the table SHALL keep every column and scroll horizontally within its container
 
 ### Requirement: Columns the viewer cannot use are left out
 
@@ -307,7 +249,7 @@ A column whose content only exists for some viewers — row actions or controls 
 
 ### Requirement: Paginated tables filter and sort on the server
 
-A table whose rows come from a paginated server read (the user list, the session history and a job's run history) SHALL send its column filters and its sort to that read, load further pages as the user scrolls (no page buttons), restart from the first page when either changes, and keep both in the page URL. Its sortable columns SHALL be exactly those the read can order by.
+A table whose rows come from a paginated server read (the user list and a job's run history) SHALL send its column filters and its sort to that read, load further pages as the user scrolls (no page buttons), restart from the first page when either changes, and keep both in the page URL. Its sortable columns SHALL be exactly those the read can order by.
 
 #### Scenario: Sorting the run history by duration
 
@@ -332,3 +274,61 @@ A table's column header (titles, sort and filter controls) SHALL stay visible at
 
 - **WHEN** a user scrolls a job's run history
 - **THEN** the history's header SHALL stay at the top of its box and more runs SHALL load as the end is reached
+
+### Requirement: Column preferences are remembered per table kind in the browser
+
+The visibility, order and widths of a table's columns SHALL be saved in the browser's local storage under a key unique to that table kind, and SHALL be restored when the table is shown again, including after a reload or in another tab of the same browser. A table shown once per entity (the run history of any job) SHALL save one layout for the table kind, not one per entity. The columns menu SHALL offer a reset that restores every column's default visibility, order and width and clears the saved preferences.
+
+Saved preferences SHALL be read defensively: a column the saved preferences do not mention SHALL take its default visibility, width and position; a saved entry for a column that no longer exists SHALL be ignored; a saved order SHALL be completed with any missing columns; a width SHALL be clamped to the column's current limits; and unreadable or malformed saved data, or storage that is unavailable, SHALL fall back to the defaults without an error.
+
+#### Scenario: Preferences survive a reload
+
+- **WHEN** the user hides a column, widens another and moves a third, then reloads the page
+- **THEN** the table SHALL show the same visibility, widths and order
+
+#### Scenario: The layout follows the user to another job
+
+- **WHEN** the user widens a column of one job's run history and opens another job's `/crons/{id}` page
+- **THEN** that job's run history SHALL show the same width
+
+#### Scenario: Resetting the columns
+
+- **WHEN** the user chooses to reset the columns from the columns menu
+- **THEN** every column SHALL return to its default visibility, position and width
+- **AND** the saved preferences for that table SHALL be cleared
+
+#### Scenario: A new column appears after a release
+
+- **WHEN** saved preferences exist and the table gains a column they do not mention
+- **THEN** the new column SHALL appear with its default visibility and width, at its default position relative to its neighbours
+
+#### Scenario: Corrupt saved preferences
+
+- **WHEN** the saved preferences for a table cannot be parsed
+- **THEN** the table SHALL render with its default column layout
+- **AND** SHALL NOT show an error
+
+#### Scenario: Storage is unavailable
+
+- **WHEN** local storage cannot be read or written (private mode, blocked site data)
+- **THEN** the column controls SHALL still work for the current visit
+
+### Requirement: Columns can be declared hidden by default
+
+A column SHALL be able to declare that it starts hidden. A hideable column declared hidden by default SHALL be hidden when the table has no saved preferences, SHALL be listed unchecked in the columns menu, and SHALL be hidden again after the user resets the columns. Saved preferences SHALL override the default for a column they mention. A table whose rows expand to a detail SHALL still show every field hidden by default in that detail.
+
+#### Scenario: A column hidden by default starts hidden
+
+- **WHEN** a user opens a table that declares a column hidden by default, with no saved preferences
+- **THEN** the table SHALL NOT show that column
+- **AND** the columns menu SHALL list it unchecked
+
+#### Scenario: The user shows a column hidden by default
+
+- **WHEN** the user checks a column that is hidden by default and reloads the page
+- **THEN** the table SHALL still show that column
+
+#### Scenario: Reset hides it again
+
+- **WHEN** the user resets the columns
+- **THEN** every column declared hidden by default SHALL be hidden again

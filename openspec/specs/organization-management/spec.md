@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Let global administrators manage every organization in the system — organizations, members and their roles, invitations, teams and team members — through admin-only API procedures and the Organizations and Teams pages of the admin panel, independently of their own organization memberships.
+Let global administrators manage every organization in the system — organizations, members and their roles, invitations, teams and team members — through admin-only API procedures, independently of their own organization memberships.
 
 ## Requirements
 
@@ -104,30 +104,3 @@ The system SHALL allow an admin to list a team's members, add an existing user t
 
 - **WHEN** an admin removes a user from a team
 - **THEN** the user SHALL no longer appear in that team's member list
-
-### Requirement: Organizations admin page
-
-The admin panel SHALL provide an Organizations page listing every organization with member/team counts and creation date, supporting create, edit (name/slug), and delete, and a detail view for managing an organization's members (add via user search with a role picker, change role, remove) and pending invitations (invite by email and role, cancel).
-
-#### Scenario: Viewing organization detail
-
-- **WHEN** an admin opens an organization's detail view
-- **THEN** the panel SHALL show its members, pending invitations, and teams
-
-### Requirement: Teams admin page
-
-The admin panel SHALL provide a Teams page listing every team across all organizations with its organization name and member count, supporting create (choosing an organization), rename, delete, and a member-management view restricted to users who already belong to the team's organization.
-
-#### Scenario: Adding a team member
-
-- **WHEN** an admin opens a team's member-management view
-- **THEN** only users who are members of that team's organization and not already on the team SHALL be offered as candidates to add
-
-### Requirement: Role picker surfaces permissions
-
-The admin organization-management UI SHALL display, for each selectable role in the add-member and invite-member role pickers, a human-readable summary of that role's granted permissions, derived from the role's `ac` statements.
-
-#### Scenario: Selecting a role shows its permissions
-
-- **WHEN** an admin selects a role in the add-member or invite-member dialog's role picker
-- **THEN** the system SHALL display a summary of that role's permissions derived from its `ac` statements

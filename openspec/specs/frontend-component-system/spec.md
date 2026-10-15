@@ -400,8 +400,7 @@ rules and the documented exceptions for authentication and global chrome.
 
 #### Scenario: An admin resource page is migrated
 
-- **WHEN** users, organizations, teams, API keys, sessions, logs or plugins adopt
-  the shared resource APIs
+- **WHEN** users or API keys adopt the shared resource APIs
 - **THEN** the same authorized users SHALL retain the same available data and
   actions at the same route
 
