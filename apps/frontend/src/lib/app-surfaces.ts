@@ -15,9 +15,6 @@ export type SurfaceId =
   | "admin-content"
   | "admin-git"
   | "admin-git-repository"
-  | "config"
-  | "config-profile"
-  | "config-appearance"
   | "config-api-keys"
   | "profile"
   | "login"
@@ -149,31 +146,6 @@ const appSurfaceDefinitions: Partial<Record<SurfaceId, SurfaceDefinition>> = {
     description: "Detalle e historial de ejecuciones de la tarea.",
     icon: iconRef("navigation", "crons"),
     searchSource: "cron-jobs",
-  },
-  config: {
-    id: "config",
-    path: "/config",
-    title: "Configuración",
-    label: "Configuración",
-    description: "Gestiona la configuración de la aplicación.",
-    icon: iconRef("config", "config"),
-    nav: { primary: false },
-    children: {
-      "config-profile": {
-        path: "/config/profile",
-        title: "Configuración · Perfil",
-        label: "Perfil",
-        description: "Gestiona tu nombre, correo y contraseña.",
-        icon: iconRef("identity", "userCircle"),
-      },
-      "config-appearance": {
-        path: "/config/appearance",
-        title: "Configuración · Apariencia",
-        label: "Apariencia",
-        description: "Elige el tema claro, oscuro o del sistema.",
-        icon: iconRef("config", "appearance"),
-      },
-    },
   },
   admin: {
     id: "admin",

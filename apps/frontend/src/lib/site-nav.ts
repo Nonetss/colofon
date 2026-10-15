@@ -44,7 +44,7 @@ function navItemHrefs(item: Pick<SiteNavItem, "href" | "subItems">) {
 
 /**
  * The most specific href in `hrefs` that matches `pathname`. A child like
- * `/config/appearance` wins over its parent `/config`, so only one
+ * `/admin/users` wins over its parent `/admin`, so only one
  * row in a section is current at a time.
  */
 function getCurrentNavHref(pathname: string, hrefs: readonly string[]) {
@@ -121,7 +121,7 @@ export function getSiteNavItemByHref(href: string) {
 }
 
 /**
- * Section hub for a `WithSidebar` route (`/config/profile` → `/config`).
+ * Section hub for a `WithSidebar` route (`/admin/users` → `/admin`).
  * Longest prefix among nav items that declare `subItems`.
  */
 export function getSidebarSection(pathname: string): string | undefined {
@@ -219,7 +219,7 @@ export function getSearchableSurfaces(isAdmin: boolean): SiteNavSearchGroup[] {
 
 /**
  * The most specific searchable href that matches `pathname`, so the search
- * marks `/config/appearance` — not also `/config` — as current.
+ * marks `/admin/users` — not also `/admin` — as current.
  */
 export function getCurrentSearchHref(
   pathname: string,

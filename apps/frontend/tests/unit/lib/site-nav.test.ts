@@ -22,12 +22,12 @@ describe("current navigation item", () => {
   })
 
   test("a parent yields to its more specific child", () => {
-    const config = requireNavItem("/config")
-    expect(isNavItemCurrent(config, "/config/appearance")).toBe(false)
-    expect(
-      isNavSubItemCurrent("/config/appearance", "/config/appearance", config)
-    ).toBe(true)
-    expect(isNavItemCurrent(config, "/config")).toBe(true)
+    const admin = requireNavItem("/admin")
+    expect(isNavItemCurrent(admin, "/admin/users")).toBe(false)
+    expect(isNavSubItemCurrent("/admin/users", "/admin/users", admin)).toBe(
+      true
+    )
+    expect(isNavItemCurrent(admin, "/admin")).toBe(true)
   })
 })
 
@@ -42,7 +42,7 @@ describe("getSiteNavItems", () => {
 
 describe("getSidebarSection", () => {
   test("returns the section hub with sub-items for a nested route", () => {
-    expect(getSidebarSection("/config/profile")).toBe("/config")
+    expect(getSidebarSection("/admin/users")).toBe("/admin")
   })
 
   test("is undefined outside a section with sub-items", () => {
@@ -63,19 +63,15 @@ describe("surface search", () => {
 
   test("groups a section's children under it with their trail", () => {
     const groups = getSearchableSurfaces(true)
-    const config = groups.find((group) => group.label === "Configuración")
-    const appearance = config?.items.find(
-      (item) => item.href === "/config/appearance"
-    )
-    expect(appearance?.trail).toEqual(["Configuración"])
+    const admin = groups.find((group) => group.label === "Admin")
+    const users = admin?.items.find((item) => item.href === "/admin/users")
+    expect(users?.trail).toEqual(["Admin"])
     expect(groups[0]?.label).toBe("General")
   })
 
   test("marks the most specific href as current", () => {
     const groups = getSearchableSurfaces(true)
-    expect(getCurrentSearchHref("/config/appearance", groups)).toBe(
-      "/config/appearance"
-    )
+    expect(getCurrentSearchHref("/admin/users", groups)).toBe("/admin/users")
   })
 })
 

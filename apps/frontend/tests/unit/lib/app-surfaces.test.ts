@@ -17,9 +17,9 @@ describe("surface registry", () => {
   })
 
   test("children are flattened with their parent id", () => {
-    expect(getAppSurface("config-appearance").parentId).toBe("config")
-    expect(getChildSurfaces("config").map((surface) => surface.id)).toContain(
-      "config-appearance"
+    expect(getAppSurface("admin-users").parentId).toBe("admin")
+    expect(getChildSurfaces("admin").map((surface) => surface.id)).toContain(
+      "admin-users"
     )
   })
 
@@ -53,7 +53,7 @@ describe("isSurfacePathActive", () => {
   })
 
   test("doesn't match a sibling that only shares a prefix", () => {
-    expect(isSurfacePathActive("/config", "/configuration")).toBe(false)
+    expect(isSurfacePathActive("/admin", "/administration")).toBe(false)
   })
 
   test("the root only matches itself", () => {

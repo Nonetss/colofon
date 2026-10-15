@@ -89,7 +89,7 @@ export function NavbarMobileMenu({
             >
               {navLinks.map(({ href, label, icon: Icon, subItems }, i) => {
                 // The section row stays lit for any of its sub-routes
-                // (`/config/appearance` → Configuración), like the
+                // (`/admin/users` → Admin), like the
                 // desktop pill; only the sub-rows pick the exact match.
                 const isActive = isNavLinkActive(href, currentPath)
                 return (
