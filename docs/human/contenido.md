@@ -21,44 +21,48 @@ proveedores…) y sus campos los decide el contenido.
 
 ## De dónde lo lee el backend
 
-Se configura en el `.env` con **una** de estas dos variables:
+Los repositorios de contenido se guardan en la base de datos y se gestionan en
+**`/admin/content`** (“Contenido”, solo administradores). Puede haber varios.
+Cada uno tiene:
 
-| Variable | Qué es | Cuándo se ve un cambio |
-| --- | --- | --- |
-| `CONTENT_DIR` | Una carpeta. Relativa a la raíz del repo, empezando por `./` o `../` (por ejemplo `../documentacion`), o absoluta. | En la siguiente petición: se lee en cada una. |
-| `CONTENT_REPO` | La URL de un repositorio git, con `CONTENT_REF` (rama, tag o commit; por defecto `main`). Para uno privado por HTTPS, las credenciales van en la URL. | Al arrancar el backend y cada cinco minutos (job `Sincronizar contenido` en `/crons`). |
+| Campo | Qué es |
+| --- | --- |
+| Nombre | Cómo se muestra en el panel. |
+| Slug | Su nombre en la URL del catálogo (`documentacion`, `homelab`…). Minúsculas, números y guiones; no se puede cambiar después de crearlo. |
+| URL | La URL `https://` del repositorio git. Para uno privado, las credenciales van en la URL (`https://usuario:token@host/org/repo.git`). La plataforma nunca las muestra ni las escribe en el log. |
+| Ref | La rama, el tag o el commit que se descarga. Por defecto `main`. |
 
-Lo normal es `CONTENT_DIR` en desarrollo y `CONTENT_REPO` en producción.
-Poner las dos a la vez es un error y el backend no arranca. Sin ninguna, el
-backend funciona igual, pero sin contenido.
+El backend guarda un clon de cada repositorio en `.content/<id>/` (en Docker,
+en el volumen `content_data`). Lo sincroniza al arrancar, cada cinco minutos
+(job `Sincronizar contenido` en `/crons`), al crearlo o al cambiarle la URL o
+el ref, y cuando pulsas **Sincronizar** en su fila. Cada sincronización deja
+el clon exactamente como el remoto: los cambios hechos a mano en el clon se
+pierden. Si el remoto no responde, sigue con lo último que bajó, y la tabla
+muestra el error. Si un commit deja el contenido inválido, sigue sirviendo la
+última versión válida y apunta los errores en el log, con el fichero y el
+motivo. Al borrar un repositorio se borra también su clon.
 
-Con `CONTENT_REPO`, el backend guarda un clon en `.content/` (en Docker, en el
-volumen `content_data`) y en cada sincronización lo deja exactamente como el
-remoto: los cambios hechos a mano en el clon se pierden. Si el remoto no
-responde, sigue con lo último que bajó. Si un commit deja el contenido
-inválido, sigue sirviendo la última versión válida y apunta los errores en el
-log, con el fichero y el motivo.
-
-En Docker (los tres compose), la carpeta de `CONTENT_DIR` se monta en el
-contenedor del backend en solo lectura. No hace falta reiniciar nada al
-editar: el backend la lee en cada petición.
+No hay fuente de carpeta local: para ver un cambio hay que hacer push y
+sincronizar (o esperar a los cinco minutos).
 
 ## Autocompletado en el editor
 
-El backend sirve, sin login, un **catálogo de schemas**:
+El backend sirve, sin login, un **catálogo de schemas** por repositorio, con
+su slug al final:
 
 ```
-GET /api/v1/content/schemas
+GET /api/v1/content/schemas/<slug>
 ```
 
 La extensión YAML de Red Hat (`redhat.vscode-yaml`, en VS Code y Cursor) lo
 usa para autocompletar, validar y documentar cada YAML del contenido: los
 campos de cada tipo con su descripción, los valores de cada `enum`, los ids
-que acepta cada referencia y las rutas de las fichas. Basta **un ajuste**:
+que acepta cada referencia y las rutas de las fichas. Basta **un ajuste**; la
+URL exacta de cada repositorio se copia desde su fila en `/admin/content`:
 
 ```json
 {
-  "yaml.schemaStore.url": "https://<sitio>/api/v1/content/schemas"
+  "yaml.schemaStore.url": "https://<sitio>/api/v1/content/schemas/<slug>"
 }
 ```
 
@@ -72,7 +76,7 @@ Dónde va depende de qué tengas abierto:
   este ajuste del workspace, nunca del `.vscode/` de cada carpeta.
 
 Nadie genera ni commitea schemas: un tipo, una entidad o una ficha nuevos
-salen en el siguiente catálogo que pida el editor.
+salen en el catálogo después de la sincronización que los trae.
 
 ### Cosas a saber
 
@@ -88,7 +92,10 @@ salen en el siguiente catálogo que pida el editor.
   desarrollas la plataforma.
 - **Lo que expone el catálogo**: los nombres de tipos y campos, sus
   descripciones, los ids de las entidades y las rutas de las fichas. Nunca el
-  texto de las fichas ni los valores de las entidades (una IP, una URL…).
+  texto de las fichas, los valores de las entidades (una IP, una URL…) ni la
+  URL del repositorio.
+- **Un slug que no existe responde 404**; uno recién creado responde un
+  catálogo vacío hasta que termina su primera sincronización.
 - **El editor guarda los schemas mientras la sesión está abierta.** Si un id
   nuevo no aparece en las sugerencias, reabre el fichero o recarga la ventana
   (Developer: Reload Window).

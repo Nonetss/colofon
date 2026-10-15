@@ -32,7 +32,7 @@ Assert the **rules the code decides**, not the library underneath. For each hand
 - **Nothing is written on rejection.** After a rejected call, `expect(fakeDb.calls("insert")).toEqual([])` (or `update`/`delete`).
 - **What is written on success.** The `values(...)`/`set(...)` arguments read with `stepArgs(call, "values")`, the number and order of writes, and whether they ran inside a `transaction`.
 - **What is returned.** The mapping to the output shape (ISO dates, `null` vs omitted, nested trees, labels), and the paging contract (page size, `nextCursor` only when more rows exist, decoding back to the last row).
-- **Integration failures.** What a disabled integration answers (no `CONTENT_DIR` or `CONTENT_REPO` → an empty schema catalog, `configSchema` `NOT_FOUND`), and an unreachable remote → `BAD_GATEWAY` (`tests/v1/content/handler.test.ts`).
+- **Integration failures.** What a missing integration answers (an unknown content repository → `NOT_FOUND`, one not cloned yet → an empty schema catalog), and an unreachable remote → `BAD_GATEWAY` (`tests/v1/content/handler.test.ts`).
 - **Edge cases and idempotent paths.** Empty lists, already-deleted rows, pagination cursors; a conflict or a repeated delete returns the existing state without a second write.
 
 Access that the builder enforces (`protectedProcedure`, `adminProcedure`…) is already covered by `tests/index.test.ts`; test it per procedure only when the handler adds its own check.
@@ -100,7 +100,7 @@ describe("comment.update", () => {
 Variations:
 
 - **The rule lives in the builder or a middleware** (access, `permissionProcedure`): call the procedure through the router with `call(procedure, input, { context })` from `@orpc/server`, which runs the middleware chain, as `tests/index.test.ts` does.
-- **Env-gated code** (`CONTENT_DIR`, `CONTENT_REPO`): set `testEnv.CONTENT_DIR = …` from `#tests/fixtures/env` in `beforeEach` or in the test; leave it unset to test the disabled branch.
+- **Env-gated code** (`OIDC_*`, `ADMIN_*`): set `testEnv.OIDC_CLIENT_ID = …` from `#tests/fixtures/env` in `beforeEach` or in the test; leave it unset to test the disabled branch.
 - **`fetch`**: `const fetchSpy = spyOn(globalThis, "fetch")` at the top, `fetchSpy.mockReset()` plus `fetchSpy.mockResolvedValue(Response.json(...))` in `beforeEach`, `fetchSpy.mockRestore()` in `afterAll`.
 - **Better Auth**: `spyOn(auth.api, "<method>")` at the top of the file with the shapes in `tests/fixtures/auth.ts`, `mockReset()` in `afterEach`. See `tests/v1/api-key/`.
 - **Streaming handlers** (async generators, `cron.watchRuns`): collect with `for await` into an array; to assert a precondition error, `await expectErrorCode(generator.next(), "CODE")`. See `tests/v1/cron/watch-runs.test.ts`.

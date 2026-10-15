@@ -18,7 +18,7 @@ browser ──▶ apps/gateway :80 (Caddy, only published port) ──rest──
            │  packages/api     (contract + handlers)
            │  packages/auth    (Better Auth)
            │  packages/cron    (in-process scheduler)
-           │  packages/content (content source: CONTENT_DIR or a CONTENT_REPO clone)
+           │  packages/content (content contract; clones of the repositories in the DB)
            │  packages/db      (Drizzle) ──▶ PostgreSQL (`db` service in every compose file)
            │  packages/logger  (pino)    ──▶ stdout
 ```

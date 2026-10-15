@@ -37,7 +37,7 @@ It checks what the code reads and writes, not the SQL. Queue results in the orde
 - `tests/setup.ts` (preload) *overwrites* the server env with placeholders. `DATABASE_URL` points at a closed loopback port. The optional integration vars (`ADMIN_*`, `OIDC_*`, `CONTENT_*`, `SKIP_ENV_VALIDATION`) are set to `""`, not deleted: `@nonete/env/server` loads the root `.env` with dotenv, which refills unset vars but never overrides set ones, and `emptyStringAsUndefined` reads `""` as unset. When `packages/env/src/server.ts` gains a required var, add a placeholder there. Turbo passes the shell's env through to the task (`passThroughEnv` in `turbo.json`), which is why the preload overwrites instead of defaulting.
 - The same preload mocks two process-wide boundaries once, each backed by a fixture in `tests/fixtures/`:
   - `@nonete/db` → `fakeDb` (`db.ts`). Call `fakeDb.reset()` in `beforeEach`.
-  - `@nonete/env/server` → `testEnv` (`env.ts`), a mutable copy of the validated env. Integrations start off, so a root `.env` never re-enables one; a test turns one on (`testEnv.CONTENT_DIR = …`). Call `resetEnv()` in `beforeEach`.
+  - `@nonete/env/server` → `testEnv` (`env.ts`), a mutable copy of the validated env. Integrations start off, so a root `.env` never re-enables one; a test turns one on (`testEnv.OIDC_CLIENT_ID = …`). Call `resetEnv()` in `beforeEach`.
   The env fixture is imported dynamically in the preload, after the placeholders are set.
 - Layout mirrors `src/`:
   - `tests/index.test.ts` covers the procedure builders.
@@ -63,7 +63,7 @@ It checks what the code reads and writes, not the SQL. Queue results in the orde
 ### `packages/content` — `bun test`
 
 - No preload: nothing reads the env. Pure schema tests call `createMetaSchemas()`, `entitySchema()` and `schemaCatalog()` directly; `loadContent()` runs against a real temporary folder from `createContentDir(files)` (`tests/fixtures/content-dir.ts`, with `VALID_SITE` as the base site), removed in `afterEach`. `createRepoSync()` runs the real git CLI against a bare repository in a temp folder reached over `file://` (`tests/fixtures/git-remote.ts`), and an unreachable remote is `127.0.0.1:1`. The disk is local and private to the test and nothing touches the network, so this stays hermetic.
-- `packages/api`'s content handler tests (`tests/v1/content/`) build the handler over `createContentReader()` with a fake logger and temp content folders (`tests/fixtures/content.ts`); `resetEnv()` clears `CONTENT_DIR` and `CONTENT_REPO`.
+- `packages/api`'s content handler tests (`tests/v1/content/`) build the handler over `createContentReader()` with a fake logger, a temp clone root, an in-memory repository store (`memoryRepositoryStore()`) and, for syncs, a local bare repository over `file://` (`createContentRemote()`), all in `tests/fixtures/content.ts`. The management procedures (`repositories.test.ts`) run against the fake database with a fake reader that records syncs and removals.
 
 ### `apps/frontend` — `bun test`, `tests/unit/`
 
