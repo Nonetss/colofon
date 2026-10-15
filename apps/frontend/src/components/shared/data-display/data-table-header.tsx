@@ -317,7 +317,7 @@ export function DataTableHeader<TData extends RowData>({
                   )}
                 />
               ) : null}
-              <span className="flex min-w-0 items-center justify-between gap-1">
+              <span className="flex w-full min-w-0 items-center justify-between gap-1">
                 {sortable ? (
                   <button
                     type="button"

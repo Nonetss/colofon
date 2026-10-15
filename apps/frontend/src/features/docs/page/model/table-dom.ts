@@ -1,6 +1,11 @@
 import type { SortingState } from "@tanstack/react-table"
 import { cellMarkdown } from "@/features/docs/page/model/table-export"
 import type { QueryTerm } from "@/features/docs/page/model/table-query"
+import {
+  bindColumnResize,
+  MIN_COLUMN_WIDTH,
+  syncColumnWidths,
+} from "@/features/docs/page/model/table-resize"
 import { tableId } from "@/features/docs/page/model/table-url"
 import {
   type TableModel,
@@ -12,9 +17,10 @@ import { foldText } from "@/lib/fold-text"
 // The server's table, made ready for the island and kept in step with its
 // view. The rows stay the server's `tr` elements: the island only moves,
 // hides and marks them. Every header's content moves into a sort button,
-// and a full table gets a slot per header for its filter and containers
-// before and after it for the toolbar and the pager, all inside one box that
-// the full-screen dialog can take.
+// and a full table gets a slot per header for its filter, at the end of the
+// header. Every header gets a resize handle on its trailing edge. Containers
+// before and after the frame hold the toolbar and the pager, all inside one
+// box that the full-screen dialog can take.
 
 /** Frames of the page's tables, except key/value ones and done ones. */
 const FRAMES = ".doc .doc-table:not([data-table-kv], [data-table-ready])"
@@ -25,6 +31,7 @@ export interface DomTable {
   /** The text of the heading it is under, for file names. */
   heading: string | null
   frame: HTMLElement
+  table: HTMLTableElement
   tbody: HTMLTableSectionElement
   headers: HTMLTableCellElement[]
   sortButtons: HTMLButtonElement[]
@@ -92,6 +99,25 @@ function sortButton(header: HTMLTableCellElement): HTMLButtonElement {
   return button
 }
 
+function headerLabel(button: HTMLButtonElement): string {
+  const text = button.textContent
+  if (text === null) return "columna"
+  const trimmed = text.trim()
+  if (trimmed === "") return "columna"
+  return trimmed
+}
+
+/** Drag handle on the header's trailing edge. */
+function resizeHandle(label: string): HTMLElement {
+  const handle = element("div", "doc-table-resize")
+  handle.setAttribute("role", "separator")
+  handle.tabIndex = 0
+  handle.setAttribute("aria-orientation", "vertical")
+  handle.setAttribute("aria-label", `Redimensionar ${label}`)
+  handle.setAttribute("aria-valuemin", String(MIN_COLUMN_WIDTH))
+  return handle
+}
+
 function prepareHeader(
   header: HTMLTableCellElement,
   withFilter: boolean
@@ -99,10 +125,12 @@ function prepareHeader(
   const button = sortButton(header)
   const wrap = element("span", "doc-table-th")
   wrap.append(button)
-  header.replaceChildren(wrap)
-  if (!withFilter) return { button, slot: null }
-  const slot = element("span", "doc-table-filter")
-  wrap.append(slot)
+  let slot: HTMLElement | null = null
+  if (withFilter) {
+    slot = element("span", "doc-table-filter")
+    wrap.append(slot)
+  }
+  header.replaceChildren(wrap, resizeHandle(headerLabel(button)))
   return { button, slot }
 }
 
@@ -115,6 +143,8 @@ function prepare(
   const tbody = frame.querySelector("table > tbody")
   if (headerRow === null || !(tbody instanceof HTMLTableSectionElement))
     return null
+  const table = tbody.parentElement
+  if (!(table instanceof HTMLTableElement)) return null
   const rows = rowsOf(tbody)
   if (rows.length === 0) return null
   const headers = cellsOf(headerRow)
@@ -134,6 +164,7 @@ function prepare(
     sortButtons.push(button)
     if (slot !== null) filterSlots.push(slot)
   }
+  bindColumnResize(table, headers)
 
   const box = element("div", "doc-table-box")
   box.id = id
@@ -146,6 +177,7 @@ function prepare(
     id,
     heading,
     frame,
+    table,
     tbody,
     headers,
     sortButtons,
@@ -241,6 +273,7 @@ export function applyView(dom: DomTable, view: DomView): void {
     }
   }
   dom.frame.toggleAttribute("data-empty", view.filteredCount === 0)
+  syncColumnWidths(dom.table, dom.headers)
 }
 
 /**

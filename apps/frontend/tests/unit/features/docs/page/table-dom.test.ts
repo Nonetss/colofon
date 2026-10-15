@@ -55,7 +55,12 @@ describe("prepareTables", () => {
     const [full, small] = prepareTables(root)
     expect(full?.sortButtons[0]?.textContent).toBe("Name")
     expect(full?.filterSlots).toHaveLength(2)
+    expect(
+      full?.headers[0]?.querySelector(".doc-table-th")?.lastElementChild
+    ).toBe(full?.filterSlots[0])
+    expect(full?.headers[0]?.querySelector(".doc-table-resize")).not.toBeNull()
     expect(small?.filterSlots).toHaveLength(0)
+    expect(small?.headers[0]?.querySelector(".doc-table-resize")).not.toBeNull()
   })
 })
 
