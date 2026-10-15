@@ -2,6 +2,7 @@
 // session: the router swaps pages in, so everything listens on the document
 // and rereads the page on `astro:page-load`.
 
+import { setupDiagramHighlights } from "@/features/docs/page/model/diagram-highlights"
 import { withOrigin } from "@/features/docs/page/model/full-links"
 
 const COPIED_MS = 1500
@@ -147,7 +148,8 @@ function setupTableOfContents() {
 let started = false
 
 /**
- * Sets up the page's buttons and table of contents, once. The tables are
+ * Sets up the page's buttons, table of contents and diagram highlighting,
+ * once. The tables are
  * the `DocTables` island's (`components/doc-tables.tsx`).
  */
 export function onDocsPageLoad() {
@@ -157,4 +159,5 @@ export function onDocsPageLoad() {
   setupCopyMarkdown()
   setupWidthToggle()
   setupTableOfContents()
+  setupDiagramHighlights()
 }
