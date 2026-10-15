@@ -3,44 +3,30 @@ import { getIcon } from "@/lib/icon-registry"
 const FolderGit = getIcon("entities", "contentRepository")
 const Plus = getIcon("actions", "add")
 
-import { useMemo } from "react"
 import { Text } from "@/components/shared/brand/typography"
-import { DataTableView } from "@/components/shared/data-display/data-table-view"
-import { RowActions } from "@/components/shared/data-display/row-action-items"
 import { HeroCount } from "@/components/shared/layout/page-hero"
 import { ResourceOverview } from "@/components/shared/resource/resource-overview"
 import { Button } from "@/components/ui/button"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
+import { ContentRepositoryCard } from "@/features/admin/content/components/content-repository-card"
 import { ContentRepositoryFormDialog } from "@/features/admin/content/components/content-repository-form-dialog"
-import {
-  CONTENT_REPOSITORY_DEFAULT_SORT,
-  CONTENT_REPOSITORY_SORT_KEYS,
-  type ContentRepositoriesRowContext,
-  contentRepositoryActions,
-  contentRepositoryColumnLayout,
-  contentRepositoryColumns,
-  contentRepositorySortValues,
-} from "@/features/admin/content/definitions/content-repository-columns.definition"
+import type { ContentRepositoryCardContext } from "@/features/admin/content/definitions/content-repository-actions.definition"
 import {
   useContentRepositoriesList,
   useContentRepositoryDelete,
   useContentRepositorySync,
 } from "@/features/admin/content/hooks/use-content-repositories"
 import type { ContentRepository } from "@/features/admin/content/model/types"
-import { useColumnPreferences } from "@/hooks/use-column-preferences"
-import { columnPreferenceProps, useDataTable } from "@/hooks/use-data-table"
 import { useEditDialog } from "@/hooks/use-edit-dialog"
-import { useSortQueryParam } from "@/hooks/use-sort-query-param"
 import { useTargetConfirmDialog } from "@/hooks/use-target-confirm-dialog"
-import { sortRows } from "@/lib/sort-rows"
 
 type SlugMutation = {
   isPending: boolean
   variables?: { slug: string } | undefined
 }
 
-/** Slug of the repository a pending delete or sync acts on, or `null`. */
-function busySlugOf(...mutations: SlugMutation[]): string | null {
+/** Slug of the repository a pending mutation acts on, or `null`. */
+function pendingSlugOf(...mutations: SlugMutation[]): string | null {
   for (const mutation of mutations) {
     if (mutation.isPending && mutation.variables !== undefined) {
       return mutation.variables.slug
@@ -69,35 +55,15 @@ export function ContentContent() {
       deleteRepository.mutateAsync({ slug: repository.slug }),
   })
 
-  const busySlug = busySlugOf(deleteRepository, syncRepository)
+  const syncingSlug = pendingSlugOf(syncRepository)
+  const busySlug = pendingSlugOf(deleteRepository, syncRepository)
   const countLabel = repositories.length === 1 ? "repositorio" : "repositorios"
-  const rowContext: ContentRepositoriesRowContext = {
-    busySlug,
+  const cardContext: ContentRepositoryCardContext = {
     onEdit: editDialog.openEdit,
-    onSync: (repository) => syncRepository.mutate({ slug: repository.slug }),
     onDelete: deleteDialog.open,
   }
-
-  const preferences = useColumnPreferences(
-    "admin-content",
-    contentRepositoryColumnLayout
-  )
-  const [sorting, setSorting] = useSortQueryParam(
-    CONTENT_REPOSITORY_SORT_KEYS,
-    CONTENT_REPOSITORY_DEFAULT_SORT
-  )
-  const rows = useMemo(
-    () => sortRows(repositories, sorting, contentRepositorySortValues),
-    [repositories, sorting]
-  )
-  const table = useDataTable({
-    data: rows,
-    columns: contentRepositoryColumns,
-    getRowId: (repository) => repository.id,
-    sorting,
-    onSortingChange: setSorting,
-    ...columnPreferenceProps(preferences),
-  })
+  const sync = (repository: ContentRepository) =>
+    syncRepository.mutate({ slug: repository.slug })
 
   return (
     <>
@@ -149,25 +115,25 @@ export function ContentContent() {
           ),
         }}
       >
-        {() => (
-          <DataTableView
-            table={table}
-            label="Repositorios de contenido"
-            idPrefix="admin-content"
-            onResetColumns={preferences.reset}
-            rowState={(repository) => ({
-              disabled: busySlug === repository.slug,
-            })}
-            renderControl={(repository) => (
-              <RowActions
-                actions={contentRepositoryActions}
-                item={repository}
-                context={rowContext}
-                accessibleLabel={repository.name}
-                disabled={busySlug === repository.slug}
-              />
-            )}
-          />
+        {(data) => (
+          <div className="@container">
+            <ul
+              aria-label="Repositorios de contenido"
+              className="grid gap-4 @3xl:grid-cols-2"
+            >
+              {data.map((repository) => (
+                <li key={repository.id} className="flex min-w-0">
+                  <ContentRepositoryCard
+                    repository={repository}
+                    context={cardContext}
+                    onSync={sync}
+                    syncing={syncingSlug === repository.slug}
+                    busy={busySlug === repository.slug}
+                  />
+                </li>
+              ))}
+            </ul>
+          </div>
         )}
       </ResourceOverview>
 
