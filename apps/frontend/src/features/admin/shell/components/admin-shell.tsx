@@ -31,8 +31,11 @@ export function AdminShell({
           their own boxes, so the content keeps clear of the phone's fixed
           "Filtros" bar (`--list-action-bar-offset`, 0 without one) rather
           than running under it: the page's own bottom padding (1.5rem)
-          plus this leaves 0.75rem above the bar. */}
-      <SidebarInset className="h-dvh overflow-clip">
+          plus this leaves 0.75rem above the bar. `min-w-0` because a
+          clipped box isn't a scroll container: without it the flex row
+          sizes the inset to its widest content (a long code line) and
+          pushes the page past the viewport. */}
+      <SidebarInset className="h-dvh min-w-0 overflow-clip">
         <header className="flex h-14 shrink-0 items-center gap-2 border-border/40 border-b px-4">
           <SidebarTrigger />
         </header>
