@@ -25,7 +25,7 @@ const tool = textVariants({ role: "compact", tone: "muted" })
 const toolButton =
   "group/tool inline-flex h-8 w-full items-center gap-2 rounded-md border border-input bg-background px-2.5 outline-none transition-colors hover:border-foreground/15 hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50"
 const link =
-  "-ml-px block border-transparent border-l-2 py-1 pr-2 text-muted-foreground transition-colors hover:text-foreground data-current:border-primary data-current:font-medium data-current:text-primary"
+  "-ml-px block rounded-r-md border-transparent border-l-2 py-1 pr-2 text-muted-foreground transition-colors hover:bg-muted/40 hover:text-foreground data-current:border-primary data-current:bg-primary/10 data-current:font-medium data-current:text-primary"
 ---
 
 <aside
@@ -78,7 +78,10 @@ const link =
             <a
               href={`#${heading.id}`}
               data-toc={heading.id}
-              class:list={[link, heading.depth === 3 ? "pl-6" : "pl-3"]}
+              class:list={[
+                link,
+                heading.depth === 3 ? "pl-6 text-meta-sm" : "pl-3",
+              ]}
             >
               {heading.text}
             </a>

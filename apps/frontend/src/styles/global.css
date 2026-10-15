@@ -834,20 +834,18 @@ html.theme-transitioning::view-transition-new(root) {
 }
 
 /* The documentation reader's page body (`features/docs/page`). It is
-   `.typeset.typeset-docs` for the prose itself; these rules only style what
-   the platform adds around the content's Markdown: code frames with their
-   copy button, table frames, heading anchors, `[!KIND]` alerts, notices for
-   components the platform doesn't provide and broken links or images.
-   Monochrome like the rest of the product: the accent marks a warning, the
-   destructive tone a caution. */
+   `.typeset.typeset-docs` for the prose itself; these rules dress it like
+   the reference site (`doc-sjd`): brand links, tinted bold, the heading
+   scale, code and table cards, and coloured callouts. Selectors start at
+   `.typeset.doc` so they beat the engine's `.typeset *` rules. */
 @layer components {
-  .doc :where([id]) {
+  .typeset.doc :where([id]) {
     scroll-margin-block-start: calc(var(--navbar-height) + 1.5rem);
   }
 
   /* Body a step below the white of headings and bold in dark mode, so those
      stand out by more than their weight. */
-  .dark .doc {
+  .dark .typeset.doc {
     color: color-mix(
       in oklch,
       var(--color-foreground) 92%,
@@ -855,29 +853,40 @@ html.theme-transitioning::view-transition-new(root) {
     );
   }
 
-  /* A rule over every section but the first. */
-  .doc :where(h2) {
+  /* Headings at the reference site's scale: darker than the body, with a
+     rule over every section but the first. */
+  .typeset.doc :where(h1, h2, h3, h4) {
+    color: var(--color-card-foreground);
+    font-weight: 600;
+    text-wrap: balance;
+  }
+
+  .typeset.doc :where(h2) {
     border-block-start: 1px solid var(--color-border);
     padding-block-start: 1.25rem;
+    font-size: 1.5em;
+    line-height: 1.333;
     letter-spacing: -0.01em;
   }
 
-  .doc > :where(h2):first-child {
+  .typeset.doc > :where(h2):first-child {
     border-block-start: 0;
     padding-block-start: 0;
   }
 
-  .doc :where(h3) {
+  .typeset.doc :where(h3) {
+    font-size: 1.25em;
+    line-height: 1.4;
     letter-spacing: -0.01em;
   }
 
-  .doc :where(p, li) {
+  .typeset.doc :where(p, li) {
     text-wrap: pretty;
   }
 
   /* Bold sits on a soft tint of the accent, so it shows at a glance without
      shouting or looking like a link. */
-  .doc :where(strong, b) {
+  .typeset.doc :where(strong, b) {
     font-weight: 700;
     color: var(--color-foreground);
     background-color: color-mix(
@@ -890,14 +899,32 @@ html.theme-transitioning::view-transition-new(root) {
     box-decoration-break: clone;
   }
 
-  .doc :where(:is(a, h1, h2, h3, h4, .doc-alert) :is(strong, b), strong a) {
+  .typeset.doc
+    :where(:is(a, h1, h2, h3, h4, .doc-alert) :is(strong, b), strong a) {
     background-color: transparent;
     padding-inline: 0;
   }
 
+  /* Inline code as a small bordered chip, like the reference site. */
+  .typeset.doc :where(:not(pre) > code) {
+    border: 1px solid
+      color-mix(in oklch, var(--color-foreground) 14%, transparent);
+    border-radius: var(--radius-sm);
+    background-color: var(--color-muted);
+    padding: 0.1rem 0.35rem;
+    color: var(--color-card-foreground);
+    font-weight: 400;
+  }
+
+  .typeset.doc :where(kbd) {
+    font-family: var(--font-mono);
+    font-size: 0.8em;
+    font-weight: 400;
+  }
+
   /* Links in the accent toned towards the text, with a thick underline that
      moves away on hover (no weight change, so nothing reflows). */
-  .doc :where(a) {
+  .typeset.doc :where(a) {
     color: color-mix(
       in oklch,
       var(--color-primary) 78%,
@@ -916,19 +943,19 @@ html.theme-transitioning::view-transition-new(root) {
       text-underline-offset 0.15s ease;
   }
 
-  .doc :where(a):hover {
+  .typeset.doc :where(a):hover {
     color: var(--color-primary);
     font-weight: 500;
     text-decoration-color: var(--color-primary);
     text-underline-offset: 0.35em;
   }
 
-  .doc :where(:is(h1, h2, h3, h4) a, a.doc-anchor) {
+  .typeset.doc :where(:is(h1, h2, h3, h4) a, a.doc-anchor) {
     color: inherit;
     text-decoration: none;
   }
 
-  .doc :where(.doc-anchor) {
+  .typeset.doc :where(.doc-anchor) {
     margin-inline-start: 0.4em;
     color: var(--color-muted-foreground);
     font-weight: 400;
@@ -937,12 +964,12 @@ html.theme-transitioning::view-transition-new(root) {
     transition: opacity 0.15s ease;
   }
 
-  .doc :where(h2, h3, h4):hover :where(.doc-anchor),
-  .doc :where(.doc-anchor):focus-visible {
+  .typeset.doc :where(h2, h3, h4):hover :where(.doc-anchor),
+  .typeset.doc :where(.doc-anchor):focus-visible {
     opacity: 1;
   }
 
-  .doc :where(.doc-code) {
+  .typeset.doc :where(.doc-code) {
     margin-block-start: var(--typeset-flow);
     overflow: hidden;
     border: 1px solid var(--color-border);
@@ -950,12 +977,12 @@ html.theme-transitioning::view-transition-new(root) {
     background-color: var(--color-muted);
   }
 
-  .doc :where(.doc-code > pre) {
+  .typeset.doc :where(.doc-code > pre) {
     margin-block-start: 0;
     border-radius: 0;
   }
 
-  .doc :where(.doc-code-bar) {
+  .typeset.doc :where(.doc-code-bar) {
     display: flex;
     align-items: center;
     gap: 0.75rem;
@@ -968,7 +995,7 @@ html.theme-transitioning::view-transition-new(root) {
     text-transform: uppercase;
   }
 
-  .doc :where(.doc-code-copy) {
+  .typeset.doc :where(.doc-code-copy) {
     margin-inline-start: auto;
     border-radius: calc(var(--radius) * 0.75);
     padding: 0.1rem 0.4rem;
@@ -976,60 +1003,22 @@ html.theme-transitioning::view-transition-new(root) {
     transition: color 0.15s ease;
   }
 
-  .doc :where(.doc-code-copy):hover,
-  .doc :where(.doc-code-copy):focus-visible {
+  .typeset.doc :where(.doc-code-copy):hover,
+  .typeset.doc :where(.doc-code-copy):focus-visible {
     color: var(--color-foreground);
-  }
-
-  .doc :where(.doc-alert) {
-    margin-block-start: var(--typeset-flow);
-    border-inline-start: 2px solid var(--color-border);
-    border-radius: 0 var(--radius) var(--radius) 0;
-    background-color: color-mix(in oklch, var(--color-muted) 60%, transparent);
-    padding: 0.75em 1em;
-  }
-
-  .doc :where(.doc-alert > * + *) {
-    margin-block-start: 0.5em;
-  }
-
-  .doc :where(.doc-alert-title) {
-    color: var(--color-muted-foreground);
-    font-size: var(--font-size-label);
-    font-weight: 500;
-    letter-spacing: var(--tracking-caps);
-    text-transform: uppercase;
-  }
-
-  .doc :where(.doc-alert-warning, .doc-alert-important) {
-    border-inline-start-color: var(--color-primary);
-  }
-
-  .doc
-    :where(.doc-alert-warning, .doc-alert-important)
-    :where(.doc-alert-title) {
-    color: var(--color-primary);
-  }
-
-  .doc :where(.doc-alert-caution) {
-    border-inline-start-color: var(--color-destructive);
-  }
-
-  .doc :where(.doc-alert-caution) :where(.doc-alert-title) {
-    color: var(--color-destructive);
   }
 
   /* `<Entities>`: a catalog table, split into blocks with a micro-caps label
      over each when it is grouped. */
-  .doc :where(.doc-entities) {
+  .typeset.doc :where(.doc-entities) {
     margin-block-start: var(--typeset-flow);
   }
 
-  .doc :where(.doc-entities > .typeset-scroll) {
+  .typeset.doc :where(.doc-entities > .typeset-scroll) {
     margin-block-start: 0;
   }
 
-  .doc :where(.doc-entities-group) {
+  .typeset.doc :where(.doc-entities-group) {
     margin-block-start: 1.5em;
     color: var(--color-muted-foreground);
     font-size: var(--font-size-label);
@@ -1038,15 +1027,15 @@ html.theme-transitioning::view-transition-new(root) {
     text-transform: uppercase;
   }
 
-  .doc :where(.doc-entities-group:first-child) {
+  .typeset.doc :where(.doc-entities-group:first-child) {
     margin-block-start: 0;
   }
 
-  .doc :where(.doc-entities-group + .typeset-scroll) {
+  .typeset.doc :where(.doc-entities-group + .typeset-scroll) {
     margin-block-start: 0.5em;
   }
 
-  .doc :where(.doc-entities-empty) {
+  .typeset.doc :where(.doc-entities-empty) {
     color: var(--color-muted-foreground);
   }
 
@@ -1057,7 +1046,7 @@ html.theme-transitioning::view-transition-new(root) {
      `diagram-layout.ts`, which sizes the boxes. Like the reference site's
      diagrams it fills the column's width, and below 640px it keeps 640px
      and scrolls sideways instead. */
-  :where(.doc figure.doc-diagram, .doc-lightbox-drawing) {
+  :where(.typeset.doc figure.doc-diagram, .doc-lightbox-drawing) {
     --d-paper: var(--color-card);
     --d-ink: var(--color-card-foreground);
     --d-muted: var(--color-muted-foreground);
@@ -1089,7 +1078,7 @@ html.theme-transitioning::view-transition-new(root) {
     );
   }
 
-  .doc :where(figure.doc-diagram) {
+  .typeset.doc :where(figure.doc-diagram) {
     position: relative;
     margin-block-start: var(--typeset-flow);
     border: 1px solid var(--color-border);
@@ -1098,19 +1087,19 @@ html.theme-transitioning::view-transition-new(root) {
     padding: 0.5rem;
   }
 
-  .doc :where(figure.doc-diagram > figcaption) {
+  .typeset.doc :where(figure.doc-diagram > figcaption) {
     color: var(--color-muted-foreground);
   }
 
-  .doc :where(figure.doc-diagram > ul, .doc-diagram-text > ul) {
+  .typeset.doc :where(figure.doc-diagram > ul, .doc-diagram-text > ul) {
     margin-block-start: 0.5em;
   }
 
-  .doc :where(.doc-diagram-canvas) {
+  .typeset.doc :where(.doc-diagram-canvas) {
     overflow-x: auto;
   }
 
-  .doc :where(.doc-diagram-svg) {
+  .typeset.doc :where(.doc-diagram-svg) {
     display: block;
     width: 100%;
     height: auto;
@@ -1118,64 +1107,68 @@ html.theme-transitioning::view-transition-new(root) {
   }
 
   @media (width < 640px) {
-    .doc :where(.doc-diagram-svg) {
+    .typeset.doc :where(.doc-diagram-svg) {
       min-width: 640px;
     }
   }
 
-  .doc :where(.doc-diagram-zone-box) {
+  /* The lightbox copies the SVG outside the page, so the same paint has to
+     match there too (`.doc-lightbox-drawing`). */
+  :is(.typeset.doc, .doc-lightbox-drawing) :where(.doc-diagram-zone-box) {
     fill: none;
     stroke: var(--d-rule);
     stroke-dasharray: 4 4;
   }
 
-  .doc :where(.doc-diagram-zone-title) {
+  :is(.typeset.doc, .doc-lightbox-drawing) :where(.doc-diagram-zone-title) {
     fill: var(--d-muted);
     font: 8px var(--font-mono);
     letter-spacing: 0.14em;
     text-transform: uppercase;
   }
 
-  .doc :where(.doc-diagram-node-box, .doc-diagram-node-rim) {
+  :is(.typeset.doc, .doc-lightbox-drawing)
+    :where(.doc-diagram-node-box, .doc-diagram-node-rim) {
     fill: var(--d-surface);
     stroke: var(--d-ink);
     stroke-width: 1;
   }
 
-  .doc :where(.doc-diagram-node-rim) {
+  :is(.typeset.doc, .doc-lightbox-drawing) :where(.doc-diagram-node-rim) {
     fill: none;
   }
 
-  .doc
+  :is(.typeset.doc, .doc-lightbox-drawing)
     :where([data-kind="entrada"])
     :where(.doc-diagram-node-box, .doc-diagram-node-rim) {
     fill: var(--d-input);
     stroke: var(--d-soft);
   }
 
-  .doc
+  :is(.typeset.doc, .doc-lightbox-drawing)
     :where([data-kind="almacen"])
     :where(.doc-diagram-node-box, .doc-diagram-node-rim) {
     fill: var(--d-store);
     stroke: var(--d-muted);
   }
 
-  .doc :where(a:has(> .doc-diagram-node)) {
+  :is(.typeset.doc, .doc-lightbox-drawing) :where(a:has(> .doc-diagram-node)) {
     text-decoration: none;
   }
 
-  .doc
+  :is(.typeset.doc, .doc-lightbox-drawing)
     :where(a > .doc-diagram-node:hover)
     :where(.doc-diagram-node-box, .doc-diagram-node-rim) {
     stroke: var(--d-accent);
     stroke-width: 2;
   }
 
-  .doc :where(a > .doc-diagram-node:hover .doc-diagram-name) {
+  :is(.typeset.doc, .doc-lightbox-drawing)
+    :where(a > .doc-diagram-node:hover .doc-diagram-name) {
     fill: var(--d-accent);
   }
 
-  .doc :where(.doc-diagram-icon) {
+  :is(.typeset.doc, .doc-lightbox-drawing) :where(.doc-diagram-icon) {
     fill: none;
     stroke: var(--d-accent);
     stroke-width: 2;
@@ -1183,56 +1176,56 @@ html.theme-transitioning::view-transition-new(root) {
     stroke-linejoin: round;
   }
 
-  .doc :where(.doc-diagram-name) {
+  :is(.typeset.doc, .doc-lightbox-drawing) :where(.doc-diagram-name) {
     fill: var(--d-ink);
     font: 600 12px var(--font-sans);
   }
 
-  .doc :where(.doc-diagram-sub) {
+  :is(.typeset.doc, .doc-lightbox-drawing) :where(.doc-diagram-sub) {
     fill: var(--d-muted);
     font: 9px var(--font-mono);
   }
 
-  .doc :where(.doc-diagram-line) {
+  :is(.typeset.doc, .doc-lightbox-drawing) :where(.doc-diagram-line) {
     fill: none;
     stroke: var(--d-muted);
     stroke-width: 1.2;
   }
 
-  .doc :where(.doc-diagram-arrow) {
+  :is(.typeset.doc, .doc-lightbox-drawing) :where(.doc-diagram-arrow) {
     fill: var(--d-muted);
   }
 
-  .doc :where(.doc-diagram-label-box) {
+  :is(.typeset.doc, .doc-lightbox-drawing) :where(.doc-diagram-label-box) {
     fill: var(--d-paper);
   }
 
-  .doc :where(.doc-diagram-label) {
+  :is(.typeset.doc, .doc-lightbox-drawing) :where(.doc-diagram-label) {
     fill: var(--d-muted);
     font: 8px var(--font-mono);
     letter-spacing: 0.06em;
   }
 
-  .doc :where(.doc-diagram-rule) {
+  :is(.typeset.doc, .doc-lightbox-drawing) :where(.doc-diagram-rule) {
     stroke: var(--d-rule);
     stroke-width: 0.8;
   }
 
-  .doc :where(.doc-diagram-legend) {
+  :is(.typeset.doc, .doc-lightbox-drawing) :where(.doc-diagram-legend) {
     fill: var(--d-muted);
     font: 8px var(--font-mono);
     letter-spacing: 0.14em;
     text-transform: uppercase;
   }
 
-  .doc :where(.doc-diagram-legend-item) {
+  :is(.typeset.doc, .doc-lightbox-drawing) :where(.doc-diagram-legend-item) {
     fill: var(--d-ink);
     font: 11px var(--font-sans);
   }
 
   /* A drawn diagram shows only its drawing: its caption and its text
      version stay for screen readers and the page's Markdown, off screen. */
-  .doc
+  .typeset.doc
   :where(
     figure.doc-diagram[data-drawn] > figcaption,
     figure.doc-diagram[data-drawn] > .doc-diagram-text
@@ -1245,59 +1238,58 @@ html.theme-transitioning::view-transition-new(root) {
     white-space: nowrap;
   }
 
-  .doc :where(.doc-entity-source) {
+  .typeset.doc :where(.doc-entity-source) {
     color: var(--color-muted-foreground);
     font-size: 0.8125em;
   }
 
-  .doc :where(div.doc-component-notice) {
+  .typeset.doc :where(div.doc-component-notice) {
     margin-block-start: var(--typeset-flow);
     border: 1px dashed var(--color-border);
     border-radius: var(--radius);
     padding: 0.75em 1em;
   }
 
-  .doc :where(.doc-component-notice) {
+  .typeset.doc :where(.doc-component-notice) {
     color: var(--color-muted-foreground);
     font-family: var(--font-mono);
     font-size: 0.8125em;
   }
 
-  .doc :where(.doc-broken-link) {
+  .typeset.doc :where(.doc-broken-link) {
     text-decoration: underline dotted var(--color-destructive);
     text-underline-offset: 4px;
   }
 
-  .doc :where(.doc-broken-image) {
+  .typeset.doc :where(.doc-broken-image) {
     color: var(--color-muted-foreground);
     font-style: italic;
   }
 }
 
-/* The reader's frames, dressed as the earlier documentation site did: code
-   and tables in soft cards, key/value tables as fact rows, zoomable images,
-   and the repeated sections of a page (`.doc-section`, split apart by
-   `features/docs/page/model/render.ts`). Monochrome but for the accent of
-   "¿Dónde busco…?" (the way in) and the destructive tone of "Trampas y
-   decisiones" (a warning). */
+/* The reader's frames, dressed as the reference site does: code and tables
+   in soft cards, key/value tables as fact rows, zoomable images, callouts
+   in their own colour, and the repeated sections of a page (`.doc-section`,
+   split apart by `features/docs/page/model/render.ts`). "¿Dónde busco…?"
+   takes the accent; "Trampas y decisiones" takes the warning red. */
 @layer components {
-  .doc :where(.doc-code) {
+  .typeset.doc :where(.doc-code) {
     border-radius: var(--radius-xl);
     background-color: var(--color-card);
   }
 
-  .doc :where(.doc-code > pre) {
+  .typeset.doc :where(.doc-code > pre) {
     background-color: transparent;
     font-size: 0.8125rem;
   }
 
-  .doc :where(.doc-code-bar) {
+  .typeset.doc :where(.doc-code-bar) {
     padding: 0.375rem 0.5rem 0.375rem 1rem;
     letter-spacing: 0;
     text-transform: lowercase;
   }
 
-  .doc :where(.doc-code-copy) {
+  .typeset.doc :where(.doc-code-copy) {
     border-radius: var(--radius-md);
     padding: 0.125rem 0.5rem;
     font-family: var(--font-sans);
@@ -1308,13 +1300,13 @@ html.theme-transitioning::view-transition-new(root) {
       background-color 0.15s ease;
   }
 
-  .doc :where(.doc-code-copy):hover,
-  .doc :where(.doc-code-copy):focus-visible {
+  .typeset.doc :where(.doc-code-copy):hover,
+  .typeset.doc :where(.doc-code-copy):focus-visible {
     background-color: var(--color-accent);
   }
 
   /* Tables sit in a soft card and scroll sideways inside it. */
-  .doc :where(.doc-table) {
+  .typeset.doc :where(.doc-table) {
     border: 1px solid var(--color-border);
     border-radius: var(--radius-xl);
     background-color: color-mix(in oklch, var(--color-card) 40%, transparent);
@@ -1325,18 +1317,18 @@ html.theme-transitioning::view-transition-new(root) {
      sideways. A word longer than its column breaks (`break-word` keeps
      short words whole when the columns share the width); the frame only
      scrolls when the columns' shortest widths don't fit. */
-  .doc :where(.doc-table) table {
+  .typeset.doc :where(.doc-table) table {
     width: 100%;
     min-width: 100%;
     border-block-end: 0;
     font-size: 0.8125rem;
   }
 
-  .doc :where(.doc-table tbody td) {
+  .typeset.doc :where(.doc-table tbody td) {
     overflow-wrap: break-word;
   }
 
-  .doc :where(.doc-table thead th) {
+  .typeset.doc :where(.doc-table thead th) {
     padding: 0.625rem 0.875rem;
     background-color: var(--color-card);
     color: var(--color-muted-foreground);
@@ -1346,28 +1338,28 @@ html.theme-transitioning::view-transition-new(root) {
     text-transform: uppercase;
   }
 
-  .doc :where(.doc-table :is(tbody, tfoot) :is(td, th)) {
+  .typeset.doc :where(.doc-table :is(tbody, tfoot) :is(td, th)) {
     padding: 0.625rem 0.875rem;
   }
 
-  .doc :where(.doc-table tbody tr) {
+  .typeset.doc :where(.doc-table tbody tr) {
     transition: background-color 0.15s ease;
   }
 
-  .doc :where(.doc-table tbody tr):hover {
+  .typeset.doc :where(.doc-table tbody tr):hover {
     background-color: color-mix(in oklch, var(--color-muted) 40%, transparent);
   }
 
   /* Key/value tables (`| | |` with an empty head) read as fact rows. */
-  .doc :where(.doc-table[data-table-kv] thead) {
+  .typeset.doc :where(.doc-table[data-table-kv] thead) {
     display: none;
   }
 
-  .doc :where(.doc-table[data-table-kv] tbody tr:first-child > *) {
+  .typeset.doc :where(.doc-table[data-table-kv] tbody tr:first-child > *) {
     border-block-start: 0;
   }
 
-  .doc :where(.doc-table[data-table-kv] tbody td:first-child) {
+  .typeset.doc :where(.doc-table[data-table-kv] tbody td:first-child) {
     width: 1%;
     white-space: nowrap;
     color: var(--color-muted-foreground);
@@ -1377,18 +1369,18 @@ html.theme-transitioning::view-transition-new(root) {
     text-transform: uppercase;
   }
 
-  .doc :where(img) {
+  .typeset.doc :where(img) {
     border: 1px solid var(--color-border);
     border-radius: var(--radius-xl);
   }
 
   /* Images open enlarged in the lightbox (`doc-lightbox.tsx`). */
-  .doc :where(img[data-zoomable]) {
+  .typeset.doc :where(img[data-zoomable]) {
     cursor: zoom-in;
     transition: border-color 0.15s ease;
   }
 
-  .doc :where(img[data-zoomable]):hover {
+  .typeset.doc :where(img[data-zoomable]):hover {
     border-color: color-mix(
       in oklch,
       var(--color-primary) 50%,
@@ -1396,43 +1388,66 @@ html.theme-transitioning::view-transition-new(root) {
     );
   }
 
-  .doc :where(a img[data-zoomable]) {
+  .typeset.doc :where(a img[data-zoomable]) {
     cursor: pointer;
   }
 
-  .doc :where(.doc-alert) {
+  /* Callouts, one colour per kind, as the reference site's alerts. */
+  .typeset.doc :where(.doc-alert) {
     --alert: var(--color-muted-foreground);
-    border: 1px solid color-mix(in oklch, var(--alert) 30%, var(--color-border));
+    margin-block: 1.25rem;
+    border: 1px solid color-mix(in oklch, var(--alert) 45%, var(--color-border));
     border-inline-start: 4px solid var(--alert);
     border-radius: var(--radius-xl);
     background-color: color-mix(
       in oklch,
-      var(--alert) 7%,
+      var(--alert) 12%,
       var(--color-background)
     );
     padding: 0.875rem 1rem;
   }
 
-  .doc :where(.doc-alert-title) {
-    color: var(--alert);
+  .typeset.doc :where(.doc-alert > :last-child) {
+    margin-block-end: 0;
   }
 
   /* The title opens the card: no flow margin above it. */
-  .doc :where(.doc-alert > :first-child) {
+  .typeset.doc :where(.doc-alert > :first-child) {
     margin-block-start: 0;
   }
 
-  .doc :where(.doc-alert-warning, .doc-alert-important) {
-    --alert: var(--color-primary);
-    border-inline-start-color: var(--alert);
+  .typeset.doc :where(.doc-alert-title) {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--alert);
+    font-size: 0.8125rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
   }
 
-  .doc :where(.doc-alert-caution) {
-    --alert: var(--color-destructive);
-    border-inline-start-color: var(--alert);
+  .typeset.doc :where(.doc-alert-note) {
+    --alert: oklch(0.6 0.13 250);
   }
 
-  .doc :where(blockquote:not(.doc-alert)) {
+  .typeset.doc :where(.doc-alert-tip) {
+    --alert: oklch(0.62 0.13 152);
+  }
+
+  .typeset.doc :where(.doc-alert-important) {
+    --alert: var(--chart-2);
+  }
+
+  .typeset.doc :where(.doc-alert-warning) {
+    --alert: oklch(0.7 0.14 75);
+  }
+
+  .typeset.doc :where(.doc-alert-caution) {
+    --alert: oklch(0.62 0.2 25);
+  }
+
+  .typeset.doc :where(blockquote:not(.doc-alert)) {
     border: 1px solid
       color-mix(in oklch, var(--color-primary) 20%, var(--color-border));
     border-inline-start: 4px solid var(--color-primary);
@@ -1442,12 +1457,14 @@ html.theme-transitioning::view-transition-new(root) {
       var(--color-primary) 6%,
       var(--color-background)
     );
-    padding: 0.25rem 1rem 0.75rem;
+    padding: 0.25rem 1rem;
+    font-style: normal;
+    font-weight: 400;
   }
 
   /* The repeated sections: the heading beside a small icon. Quiet ones keep
      the rule over them; "where" and "pitfalls" are cards. */
-  .doc :where(.doc-section) {
+  .typeset.doc :where(.doc-section) {
     --section: var(--color-muted-foreground);
     display: grid;
     grid-template-columns: auto minmax(0, 1fr);
@@ -1458,20 +1475,20 @@ html.theme-transitioning::view-transition-new(root) {
     padding-block-start: 1.25rem;
   }
 
-  .doc > :where(.doc-section:first-child) {
+  .typeset.doc > :where(.doc-section:first-child) {
     margin-block-start: 0;
     border-block-start: 0;
     padding-block-start: 0;
   }
 
-  .doc :where(.doc-section-badge) {
+  .typeset.doc :where(.doc-section-badge) {
     grid-column: 1;
     grid-row: 1;
     display: inline-flex;
     color: var(--section);
   }
 
-  .doc :where(.doc-section > h2) {
+  .typeset.doc :where(.doc-section > h2) {
     grid-column: 2;
     grid-row: 1;
     margin-block-start: 0;
@@ -1479,11 +1496,11 @@ html.theme-transitioning::view-transition-new(root) {
     padding: 0;
   }
 
-  .doc :where(.doc-section > :not(.doc-section-badge, h2)) {
+  .typeset.doc :where(.doc-section > :not(.doc-section-badge, h2)) {
     grid-column: 1 / -1;
   }
 
-  .doc :where(.doc-section[data-kind="where"]) {
+  .typeset.doc :where(.doc-section[data-kind="where"]) {
     --section: var(--color-primary);
     border: 1px solid
       color-mix(in oklch, var(--section) 30%, var(--color-border));
@@ -1496,30 +1513,31 @@ html.theme-transitioning::view-transition-new(root) {
     padding: 1.5rem;
   }
 
-  .doc :where(.doc-section[data-kind="where"] .doc-table) {
+  .typeset.doc :where(.doc-section[data-kind="where"] .doc-table) {
     background-color: var(--color-card);
   }
 
-  .doc :where(.doc-section[data-kind="where"] .doc-table tbody tr):hover {
+  .typeset.doc
+    :where(.doc-section[data-kind="where"] .doc-table tbody tr):hover {
     background-color: transparent;
   }
 
-  .doc :where(.doc-section[data-kind="pitfalls"]) {
-    --section: var(--color-destructive);
+  .typeset.doc :where(.doc-section[data-kind="pitfalls"]) {
+    --section: oklch(0.62 0.2 25);
     border: 1px solid
-      color-mix(in oklch, var(--section) 25%, var(--color-border));
+      color-mix(in oklch, var(--section) 30%, var(--color-border));
     border-inline-start: 4px solid var(--section);
     border-radius: var(--radius-xl);
     background-color: color-mix(
       in oklch,
-      var(--section) 5%,
+      var(--section) 7%,
       var(--color-background)
     );
     padding: 1.25rem 1.375rem;
   }
 
   @media (max-width: 40rem) {
-    .doc
+    .typeset.doc
       :where(
         .doc-section[data-kind="where"],
         .doc-section[data-kind="pitfalls"]
@@ -1578,7 +1596,8 @@ html.theme-transitioning::view-transition-new(root) {
 }
 
 /* A diagram's drawing, copied from the page and sized to fit by the
-   lightbox; `.doc` gives it the page's diagram colours. */
+   lightbox. Its paint is the same rules as on the page
+   (`:is(.typeset.doc, .doc-lightbox-drawing)`). */
 .doc-lightbox-drawing {
   max-width: none;
   max-height: none;
@@ -1610,7 +1629,7 @@ html.theme-transitioning::view-transition-new(root) {
    pages. The controls are the design system's; this styles the server's
    table around them. */
 @layer components {
-  .doc :where(.doc-table-sort) {
+  .typeset.doc :where(.doc-table-sort) {
     display: inline-flex;
     align-items: center;
     gap: 0.375rem;
@@ -1623,20 +1642,20 @@ html.theme-transitioning::view-transition-new(root) {
     transition: color 0.15s ease;
   }
 
-  .doc :where(.doc-table-sort):hover,
-  .doc
+  .typeset.doc :where(.doc-table-sort):hover,
+  .typeset.doc
     :where(th[aria-sort="ascending"], th[aria-sort="descending"])
     :where(.doc-table-sort) {
     color: var(--color-foreground);
   }
 
-  .doc :where(.doc-table-sort):focus-visible {
+  .typeset.doc :where(.doc-table-sort):focus-visible {
     outline: 2px solid var(--color-ring);
     outline-offset: 1px;
   }
 
   /* An up/down chevron pair, shown on hover; the active direction alone. */
-  .doc :where(.doc-table-sort-icon) {
+  .typeset.doc :where(.doc-table-sort-icon) {
     display: inline-block;
     width: 0.5rem;
     height: 0.75rem;
@@ -1648,23 +1667,23 @@ html.theme-transitioning::view-transition-new(root) {
       center / contain no-repeat;
   }
 
-  .doc :where(.doc-table-sort:hover .doc-table-sort-icon) {
+  .typeset.doc :where(.doc-table-sort:hover .doc-table-sort-icon) {
     opacity: 0.6;
   }
 
-  .doc :where(th[aria-sort="ascending"]) :where(.doc-table-sort-icon),
-  .doc :where(th[aria-sort="descending"]) :where(.doc-table-sort-icon) {
+  .typeset.doc :where(th[aria-sort="ascending"]) :where(.doc-table-sort-icon),
+  .typeset.doc :where(th[aria-sort="descending"]) :where(.doc-table-sort-icon) {
     opacity: 1;
     mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 12'%3E%3Cpath d='M1 4.5 4 1.5l3 3' fill='none' stroke='black' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
     color: var(--color-primary);
   }
 
-  .doc :where(th[aria-sort="descending"]) :where(.doc-table-sort-icon) {
+  .typeset.doc :where(th[aria-sort="descending"]) :where(.doc-table-sort-icon) {
     transform: rotate(180deg);
   }
 
   /* With Shift, several columns sort at once: each shows its place. */
-  .doc :where(.doc-table-sort[data-sort-index])::after {
+  .typeset.doc :where(.doc-table-sort[data-sort-index])::after {
     content: attr(data-sort-index);
     color: var(--color-primary);
     font-family: var(--font-mono);
@@ -1673,31 +1692,31 @@ html.theme-transitioning::view-transition-new(root) {
   }
 
   /* A header holds its sort button and, on a full table, its filter. */
-  .doc :where(.doc-table-th) {
+  .typeset.doc :where(.doc-table-th) {
     display: inline-flex;
     align-items: center;
     gap: 0.125rem;
   }
 
-  .doc :where(.doc-table-filter:empty) {
+  .typeset.doc :where(.doc-table-filter:empty) {
     display: none;
   }
 
   /* The toolbar over the table and the pager under it, in one box that the
      full-screen dialog takes. */
-  .doc :where(.doc-table-box) {
+  .typeset.doc :where(.doc-table-box) {
     margin-block-start: var(--typeset-flow);
   }
 
-  .doc :where(.doc-table-box > .doc-table) {
+  .typeset.doc :where(.doc-table-box > .doc-table) {
     margin-block: 0.5rem;
   }
 
-  .doc :where(.doc-table-tools:empty, .doc-table-foot:empty) {
+  .typeset.doc :where(.doc-table-tools:empty, .doc-table-foot:empty) {
     display: none;
   }
 
-  .doc :where(.doc-table mark[data-table-mark]) {
+  .typeset.doc :where(.doc-table mark[data-table-mark]) {
     border-radius: 0.125rem;
     background-color: color-mix(
       in oklch,
@@ -1707,7 +1726,7 @@ html.theme-transitioning::view-transition-new(root) {
     color: inherit;
   }
 
-  .doc :where(.doc-table[data-empty] tbody) {
+  .typeset.doc :where(.doc-table[data-empty] tbody) {
     display: none;
   }
 }
