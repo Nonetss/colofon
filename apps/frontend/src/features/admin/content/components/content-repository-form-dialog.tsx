@@ -3,6 +3,7 @@ import { textVariants } from "@/components/shared/brand/typography"
 import { FormField } from "@/components/shared/form/field-label"
 import { FormDialog } from "@/components/shared/form/form-dialog"
 import { Input } from "@/components/ui/input"
+import { RefField } from "@/features/admin/content/components/ref-field"
 import {
   useContentRepositoryCreate,
   useContentRepositoryUpdate,
@@ -68,6 +69,9 @@ export function ContentRepositoryFormDialog({
   const [slugTouched, setSlugTouched] = useState(false)
   const [url, setUrl] = useState("")
   const [ref, setRef] = useState("main")
+  // An edited repository's ref, or one the user picked, is never replaced by
+  // the remote's default branch.
+  const [refChosen, setRefChosen] = useState(false)
 
   useEffect(() => {
     if (!open) return
@@ -76,7 +80,13 @@ export function ContentRepositoryFormDialog({
     setSlugTouched(false)
     setUrl("")
     setRef(repository?.ref ?? "main")
+    setRefChosen(repository !== null)
   }, [open, repository])
+
+  const chooseRef = (value: string) => {
+    setRefChosen(true)
+    setRef(value)
+  }
 
   const isPending = createRepository.isPending || updateRepository.isPending
 
@@ -161,20 +171,15 @@ export function ContentRepositoryFormDialog({
           onChange={(e) => setUrl(e.target.value)}
         />
       </FormField>
-      <FormField
-        label="Ref"
-        htmlFor="content-repository-ref"
-        hint="Rama, tag o commit que se descarga."
-      >
-        <Input
-          id="content-repository-ref"
-          required
-          maxLength={255}
-          className={textVariants({ role: "data" })}
-          value={ref}
-          onChange={(e) => setRef(e.target.value)}
-        />
-      </FormField>
+      <RefField
+        open={open}
+        repository={repository}
+        url={url}
+        value={ref}
+        onChange={chooseRef}
+        onSuggest={setRef}
+        chosen={refChosen}
+      />
     </FormDialog>
   )
 }

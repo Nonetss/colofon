@@ -1,4 +1,5 @@
-import { useQuery } from "@tanstack/react-query"
+import { type skipToken, useQuery } from "@tanstack/react-query"
+import type { BranchesSource } from "@/features/admin/content/model/branches-source"
 import type { ContentRepository } from "@/features/admin/content/model/types"
 import { useResourceMutation } from "@/hooks/use-resource-mutation"
 import { orpc } from "@/lib/orpc"
@@ -7,6 +8,11 @@ export const useContentRepositoriesList = () =>
   useQuery(orpc.v1.content.listRepositories.queryOptions())
 
 const listKey = orpc.v1.content.listRepositories.queryKey()
+
+/** The remote's branches, read once `source` exists (`branchesSource`). */
+export const useContentRepositoryBranches = (
+  source: BranchesSource | typeof skipToken
+) => useQuery(orpc.v1.content.listBranches.queryOptions({ input: source }))
 
 type ContentRepositoryCreateInput = {
   slug: string
