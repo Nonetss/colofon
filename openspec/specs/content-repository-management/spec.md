@@ -95,11 +95,11 @@ The backend SHALL expose to admins a procedure that lists the branches of a git 
 ### Requirement: Content admin screen
 
 The admin panel SHALL provide a “Contenido” screen at `/admin/content`, listed in the admin navigation and overview for admins only, that:
-- lists the repositories in a table with their name, slug, URL without credentials, ref and last sync (time, short commit, or the error);
+- shows each repository as a card with its name, slug, URL without credentials, ref and last sync (time and short commit, or the full error), a button to sync it and a menu to edit or delete it, in one column or two depending on the width available;
 - shows each repository's catalog URL, ready to copy into the editor's `yaml.schemaStore.url`;
 - creates and edits repositories in a form, where the slug is only editable on creation and an empty URL field on edit keeps the stored URL, and the ref is chosen from a select of the remote's branches once they can be read (the typed URL once complete, or the stored repository while editing with the URL left empty), preselecting the default branch on creation; while they can't be read, the ref is typed;
 - deletes a repository after a confirmation;
-- syncs a repository on demand and shows the outcome.
+- shows the outcome of an on-demand sync on the repository's card.
 
 Non-admin users SHALL NOT reach the screen; the request SHALL be redirected to the home page. All of its copy SHALL be in Spanish.
 
