@@ -1,5 +1,7 @@
 # stack
 
+> What this project is for, the decisions behind it and what comes next (content repositories, schema catalog, diagrams, skills, MCP and the secrets broker): [VISION.md](VISION.md), in Spanish.
+
 **A project template.** A Turborepo monorepo with an Astro frontend and a
 Hono/oRPC backend (TypeScript, Bun) behind a Caddy gateway, on PostgreSQL,
 ready to be cloned as the starting point of a new project. It derives from
