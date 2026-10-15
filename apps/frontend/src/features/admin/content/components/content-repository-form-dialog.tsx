@@ -26,6 +26,8 @@ interface ContentRepositoryFormDialogProps {
   repository: ContentRepository | null
   open: boolean
   onOpenChange: (open: boolean) => void
+  /** Create only hosted repositories: the source is fixed and not shown. */
+  hostedOnly?: boolean
 }
 
 const SOURCE_OPTIONS = [
@@ -40,7 +42,15 @@ function urlHintOf(repository: ContentRepository | null): string {
   return "Déjala vacía para mantener la actual, credenciales incluidas."
 }
 
-function dialogCopy(repository: ContentRepository | null) {
+function dialogCopy(repository: ContentRepository | null, hostedOnly: boolean) {
+  if (repository === null && hostedOnly) {
+    return {
+      title: "Nuevo repositorio alojado",
+      description:
+        "La plataforma guarda el repositorio y publica su contenido. Créalo y sube su historial con git push.",
+      submitLabel: "Crear repositorio",
+    }
+  }
   if (repository === null) {
     return {
       title: "Nuevo repositorio",
@@ -63,6 +73,14 @@ function urlPlaceholderOf(repository: ContentRepository | null): string {
   return repository.url
 }
 
+function startingSource(
+  repository: ContentRepository | null,
+  hostedOnly: boolean
+): RepositorySource {
+  if (hostedOnly) return "hosted"
+  return initialSource(repository)
+}
+
 function sourceHint(
   repository: ContentRepository | null,
   source: RepositorySource
@@ -80,11 +98,12 @@ export function ContentRepositoryFormDialog({
   repository,
   open,
   onOpenChange,
+  hostedOnly = false,
 }: ContentRepositoryFormDialogProps) {
   const createRepository = useContentRepositoryCreate()
   const updateRepository = useContentRepositoryUpdate()
   const isEditing = repository !== null
-  const copy = dialogCopy(repository)
+  const copy = dialogCopy(repository, hostedOnly)
 
   const [name, setName] = useState("")
   const [slug, setSlug] = useState("")
@@ -101,11 +120,11 @@ export function ContentRepositoryFormDialog({
     setName(repository?.name ?? "")
     setSlug(repository?.slug ?? "")
     setSlugTouched(false)
-    setSource(initialSource(repository))
+    setSource(startingSource(repository, hostedOnly))
     setUrl("")
     setRef(repository?.ref ?? "main")
     setRefChosen(repository !== null)
-  }, [open, repository])
+  }, [open, repository, hostedOnly])
 
   const chooseRef = (value: string) => {
     setRefChosen(true)
@@ -179,15 +198,17 @@ export function ContentRepositoryFormDialog({
           />
         </FormField>
       )}
-      <FormField label="Origen" hint={sourceHint(repository, source)}>
-        <SegmentedPicker
-          label="Origen del repositorio"
-          options={SOURCE_OPTIONS}
-          value={source}
-          onChange={setSource}
-          columns={2}
-        />
-      </FormField>
+      {!hostedOnly && (
+        <FormField label="Origen" hint={sourceHint(repository, source)}>
+          <SegmentedPicker
+            label="Origen del repositorio"
+            options={SOURCE_OPTIONS}
+            value={source}
+            onChange={setSource}
+            columns={2}
+          />
+        </FormField>
+      )}
       {source === "url" && (
         <FormField
           label="URL del repositorio git"
