@@ -104,23 +104,6 @@ export function fileInput(
   return { slug, branch, path: location.file }
 }
 
-export type Crumb = {
-  label: string
-  /** The folder it opens, from the repository root; `""` for the root. */
-  path: string
-}
-
-/** The trail from the repository root (named `rootLabel`) to `path`. */
-export function breadcrumb(rootLabel: string, path: string): Crumb[] {
-  const crumbs: Crumb[] = [{ label: rootLabel, path: "" }]
-  if (path === "") return crumbs
-  const segments = path.split("/")
-  segments.forEach((label, index) => {
-    crumbs.push({ label, path: segments.slice(0, index + 1).join("/") })
-  })
-  return crumbs
-}
-
 /** The folder holding `filePath`; `""` for a file at the root. */
 export function parentFolder(filePath: string): string {
   const slash = filePath.lastIndexOf("/")

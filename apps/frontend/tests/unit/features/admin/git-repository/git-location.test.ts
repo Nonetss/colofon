@@ -4,7 +4,6 @@ import { skipToken } from "@tanstack/react-query"
 import {
   ancestorFolders,
   branchesInput,
-  breadcrumb,
   EMPTY_LOCATION,
   fileInput,
   folderInput,
@@ -111,16 +110,7 @@ describe("branchesInput / folderInput / fileInput", () => {
   })
 })
 
-describe("breadcrumb / parentFolder", () => {
-  test("the root alone at the root, then one crumb per folder", () => {
-    expect(breadcrumb("manual", "")).toEqual([{ label: "manual", path: "" }])
-    expect(breadcrumb("manual", "docs/red")).toEqual([
-      { label: "manual", path: "" },
-      { label: "docs", path: "docs" },
-      { label: "red", path: "docs/red" },
-    ])
-  })
-
+describe("parentFolder", () => {
   test("a file's folder, the root for a file at the root", () => {
     expect(parentFolder("docs/red/dns.mdx")).toBe("docs/red")
     expect(parentFolder("doc.config.yaml")).toBe("")
