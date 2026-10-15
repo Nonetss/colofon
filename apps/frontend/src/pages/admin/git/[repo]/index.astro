@@ -1,0 +1,11 @@
+---
+import { GitRepositoryPage } from "@/features/admin/git-repository"
+import Admin from "@/layouts/Admin.astro"
+import { appSurfaces } from "@/lib/app-surfaces"
+
+const { repo } = Astro.params as { repo: string }
+---
+
+<Admin title={appSurfaces["admin-git-repository"].title}>
+  <GitRepositoryPage slug={repo} client:only="react" />
+</Admin>

@@ -40,6 +40,10 @@ const entityIcons = {
   organization: Lucide.Building2,
   apiKey: Lucide.KeyRound,
   contentRepository: Lucide.FolderGit2,
+  gitBranch: Lucide.GitBranch,
+  folder: Lucide.Folder,
+  file: Lucide.FileText,
+  submodule: Lucide.FolderSymlink,
 } as const
 
 const identityIcons = {

@@ -1,0 +1,9 @@
+---
+import { GitPage } from "@/features/admin/git"
+import Admin from "@/layouts/Admin.astro"
+import { appSurfaces } from "@/lib/app-surfaces"
+---
+
+<Admin title={appSurfaces["admin-git"].title}>
+  <GitPage client:only="react" />
+</Admin>

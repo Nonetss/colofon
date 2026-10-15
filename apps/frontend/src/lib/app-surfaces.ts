@@ -13,6 +13,8 @@ export type SurfaceId =
   | "admin-users"
   | "admin-api-keys"
   | "admin-content"
+  | "admin-git"
+  | "admin-git-repository"
   | "config"
   | "config-profile"
   | "config-appearance"
@@ -130,6 +132,15 @@ const appSurfaceDefinitions: Partial<Record<SurfaceId, SurfaceDefinition>> = {
     icon: iconRef("navigation", "crons"),
     nav: { primary: true },
   },
+  "admin-git-repository": {
+    id: "admin-git-repository",
+    path: "/admin/git/[repo]",
+    title: "Admin · Repositorio git",
+    label: "Repositorio",
+    description: "Ramas, carpetas y ficheros de un repositorio alojado.",
+    icon: iconRef("entities", "gitBranch"),
+    adminOnly: true,
+  },
   "cron-detail": {
     id: "cron-detail",
     path: "/crons/[id]",
@@ -197,6 +208,15 @@ const appSurfaceDefinitions: Partial<Record<SurfaceId, SurfaceDefinition>> = {
         description:
           "Conecta los repositorios de documentación que lee la plataforma.",
         icon: iconRef("entities", "contentRepository"),
+        adminOnly: true,
+      },
+      "admin-git": {
+        path: "/admin/git",
+        title: "Admin · Git",
+        label: "Git",
+        description:
+          "Navega por las ramas y los ficheros de los repositorios alojados.",
+        icon: iconRef("entities", "gitBranch"),
         adminOnly: true,
       },
     },
