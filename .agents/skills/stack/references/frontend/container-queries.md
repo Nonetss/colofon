@@ -48,4 +48,4 @@ Keep full literal strings in lookups (`{ 2: "grid-cols-1 @lg:grid-cols-2" }`). T
 
 ## Components that already own a container
 
-`SurfaceCardGrid`, `MetadataList` / `MetadataDefinitionList`, `CollapsibleFilters` (field grid), `DataTableView` (table vs compact layout, compact field grid), `EntityList` (rows and metadata), `ThemeModeSelector`, `CronScheduleBuilder`, `ui/card` (`@container/card-header`).
+`SurfaceCardGrid`, `MetadataList` / `MetadataDefinitionList`, `CollapsibleFilters` (field grid), `DataTableView` (table vs compact layout, compact field grid), `EntityList` (rows and metadata), `CronScheduleBuilder`, `ui/card` (`@container/card-header`).

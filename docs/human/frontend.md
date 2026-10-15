@@ -95,7 +95,7 @@ navegación.
 
 Para saber si un enlace está activo se usa `isNavLinkActive(href, pathname)`,
 nunca un `startsWith` suelto. Dentro de una sección solo se marca la fila más
-específica (en `/config/appearance` se marca Apariencia, no Configuración).
+específica (en `/admin/users` se marca Usuarios, no Admin).
 
 ### La búsqueda del navbar (`⌘K` / `Ctrl+K`)
 

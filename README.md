@@ -76,7 +76,6 @@ Every page except login and signup requires a session.
 | `/` | Home |
 | `/login`, `/signup` | Sign in and create an account (email/password, plus OIDC when configured) |
 | `/me` | The signed-in user's account: name, email, role, changing the name and password |
-| `/config/profile`, `/config/appearance` | Profile settings and theme |
 | `/crons`, `/crons/[id]` | Cron jobs: list, create and edit, run history with live updates, comments on runs |
 | `/admin/users`, `/admin/api-keys` | Admin only: users and API keys |
 | `/admin/content` | Admin only: content repositories as cards, with their sync state, sync button and editor catalog URL |
