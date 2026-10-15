@@ -8,7 +8,7 @@ import { QueryProvider } from "@/providers/query-provider"
 export function ProfilePage(props: ProfilePageProps) {
   return (
     <QueryProvider>
-      <PageShell maxWidth="3xl">
+      <PageShell maxWidth="80%">
         <ProfileContent {...props} />
       </PageShell>
     </QueryProvider>

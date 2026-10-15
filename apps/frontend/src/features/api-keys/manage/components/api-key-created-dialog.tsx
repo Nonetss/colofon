@@ -15,6 +15,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { agentPrompt } from "@/features/api-keys/manage/model/agent-prompt"
 import { cn } from "@/lib/utils"
 
 export type ApiKeyCreatedDialogProps = {
@@ -61,6 +63,37 @@ export function ApiKeyCreatedDialog({
                   copiedLabel="Copiada"
                   showSuccessToast
                   onError="No se pudo copiar la clave"
+                  size="icon"
+                  variant="outline"
+                  className="shrink-0"
+                />
+              </div>
+            </FormField>
+          ) : null}
+
+          {fullKey ? (
+            <FormField
+              label="Para tu IA"
+              htmlFor="api-key-prompt"
+              hint="Pégale esto para que lea la documentación con tu clave."
+            >
+              <div className="flex items-start gap-2">
+                <Textarea
+                  id="api-key-prompt"
+                  readOnly
+                  rows={4}
+                  value={agentPrompt(window.location.origin, fullKey)}
+                  className={cn(
+                    textVariants({ role: "data" }),
+                    "min-w-0 flex-1 resize-none leading-relaxed"
+                  )}
+                />
+                <CopyButton
+                  text={agentPrompt(window.location.origin, fullKey)}
+                  label="Copiar instrucciones"
+                  copiedLabel="Copiadas"
+                  showSuccessToast
+                  onError="No se pudieron copiar las instrucciones"
                   size="icon"
                   variant="outline"
                   className="shrink-0"

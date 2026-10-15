@@ -6,7 +6,7 @@ import {
   DataTableStatusCell,
 } from "@/components/shared/data-display/data-table-cell-content"
 import type { RowActionDescriptor } from "@/components/shared/data-display/row-action-items"
-import type { ApiKeyListItem } from "@/features/admin/api-keys/model/types"
+import type { ApiKeyListItem } from "@/features/api-keys/manage"
 import { columnLayoutOf, type DataTableFeatures } from "@/hooks/use-data-table"
 import type { SortOrdering } from "@/hooks/use-sort-query-param"
 import { formatDate } from "@/lib/format"

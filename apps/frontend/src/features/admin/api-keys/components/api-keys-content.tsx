@@ -12,8 +12,6 @@ import { HeroCount } from "@/components/shared/layout/page-hero"
 import { ResourceOverview } from "@/components/shared/resource/resource-overview"
 import { Button } from "@/components/ui/button"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
-import { ApiKeyCreatedDialog } from "@/features/admin/api-keys/components/api-key-created-dialog"
-import { ApiKeyFormModal } from "@/features/admin/api-keys/components/api-key-form-modal"
 import {
   API_KEY_DEFAULT_SORT,
   API_KEY_SORT_KEYS,
@@ -25,10 +23,12 @@ import {
   apiKeySortValues,
 } from "@/features/admin/api-keys/definitions/api-key-columns.definition"
 import {
+  ApiKeyCreatedDialog,
+  ApiKeyFormModal,
+  type ApiKeyListItem,
   useApiKeyDelete,
   useApiKeysList,
-} from "@/features/admin/api-keys/hooks/use-api-keys"
-import type { ApiKeyListItem } from "@/features/admin/api-keys/model/types"
+} from "@/features/api-keys/manage"
 import { useColumnPreferences } from "@/hooks/use-column-preferences"
 import { columnPreferenceProps, useDataTable } from "@/hooks/use-data-table"
 import { useSortQueryParam } from "@/hooks/use-sort-query-param"

@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query"
 import type {
   ApiKey,
   ApiKeyListItem,
-} from "@/features/admin/api-keys/model/types"
+} from "@/features/api-keys/manage/model/types"
 import { useResourceMutation } from "@/hooks/use-resource-mutation"
 import { orpc } from "@/lib/orpc"
 
@@ -14,10 +14,16 @@ const listKey = orpc.v1.apiKey.list.queryKey()
 
 type ApiKeyCreateInput = {
   name?: string
-  expiresIn?: number
+  /** Seconds until it expires; `null` never expires. */
+  expiresIn: number | null
 }
 
 type ApiKeyDeleteOutput = { id: string; success: boolean }
+
+function expiryOf(now: Date, expiresIn: number | null): string | null {
+  if (expiresIn === null) return null
+  return new Date(now.getTime() + expiresIn * 1000).toISOString()
+}
 
 function applyCreateOptimistic(
   current: ApiKeyListItem[] | undefined,
@@ -31,9 +37,7 @@ function applyCreateOptimistic(
     start: null,
     prefix: null,
     enabled: true,
-    expiresAt: input.expiresIn
-      ? new Date(now.getTime() + input.expiresIn * 1000).toISOString()
-      : null,
+    expiresAt: expiryOf(now, input.expiresIn),
     createdAt: now.toISOString(),
     updatedAt: now.toISOString(),
   }

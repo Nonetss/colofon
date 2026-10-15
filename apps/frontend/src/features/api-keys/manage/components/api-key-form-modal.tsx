@@ -1,7 +1,7 @@
 import type { SyntheticEvent } from "react"
 import type { DialogFieldDescriptor } from "@/components/shared/form/dialog-fields"
 import { FormDialog } from "@/components/shared/form/form-dialog"
-import { useApiKeyCreate } from "@/features/admin/api-keys/hooks/use-api-keys"
+import { useApiKeyCreate } from "@/features/api-keys/manage/hooks/use-api-keys"
 import { useDialogForm } from "@/hooks/use-dialog-form"
 
 const EXPIRATION_OPTIONS = [
@@ -34,6 +34,15 @@ const fields: DialogFieldDescriptor<ApiKeyFormValues>[] = [
   },
 ]
 
+const DAY_SECONDS = 24 * 60 * 60
+
+/** The chosen expiry in seconds; `null` for "Sin caducidad". */
+function expirySeconds(choice: string): number | null {
+  const days = Number.parseInt(choice, 10)
+  if (choice === "never" || !Number.isFinite(days)) return null
+  return days * DAY_SECONDS
+}
+
 export type ApiKeyFormModalProps = {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -56,15 +65,9 @@ export function ApiKeyFormModal({
   const handleSubmit = async (e: SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault()
     const { name, expiresIn } = form.trimmed()
-    const days = Number.parseInt(expiresIn, 10)
-    const expiresInSeconds =
-      expiresIn === "never" || !Number.isFinite(days)
-        ? undefined
-        : days * 24 * 60 * 60
-
     const created = await createApiKey.mutateAsync({
       name: name || undefined,
-      expiresIn: expiresInSeconds,
+      expiresIn: expirySeconds(expiresIn),
     })
     onOpenChange(false)
     if (created?.key && onCreated) {

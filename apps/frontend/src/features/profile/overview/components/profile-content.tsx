@@ -12,6 +12,7 @@ import { UserAvatar } from "@/components/shared/user/avatar"
 import { Button } from "@/components/ui/button"
 import { ChangePasswordDialog } from "@/features/profile/overview/components/change-password-dialog"
 import { EditNameDialog } from "@/features/profile/overview/components/edit-name-dialog"
+import { ProfileApiKeys } from "@/features/profile/overview/components/profile-api-keys"
 import { authClient } from "@/lib/auth-client"
 import { formatDate } from "@/lib/format"
 import { userDisplayName } from "@/lib/user-display"
@@ -44,7 +45,7 @@ export function ProfileContent({ user: initialUser }: ProfilePageProps) {
         : "Usuario"
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-8 pt-[6vh]">
+    <div className="flex min-h-0 flex-1 flex-col gap-8">
       <div className="flex items-center gap-4">
         <UserAvatar displayName={displayName} email={user.email} size="lg" />
         <div className="min-w-0">
@@ -140,6 +141,8 @@ export function ProfileContent({ user: initialUser }: ProfilePageProps) {
           },
         ]}
       />
+
+      <ProfileApiKeys />
 
       <EditNameDialog
         open={editNameOpen}
