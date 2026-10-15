@@ -50,7 +50,7 @@ The reader procedures SHALL serve what the repository's clone holds at its last 
 
 ### Requirement: Reader routes
 
-The web SHALL serve, to signed-in users only:
+The web SHALL serve, to signed-in users only (a session cookie, or an enabled API key in the `x-api-key` header resolved to its owner):
 - `/`: the home of the "Todos" scope, or a redirect to `/<slug>` when the remembered scope is one repository that exists;
 - `/<slug>`: the home of the repository `slug`, rendered from its `docs/index.mdx`, or the list of its top-level sections when it has none;
 - `/<slug>/<page path>`: that page; a section's path SHALL show its `index.mdx`, or the list of its pages when it has none.
@@ -61,6 +61,11 @@ An unknown repository or page SHALL render the not-found page with status 404. E
 
 - **WHEN** a signed-in user opens `/casa/red/dns`
 - **THEN** the response SHALL hold the page's title, description and body in its HTML
+
+#### Scenario: Opening a page with an API key
+
+- **WHEN** a request without cookies sends a valid key in `x-api-key` to `/casa/red/dns`
+- **THEN** the response SHALL hold the page's title, description and body in its HTML, read as the key's owner
 
 #### Scenario: Unknown page
 
