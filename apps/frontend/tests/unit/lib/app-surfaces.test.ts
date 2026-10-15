@@ -24,12 +24,12 @@ describe("surface registry", () => {
   })
 
   test("detail surfaces list their records through a search source", () => {
-    expect(getAppSurface("cron-detail").searchSource).toBe("cron-jobs")
+    expect(getAppSurface("doc-page").searchSource).toBe("doc-pages")
   })
 
   test("looks a surface up by its exact path", () => {
-    expect(getAppSurfaceByPath("/crons")?.id).toBe("crons")
-    expect(getAppSurfaceByPath("/crons/123")).toBeUndefined()
+    expect(getAppSurfaceByPath("/admin/users")?.id).toBe("admin-users")
+    expect(getAppSurfaceByPath("/admin/users/123")).toBeUndefined()
   })
 })
 
@@ -40,16 +40,16 @@ describe("getNavigableSurfaces", () => {
     expect(surfaces.every((surface) => surface.nav)).toBe(true)
   })
 
-  test("includes admin-only surfaces for admins", () => {
+  test("admin is not a navigation section: it is reached from the account menu", () => {
     const ids = getNavigableSurfaces(true).map((surface) => surface.id)
-    expect(ids).toContain("admin")
+    expect(ids).not.toContain("admin")
   })
 })
 
 describe("isSurfacePathActive", () => {
   test("matches the path itself and nested routes", () => {
-    expect(isSurfacePathActive("/crons", "/crons")).toBe(true)
-    expect(isSurfacePathActive("/crons", "/crons/abc")).toBe(true)
+    expect(isSurfacePathActive("/admin", "/admin")).toBe(true)
+    expect(isSurfacePathActive("/admin", "/admin/users")).toBe(true)
   })
 
   test("doesn't match a sibling that only shares a prefix", () => {
@@ -58,6 +58,6 @@ describe("isSurfacePathActive", () => {
 
   test("the root only matches itself", () => {
     expect(isSurfacePathActive("/", "/")).toBe(true)
-    expect(isSurfacePathActive("/", "/crons")).toBe(false)
+    expect(isSurfacePathActive("/", "/casa")).toBe(false)
   })
 })

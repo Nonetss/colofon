@@ -13,7 +13,7 @@ import type { ComponentType } from "react"
 
 const navigationIcons = {
   home: Lucide.Home,
-  crons: Lucide.Clock,
+  docs: Lucide.BookOpen,
   admin: Lucide.BrickWallFire,
   back: Lucide.ArrowLeft,
   forward: Lucide.ArrowRight,

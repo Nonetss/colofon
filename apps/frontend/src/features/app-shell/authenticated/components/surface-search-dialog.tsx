@@ -60,7 +60,7 @@ function groupHeading(label: string) {
 /**
  * Every word of the query must be a substring of one of the item's folded
  * keywords (label, description, section, trail, extra keywords), so
- * "crons limpieza" finds that job. The score stays binary so cmdk keeps the
+ * "red dns" finds that page. The score stays binary so cmdk keeps the
  * render order, and with it the order a server search returned.
  */
 function matchSurface(_value: string, search: string, keywords?: string[]) {
@@ -104,7 +104,7 @@ export function SurfaceSearchDialog({
     enabled: open,
     search,
   })
-  // Records take part so `/crons/<id>` marks that job, not `/crons`.
+  // Records take part so `/casa/red/dns` marks that page, not `/casa`.
   const currentHref = getCurrentSearchHref(currentPath, [
     ...groups,
     ...recordGroups,
@@ -113,7 +113,7 @@ export function SurfaceSearchDialog({
     readRecentSurfaces(userId)
   )
 
-  // Only exact visits count: `/crons/42` is not a visit to `/crons`.
+  // Only exact visits count: `/admin/git/manual` is not a visit to `/admin/git`.
   useEffect(() => {
     if (!itemsByHref.has(currentPath)) return
     setRecentHrefs(recordRecentSurface(userId, currentPath))

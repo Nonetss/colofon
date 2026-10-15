@@ -1,8 +1,9 @@
 import { useQueries } from "@tanstack/react-query"
 import { useMemo } from "react"
 import {
-  fillSurfacePath,
   getSearchSourceSurfaces,
+  recordHref,
+  recordTrail,
   serverSearchText,
   surfaceSearchSources,
 } from "@/features/app-shell/authenticated/model/surface-search-sources"
@@ -55,7 +56,7 @@ export function useSurfaceSearchRecords({
     const heading = surfaceSearchSources[source].heading
     const icon = resolveIconRef(surface.icon)
     const items = entries.flatMap((entry) => {
-      const href = fillSurfacePath(surface.path, entry.params)
+      const href = recordHref(surface.path, entry)
       if (href == null) return []
       return [
         {
@@ -64,7 +65,7 @@ export function useSurfaceSearchRecords({
           description: entry.description ?? surface.description,
           icon,
           section: heading,
-          trail,
+          trail: recordTrail(trail, entry),
           keywords: [surface.label, ...(entry.keywords ?? [])],
         },
       ]

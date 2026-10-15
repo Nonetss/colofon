@@ -146,11 +146,11 @@ export function AppSidebar({ nameApp, currentPath, user }: AppSidebarProps) {
           </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton
-              tooltip="Volver a la app"
+              tooltip="Volver a la documentación"
               render={<AppLink href="/" />}
             >
               <ArrowLeft />
-              <span>Volver a la app</span>
+              <span>Volver a la documentación</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

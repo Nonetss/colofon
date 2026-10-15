@@ -7,8 +7,7 @@ import { type IconRef, iconRef } from "@/lib/icon-registry"
  */
 export type SurfaceId =
   | "home"
-  | "crons"
-  | "cron-detail"
+  | "doc-page"
   | "admin"
   | "admin-users"
   | "admin-api-keys"
@@ -25,7 +24,7 @@ export type SurfaceId =
  * `[param]` surface. Resolved by the registry in
  * `features/app-shell/authenticated/model/surface-search-sources.ts`.
  */
-export type SurfaceSearchSourceId = "cron-jobs"
+export type SurfaceSearchSourceId = "doc-pages"
 
 /** Navigation placement for a surface that appears in the navbar/sidebars. */
 export interface SurfaceNavConfig {
@@ -39,7 +38,7 @@ export interface SurfaceNavConfig {
 
 export interface AppSurface {
   id: SurfaceId
-  /** Route path. Dynamic segments use the Astro bracket form, e.g. `/crons/[id]`. */
+  /** Route path. Dynamic segments use the Astro bracket form, e.g. `/[repo]/[...path]`. */
   path: string
   /** Browser tab `<title>`. Static — detail pages override the on-page hero
    *  title/description with runtime data, but keep this generic. */
@@ -66,7 +65,7 @@ export interface AppSurface {
   search?: false
   /**
    * Makes a dynamic `[param]` surface reachable from the navbar search by
-   * listing its records (each cron job). A plain-data
+   * listing its records (each documentation page). A plain-data
    * key — like `icon` — so this module stays safe to import from Astro
    * frontmatter; ignored on concrete paths.
    */
@@ -117,17 +116,8 @@ const appSurfaceDefinitions: Partial<Record<SurfaceId, SurfaceDefinition>> = {
     path: "/",
     title: "Inicio",
     label: "Inicio",
-    description: "Revisa las tareas programadas.",
+    description: "La documentación de todos los repositorios.",
     icon: iconRef("navigation", "home"),
-  },
-  crons: {
-    id: "crons",
-    path: "/crons",
-    title: "Crons",
-    label: "Crons",
-    description: "Consulta y gestiona tareas que se ejecutan automáticamente.",
-    icon: iconRef("navigation", "crons"),
-    nav: { primary: true },
   },
   "admin-git-repository": {
     id: "admin-git-repository",
@@ -138,14 +128,14 @@ const appSurfaceDefinitions: Partial<Record<SurfaceId, SurfaceDefinition>> = {
     icon: iconRef("entities", "gitBranch"),
     adminOnly: true,
   },
-  "cron-detail": {
-    id: "cron-detail",
-    path: "/crons/[id]",
-    title: "Cron",
-    label: "Cron",
-    description: "Detalle e historial de ejecuciones de la tarea.",
-    icon: iconRef("navigation", "crons"),
-    searchSource: "cron-jobs",
+  "doc-page": {
+    id: "doc-page",
+    path: "/[repo]/[...path]",
+    title: "Documentación",
+    label: "Documentación",
+    description: "Una ficha de la documentación.",
+    icon: iconRef("navigation", "docs"),
+    searchSource: "doc-pages",
   },
   admin: {
     id: "admin",
@@ -155,7 +145,6 @@ const appSurfaceDefinitions: Partial<Record<SurfaceId, SurfaceDefinition>> = {
     description: "Panel de administración de la aplicación.",
     icon: iconRef("navigation", "admin"),
     adminOnly: true,
-    nav: { primary: false },
     children: {
       "admin-users": {
         path: "/admin/users",

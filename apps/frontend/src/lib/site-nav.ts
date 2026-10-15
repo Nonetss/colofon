@@ -4,7 +4,6 @@ import {
   appSurfaceList,
   appSurfaces,
   getChildSurfaces,
-  getNavigableSurfaces,
   isSurfacePathActive,
 } from "@/lib/app-surfaces"
 import { resolveIconRef } from "@/lib/icon-registry"
@@ -38,10 +37,6 @@ export interface SiteNavItem {
 /** True when `pathname` is exactly `href` or a nested route under it. */
 export const isNavLinkActive = isSurfacePathActive
 
-function navItemHrefs(item: Pick<SiteNavItem, "href" | "subItems">) {
-  return [item.href, ...(item.subItems?.map((sub) => sub.href) ?? [])]
-}
-
 /**
  * The most specific href in `hrefs` that matches `pathname`. A child like
  * `/admin/users` wins over its parent `/admin`, so only one
@@ -54,27 +49,6 @@ function getCurrentNavHref(pathname: string, hrefs: readonly string[]) {
     if (current == null || href.length > current.length) current = href
   }
   return current
-}
-
-/**
- * Whether a top-level navbar item is the current location.
- * Nested pages still highlight a leaf section (`/crons/[id]` → Crons); a
- * parent with `subItems` stays idle when a child is the better match.
- */
-export function isNavItemCurrent(
-  item: Pick<SiteNavItem, "href" | "subItems">,
-  pathname: string
-) {
-  return getCurrentNavHref(pathname, navItemHrefs(item)) === item.href
-}
-
-/** Whether a dropdown/mobile sub-route is the current location. */
-export function isNavSubItemCurrent(
-  href: string,
-  pathname: string,
-  item: Pick<SiteNavItem, "href" | "subItems">
-) {
-  return getCurrentNavHref(pathname, navItemHrefs(item)) === href
 }
 
 function toSubItem(surface: AppSurface): SiteNavSubItem {
@@ -100,13 +74,10 @@ function toNavItem(surface: AppSurface): SiteNavItem {
 }
 
 /**
- * Single source of truth for site navigation: navbar (desktop + mobile),
- * section sidebars and section landing pages all read from here. Projected
+ * Sections for the section landing pages (`SectionNavOverview`), projected
  * from `app-surfaces.ts` — register a new navigable surface there, not here.
- *
- * A section that declares `subItems` gets, for free: a hover dropdown in the
- * desktop navbar, a nested group in the mobile menu, a `SectionSidebar` (mount
- * it with the `WithSidebar` layout) and a `SectionNavOverview` landing page.
+ * The navbar lists no sections: the documentation sidebar is the app's
+ * navigation and admin has its own shell (`adminSidebarLinks`).
  *
  * Icons are React components, so they cannot cross the Astro island boundary as
  * props — consumers mounted with `client:only` must import this module directly
@@ -118,25 +89,6 @@ export const siteNavItems: SiteNavItem[] = appSurfaceList
 
 export function getSiteNavItemByHref(href: string) {
   return siteNavItems.find((item) => item.href === href)
-}
-
-/**
- * Section hub for a `WithSidebar` route (`/admin/users` → `/admin`).
- * Longest prefix among nav items that declare `subItems`.
- */
-export function getSidebarSection(pathname: string): string | undefined {
-  let match: string | undefined
-  for (const item of siteNavItems) {
-    if (!item.subItems?.length) continue
-    if (!isNavLinkActive(item.href, pathname)) continue
-    if (!match || item.href.length > match.length) match = item.href
-  }
-  return match
-}
-
-/** Sections visible to the current user; `adminOnly` entries need an admin. */
-export function getSiteNavItems(isAdmin: boolean) {
-  return getNavigableSurfaces(isAdmin).map(toNavItem)
 }
 
 export interface SiteNavSearchItem {
@@ -242,16 +194,13 @@ export interface AdminSidebarLink {
  * (`features/admin/shell/components/app-sidebar.tsx`). Reuses the `/admin`
  * surface's children so routes/labels/icons aren't duplicated; only
  * "Resumen" (the section's own overview page) is added on top, since it
- * isn't a child surface — child surfaces drive the navbar dropdown, and a
- * child pointing back at the parent's own href would double up as "active"
- * there.
+ * isn't a child surface.
  */
-const adminNavItem = getSiteNavItemByHref("/admin")
 export const adminSidebarLinks: AdminSidebarLink[] = [
   {
     href: "/admin",
     label: "Resumen",
     icon: resolveIconRef(appSurfaces.admin.icon),
   },
-  ...(adminNavItem?.subItems ?? []),
+  ...getChildSurfaces("admin").map(toSubItem),
 ]

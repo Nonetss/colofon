@@ -10,7 +10,7 @@ export function foldText(value: string): string {
  * query over already-loaded records: fold the query, match, cap the result
  * count, project to `SuggestInputItem`. Replaces the repeated
  * `foldText(...).filter(...).slice(0, 8).map(...)` cascade across the
- * organizations/teams/crons search filters. Record matching stays the
+ * admin search filters. Record matching stays the
  * caller's own predicate — this only owns the fold/cap/project boilerplate.
  */
 export function textSuggestions<TItem>(

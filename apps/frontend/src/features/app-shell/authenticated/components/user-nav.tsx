@@ -5,6 +5,7 @@ const LogIn = getIcon("auth", "loginAction")
 const LogOut = getIcon("actions", "logout")
 const UserCircle2 = getIcon("identity", "userCircle")
 const UserIcon = getIcon("identity", "userIcon")
+const AdminIcon = getIcon("navigation", "admin")
 
 import { Text } from "@/components/shared/brand/typography"
 import { Hint } from "@/components/shared/feedback/hint"
@@ -29,9 +30,11 @@ import { userDisplayName } from "@/lib/user-display"
 
 export interface UserNavProps {
   user: User | null
+  /** Offers "Administración"; the admin panel is reached only from here. */
+  isAdmin?: boolean
 }
 
-export function UserNav({ user }: UserNavProps) {
+export function UserNav({ user, isAdmin = false }: UserNavProps) {
   if (!user) {
     return (
       <Hint label="Iniciar sesión" side="bottom">
@@ -85,6 +88,12 @@ export function UserNav({ user }: UserNavProps) {
           <UserCircle2 className="size-4 shrink-0" aria-hidden />
           Mi perfil
         </DropdownMenuItem>
+        {isAdmin ? (
+          <DropdownMenuItem render={<AppLink href="/admin" />}>
+            <AdminIcon className="size-4 shrink-0" aria-hidden />
+            Administración
+          </DropdownMenuItem>
+        ) : null}
         <DropdownMenuSeparator />
         <DropdownMenuItem
           variant="destructive"

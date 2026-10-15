@@ -4,6 +4,12 @@ import {
   type UseQueryOptions,
 } from "@tanstack/react-query"
 import {
+  flattenPages,
+  inScope,
+  readScopeCookie,
+  resolveScope,
+} from "@/features/docs/shared"
+import {
   type AppSurface,
   appSurfaceList,
   isSurfacePathActive,
@@ -16,6 +22,13 @@ import { orpc } from "@/lib/orpc"
 export interface SurfaceSearchEntry {
   /** Values for the surface path's `[param]` segments. */
   params: Record<string, string>
+  /** The record's route when the source knows it, instead of `params`. */
+  href?: string
+  /**
+   * Sections above the record when the source knows them, instead of the
+   * concrete-path surfaces above the surface's route.
+   */
+  trail?: string[]
   label: string
   description?: string
   /**
@@ -143,25 +156,33 @@ export function serverSearchQuery({
  * ),
  * ```
  */
-/** A job's line in the search: its description, or its cron expression. */
-function jobSearchDescription(job: {
-  description: string | null
-  cronExpression: string
-}): string {
-  if (job.description !== null) return job.description
-  return job.cronExpression
+/** The scope cookie as the browser holds it, `undefined` outside one. */
+function browserScopeCookie(): string | undefined {
+  if (typeof document === "undefined") return undefined
+  return readScopeCookie(document.cookie)
 }
 
 export const surfaceSearchSources = {
-  "cron-jobs": defineSearchSource("Tareas programadas", ({ enabled }) =>
-    orpc.v1.cron.list.queryOptions({
+  // The sidebar's own query, so the pages are listed without a request.
+  "doc-pages": defineSearchSource("Documentación", ({ enabled }) =>
+    orpc.v1.docs.nav.queryOptions({
       enabled,
-      select: (jobs) =>
-        jobs.map((job) => ({
-          params: { id: job.id },
-          label: job.name,
-          description: jobSearchDescription(job),
-        })),
+      select: ({ repositories }) => {
+        const scope = resolveScope(
+          browserScopeCookie(),
+          repositories.map((repository) => repository.slug)
+        )
+        const shown = repositories.filter((repository) =>
+          inScope(scope, repository.slug)
+        )
+        return flattenPages(shown, scope.kind === "all").map((page) => ({
+          params: {},
+          href: page.href,
+          trail: page.trail,
+          label: page.label,
+          description: page.description,
+        }))
+      },
     })
   ),
 } satisfies Record<SurfaceSearchSourceId, SurfaceSearchSourceShape>
@@ -175,7 +196,7 @@ export interface SearchSourceSurface {
 
 /**
  * Labels of the concrete-path surfaces a record's route sits under
- * (`/crons/[id]` → "Crons"; a deeper route lists every section above it,
+ * (`/admin/git/[repo]` → "Admin", "Git"; a deeper route lists every section above it,
  * outermost first). Shown before the record's label and matched like it, so
  * typing a section's name lists its records.
  */
@@ -192,8 +213,8 @@ function getRecordTrail(surface: AppSurface): string[] {
 
 /**
  * The words of `search` that none of the source's own section labels
- * contain, which are what its server search has to find ("crons limpieza" →
- * "limpieza"). The dialog still matches the dropped words locally, against
+ * contain, which are what its server search has to find ("git manual" →
+ * "manual"). The dialog still matches the dropped words locally, against
  * the record's trail and surface label.
  */
 export function serverSearchText(search: string, sectionLabels: string[]) {
@@ -227,8 +248,26 @@ export function getSearchSourceSurfaces(
   })
 }
 
+/** A record's route: the one it brings, or its surface path filled in. */
+export function recordHref(
+  surfacePath: string,
+  entry: Pick<SurfaceSearchEntry, "href" | "params">
+): string | null {
+  if (entry.href !== undefined) return entry.href
+  return fillSurfacePath(surfacePath, entry.params)
+}
+
+/** The sections shown before a record: its own, or its surface's. */
+export function recordTrail(
+  surfaceTrail: string[],
+  entry: Pick<SurfaceSearchEntry, "trail">
+): string[] {
+  if (entry.trail !== undefined) return entry.trail
+  return surfaceTrail
+}
+
 /**
- * Fills each `[name]` segment of a surface path (`/crons/[id]`) with the
+ * Fills each `[name]` segment of a surface path (`/admin/git/[repo]`) with the
  * URI-encoded value from `params`; `null` when a segment has no value.
  */
 export function fillSurfacePath(
