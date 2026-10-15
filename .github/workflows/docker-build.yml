@@ -24,7 +24,8 @@ jobs:
   changes:
     runs-on: ubuntu-26.04
     outputs:
-      matrix: ${{ steps.filter.outputs.matrix }}
+      builds: ${{ steps.filter.outputs.builds }}
+      images: ${{ steps.filter.outputs.images }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -61,24 +62,35 @@ jobs:
             return 1
           }
 
-          ITEMS=()
+          # `builds` has one entry per image and architecture, `images` one
+          # per image for the job that joins both architectures.
+          BUILDS=()
+          IMAGES=()
           for name in backend frontend gateway; do
             if matches "${PATHS[$name]}"; then
-              ITEMS+=("{\"name\":\"$name\",\"suffix\":\"-$name\",\"dockerfile\":\"apps/$name/Dockerfile\"}")
+              IMAGES+=("{\"name\":\"$name\",\"suffix\":\"-$name\"}")
+              for arch in amd64 arm64; do
+                BUILDS+=("{\"name\":\"$name\",\"suffix\":\"-$name\",\"dockerfile\":\"apps/$name/Dockerfile\",\"arch\":\"$arch\"}")
+              done
             fi
           done
-          MATRIX="[$(IFS=,; echo "${ITEMS[*]}")]"
-          echo "Matrix: $MATRIX"
-          echo "matrix=$MATRIX" >> "$GITHUB_OUTPUT"
+          BUILDS_JSON="[$(IFS=,; echo "${BUILDS[*]}")]"
+          IMAGES_JSON="[$(IFS=,; echo "${IMAGES[*]}")]"
+          echo "Builds: $BUILDS_JSON"
+          echo "Images: $IMAGES_JSON"
+          echo "builds=$BUILDS_JSON" >> "$GITHUB_OUTPUT"
+          echo "images=$IMAGES_JSON" >> "$GITHUB_OUTPUT"
 
+  # Each architecture builds natively on its own runner (no QEMU) and pushes
+  # an arch-only tag; the merge job joins them under the public tags.
   build:
     needs: changes
-    if: needs.changes.outputs.matrix != '[]'
-    runs-on: ubuntu-26.04
+    if: needs.changes.outputs.builds != '[]'
+    runs-on: ${{ matrix.arch == 'arm64' && 'ubuntu-26.04-arm' || 'ubuntu-26.04' }}
     strategy:
       fail-fast: false
       matrix:
-        include: ${{ fromJSON(needs.changes.outputs.matrix) }}
+        include: ${{ fromJSON(needs.changes.outputs.builds) }}
     steps:
       - uses: actions/checkout@v7
 
@@ -93,21 +105,59 @@ jobs:
       # registry cache.
       - uses: docker/setup-buildx-action@v4
 
-      - name: Build and Push ${{ matrix.name }}
+      - name: Build and Push ${{ matrix.name }} (${{ matrix.arch }})
+        env:
+          ARCH: ${{ matrix.arch }}
         run: |
           IMAGE_ID=$(echo "$REGISTRY/${{ github.repository }}${{ matrix.suffix }}" | tr '[:upper:]' '[:lower:]')
           SHA=$(echo "${{ github.sha }}" | cut -c1-8)
 
-          echo "Building ${{ matrix.name }} image: $IMAGE_ID — tag: $IMAGE_TAG sha: $SHA"
+          echo "Building ${{ matrix.name }} image on $ARCH: $IMAGE_ID — tag: $IMAGE_TAG sha: $SHA"
 
-          # Layer cache lives in the registry (one ref per branch, falling back
-          # to main's), so it survives ephemeral runners.
+          # Layer cache lives in the registry (one ref per branch and
+          # architecture, falling back to main's), so it survives ephemeral
+          # runners.
           docker buildx build . \
             -f "${{ matrix.dockerfile }}" \
+            --platform "linux/$ARCH" \
+            -t "$IMAGE_ID:$IMAGE_TAG-$SHA-$ARCH" \
+            --cache-from "type=registry,ref=$IMAGE_ID:buildcache-$IMAGE_TAG-$ARCH" \
+            --cache-from "type=registry,ref=$IMAGE_ID:buildcache-main-$ARCH" \
+            --cache-to "type=registry,ref=$IMAGE_ID:buildcache-$IMAGE_TAG-$ARCH,mode=max,image-manifest=true,oci-mediatypes=true" \
+            --push
+
+  # Joins the amd64 and arm64 images of each rebuilt app into one multi-arch
+  # manifest under the public tags. It runs even when another app's build
+  # failed, so one broken image doesn't hold back the others; an app whose
+  # own build failed fails here on its missing arch tag.
+  merge:
+    needs: [changes, build]
+    if: ${{ !cancelled() && needs.changes.outputs.images != '[]' }}
+    runs-on: ubuntu-26.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.changes.outputs.images) }}
+    steps:
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/setup-buildx-action@v4
+
+      - name: Create the multi-arch manifest for ${{ matrix.name }}
+        run: |
+          IMAGE_ID=$(echo "$REGISTRY/${{ github.repository }}${{ matrix.suffix }}" | tr '[:upper:]' '[:lower:]')
+          SHA=$(echo "${{ github.sha }}" | cut -c1-8)
+
+          docker buildx imagetools create \
             -t "$IMAGE_ID:latest" \
             -t "$IMAGE_ID:$IMAGE_TAG" \
             -t "$IMAGE_ID:$IMAGE_TAG-$SHA" \
-            --cache-from "type=registry,ref=$IMAGE_ID:buildcache-$IMAGE_TAG" \
-            --cache-from "type=registry,ref=$IMAGE_ID:buildcache-main" \
-            --cache-to "type=registry,ref=$IMAGE_ID:buildcache-$IMAGE_TAG,mode=max,image-manifest=true,oci-mediatypes=true" \
-            --push
+            "$IMAGE_ID:$IMAGE_TAG-$SHA-amd64" \
+            "$IMAGE_ID:$IMAGE_TAG-$SHA-arm64"
+
+          docker buildx imagetools inspect "$IMAGE_ID:$IMAGE_TAG"
