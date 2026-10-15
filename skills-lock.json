@@ -4,7 +4,7 @@
     "accessibility": {
       "source": "addyosmani/web-quality-skills",
       "sourceType": "autoskills-registry",
-      "computedHash": "bffe3d08cfe92ebad63699f74ce29e35c19850ebfbf474c1463183cfe34d6a09"
+      "computedHash": "2174f783a038a7ca4869c4c18e14726ec13b9c6b705d59253f647d0ca37cb78d"
     },
     "astro": {
       "source": "astrolicious/agent-skills",
@@ -14,12 +14,12 @@
     "bash-defensive-patterns": {
       "source": "wshobson/agents",
       "sourceType": "autoskills-registry",
-      "computedHash": "1f566c2d9c3b50a784b05d08f6b08ebfeb31f038e4d4173f2d488484edb058a6"
+      "computedHash": "2c6409224fbb56ceff6655b73cb03a736ea6c89e622734752c568efafd59a964"
     },
     "best-practices": {
       "source": "better-auth/skills",
       "sourceType": "autoskills-registry",
-      "computedHash": "0d59bc23f61ba03b850aa3b81392044c5c7fa3662a5f61b98490b20b0f14a56a"
+      "computedHash": "db4a1edfec63f4eaf5f0b1278f4e4b004768d8765708f94960c3ca2334caced9"
     },
     "better-auth-best-practices": {
       "source": "better-auth/skills",
@@ -46,7 +46,7 @@
     "drizzle": {
       "source": "bobmatnyc/claude-mpm-skills",
       "sourceType": "autoskills-registry",
-      "computedHash": "ee38c0b7737febd7409d84e613099a0f276e215e0bbda418b2593786ea8a4754"
+      "computedHash": "329c51bff48a92ddc4668c0396104ef47615db01b12ca894c2b322cbba19c0f0"
     },
     "email-and-password-best-practices": {
       "source": "better-auth/skills",
@@ -57,28 +57,28 @@
     "emailAndPassword": {
       "source": "better-auth/skills",
       "sourceType": "autoskills-registry",
-      "computedHash": "1cbc9527756aa933c0f2f5ad7f18fe493f78ef0f4b6f073b624fbf6ccbd463c9"
+      "computedHash": "f19e76b069b8569a6906f9dc38c3b7dbdce83da7a5577f6b3c844a95db29d30d"
     },
     "frontend-design": {
       "source": "anthropics/skills",
       "sourceType": "autoskills-registry",
-      "computedHash": "82fb11a63fb1e35ee2469516ed02d54695f783115b1540c0e783197af4240a3a"
+      "computedHash": "a4e6516a601f72ffd8bcd0d64609e8ba724d2ce92569a059a6890a5caadf072b"
     },
     "hono": {
-      "source": "yusukebe/hono-skill",
+      "source": "honojs/skills",
       "sourceType": "autoskills-registry",
-      "computedHash": "bc1c40e71ec13faa82ab7e9464bfd57cc282780a1087b021d26ba0d2c082059b"
+      "computedHash": "ee8309477b66026b815cabedc7b8bd4709741c602802efd31dffc94c57ff7190"
     },
     "impeccable": {
       "source": "pbakaus/impeccable",
       "sourceType": "github",
       "skillPath": ".agents/skills/impeccable/SKILL.md",
-      "computedHash": "49d27a2048ad44a8457fc78852a1b2e2d6935df23283197cce160cb6ea0b4211"
+      "computedHash": "9843172fa7aa2283d04f8bf17ea345c44f6d1a51b69716d5d8444a02a17d6874"
     },
     "organization": {
       "source": "better-auth/skills",
       "sourceType": "autoskills-registry",
-      "computedHash": "74bd4e58dd4b66466f79cf0d00a5e75d5ca81b98c0461ee8cd7faba7d8dc16fa"
+      "computedHash": "4ffd93096f81a88450e4428ee0ad8b4af60a235ee96b61b624f3b5fe8f046463"
     },
     "orpc": {
       "source": "middleapi/orpc",
@@ -112,12 +112,12 @@
     "seo": {
       "source": "addyosmani/web-quality-skills",
       "sourceType": "autoskills-registry",
-      "computedHash": "c184da724d1c61ad077f27418ea8e7e88fd54bcdf98165e18be7e4681cbd5e20"
+      "computedHash": "7495da57766c99f787a729d4a21234ecb5d29d90f304a0d9a5996dcdc1eec048"
     },
     "shadcn": {
       "source": "shadcn/ui",
       "sourceType": "autoskills-registry",
-      "computedHash": "3e8ca56eb3af0f18b9cca3ae002f2b52f5dd23bceb286dd7403e18ae2fb38d08"
+      "computedHash": "bb3ef47ffe878da022cf38d6045b1bc1a47993c28719f9fc8413939beaa95250"
     },
     "tailwind-css-patterns": {
       "source": "giuseppe-trisciuoglio/developer-kit",
@@ -127,7 +127,7 @@
     "tailwind-v4-shadcn": {
       "source": "secondsky/claude-skills",
       "sourceType": "autoskills-registry",
-      "computedHash": "551eb86a35cbf35747cc1a58059ed7e73aacdf03d2fd2e12f63208ea2c0a4ae9"
+      "computedHash": "c4cbd4cecb0da6f7f9e3c8826da87f3d05feb586e3560e62d89b95ab22b8df35"
     },
     "tanstack-query-best-practices": {
       "source": "deckardger/tanstack-agent-skills",
@@ -138,22 +138,22 @@
     "turborepo": {
       "source": "vercel/turborepo",
       "sourceType": "autoskills-registry",
-      "computedHash": "341f67c77a99b473c48207db023503509de7955af1517ce39e17b21a0127d79c"
+      "computedHash": "0f42bba21f1ccfae78255a5d8a5c96b341a4348e9c16fa55edf8d9a4ecbf77a6"
     },
     "twoFactor": {
       "source": "better-auth/skills",
       "sourceType": "autoskills-registry",
-      "computedHash": "85230144b20eed676d0cbe8d28997cb9ccc0b293517204215adad0d74fae9a9d"
+      "computedHash": "6f81f0ece8181797011da7dbd1180cdce2a92d88611833d8e2219a977b8189ed"
     },
     "typescript-advanced-types": {
       "source": "wshobson/agents",
       "sourceType": "autoskills-registry",
-      "computedHash": "5ca0e177c6aaaba1889255691224daafdb7d71f317cc70bede1590d3907ded42"
+      "computedHash": "cb5d18bc19191b388cc49c15ff98dcbc714fa343373d078be00833e8a18ef291"
     },
     "zod": {
       "source": "pproenca/dot-skills",
       "sourceType": "autoskills-registry",
-      "computedHash": "aa8a97195b07763d37494b511f48be90979fd6826c031956c831cfc58f6a24b8"
+      "computedHash": "2e6455bb2c68a46f88db0fef1151cdb4d0a50b57b6a0cdbe7fa3b68641adf45b"
     }
   }
 }
