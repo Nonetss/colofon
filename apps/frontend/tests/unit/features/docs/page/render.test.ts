@@ -126,6 +126,13 @@ describe("renderBlocks", () => {
     expect(blocks[3]?.html).toContain("Notas sueltas")
   })
 
+  test("the same sections are known by their English headings", () => {
+    const kinds = renderBlocks(
+      root(h2("Where do I find…?"), p("Here"), h2("How it all fits together"))
+    ).map((block) => block.kind)
+    expect(kinds).toEqual(["where", "fit"])
+  })
+
   test("headings match whatever their case and spacing", () => {
     const [block] = renderBlocks(root(h2("  QUÉ ES "), p("Un servicio")))
     expect(block?.kind).toBe("about")

@@ -33,6 +33,21 @@ const KINDS: ReadonlyMap<string, SectionKind> = new Map([
   ["trampas y decisiones", "pitfalls"],
   ["specs relacionadas", "specs"],
   ["datos", "data"],
+  // The same sections in repositories written in English.
+  ["where do i find…?", "where"],
+  ["where do i find...?", "where"],
+  ["what it is", "about"],
+  ["what it is and what for", "about"],
+  ["current configuration", "config"],
+  ["configuration", "config"],
+  ["notes", "notes"],
+  ["how it all fits together", "fit"],
+  ["how it works", "works"],
+  ["where each piece lives", "parts"],
+  ["how to extend it", "extend"],
+  ["pitfalls and decisions", "pitfalls"],
+  ["related specs", "specs"],
+  ["data", "data"],
 ])
 
 /** The kind of section a `##` heading opens, `null` for any other heading. */
