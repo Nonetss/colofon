@@ -1,10 +1,11 @@
 import type { Dirent } from "node:fs"
 import { readdir, readFile } from "node:fs/promises"
 import path from "node:path"
+import type { Catalog } from "#catalog"
 import type { CatalogIndex } from "#entity-schema"
 import type { SiteConfig } from "#meta-schema"
 import { type HeaderSchema, headerSchema, readHeader } from "#pages/header"
-import { parsePage } from "#pages/parse"
+import { type ParsedPage, parsePage } from "#pages/parse"
 import { pageToHast } from "#pages/to-hast"
 import { pagePathOf, transformPage } from "#pages/transform"
 import type { Page, PageHeader, PageProblem } from "#pages/types"
@@ -13,7 +14,9 @@ import type { Page, PageHeader, PageProblem } from "#pages/types"
 // (docs/index.mdx), one section per folder holding pages, and each page in
 // its folder's section, ordered by `orden` and then by title. The reading
 // order (home, then each section's index before its pages and subsections,
-// depth first) gives every page its previous and next page.
+// depth first) gives every page its previous and next page. Pages are read
+// in two passes: every header first, so a page can show another page's
+// title (a `ficha` cell of `<Entities>`), then every body.
 
 const DOCS_DIR = "docs"
 
@@ -65,6 +68,7 @@ export async function readSite(
   root: string,
   config: SiteConfig,
   index: CatalogIndex,
+  catalog: Catalog,
   routes: SiteRoutes
 ): Promise<Site> {
   const docsRoot = path.join(root, DOCS_DIR)
@@ -76,40 +80,70 @@ export async function readSite(
   pagePaths.add("")
 
   const schema = headerSchema(config, index)
-  const read = new Map<string, Page>()
+  const headed: HeadedPage[] = []
   for (const file of mdxFiles) {
     const source = await readFile(path.join(docsRoot, file), "utf8")
-    const page = buildPage(source, file, {
-      schema,
-      pages: pagePaths,
-      files: fileSet,
-      routes,
-    })
-    read.set(page.path, page)
+    headed.push(headPage(source, file, schema))
   }
+  const titles = new Map(headed.map((page) => [page.path, page.header.titulo]))
+  const context: BuildContext = {
+    pages: pagePaths,
+    files: fileSet,
+    catalog,
+    routes,
+    titleOf: (pagePath) => titleOr(titles.get(pagePath), pagePath),
+  }
+  const read = new Map<string, Page>()
+  for (const page of headed) read.set(page.path, buildPage(page, context))
 
   const tree = buildTree("", read, mdxFiles)
   const home = entryOf("", read, config.nombre)
   return arrange(home, tree, read)
 }
 
-type BuildContext = {
-  schema: HeaderSchema
-  pages: ReadonlySet<string>
-  files: ReadonlySet<string>
-  routes: SiteRoutes
+/** A page with its header read and its body parsed, not yet transformed. */
+type HeadedPage = {
+  path: string
+  file: string
+  contentFile: string
+  parsed: ParsedPage
+  header: PageHeader
+  problems: PageProblem[]
 }
 
-function buildPage(source: string, file: string, context: BuildContext): Page {
+type BuildContext = {
+  pages: ReadonlySet<string>
+  files: ReadonlySet<string>
+  catalog: Catalog
+  routes: SiteRoutes
+  titleOf: (pagePath: string) => string
+}
+
+function titleOr(title: string | undefined, pagePath: string): string {
+  if (title === undefined) return fallbackTitleOf(pagePath)
+  return title
+}
+
+function headPage(
+  source: string,
+  file: string,
+  schema: HeaderSchema
+): HeadedPage {
   const pagePath = pagePathOf(file)
   const contentFile = `${DOCS_DIR}/${file}`
   const parsed = parsePage(source)
   const { header, problems } = readHeader(
     parsed.header,
-    context.schema,
+    schema,
     contentFile,
     fallbackTitleOf(pagePath)
   )
+  return { path: pagePath, file, contentFile, parsed, header, problems }
+}
+
+function buildPage(page: HeadedPage, context: BuildContext): Page {
+  const { path: pagePath, file, contentFile, parsed, header } = page
+  const problems = [...page.problems]
   if (!parsed.ok) {
     problems.push({
       file: contentFile,
@@ -123,8 +157,10 @@ function buildPage(source: string, file: string, context: BuildContext): Page {
     folder: folderOf(file),
     pages: context.pages,
     files: context.files,
+    catalog: context.catalog,
     routeOf: context.routes.routeOf,
     fileUrlOf: context.routes.fileUrlOf,
+    titleOf: context.titleOf,
   })
   problems.push(...transformed.problems)
   problems.sort(byLine)

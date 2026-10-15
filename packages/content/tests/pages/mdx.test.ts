@@ -131,6 +131,61 @@ describe("accepted MDX", () => {
     )
   })
 
+  test("Entities renders the type's table inside the page", async () => {
+    const found = await notas(
+      'Antes\n\n<Entities type="maquinas" />\n\nDespués'
+    )
+    expect(found.problems).toEqual([])
+    expect(htmlOf(found.tree)).toBe(
+      '<p>Antes</p>\n<div class="doc-entities"><table><thead><tr><th>id</th><th>ip</th></tr></thead><tbody><tr><td>nas</td><td>192.168.1.30</td></tr></tbody></table></div>\n<p>Después</p>'
+    )
+  })
+
+  test("an Entities cell of a ficha field shows the page's title", async () => {
+    const site = await siteOf({
+      "catalogo/maquinas/_tipo.yaml": [
+        "nombre: Máquina",
+        "plural: Máquinas",
+        "campos:",
+        "  ip: { tipo: ip }",
+        "  ficha: { tipo: ficha, opcional: true }",
+      ].join("\n"),
+      "catalogo/maquinas/nas.yaml": "ip: 192.168.1.30\nficha: red/nas\n",
+      "docs/red/nas.mdx": page("El NAS de casa"),
+      "docs/notas.mdx": page(
+        "Notas",
+        '<Entities type="maquinas" columns="id,ficha" />'
+      ),
+    })
+    const html = htmlOf(pageAt(site, "notas").tree)
+    expect(html).toContain('<td><a href="/casa/red/nas">nas</a></td>')
+    expect(html).toContain(
+      '<td><a href="/casa/red/nas">El NAS de casa</a></td>'
+    )
+  })
+
+  test("an Entities problem is reported on the component's line", async () => {
+    const found = await notas('Hola\n\n<Entities type="servidores" />')
+    expect(found.problems).toEqual([
+      {
+        file: "docs/notas.mdx",
+        line: 8,
+        message:
+          '<Entities type="servidores">: no hay ese tipo en catalogo/ (hay: maquinas)',
+      },
+    ])
+    expect(htmlOf(found.tree)).toContain(
+      '<div class="doc-component-notice" data-component="Entities">'
+    )
+  })
+
+  test("an Entities inside a paragraph is reported for where it is", async () => {
+    const found = await notas('Ver <Entities type="maquinas" /> aquí')
+    expect(messagesOf(found)).toEqual([
+      "El componente <Entities> va en su propio bloque, con una línea en blanco antes y después",
+    ])
+  })
+
   test("a syntax error is reported with its line and the page has no body", async () => {
     const found = await notas("Texto\n\n<div")
     expect(found.tree).toBeNull()
@@ -238,5 +293,60 @@ describe("links and images", () => {
       "Enlace roto: named.conf: solo se enlazan fichas (.mdx) e imágenes",
       "Enlace roto: ../../x.mdx queda fuera de docs/",
     ])
+  })
+
+  describe("catalogo: links", () => {
+    const withPages = {
+      "catalogo/maquinas/_tipo.yaml": [
+        "nombre: Máquina",
+        "plural: Máquinas",
+        "campos:",
+        "  ip: { tipo: ip }",
+        "  ficha: { tipo: ficha, opcional: true }",
+      ].join("\n"),
+      "catalogo/maquinas/nas.yaml": "ip: 192.168.1.30\nficha: red/dns\n",
+      "catalogo/maquinas/pve-01.yaml": "ip: 192.168.1.10\n",
+      "docs/red/dns.mdx": page("DNS"),
+    }
+
+    async function notasWith(body: string) {
+      const site = await siteOf({
+        ...withPages,
+        "docs/notas.mdx": page("Notas", body),
+      })
+      return pageAt(site, "notas")
+    }
+
+    test("an entity with a page links to it", async () => {
+      const found = await notasWith("[NAS](catalogo:maquinas/nas)")
+      expect(found.problems).toEqual([])
+      expect(htmlOf(found.tree)).toBe('<p><a href="/casa/red/dns">NAS</a></p>')
+    })
+
+    test("an entity without a page is plain text, without a problem", async () => {
+      const found = await notasWith("[pve-01](catalogo:maquinas/pve-01)")
+      expect(found.problems).toEqual([])
+      expect(htmlOf(found.tree)).toBe("<p><span>pve-01</span></p>")
+    })
+
+    test("a missing entity or type is a broken link", async () => {
+      const found = await notasWith(
+        "[viejo](catalogo:maquinas/old-01) [x](catalogo:servidores/x)"
+      )
+      expect(messagesOf(found)).toEqual([
+        "Enlace roto: catalogo:maquinas/old-01 no es ninguna entidad del catálogo",
+        "Enlace roto: catalogo:servidores/x no es ninguna entidad del catálogo",
+      ])
+      expect(htmlOf(found.tree)).toContain(
+        '<span class="doc-broken-link">viejo</span>'
+      )
+    })
+
+    test("an image can't point at the catalog", async () => {
+      const found = await notasWith("![nas](catalogo:maquinas/nas)")
+      expect(messagesOf(found)).toEqual([
+        "Imagen rota: catalogo:maquinas/nas no es una imagen",
+      ])
+    })
   })
 })

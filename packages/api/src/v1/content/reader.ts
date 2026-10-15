@@ -6,6 +6,7 @@ import {
   describeRepository,
   loadContent,
   pruneClones,
+  readCatalog,
   readSite,
   redactCredentials,
   type Site,
@@ -180,10 +181,24 @@ export function createContentReader(
     declarations: ContentDeclarations,
     folder: string
   ): Promise<Site> {
+    const catalog = await readCatalog(folder, declarations)
+    const catalogProblems = [...catalog.values()].flatMap(
+      (type) => type.problems
+    )
+    if (catalogProblems.length > 0) {
+      logger.warn(
+        {
+          source: describeRepository(repository),
+          problems: catalogProblems,
+        },
+        "Catalog entities have problems"
+      )
+    }
     const built = await readSite(
       folder,
       declarations.config,
       declarations.index,
+      catalog,
       readerRoutesOf(repository.slug)
     )
     if (built.problems.length > 0) {

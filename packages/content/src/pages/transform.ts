@@ -12,14 +12,16 @@ import type { MdxJsxFlowElement, MdxJsxTextElement } from "mdast-util-mdx"
 import type {} from "mdast-util-to-hast"
 import { toString as textOf } from "mdast-util-to-string"
 import { SKIP, visit } from "unist-util-visit"
+import type { Catalog } from "#catalog"
+import { ENTITIES, entitiesTable } from "#pages/entities"
 import type { PageHeading, PageProblem } from "#pages/types"
 
 // Walks a page's syntax tree before it becomes HTML: reports what a page
 // cannot use, gives headings their ids, turns `[!KIND]` blockquotes into
-// alerts and points links and images at the reader's routes. `<Callout>`,
-// the one component the platform provides, becomes an alert too; other MDX
-// nodes are left in place and `to-hast.ts` drops them or renders them as
-// notices.
+// alerts and points links and images at the reader's routes. The platform's
+// components are replaced here: `<Callout>` by an alert and `<Entities>` by
+// its catalog table (`entities.ts`); other MDX nodes are left in place and
+// `to-hast.ts` drops them or renders them as notices.
 
 /** Image files a page can show, by extension. */
 export const IMAGE_EXTENSIONS = [
@@ -45,6 +47,10 @@ export type TransformContext = {
   routeOf: (pagePath: string) => string
   /** The URL of a file under `docs/` (`red/img/zonas.svg`). */
   fileUrlOf: (docsPath: string) => string
+  /** The catalog `<Entities>` and `catalogo:` links read from. */
+  catalog: Catalog
+  /** The title of a page path, for links that show it. */
+  titleOf: (pagePath: string) => string
 }
 
 const ALERT_TITLES = {
@@ -87,6 +93,12 @@ export function transformPage(
   const report = (line: number | null, message: string) =>
     problems.push({ file: context.file, line, message })
 
+  // A callout is visited next for the links inside; a table needs nothing.
+  const toBlock = (node: MdxJsxFlowElement, line: number | null) => {
+    if (node.name === ENTITIES) return toEntities(node, context, line, report)
+    return toCallout(node, line, report)
+  }
+
   visit(tree, (node, index, parent) => {
     const line = node.position?.start.line ?? null
     switch (node.type) {
@@ -103,27 +115,26 @@ export function transformPage(
         return SKIP
       case "mdxJsxFlowElement":
         if (
-          node.name !== CALLOUT ||
+          !isBlockComponent(node.name) ||
           parent === undefined ||
           index === undefined
         ) {
           report(line, componentMessage(node.name))
           return SKIP
         }
-        // Replaced by its alert, which is visited next for the links inside.
-        parent.children.splice(index, 1, toCallout(node, line, report))
-        return [SKIP, index]
+        parent.children.splice(index, 1, toBlock(node, line))
+        return [SKIP, nextIndex(node, index)]
       case "mdxJsxTextElement":
         report(line, componentMessage(node.name, "inline"))
         return SKIP
       case "paragraph": {
-        // `<Callout>…</Callout>` on a line of its own reads as a paragraph
-        // holding just that element: it is a block all the same.
-        const callout = soleCallout(node)
-        if (callout === null || parent === undefined || index === undefined)
+        // A component on a line of its own (`<Callout>…</Callout>`) reads as
+        // a paragraph holding just that element: it is a block all the same.
+        const component = soleComponent(node)
+        if (component === null || parent === undefined || index === undefined)
           return
-        parent.children.splice(index, 1, toCallout(callout, line, report))
-        return [SKIP, index]
+        parent.children.splice(index, 1, toBlock(component, line))
+        return [SKIP, nextIndex(component, index)]
       }
       case "heading": {
         if (node.depth === 1) {
@@ -168,17 +179,52 @@ function esmMessage(value: string): string {
   return `Las fichas no admiten \`${keyword}\`: solo Markdown y los componentes de la plataforma`
 }
 
+/** The components the platform provides, each written as a block. */
+const BLOCK_COMPONENTS: ReadonlySet<string> = new Set([CALLOUT, ENTITIES])
+
+function isBlockComponent(name: string | null): name is string {
+  return name !== null && BLOCK_COMPONENTS.has(name)
+}
+
+/** Where the visit goes on after a component is replaced by its block. */
+function nextIndex(node: MdxJsxFlowElement, index: number): number {
+  if (node.name === ENTITIES) return index + 1
+  return index
+}
+
+/** An `<Entities>` as a node that becomes its table, or its notice. */
+function toEntities(
+  node: MdxJsxFlowElement,
+  context: TransformContext,
+  line: number | null,
+  report: Report
+): Blockquote {
+  const { element, problems } = entitiesTable(node.attributes, context)
+  for (const message of problems) report(line, message)
+  return {
+    type: "blockquote",
+    children: [],
+    position: node.position,
+    data: {
+      hName: element.tagName,
+      hProperties: element.properties,
+      hChildren: element.children,
+    },
+  }
+}
+
 /**
- * The notice text, also used for the message of the problem. A `<Callout>`
- * inside a paragraph is refused for where it is, not for what it is.
+ * The notice text, also used for the message of the problem. A platform
+ * component inside a paragraph is refused for where it is, not for what it
+ * is.
  */
 export function componentMessage(
   name: string | null,
   placement: "block" | "inline" = "block"
 ): string {
   if (name === null) return "Las fichas no admiten fragmentos JSX (<>…</>)"
-  if (name === CALLOUT && placement === "inline")
-    return `El componente <${CALLOUT}> va en su propio bloque, con una línea en blanco antes y después`
+  if (isBlockComponent(name) && placement === "inline")
+    return `El componente <${name}> va en su propio bloque, con una línea en blanco antes y después`
   return `El componente <${name}> no existe en la plataforma`
 }
 
@@ -220,12 +266,13 @@ function isBlank(node: Paragraph["children"][number]): boolean {
   return node.type === "text" && node.value.trim() === ""
 }
 
-/** The `<Callout>` a paragraph holds alone, as the block it stands for. */
-function soleCallout(paragraph: Paragraph): MdxJsxFlowElement | null {
+/** The component a paragraph holds alone, as the block it stands for. */
+function soleComponent(paragraph: Paragraph): MdxJsxFlowElement | null {
   const content = paragraph.children.filter((child) => !isBlank(child))
   const [only] = content
   if (content.length !== 1 || only === undefined) return null
-  if (only.type !== "mdxJsxTextElement" || only.name !== CALLOUT) return null
+  if (only.type !== "mdxJsxTextElement" || !isBlockComponent(only.name))
+    return null
   return asBlock(only, paragraph)
 }
 
@@ -314,7 +361,25 @@ type Report = (line: number | null, message: string) => void
 type Target =
   | { kind: "keep" }
   | { kind: "url"; url: string }
+  | { kind: "text" }
   | { kind: "broken"; message: string }
+
+const CATALOG_SCHEME = "catalogo:"
+
+/** `catalogo:<type>/<id>`: the entity's page, or its text when it has none. */
+function entityTarget(url: string, context: TransformContext): Target {
+  const [typeId = "", id = "", ...rest] = url
+    .slice(CATALOG_SCHEME.length)
+    .split("/")
+  const entity = context.catalog.get(typeId)?.entities.get(id)
+  if (rest.length > 0 || entity === undefined)
+    return {
+      kind: "broken",
+      message: `${url} no es ninguna entidad del catálogo`,
+    }
+  if (entity.page === null) return { kind: "text" }
+  return { kind: "url", url: context.routeOf(entity.page) }
+}
 
 function resolveTarget(
   url: string,
@@ -323,6 +388,11 @@ function resolveTarget(
 ): Target {
   if (url === "" || url.startsWith("#") || url.startsWith("/"))
     return { kind: "keep" }
+  if (url.startsWith(CATALOG_SCHEME)) {
+    if (imagesOnly)
+      return { kind: "broken", message: `${url} no es una imagen` }
+    return entityTarget(url, context)
+  }
   if (SCHEME.test(url)) return { kind: "keep" }
   const [target = "", hash] = splitHash(url)
   const relative = path.posix.normalize(
@@ -360,8 +430,12 @@ function resolveLink(
     node.url = target.url
     return
   }
-  report(line, `Enlace roto: ${target.message}`)
   node.url = ""
+  if (target.kind === "text") {
+    node.data = { ...node.data, hName: "span" }
+    return
+  }
+  report(line, `Enlace roto: ${target.message}`)
   node.data = {
     ...node.data,
     hName: "span",
@@ -381,8 +455,9 @@ function resolveDefinition(
     node.url = target.url
     return
   }
-  report(line, `Enlace roto: ${target.message}`)
   node.url = ""
+  if (target.kind === "text") return
+  report(line, `Enlace roto: ${target.message}`)
 }
 
 function resolveImage(
@@ -397,6 +472,7 @@ function resolveImage(
     node.url = target.url
     return
   }
+  if (target.kind === "text") return
   report(line, `Imagen rota: ${target.message}`)
   node.url = ""
   node.data = {

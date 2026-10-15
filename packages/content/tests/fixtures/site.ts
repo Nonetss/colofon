@@ -1,5 +1,6 @@
 import type { Root } from "hast"
 import { toHtml } from "hast-util-to-html"
+import { readCatalog } from "#catalog"
 import { loadContent } from "#load"
 import { readSite, type Site, type SitePage } from "#pages/site"
 import { createContentDir } from "#tests/fixtures/content-dir"
@@ -46,6 +47,7 @@ export async function siteOf(files: Record<string, string>): Promise<Site> {
       dir.root,
       loaded.content.config,
       loaded.content.index,
+      await readCatalog(dir.root, loaded.content),
       ROUTES
     )
   } finally {

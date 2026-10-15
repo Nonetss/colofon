@@ -60,10 +60,23 @@ export const SANITIZE_SCHEMA: Schema = {
     h3: ["id"],
     h4: ["id"],
     div: [
-      ["className", "doc-alert", /^doc-alert-[a-z]+$/, "doc-component-notice"],
+      [
+        "className",
+        "doc-alert",
+        /^doc-alert-[a-z]+$/,
+        "doc-component-notice",
+        "doc-entities",
+      ],
       "dataComponent",
     ],
-    p: [["className", "doc-alert-title"]],
+    p: [
+      [
+        "className",
+        "doc-alert-title",
+        "doc-entities-group",
+        "doc-entities-empty",
+      ],
+    ],
     span: [
       [
         "className",
