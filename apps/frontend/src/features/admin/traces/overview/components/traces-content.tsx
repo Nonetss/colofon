@@ -19,8 +19,6 @@ import {
 } from "@/components/shared/resource/resource-filters"
 import { ResourceOverview } from "@/components/shared/resource/resource-overview"
 import { Button } from "@/components/ui/button"
-import { DatePicker } from "@/components/ui/date-picker"
-import { Input } from "@/components/ui/input"
 import {
   Sheet,
   SheetContent,
@@ -49,7 +47,6 @@ import {
 } from "@/features/admin/traces/shared"
 import { useColumnPreferences } from "@/hooks/use-column-preferences"
 import { columnPreferenceProps, useDataTable } from "@/hooks/use-data-table"
-import { useDebouncedValue } from "@/hooks/use-debounced-value"
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll"
 import { useIsMobile } from "@/hooks/use-mobile"
 import {
@@ -137,14 +134,6 @@ function TraceNameCell({
   )
 }
 
-/** A whole number of milliseconds from the input, or `undefined` for any. */
-function minDurationOf(value: string): number | undefined {
-  if (value.trim() === "") return undefined
-  const ms = Number(value)
-  if (!Number.isFinite(ms) || ms < 0) return undefined
-  return Math.floor(ms)
-}
-
 export function TracesContent() {
   const [serviceParam, setServiceParam] = useQueryParam(
     "services",
@@ -160,15 +149,10 @@ export function TracesContent() {
   const [traceParam, setTraceParam] = useQueryParam("trace", "")
   const traceSheet = useTraceSheetHistory(setTraceParam)
   const chosenTraceId = traceIdOf(traceParam)
-  const [minDuration, setMinDuration] = useState("")
-  const [from, setFrom] = useState<Date | undefined>(undefined)
-  const [to, setTo] = useState<Date | undefined>(undefined)
-  const debouncedMinDuration = useDebouncedValue(minDuration)
 
   // Unknown values in the URL are dropped instead of emptying the list.
   const services = traceServicesOf(serviceParam)
   const errorsOnly = errorsParam === ERRORS_ONLY_PARAM
-  const minDurationMs = minDurationOf(debouncedMinDuration)
 
   const {
     traces,
@@ -182,12 +166,9 @@ export function TracesContent() {
   } = useTraceSearch({
     services,
     errorsOnly,
-    minDurationMs,
     names: nameParam,
-    from,
-    to,
   })
-  const rootNames = useTraceRootNames({ from, to }, nameParam)
+  const rootNames = useTraceRootNames(nameParam)
   const openTraceId = openTraceOf(chosenTraceId, traces)
   const preferences = useColumnPreferences("admin-traces", traceColumnLayout)
   const table = useDataTable({
@@ -214,20 +195,11 @@ export function TracesContent() {
     hasNextPage && !isFetchingNextPage
   )
 
-  const filtered =
-    services.length > 0 ||
-    errorsOnly ||
-    minDurationMs !== undefined ||
-    nameParam.length > 0 ||
-    from !== undefined ||
-    to !== undefined
+  const filtered = services.length > 0 || errorsOnly || nameParam.length > 0
   const clearFilters = () => {
     setServiceParam(NO_VALUES)
     setErrorsParam("")
     setNameParam(NO_VALUES)
-    setMinDuration("")
-    setFrom(undefined)
-    setTo(undefined)
   }
   // An empty list is "every value": store the shared constant so the param
   // drops out of the URL.
@@ -259,17 +231,6 @@ export function TracesContent() {
       groups={rootNames}
       selected={nameParam}
       onChange={valuesSetter(setNameParam)}
-    />
-  )
-  const minDurationInput = (
-    <Input
-      type="number"
-      inputMode="numeric"
-      min={0}
-      value={minDuration}
-      onChange={(event) => setMinDuration(event.target.value)}
-      placeholder="Mín. ms"
-      aria-label="Duración mínima en milisegundos"
     />
   )
   const errorsSwitch = (
@@ -309,29 +270,6 @@ export function TracesContent() {
       excludable: false,
     },
     {
-      key: "minDuration",
-      kind: "custom",
-      label: "Duración mínima (ms)",
-      isActive: minDuration.trim() !== "",
-      render: () => minDurationInput,
-    },
-    {
-      key: "from",
-      kind: "date",
-      label: "Desde",
-      value: from,
-      onChange: setFrom,
-      placeholder: "Desde",
-    },
-    {
-      key: "to",
-      kind: "date",
-      label: "Hasta",
-      value: to,
-      onChange: setTo,
-      placeholder: "Hasta",
-    },
-    {
       key: "errors",
       kind: "custom",
       label: "Errores",
@@ -366,23 +304,8 @@ export function TracesContent() {
           <ResourceFilters filters={filterDescriptors} onClear={clearFilters} />
         ) : (
           <div className="@container">
-            <div className="grid gap-2 @md:grid-cols-2 @4xl:grid-cols-[minmax(0,1fr)_10rem_auto_auto_auto]">
-              <div className="min-w-0 @md:col-span-2 @4xl:col-span-1">
-                {nameFilter}
-              </div>
-              {minDurationInput}
-              <DatePicker
-                value={from}
-                onChange={setFrom}
-                placeholder="Desde"
-                aria-label="Desde"
-              />
-              <DatePicker
-                value={to}
-                onChange={setTo}
-                placeholder="Hasta"
-                aria-label="Hasta"
-              />
+            <div className="grid gap-2 @md:grid-cols-[minmax(0,1fr)_auto]">
+              <div className="min-w-0">{nameFilter}</div>
               {errorsSwitch}
             </div>
           </div>
