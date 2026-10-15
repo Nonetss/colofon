@@ -1,0 +1,112 @@
+---
+import { textVariants } from "@/components/shared/brand/typography"
+import { isStale } from "@/features/docs/page/model/dates"
+import { loadIcon } from "@/features/docs/page/model/icon"
+import type { DocsPage } from "@/features/docs/page/model/types"
+import { formatDate } from "@/lib/format"
+import { getIcon } from "@/lib/icon-registry"
+
+interface Props {
+  page: DocsPage
+}
+
+const { page } = Astro.props
+const { header } = Astro.props.page
+const Icon = await loadIcon(header.icon)
+const CalendarIcon = getIcon("scheduling", "schedule")
+const stale = header.updated !== null && isStale(header.updated, new Date())
+const trail = [
+  { href: `/${page.repository.slug}`, title: page.repository.name },
+  ...page.breadcrumbs,
+]
+const eyebrow = textVariants({ role: "label", tone: "muted" })
+
+/** The accent marks data that is due for review. */
+function updatedTone(isStaleData: boolean): "primary" | "muted" {
+  if (isStaleData) return "primary"
+  return "muted"
+}
+
+function updatedLabel(updated: string, isStaleData: boolean): string {
+  if (isStaleData) return `Revisar · datos del ${formatDate(updated)}`
+  return `Datos del ${formatDate(updated)}`
+}
+
+const meta = textVariants({ role: "status", tone: updatedTone(stale) })
+---
+
+<header class="flex flex-col gap-3 border-b pb-6">
+  {page.path !== "" && (
+    <nav aria-label="Ruta" data-md-skip>
+      <ol
+        class:list={["flex flex-wrap items-center gap-x-1.5 gap-y-1", eyebrow]}
+      >
+        {trail.map((link, index) => (
+          <li class="flex items-center gap-1.5">
+            {index > 0 && (
+              <span aria-hidden="true" class="text-border">
+                /
+              </span>
+            )}
+            <a
+              href={link.href}
+              class="rounded-sm transition-colors hover:text-foreground"
+            >
+              {link.title}
+            </a>
+          </li>
+        ))}
+      </ol>
+    </nav>
+  )}
+  <div class="flex items-center gap-2.5">
+    {Icon && <Icon className="size-5 shrink-0 text-primary" />}
+    <h1 class:list={[textVariants({ role: "display" }), "text-balance"]}>
+      {header.title}
+    </h1>
+  </div>
+  {header.description && (
+    <p
+      class:list={[textVariants({ role: "meta", tone: "muted" }), "max-w-3xl"]}
+    >
+      {header.description}
+    </p>
+  )}
+  {header.updated && (
+    <p class:list={["inline-flex items-center gap-1.5", meta]}>
+      <CalendarIcon className="size-3.5" />
+      {updatedLabel(header.updated, stale)}
+    </p>
+  )}
+  {header.fields.length > 0 && (
+    <dl class="mt-1 grid grid-cols-[auto_1fr] gap-x-6 gap-y-1.5 border-y py-3">
+      {header.fields.map((field) => (
+        <>
+          <dt class={eyebrow}>{field.name}</dt>
+          <dd
+            class:list={[
+              textVariants({ role: "meta" }),
+              "flex flex-wrap gap-x-2",
+            ]}
+          >
+            {field.values.map((value, index) => (
+              <span>
+                {value.href ? (
+                  <a
+                    href={value.href}
+                    class="text-primary underline-offset-4 hover:underline"
+                  >
+                    {value.text}
+                  </a>
+                ) : (
+                  value.text
+                )}
+                {index < field.values.length - 1 && ","}
+              </span>
+            ))}
+          </dd>
+        </>
+      ))}
+    </dl>
+  )}
+</header>

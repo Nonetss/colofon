@@ -1,0 +1,46 @@
+---
+import { textVariants } from "@/components/shared/brand/typography"
+import type { DocsPage } from "@/features/docs/page/model/types"
+
+interface Props {
+  page: DocsPage
+}
+
+const { headings } = Astro.props.page
+const link =
+  "-ml-px block border-transparent border-l-2 py-1 pr-2 text-muted-foreground transition-colors hover:text-foreground data-current:border-primary data-current:font-medium data-current:text-primary"
+---
+
+<aside
+  class="sticky top-[calc(var(--navbar-height)+2rem)] hidden max-h-[calc(100dvh-var(--navbar-height)-4rem)] w-56 shrink-0 self-start overflow-y-auto xl:block"
+>
+  {headings.length > 2 && (
+    <nav id="toc" aria-label="En esta página">
+      <p class:list={["mb-3", textVariants({ role: "label", tone: "muted" })]}>
+        En esta página
+      </p>
+      <ul class:list={["space-y-0.5 border-l", textVariants({ role: "meta" })]}>
+        {headings.map((heading) => (
+          <li>
+            <a
+              href={`#${heading.id}`}
+              data-toc={heading.id}
+              class:list={[link, heading.depth === 3 ? "pl-6" : "pl-3"]}
+            >
+              {heading.text}
+            </a>
+          </li>
+        ))}
+      </ul>
+      <a
+        href="#top"
+        class:list={[
+          "mt-4 inline-flex items-center gap-1 transition-colors hover:text-foreground",
+          textVariants({ role: "compact", tone: "muted" }),
+        ]}
+      >
+        ↑ Volver arriba
+      </a>
+    </nav>
+  )}
+</aside>

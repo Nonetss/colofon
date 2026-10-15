@@ -1,0 +1,42 @@
+---
+import { textVariants } from "@/components/shared/brand/typography"
+import { renderPage } from "@/features/docs/page/model/render"
+import type { DocsPage } from "@/features/docs/page/model/types"
+
+interface Props {
+  page: DocsPage
+}
+
+const { page } = Astro.props
+const html = page.tree === null ? "" : renderPage(page.tree)
+const unreadable = page.source === "file" && page.tree === null
+const notice =
+  "mt-6 flex flex-col gap-2 rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3"
+---
+
+{page.problems.length > 0 && (
+  <section class={notice} aria-label="Problemas de la ficha" data-md-skip>
+    <p class={textVariants({ role: "label", tone: "destructive" })}>
+      Problemas de esta ficha · solo lo ven los administradores
+    </p>
+    <ul class:list={["flex flex-col gap-1", textVariants({ role: "meta" })]}>
+      {page.problems.map((problem) => (
+        <li>
+          <span class={textVariants({ role: "data", tone: "muted" })}>
+            {problem.file}
+            {problem.line !== null && `:${problem.line}`}
+          </span>{" "}
+          {problem.message}
+        </li>
+      ))}
+    </ul>
+  </section>
+)}
+
+{unreadable ? (
+  <p class:list={[notice, textVariants({ role: "meta" })]}>
+    Esta ficha no se puede mostrar: su contenido tiene un error.
+  </p>
+) : (
+  html !== "" && <div class="typeset typeset-docs doc mt-6" set:html={html} />
+)}

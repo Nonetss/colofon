@@ -1,0 +1,62 @@
+---
+import { fade } from "astro:transitions"
+import { DOCS_SIDEBAR_ATTRIBUTE, type DocsNav } from "@/features/docs/shared"
+import { DocsSidebar } from "@/features/docs/sidebar"
+import Layout from "@/layouts/Layout.astro"
+
+interface Props {
+  /** Browser tab title. */
+  title: string
+  /** The navigation the sidebar starts from (`v1.docs.nav`). */
+  nav: DocsNav
+  /** The scope cookie this request carried, for the sidebar's first paint. */
+  storedScope: string | undefined
+  /** Pages with their own wide layout (the "Todos" home) drop the TOC column. */
+  wide?: boolean
+}
+
+const { title, nav, storedScope, wide = false } = Astro.props
+---
+
+<!--
+  The documentation reader. The window scrolls; the sidebar and the table of
+  contents stick below the navbar. The sidebar is a persisted island, so it
+  keeps its scroll and open sections across navigations; its wrapper reserves
+  its width before it hydrates. Only the page column fades.
+-->
+<Layout
+  title={title}
+  animateContent={false}
+  footer={false}
+  scrollToTop
+  bodyAttributes={{ [DOCS_SIDEBAR_ATTRIBUTE]: "" }}
+>
+  <div class="flex w-full">
+    <div
+      class="sticky top-(--navbar-height) hidden h-[calc(100dvh-var(--navbar-height))] w-64 shrink-0 border-sidebar-border border-r bg-sidebar md:block lg:w-72"
+      transition:persist="docs-sidebar"
+    >
+      <DocsSidebar
+        client:only="react"
+        initialNav={nav}
+        initialScope={storedScope}
+      />
+    </div>
+    <main
+      class="flex min-w-0 flex-1 justify-center gap-10 px-4 py-8 sm:px-8"
+      transition:animate={fade({ duration: "0.2s" })}
+    >
+      <article
+        class:list={["min-w-0 flex-1", wide ? "max-w-5xl" : "max-w-4xl"]}
+      >
+        <slot />
+      </article>
+      <slot name="aside" />
+    </main>
+  </div>
+  <script>
+  import { onDocsPageLoad } from "@/features/docs/page/model/page-scripts"
+
+  onDocsPageLoad()
+  </script>
+</Layout>

@@ -1,0 +1,74 @@
+---
+import { ORPCError } from "@orpc/client"
+import {
+  DocBody,
+  DocChildren,
+  DocHero,
+  DocPager,
+  DocToc,
+} from "@/features/docs/page"
+import {
+  DOCS_SCOPE_COOKIE,
+  SCOPE_COOKIE_MAX_AGE,
+  scopeToStore,
+} from "@/features/docs/shared"
+import Docs from "@/layouts/Docs.astro"
+import { createServerClient } from "@/lib/orpc-server"
+
+// A page of a content repository: `/<slug>` is its home and `/<slug>/<path>`
+// a page or section. Rendered on the server from the backend's tree, so the
+// text is in the HTML; an unknown repository or page is the 404 page.
+
+/** The scope the sidebar starts with: the one just stored, or the old one. */
+function scopeNow(
+  store: string | undefined,
+  stored: string | undefined
+): string | undefined {
+  if (store !== undefined) return store
+  return stored
+}
+
+/** An answer meaning there is no such page (or the path can't be one). */
+function isMissing(error: unknown): boolean {
+  if (!(error instanceof ORPCError)) return false
+  return error.code === "NOT_FOUND" || error.code === "BAD_REQUEST"
+}
+
+const client = createServerClient(Astro.request)
+const repository = Astro.params.repo ?? ""
+const path = Astro.params.path ?? ""
+
+const loaded = await Promise.all([
+  client.v1.docs.nav(),
+  client.v1.docs.page({ repository, path }),
+]).catch((error: unknown) => {
+  if (isMissing(error)) return undefined
+  throw error
+})
+if (loaded === undefined) return Astro.rewrite("/404")
+const [nav, page] = loaded
+
+const stored = Astro.cookies.get(DOCS_SCOPE_COOKIE)?.value
+const store = scopeToStore(
+  stored,
+  nav.repositories.map((entry) => entry.slug),
+  page.repository.slug
+)
+if (store !== undefined) {
+  Astro.cookies.set(DOCS_SCOPE_COOKIE, store, {
+    path: "/",
+    maxAge: SCOPE_COOKIE_MAX_AGE,
+    sameSite: "lax",
+  })
+}
+const scope = scopeNow(store, stored)
+const title = `${page.header.title} · ${page.repository.name}`
+---
+
+<Docs title={title} nav={nav} storedScope={scope}>
+  <DocHero page={page} />
+  <DocBody page={page} />
+  <DocChildren page={page} />
+  <DocPager page={page} />
+  <DocToc slot="aside" page={page} />
+</Docs>

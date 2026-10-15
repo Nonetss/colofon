@@ -815,3 +815,130 @@ html.theme-transitioning::view-transition-new(root) {
       400 var(--text-xs) / var(--text-xs--line-height) var(--font-sans);
   }
 }
+
+/* The documentation reader's page body (`features/docs/page`). It is
+   `.typeset.typeset-docs` for the prose itself; these rules only style what
+   the platform adds around the content's Markdown: code frames with their
+   copy button, table frames, heading anchors, `[!KIND]` alerts, notices for
+   components the platform doesn't provide and broken links or images.
+   Monochrome like the rest of the product: the accent marks a warning, the
+   destructive tone a caution. */
+@layer components {
+  .doc :where([id]) {
+    scroll-margin-block-start: calc(var(--navbar-height) + 1.5rem);
+  }
+
+  .doc :where(.doc-anchor) {
+    margin-inline-start: 0.4em;
+    color: var(--color-muted-foreground);
+    font-weight: 400;
+    text-decoration: none;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+  }
+
+  .doc :where(h2, h3, h4):hover :where(.doc-anchor),
+  .doc :where(.doc-anchor):focus-visible {
+    opacity: 1;
+  }
+
+  .doc :where(.doc-code) {
+    margin-block-start: var(--typeset-flow);
+    overflow: hidden;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    background-color: var(--color-muted);
+  }
+
+  .doc :where(.doc-code > pre) {
+    margin-block-start: 0;
+    border-radius: 0;
+  }
+
+  .doc :where(.doc-code-bar) {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.35rem 0.75rem;
+    border-block-end: 1px solid var(--color-border);
+    color: var(--color-muted-foreground);
+    font-family: var(--font-mono);
+    font-size: var(--font-size-label);
+    letter-spacing: var(--tracking-caps);
+    text-transform: uppercase;
+  }
+
+  .doc :where(.doc-code-copy) {
+    margin-inline-start: auto;
+    border-radius: calc(var(--radius) * 0.75);
+    padding: 0.1rem 0.4rem;
+    text-transform: uppercase;
+    transition: color 0.15s ease;
+  }
+
+  .doc :where(.doc-code-copy):hover,
+  .doc :where(.doc-code-copy):focus-visible {
+    color: var(--color-foreground);
+  }
+
+  .doc :where(.doc-alert) {
+    margin-block-start: var(--typeset-flow);
+    border-inline-start: 2px solid var(--color-border);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    background-color: color-mix(in oklch, var(--color-muted) 60%, transparent);
+    padding: 0.75em 1em;
+  }
+
+  .doc :where(.doc-alert > * + *) {
+    margin-block-start: 0.5em;
+  }
+
+  .doc :where(.doc-alert-title) {
+    color: var(--color-muted-foreground);
+    font-size: var(--font-size-label);
+    font-weight: 500;
+    letter-spacing: var(--tracking-caps);
+    text-transform: uppercase;
+  }
+
+  .doc :where(.doc-alert-warning, .doc-alert-important) {
+    border-inline-start-color: var(--color-primary);
+  }
+
+  .doc
+    :where(.doc-alert-warning, .doc-alert-important)
+    :where(.doc-alert-title) {
+    color: var(--color-primary);
+  }
+
+  .doc :where(.doc-alert-caution) {
+    border-inline-start-color: var(--color-destructive);
+  }
+
+  .doc :where(.doc-alert-caution) :where(.doc-alert-title) {
+    color: var(--color-destructive);
+  }
+
+  .doc :where(div.doc-component-notice) {
+    margin-block-start: var(--typeset-flow);
+    border: 1px dashed var(--color-border);
+    border-radius: var(--radius);
+    padding: 0.75em 1em;
+  }
+
+  .doc :where(.doc-component-notice) {
+    color: var(--color-muted-foreground);
+    font-family: var(--font-mono);
+    font-size: 0.8125em;
+  }
+
+  .doc :where(.doc-broken-link) {
+    text-decoration: underline dotted var(--color-destructive);
+    text-underline-offset: 4px;
+  }
+
+  .doc :where(.doc-broken-image) {
+    color: var(--color-muted-foreground);
+    font-style: italic;
+  }
+}

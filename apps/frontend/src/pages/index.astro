@@ -1,12 +1,22 @@
 ---
-import { HomePage } from "@/features/home"
-import Layout from "@/layouts/Layout.astro"
+import { DocsHome } from "@/features/docs/home"
+import { DOCS_SCOPE_COOKIE, resolveScope } from "@/features/docs/shared"
+import Docs from "@/layouts/Docs.astro"
 import { appSurfaces } from "@/lib/app-surfaces"
 import { isAdminUser } from "@/lib/auth"
+import { createServerClient } from "@/lib/orpc-server"
 
-const isAdmin = isAdminUser(Astro.locals.user)
+// The "Todos" home, or the remembered repository's home when the scope is
+// one repository (always the case with a single repository).
+const nav = await createServerClient(Astro.request).v1.docs.nav()
+const stored = Astro.cookies.get(DOCS_SCOPE_COOKIE)?.value
+const scope = resolveScope(
+  stored,
+  nav.repositories.map((repository) => repository.slug)
+)
+if (scope.kind === "repository") return Astro.redirect(`/${scope.slug}`)
 ---
 
-<Layout title={appSurfaces.home.title}>
-  <HomePage client:only="react" isAdmin={isAdmin} />
-</Layout>
+<Docs title={appSurfaces.home.title} nav={nav} storedScope={stored} wide>
+  <DocsHome nav={nav} isAdmin={isAdminUser(Astro.locals.user)} />
+</Docs>

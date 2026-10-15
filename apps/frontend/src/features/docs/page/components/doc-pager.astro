@@ -1,0 +1,55 @@
+---
+import { textVariants } from "@/components/shared/brand/typography"
+import type { DocsPage } from "@/features/docs/page/model/types"
+
+interface Props {
+  page: DocsPage
+}
+
+const { previous, next } = Astro.props.page
+const link =
+  "group flex min-w-0 flex-col gap-1 rounded-lg border px-4 py-3 transition-colors hover:border-primary/40"
+---
+
+{(previous || next) && (
+  <div class="@container mt-12 border-t pt-6">
+    <nav
+      aria-label="Anterior y siguiente"
+      class="grid grid-cols-1 gap-3 @md:grid-cols-2"
+      data-md-skip
+    >
+      {previous ? (
+        <a href={previous.href} class={link}>
+          <span class={textVariants({ role: "status", tone: "muted" })}>
+            ← Anterior
+          </span>
+          <span
+            class:list={[
+              textVariants({ role: "title" }),
+              "truncate group-hover:text-primary",
+            ]}
+          >
+            {previous.title}
+          </span>
+        </a>
+      ) : (
+        <span />
+      )}
+      {next && (
+        <a href={next.href} class:list={[link, "@md:items-end @md:text-right"]}>
+          <span class={textVariants({ role: "status", tone: "muted" })}>
+            Siguiente →
+          </span>
+          <span
+            class:list={[
+              textVariants({ role: "title" }),
+              "truncate group-hover:text-primary",
+            ]}
+          >
+            {next.title}
+          </span>
+        </a>
+      )}
+    </nav>
+  </div>
+)}

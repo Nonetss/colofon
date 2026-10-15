@@ -1,0 +1,94 @@
+---
+import { textVariants } from "@/components/shared/brand/typography"
+import type { DocsNav } from "@/features/docs/shared"
+
+interface Props {
+  nav: DocsNav
+  isAdmin: boolean
+}
+
+// The "Todos" home: every repository as a section of one document, with its
+// description and top-level sections listed under it. No cards.
+const { nav, isAdmin } = Astro.props
+const muted = textVariants({ role: "meta", tone: "muted" })
+---
+
+<header class="flex flex-col gap-2 border-b pb-6">
+  <h1 class:list={[textVariants({ role: "display" }), "text-balance"]}>
+    Documentación
+  </h1>
+  <p class:list={[muted, "max-w-3xl"]}>
+    Todos los repositorios de documentación de la plataforma.
+  </p>
+</header>
+
+{nav.repositories.length === 0 ? (
+  <section class="mt-8 flex flex-col gap-3">
+    <p class={textVariants({ role: "body" })}>Aún no hay documentación.</p>
+    {isAdmin ? (
+      <p class={muted}>
+        Añade un repositorio de contenido en{" "}
+        <a
+          href="/admin/content"
+          class="text-primary underline-offset-4 hover:underline"
+        >
+          Administración · Contenido
+        </a>
+        .
+      </p>
+    ) : (
+      <p class={muted}>
+        Cuando un administrador conecte un repositorio aparecerá aquí.
+      </p>
+    )}
+  </section>
+) : (
+  <div class="mt-8 flex flex-col gap-12">
+    {nav.repositories.map((repository) => (
+      <section
+        class="flex flex-col gap-3"
+        aria-labelledby={`repo-${repository.slug}`}
+      >
+        <h2
+          id={`repo-${repository.slug}`}
+          class={textVariants({ role: "headline" })}
+        >
+          <a
+            href={`/${repository.slug}`}
+            class="transition-colors hover:text-primary"
+          >
+            {repository.name}
+          </a>
+        </h2>
+        {repository.description && (
+          <p class:list={[muted, "max-w-3xl"]}>{repository.description}</p>
+        )}
+        {repository.available ? (
+          repository.nodes.length > 0 && (
+            <ul class="divide-y border-y">
+              {repository.nodes.map((node) => (
+                <li>
+                  <a href={node.href} class="group flex flex-col gap-0.5 py-3">
+                    <span
+                      class:list={[
+                        textVariants({ role: "title" }),
+                        "group-hover:text-primary",
+                      ]}
+                    >
+                      {node.title}
+                    </span>
+                    {node.description && (
+                      <span class={muted}>{node.description}</span>
+                    )}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          )
+        ) : (
+          <p class={muted}>Sin contenido todavía.</p>
+        )}
+      </section>
+    ))}
+  </div>
+)}

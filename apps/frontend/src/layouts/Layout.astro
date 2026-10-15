@@ -19,8 +19,19 @@ interface Props {
    * `hideFooter`. Without this, the slot is padded below the navbar.
    */
   overlayNavbar?: boolean
-  /** Fade the layout slot. `WithSidebar` opts out and fades only the page. */
+  /** Fade the layout slot. `Docs` opts out and fades only the page. */
   animateContent?: boolean
+  /**
+   * `false` leaves out the site footer while the window still scrolls (the
+   * documentation reader). `hideFooter` also locks the page to the viewport.
+   */
+  footer?: boolean
+  /**
+   * Extra attributes for `<body>`. The router swaps `<body>` with each page,
+   * so they follow client-side navigation (`Docs` marks pages that have the
+   * documentation sidebar).
+   */
+  bodyAttributes?: Record<string, string>
   /**
    * Shows the floating "back to top" button (mounted once below) once the
    * page scrolls past its threshold, by stamping `data-scroll-to-top` on the
@@ -35,6 +46,8 @@ const {
   hideFooter = false,
   overlayNavbar = false,
   animateContent = true,
+  footer = true,
+  bodyAttributes = {},
   scrollToTop = false,
 } = Astro.props
 const scrollUnderNavbar = hideFooter && overlayNavbar
@@ -84,6 +97,7 @@ const isAdmin = isAdminUser(user)
     <ServiceWorker />
   </head>
   <body
+    {...bodyAttributes}
     class:list={[
       "flex flex-col",
       hideFooter ? "h-dvh overflow-hidden" : "min-h-screen",
@@ -119,7 +133,7 @@ const isAdmin = isAdminUser(user)
     >
       <slot />
     </div>
-    {!hideFooter ? <SiteFooter /> : null}
+    {!hideFooter && footer ? <SiteFooter /> : null}
     <Toaster client:only="react" />
     <div class="scroll-to-top-root" transition:persist="scroll-to-top">
       <ScrollToTopButton client:only="react" />

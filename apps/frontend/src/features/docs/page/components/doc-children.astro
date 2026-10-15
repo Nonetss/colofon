@@ -1,0 +1,42 @@
+---
+import { textVariants } from "@/components/shared/brand/typography"
+import type { DocsPage } from "@/features/docs/page/model/types"
+
+interface Props {
+  page: DocsPage
+}
+
+const { page } = Astro.props
+---
+
+{page.children.length > 0 && (
+  <section class="mt-12 flex flex-col gap-3" aria-labelledby="fichas">
+    <h2 id="fichas" class={textVariants({ role: "headline" })}>
+      {page.path === "" ? "Secciones" : `En ${page.header.title}`}
+    </h2>
+    <ul class="divide-y border-y">
+      {page.children.map((child) => (
+        <li>
+          <a
+            href={child.href}
+            class="group flex flex-col gap-0.5 py-3 transition-colors"
+          >
+            <span
+              class:list={[
+                textVariants({ role: "title" }),
+                "group-hover:text-primary",
+              ]}
+            >
+              {child.title}
+            </span>
+            {child.description && (
+              <span class={textVariants({ role: "meta", tone: "muted" })}>
+                {child.description}
+              </span>
+            )}
+          </a>
+        </li>
+      ))}
+    </ul>
+  </section>
+)}
