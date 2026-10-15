@@ -1,0 +1,9 @@
+---
+import { ContentPage } from "@/features/admin/content"
+import Admin from "@/layouts/Admin.astro"
+import { appSurfaces } from "@/lib/app-surfaces"
+---
+
+<Admin title={appSurfaces["admin-content"].title}>
+  <ContentPage client:only="react" />
+</Admin>

@@ -39,6 +39,7 @@ const adminIcons = {
 const entityIcons = {
   organization: Lucide.Building2,
   apiKey: Lucide.KeyRound,
+  contentRepository: Lucide.FolderGit2,
 } as const
 
 const identityIcons = {

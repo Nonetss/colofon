@@ -15,6 +15,7 @@ export type SurfaceId =
   | "admin-organizations"
   | "admin-teams"
   | "admin-api-keys"
+  | "admin-content"
   | "admin-plugins"
   | "config"
   | "config-profile"
@@ -215,6 +216,15 @@ const appSurfaceDefinitions: Partial<Record<SurfaceId, SurfaceDefinition>> = {
         label: "API keys",
         description: "Crea y revoca credenciales para conectar servicios.",
         icon: iconRef("entities", "apiKey"),
+        adminOnly: true,
+      },
+      "admin-content": {
+        path: "/admin/content",
+        title: "Admin · Contenido",
+        label: "Contenido",
+        description:
+          "Conecta los repositorios de documentación que lee la plataforma.",
+        icon: iconRef("entities", "contentRepository"),
         adminOnly: true,
       },
       "admin-plugins": {
