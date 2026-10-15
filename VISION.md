@@ -10,11 +10,11 @@ Una **plataforma para documentar sistemas** (la infraestructura del trabajo,
 un homelab o cualquier otra cosa) que sirva por igual a **personas** y a
 **agentes de IA**.
 
-La idea nace de `doc-sjd`, la documentación de la infraestructura del
-trabajo. Con su `llms.txt`, un agente se leyó la documentación, entendió dónde
-estaba cada cosa y cuál era el flujo de trabajo, y montó unas copias en
-Duplicati de forma autónoma, sin que hubiera que explicarle nada. Funcionó muy
-bien, pero tenía dos problemas:
+La idea nace de la documentación de la infraestructura del trabajo. Con su
+`llms.txt`, un agente se leyó la documentación, entendió dónde estaba cada cosa
+y cuál era el flujo de trabajo, y montó unas copias en Duplicati de forma
+autónoma, sin que hubiera que explicarle nada. Funcionó muy bien, pero tenía
+dos problemas:
 
 1. **La estructura era improvisada.** Los catálogos de `datos/` crecían a
    mano, cada uno con su forma y su página hecha a medida.
@@ -89,8 +89,8 @@ cómo se muestra. Los tipos de campo son `texto`, `numero`, `entero`,
 `booleano`, `fecha`, `url`, `email`, `ip`, `ficha` (una página de `docs/`),
 `enum`, `ref` (una entidad de otro tipo), `lista` y `objeto`, cada uno con
 `opcional` y `descripcion`. La `descripcion` de cada campo sustituye a los
-comentarios de cabecera que tenían los YAML de `doc-sjd`: la ve quien edita y
-la lee la IA.
+comentarios de cabecera que tenían los YAML de la documentación anterior: la
+ve quien edita y la lee la IA.
 
 - **Una entidad por fichero.** Diffs limpios, y la IA toca una cosa sin
   reescribir un YAML de miles de líneas.
@@ -116,12 +116,12 @@ certificado local.
 
 ### Web de documentación (en parte)
 
-Ya existe el **lector**, con el aspecto de `doc-sjd`: `/` es la portada
-"Todos" con cada repositorio y sus secciones, `/<slug>` la portada de un
-repositorio y `/<slug>/<ruta>` una ficha. El backend convierte cada ficha MDX
-en un **árbol** sin ejecutar nada y el frontend lo pinta en el servidor, con
-un sidebar de secciones y fichas, un selector de repositorio ("Todos" o uno),
-migas, anterior y siguiente, y el índice "En esta página". Qué admite una
+Ya existe el **lector**: `/` es la portada "Todos" con cada repositorio y
+sus secciones, `/<slug>` la portada de un repositorio y `/<slug>/<ruta>` una
+ficha. El backend convierte cada ficha MDX en un **árbol** sin ejecutar nada
+y el frontend lo pinta en el servidor, con un sidebar de secciones y fichas, un
+selector de repositorio ("Todos" o uno), migas, anterior y siguiente, y el
+índice "En esta página". Qué admite una
 ficha está en [`docs/human/contenido.md`](docs/human/contenido.md#cómo-se-escriben-las-fichas).
 
 Pendiente:
@@ -129,8 +129,8 @@ Pendiente:
 - Montar como islas los **componentes** interactivos: hoy la plataforma no
   ofrece ninguno y cada uno se muestra como un aviso.
 - **Componentes genéricos** que no dependen del dominio:
-  `<Entidades tipo="servicios" agrupar="categoria" />` monta la portada de
-  servicios de `doc-sjd` y también una lista de frutas por temporada.
+  `<Entidades tipo="servicios" agrupar="categoria" />` monta una portada de
+  servicios y también una lista de frutas por temporada.
 - **Páginas automáticas** por tipo y por entidad, con sus relaciones y las
   fichas que la citan.
 - **Búsqueda** en el texto de las fichas (hoy el buscador del navbar solo las
@@ -141,8 +141,8 @@ Pendiente:
 
 ### Diagramas (pendiente)
 
-En `doc-sjd` cada caja de un diagrama lleva sus coordenadas a mano, y solo el
-mapa de la portada es interactivo. Aquí:
+En la documentación anterior cada caja de un diagrama lleva sus coordenadas a
+mano, y solo el mapa de la portada es interactivo. Aquí:
 
 - Se declaran **solo nodos, flechas y zonas**, en un bloque ` ```diagrama ` de
   YAML dentro de la propia ficha.
@@ -261,16 +261,17 @@ de datos sin conocerla.
    ruta y con qué resultado.
 
 Para validar la idea, el primer caso propuesto es **Duplicati**: ya se hizo a
-mano en `doc-sjd`, tiene login previo (el caso de autenticación más difícil) y
-crear una copia necesita una passphrase, que es justo el caso de las
-referencias a secretos.
+mano en la documentación anterior, tiene login previo (el caso de
+autenticación más difícil) y crear una copia necesita una passphrase, que es
+justo el caso de las referencias a secretos.
 
 ### Importadores (pendiente)
 
 Comandos como "sincroniza los dockers desde la conexión de Komodo" que piden
 los datos al broker y escriben las entidades del catálogo, validadas contra su
-esquema. Los datos grandes (los 3.000 líneas de dockers de `doc-sjd`) no pasan
-por el modelo, y regenerarlos es un comando en vez de una conversación.
+esquema. Los datos grandes (las 3.000 líneas de dockers de la documentación
+anterior) no pasan por el modelo, y regenerarlos es un comando en vez de una
+conversación.
 
 ### Más adelante
 
