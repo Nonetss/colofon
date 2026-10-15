@@ -59,7 +59,7 @@ export function SignInContent() {
               className="font-mono"
               aria-hidden="true"
             >
-              STACK · Acceso
+              DOC · Acceso
             </Text>
             <CardTitle className={textVariants({ role: "display" })}>
               Iniciar sesión
