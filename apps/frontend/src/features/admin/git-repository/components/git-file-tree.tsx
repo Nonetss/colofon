@@ -2,8 +2,9 @@ import { type CSSProperties, useEffect, useRef, useState } from "react"
 import { Text } from "@/components/shared/brand/typography"
 import { useRepositoryFolder } from "@/features/admin/git-repository/hooks/use-git-browser"
 import {
-  ancestorFolders,
+  formatBytes,
   isNotFound,
+  revealedFolders,
   toggledFolder,
 } from "@/features/admin/git-repository/model/git-location"
 import type { FolderEntry } from "@/features/admin/git-repository/model/types"
@@ -28,8 +29,12 @@ const ROW =
 interface GitFileTreeProps {
   slug: string
   branch: string
+  /** The folder the URL names; it starts unfolded. */
+  folder: string
   /** The open file, highlighted; its folders start unfolded. */
   openFile: string
+  /** Shows each file's size at the end of its row. */
+  showSizes: boolean
   onOpenFile: (path: string) => void
 }
 
@@ -41,23 +46,26 @@ interface GitFileTreeProps {
 export function GitFileTree({
   slug,
   branch,
+  folder,
   openFile,
+  showSizes,
   onOpenFile,
 }: GitFileTreeProps) {
   const [unfolded, setUnfolded] = useState<Set<string>>(
-    () => new Set(ancestorFolders(openFile))
+    () => new Set(revealedFolders({ path: folder, file: openFile }))
   )
 
-  // Opening a file from elsewhere (breadcrumb, back button) reveals it.
+  // A folder or file named from elsewhere (breadcrumb, back button) is
+  // revealed; what the user unfolded stays unfolded.
   useEffect(() => {
     setUnfolded((current) => {
-      const missing = ancestorFolders(openFile).filter(
-        (folder) => !current.has(folder)
+      const missing = revealedFolders({ path: folder, file: openFile }).filter(
+        (path) => !current.has(path)
       )
       if (missing.length === 0) return current
       return new Set([...current, ...missing])
     })
-  }, [openFile])
+  }, [folder, openFile])
 
   return (
     <nav aria-label="Ficheros del repositorio">
@@ -67,6 +75,7 @@ export function GitFileTree({
         folder=""
         depth={0}
         openFile={openFile}
+        showSizes={showSizes}
         unfolded={unfolded}
         onToggle={(path) =>
           setUnfolded((current) => toggledFolder(current, path))
@@ -83,6 +92,7 @@ interface TreeLevelProps {
   folder: string
   depth: number
   openFile: string
+  showSizes: boolean
   unfolded: ReadonlySet<string>
   onToggle: (path: string) => void
   onOpenFile: (path: string) => void
@@ -122,7 +132,7 @@ function TreeEntry({
   depth,
   ...props
 }: TreeLevelProps & { entry: FolderEntry }) {
-  const { openFile, unfolded, onToggle, onOpenFile } = props
+  const { openFile, showSizes, unfolded, onToggle, onOpenFile } = props
   const Icon = ICONS[entry.kind]
   const indent = indentOf(depth)
 
@@ -169,6 +179,7 @@ function TreeEntry({
   return (
     <FileRow
       name={entry.name}
+      size={sizeOf(entry, showSizes)}
       isOpen={entry.path === openFile}
       style={leafIndent}
       onOpen={() => onOpenFile(entry.path)}
@@ -176,13 +187,21 @@ function TreeEntry({
   )
 }
 
+/** The size shown at the end of a file's row, when sizes are shown. */
+function sizeOf(entry: FolderEntry, showSizes: boolean): string | undefined {
+  if (!showSizes || entry.size === null) return undefined
+  return formatBytes(entry.size)
+}
+
 function FileRow({
   name,
+  size,
   isOpen,
   style,
   onOpen,
 }: {
   name: string
+  size: string | undefined
   isOpen: boolean
   style: CSSProperties
   onOpen: () => void
@@ -210,6 +229,15 @@ function FileRow({
     >
       <Icon aria-hidden className="size-4 shrink-0 text-muted-foreground" />
       <EntryName name={name} />
+      {size !== undefined && (
+        <Text
+          variant="compact"
+          tone="muted"
+          className="ml-auto shrink-0 pl-4 tabular-nums"
+        >
+          {size}
+        </Text>
+      )}
     </button>
   )
 }
