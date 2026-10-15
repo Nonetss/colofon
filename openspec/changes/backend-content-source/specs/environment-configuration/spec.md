@@ -1,0 +1,62 @@
+## MODIFIED Requirements
+
+### Requirement: Validated server environment
+
+`@nonete/env/server` SHALL validate the server variables with t3-env and zod and export them as a typed `env` object:
+- required: `DATABASE_URL`, `BETTER_AUTH_SECRET` (at least 32 characters), `BETTER_AUTH_URL` (URL) and `CORS_ORIGIN` (URL);
+- with defaults: `NODE_ENV` (`development` | `production` | `test`, default `development`), `LOG_LEVEL` (`fatal` | `error` | `warn` | `info` | `debug` | `trace`, default `info`), `OTEL_TRACES_SAMPLER_ARG` (a number from `0` to `1`, default `1`) and `CONTENT_REF` (default `main`);
+- optional: `LOKI_URL`, `OTEL_EXPORTER_OTLP_ENDPOINT` (URL), `TEMPO_URL` (URL), `ADMIN_EMAIL`, `ADMIN_PASSWORD` (at least 8 characters), `ADMIN_NAME`, `OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET`, `OIDC_DISCOVERY_URL`, `CONTENT_DIR` (a folder path) and `CONTENT_REPO` (a git repository URL), where `CONTENT_DIR` and `CONTENT_REPO` SHALL NOT both be set.
+
+Empty strings SHALL be treated as unset. Validation SHALL be skipped when `SKIP_ENV_VALIDATION` is set. `@nonete/env/web` SHALL validate the client variable `PUBLIC_SERVER_URL`. The frontend's `astro:env` schema SHALL declare `OTEL_EXPORTER_OTLP_ENDPOINT` and `OTEL_TRACES_SAMPLER_ARG` as optional server variables with the same meaning and default.
+
+#### Scenario: Missing required variable
+
+- **WHEN** the backend starts without `BETTER_AUTH_SECRET` and without `SKIP_ENV_VALIDATION`
+- **THEN** environment validation SHALL fail and the backend SHALL NOT start
+
+#### Scenario: Defaults apply
+
+- **WHEN** neither `NODE_ENV`, `LOG_LEVEL`, `OTEL_TRACES_SAMPLER_ARG` nor `CONTENT_REF` is set
+- **THEN** `env.NODE_ENV` SHALL be `development`, `env.LOG_LEVEL` SHALL be `info`, `env.OTEL_TRACES_SAMPLER_ARG` SHALL be `1` and `env.CONTENT_REF` SHALL be `main`
+
+#### Scenario: Out-of-range sample ratio
+
+- **WHEN** the backend starts with `OTEL_TRACES_SAMPLER_ARG=2`
+- **THEN** environment validation SHALL fail and the backend SHALL NOT start
+
+#### Scenario: Two content sources
+
+- **WHEN** the backend starts with both `CONTENT_DIR` and `CONTENT_REPO` set
+- **THEN** environment validation SHALL fail and the backend SHALL NOT start
+
+#### Scenario: Build without secrets
+
+- **WHEN** a production image is built with `SKIP_ENV_VALIDATION=1` and no runtime variables
+- **THEN** the build SHALL NOT fail on environment validation
+
+### Requirement: Compose files read the root env file
+
+Every compose file (`compose.yml`, `compose.dev.yml`, `compose.prod.yml`) SHALL load the root `.env` for the app services and SHALL override only:
+- container-network addresses (service hostnames, `BACKEND_URL`, `LOKI_URL`, `OTEL_EXPORTER_OTLP_ENDPOINT`, `TEMPO_URL`);
+- container paths of host folders the compose file mounts (`CONTENT_DIR`, set to where the host's `CONTENT_DIR` is mounted, and only when the host value is set);
+- values fixed by the compose file itself (such as the `CORS_ORIGIN` and `BETTER_AUTH_URL` of the port it publishes, or `BETTER_AUTH_URL` taken from `CORS_ORIGIN`);
+- `NODE_ENV`.
+
+It SHALL always use the unified names.
+
+#### Scenario: Production overrides use unified names
+
+- **WHEN** `compose.prod.yml` starts the stack from a `.env` written by `scripts/bootstrap.sh`
+- **THEN** the backend SHALL receive the public origin as `CORS_ORIGIN` from `.env`, the same origin as `BETTER_AUTH_URL`, and `NODE_ENV=production`
+- **AND** the frontend SHALL receive its internal backend address as `BACKEND_URL`
+- **AND** both apps SHALL receive `OTEL_EXPORTER_OTLP_ENDPOINT=http://tempo:4318`, and the backend `TEMPO_URL=http://tempo:3200`
+
+#### Scenario: Content folder inside a container
+
+- **WHEN** the Docker dev stack starts with `CONTENT_DIR=../documentacion` in `.env`
+- **THEN** the backend container SHALL receive `CONTENT_DIR` set to the container path where that folder is mounted
+
+#### Scenario: Content repository inside a container
+
+- **WHEN** a compose file starts the backend with `CONTENT_REPO` set and `CONTENT_DIR` unset in `.env`
+- **THEN** the backend container SHALL receive `CONTENT_REPO` and `CONTENT_REF` unchanged and no `CONTENT_DIR`
