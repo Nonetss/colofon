@@ -2,6 +2,7 @@ import { getIcon } from "@/lib/icon-registry"
 
 const Search = getIcon("views", "search")
 
+import type { KeyboardEvent } from "react"
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
 
@@ -12,6 +13,7 @@ export function SearchInput({
   placeholder,
   label,
   className,
+  onKeyDown,
 }: {
   id?: string
   /** Accessible name when no visible `<label>` points at the input. */
@@ -20,6 +22,8 @@ export function SearchInput({
   onValueChange: (value: string) => void
   placeholder?: string
   className?: string
+  /** Keys pressed in the field (Escape to clear it, Enter to apply…). */
+  onKeyDown?: (event: KeyboardEvent<HTMLInputElement>) => void
 }) {
   return (
     <div className={cn("relative", className)}>
@@ -30,6 +34,7 @@ export function SearchInput({
         onChange={(e) => onValueChange(e.target.value)}
         placeholder={placeholder}
         aria-label={label}
+        onKeyDown={onKeyDown}
         className="h-9 pl-8"
       />
     </div>
