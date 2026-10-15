@@ -172,6 +172,13 @@ services:
       LOKI_URL: http://loki:3100
       OTEL_EXPORTER_OTLP_ENDPOINT: http://tempo:4318
       TEMPO_URL: http://tempo:3200
+      CONTENT_DIR: ${CONTENT_DIR:+/content}
+    volumes:
+      # The content: a CONTENT_DIR from .env is mounted read-only at /content
+      # and the variable pointed there; unset, it stays unset (and /content
+      # gets an empty volume). A CONTENT_REPO clone lives in content_data.
+      - ${CONTENT_DIR:-content_unset}:/content:ro
+      - content_data:/app/.content
     expose:
       - "3000"
     depends_on:
@@ -192,6 +199,9 @@ services:
         - action: sync+restart
           path: ./packages/auth/src
           target: /app/packages/auth/src
+        - action: sync+restart
+          path: ./packages/content/src
+          target: /app/packages/content/src
         - action: sync+restart
           path: ./packages/cron/src
           target: /app/packages/cron/src
@@ -309,6 +319,8 @@ services:
       - "127.0.0.1:3200:3200"
 
 volumes:
+  content_data:
+  content_unset:
   db_data:
   frontend_vite_cache:
   gateway_data:

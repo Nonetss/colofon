@@ -15,6 +15,7 @@ COPY apps/frontend/package.json apps/frontend/
 COPY packages/api/package.json packages/api/
 COPY packages/auth/package.json packages/auth/
 COPY packages/config/package.json packages/config/
+COPY packages/content/package.json packages/content/
 COPY packages/cron/package.json packages/cron/
 COPY packages/db/package.json packages/db/
 COPY packages/env/package.json packages/env/

@@ -15,6 +15,7 @@ COPY apps/frontend/package.json apps/frontend/
 COPY packages/api/package.json packages/api/
 COPY packages/auth/package.json packages/auth/
 COPY packages/config/package.json packages/config/
+COPY packages/content/package.json packages/content/
 COPY packages/cron/package.json packages/cron/
 COPY packages/db/package.json packages/db/
 COPY packages/env/package.json packages/env/
@@ -34,6 +35,12 @@ RUN cd apps/backend && bun run build
 # serving); the compose healthchecks use `bun -e` too, so no Node is needed.
 FROM oven/bun:${BUN_VERSION}-slim AS runtime
 ENV NODE_ENV=production
+
+# git clones and fetches CONTENT_REPO (the backend's content sync); the CA
+# certificates let it reach HTTPS remotes.
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends git ca-certificates \
+  && rm -rf /var/lib/apt/lists/*
 
 # runMigrations() runs from the bundle's cwd (WORKDIR = apps/backend/) and
 # resolves the migrations folder as ../../packages/db/src/migrations, so the
