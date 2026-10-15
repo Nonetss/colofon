@@ -11,12 +11,8 @@ export type SurfaceId =
   | "cron-detail"
   | "admin"
   | "admin-users"
-  | "admin-sessions"
-  | "admin-organizations"
-  | "admin-teams"
   | "admin-api-keys"
   | "admin-content"
-  | "admin-plugins"
   | "config"
   | "config-profile"
   | "config-appearance"
@@ -186,30 +182,6 @@ const appSurfaceDefinitions: Partial<Record<SurfaceId, SurfaceDefinition>> = {
         icon: iconRef("admin", "users"),
         adminOnly: true,
       },
-      "admin-sessions": {
-        path: "/admin/sessions",
-        title: "Sesiones",
-        label: "Sesiones",
-        description: "Gestiona las sesiones de los usuarios.",
-        icon: iconRef("admin", "sessions"),
-        adminOnly: true,
-      },
-      "admin-organizations": {
-        path: "/admin/organizations",
-        title: "Admin · Organizaciones",
-        label: "Organizaciones",
-        description: "Crea y gestiona organizaciones y miembros.",
-        icon: iconRef("entities", "organization"),
-        adminOnly: true,
-      },
-      "admin-teams": {
-        path: "/admin/teams",
-        title: "Admin · Equipos",
-        label: "Equipos",
-        description: "Agrupa miembros dentro de una organización.",
-        icon: iconRef("admin", "teams"),
-        adminOnly: true,
-      },
       "admin-api-keys": {
         path: "/admin/api-keys",
         title: "Admin · API keys",
@@ -225,14 +197,6 @@ const appSurfaceDefinitions: Partial<Record<SurfaceId, SurfaceDefinition>> = {
         description:
           "Conecta los repositorios de documentación que lee la plataforma.",
         icon: iconRef("entities", "contentRepository"),
-        adminOnly: true,
-      },
-      "admin-plugins": {
-        path: "/admin/plugins",
-        title: "Admin · Plugins",
-        label: "Plugins",
-        description: "Inspecciona los plugins activos de Better Auth.",
-        icon: iconRef("admin", "plugins"),
         adminOnly: true,
       },
     },
