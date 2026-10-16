@@ -1,8 +1,14 @@
+import {
+  claudeCodeCommand,
+  codexConfig,
+  mcpServersJson,
+} from "@nonete/api/v1/mcp/setup"
 import { agentPrompt } from "@/features/api-keys/manage/model/agent-prompt"
 
 // How to connect an agent to the documentation with a new key: the MCP at
 // `/mcp` in the config each client reads, or, for an agent without MCP, the
-// instructions that point it at `llms.txt`. Every text holds the key, so it
+// instructions that point it at `llms.txt`. The MCP configs come from
+// `@nonete/api/v1/mcp/setup`, which `/llms.txt` shares. Every text holds the key, so it
 // is shown only in the dialog that shows the key once.
 
 /** One way to connect an agent, shown as a tab of the created-key dialog. */
@@ -14,38 +20,6 @@ export type AgentSetup = {
   language: "shell" | "toml" | "json" | "plaintext"
   /** Where the text goes, in the user's words. */
   hint: string
-}
-
-/** The name every client lists the server under. */
-const SERVER_NAME = "colofon"
-
-/** The documentation MCP's address on `origin`. */
-export function mcpUrl(origin: string): string {
-  return `${origin}/mcp`
-}
-
-/** Claude Code's command, which stores the server in the project's config. */
-export function claudeCodeCommand(origin: string, key: string): string {
-  return `claude mcp add --transport http ${SERVER_NAME} ${mcpUrl(origin)} --header "x-api-key: ${key}"`
-}
-
-/** Codex's `config.toml` entry: `codex mcp add` can't set a header. */
-export function codexConfig(origin: string, key: string): string {
-  return [
-    `[mcp_servers.${SERVER_NAME}]`,
-    `url = "${mcpUrl(origin)}"`,
-    `http_headers = { "x-api-key" = "${key}" }`,
-  ].join("\n")
-}
-
-/** The `mcpServers` JSON that Cursor and most other clients read. */
-export function mcpServersJson(origin: string, key: string): string {
-  const config = {
-    mcpServers: {
-      [SERVER_NAME]: { url: mcpUrl(origin), headers: { "x-api-key": key } },
-    },
-  }
-  return JSON.stringify(config, null, 2)
 }
 
 /** Every way to connect an agent with `key`, the MCP ones first. */
