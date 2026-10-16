@@ -15,4 +15,4 @@
 
 - [x] 3.1 Update `.agents/skills/stack/references/api/mcp.md`: the tools in the `tools.ts` row (`entityTool`), and the "Same text as the routes" rule (a `#section` route returns only that section, through `bodyMarkdown` and `sectionTree`).
 - [x] 3.2 Run `bun run check-types`, `bunx biome check` on the changed files and `bun run test`. All green.
-- [ ] 3.3 At archive, update the `documentation-mcp` spec's Purpose to mention the `entity` tool and reading one section.
+- [x] 3.3 At archive, update the `documentation-mcp` spec's Purpose to mention the `entity` tool and reading one section.
