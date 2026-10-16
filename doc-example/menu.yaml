@@ -28,6 +28,6 @@ secciones:
 
   - titulo: Publicación
     icono: send
-    descripcion: Cómo un push se convierte en el sitio publicado y cómo lo leen los agentes
+    descripcion: Cómo un push se convierte en el sitio publicado y cómo trabajan con él los agentes
     paginas:
       - { ruta: publishing, icono: git-branch }

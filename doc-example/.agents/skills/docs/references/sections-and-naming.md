@@ -28,7 +28,7 @@ and `docs/repository/index.mdx` ("Nombres y rutas").
 | `docs/pages/` | Páginas | `header` (1), `markdown` (2), `components` (3) |
 | `docs/catalog/` | El catálogo | `types` (1), `entities` (2), `reader` (3) |
 | `docs/diagrams/` | Diagramas | `drawn` (1), `graphs` (2), `time` (3), `concepts` (4), `charts` (5), `proportions` (6), `comparison` (7), `illustrations` (8) |
-| `docs/publishing/` | Sincronización y problemas | `editor` (1), `agents` (2) |
+| `docs/publishing/` | Sincronización y problemas | `editor` (1), `agents` (2), `writing-agents` (3) |
 
 ## Rules
 
