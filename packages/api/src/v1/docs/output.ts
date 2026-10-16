@@ -212,7 +212,7 @@ export const docsOutput = {
       .string()
       .nullable()
       .describe(
-        "The repository's cleaned stylesheet from its estilos/ modules, the same for every page of the repository, applied over the platform's styles; null when it has none"
+        "The repository's cleaned stylesheet from its styles/ modules, the same for every page of the repository, applied over the platform's styles; null when it has none"
       ),
   }),
   file: z.file().describe("The image file"),

@@ -10,7 +10,7 @@ import {
   styleModuleFiles,
 } from "#styles/modules"
 
-// Reads a content repository's `estilos/` (`content-styles`): every module it
+// Reads a content repository's `styles/` (`content-styles`): every module it
 // holds, in the platform's order, cleaned and joined into one stylesheet.
 // Entries that are not a module are reported and ignored, and the size
 // limits leave out a module too large, or every module from the one that

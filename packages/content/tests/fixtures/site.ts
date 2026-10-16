@@ -23,13 +23,13 @@ const CONFIG = [
 
 const CATALOG: Record<string, string> = {
   "doc.config.yaml": CONFIG,
-  "catalogo/maquinas/_tipo.yaml": [
+  "catalog/maquinas/_type.yaml": [
     "nombre: Máquina",
     "plural: Máquinas",
     "campos:",
     "  ip: { tipo: ip }",
   ].join("\n"),
-  "catalogo/maquinas/nas.yaml": "ip: 192.168.1.30\n",
+  "catalog/maquinas/nas.yaml": "ip: 192.168.1.30\n",
 }
 
 /** A page file with a valid header and `body`. */

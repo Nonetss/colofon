@@ -63,7 +63,7 @@ const SITE = {
   "doc.config.yaml": "nombre: Manual\n",
   "docs/index.mdx": "---\ntitulo: Inicio\n---\n",
   "docs/red/dns.mdx": "# DNS\n",
-  "catalogo/maquinas/_tipo.yaml": "nombre: Máquina\n",
+  "catalog/maquinas/_type.yaml": "nombre: Máquina\n",
 }
 
 describe("readFolder", () => {
@@ -74,7 +74,7 @@ describe("readFolder", () => {
     expect(await readFolder(manual.bare, "main", "")).toEqual({
       ok: true,
       entries: [
-        { name: "catalogo", path: "catalogo", kind: "folder", size: null },
+        { name: "catalog", path: "catalog", kind: "folder", size: null },
         { name: "docs", path: "docs", kind: "folder", size: null },
         { name: "a.yaml", path: "a.yaml", kind: "file", size: 5 },
         {

@@ -1,9 +1,9 @@
 import { describe, expect, test } from "bun:test"
 import { cleanStyleModule } from "#styles/clean"
 
-const FILE = "estilos/tema.css"
+const FILE = "styles/theme.css"
 
-/** Cleans `css` as `estilos/tema.css` of a repository with `docs/img/`. */
+/** Cleans `css` as `styles/theme.css` of a repository with `docs/img/`. */
 function clean(css: string) {
   return cleanStyleModule(css, {
     file: FILE,

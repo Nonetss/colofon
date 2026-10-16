@@ -17,11 +17,11 @@ import { DIAGRAM_TYPES } from "#diagrams/types/index"
 // JSON Schemas for the editor: the YAML language server (Red Hat's YAML
 // extension) completes, validates and documents a file once a schema is
 // associated with it. The meta-schema covers doc.config.yaml, menu.yaml
-// (with the paths an entry can name) and each _tipo.yaml; diagrams (JSON)
+// (with the paths an entry can name) and each _type.yaml; diagrams (JSON)
 // get one schema, every form of them (drawn, chain and each typed form by
 // its `type`), with the entities and pages a box or item can link to; each
 // catalog type gets its own
-// schema, generated from its _tipo.yaml, with the ids its `ref` fields can
+// schema, generated from its _type.yaml, with the ids its `ref` fields can
 // take. Every `icono` lists the Lucide names. The editor finds them
 // through a catalog in SchemaStore's format (`schemaCatalog`), set once as
 // its `yaml.schemaStore.url`.
@@ -32,7 +32,7 @@ export const CONFIG_SCHEMA = "config"
 export const MENU_SCHEMA = "menu"
 /** Name of the schema of every diagram file. */
 export const DIAGRAM_SCHEMA = "diagram"
-/** Name of the schema of every `_tipo.yaml`. */
+/** Name of the schema of every `_type.yaml`. */
 export const TYPE_SCHEMA = "type"
 /** Prefix of the name of each catalog type's entity schema. */
 export const ENTITY_SCHEMA_PREFIX = "entities/"

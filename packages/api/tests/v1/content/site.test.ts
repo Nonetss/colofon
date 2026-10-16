@@ -111,7 +111,7 @@ describe("contentReader.site", () => {
       [repository],
       inClone(repository.id, {
         ...CONTENT_SITE,
-        "diagramas/red.json": '{ "title": "Red" "desc": "x" }',
+        "diagrams/red.json": '{ "title": "Red" "desc": "x" }',
       })
     )
     await reader.site("documentacion")
@@ -120,7 +120,7 @@ describe("contentReader.site", () => {
       args.includes("Content pages have problems")
     )
     expect(pageWarnings).toHaveLength(1)
-    expect(JSON.stringify(pageWarnings[0])).toContain("diagramas/red.json")
+    expect(JSON.stringify(pageWarnings[0])).toContain("diagrams/red.json")
   })
 })
 

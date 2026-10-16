@@ -13,7 +13,7 @@ const NO_CONTENT = { catalog: new Map(), pages: new Set(["", "red"]) }
 function diagramOf(spec: Record<string, unknown>): Diagram {
   const read = readDiagram(
     "red",
-    "diagramas/red.json",
+    "diagrams/red.json",
     JSON.stringify({ title: "Red", desc: "La red", ...spec }),
     NO_CONTENT
   )

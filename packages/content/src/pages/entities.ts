@@ -66,7 +66,7 @@ export function entitiesTable(
   }
   const type = context.catalog.get(options.type)
   if (type === undefined) {
-    const message = `<${ENTITIES} type="${options.type}">: no hay ese tipo en catalogo/ (hay: ${known})`
+    const message = `<${ENTITIES} type="${options.type}">: no hay ese tipo en catalog/ (hay: ${known})`
     return { element: notice(message), problems: [...problems, message] }
   }
   for (const problem of type.problems)

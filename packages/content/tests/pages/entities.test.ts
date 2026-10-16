@@ -10,15 +10,15 @@ import { type ContentDir, createContentDir } from "#tests/fixtures/content-dir"
 // machines labelled by an optional field and pointing at a location.
 const FILES: Record<string, string> = {
   "doc.config.yaml": 'nombre: Homelab\nplataforma: "1"\n',
-  "catalogo/locations/_tipo.yaml": [
+  "catalog/locations/_type.yaml": [
     "nombre: Location",
     "plural: Locations",
     "etiqueta: name",
     "campos:",
     "  name: { tipo: texto }",
   ].join("\n"),
-  "catalogo/locations/home.yaml": "name: Home\n",
-  "catalogo/machines/_tipo.yaml": [
+  "catalog/locations/home.yaml": "name: Home\n",
+  "catalog/machines/_type.yaml": [
     "nombre: Machine",
     "plural: Machines",
     "etiqueta: name",
@@ -32,11 +32,11 @@ const FILES: Record<string, string> = {
     "vista:",
     "  columnas: [name, ip, location]",
   ].join("\n"),
-  "catalogo/machines/docker-01.yaml":
+  "catalog/machines/docker-01.yaml":
     "ip: 192.168.1.20\nkind: vm\nlocation: home\nvirtual: true\ntags: [docker, apps]\n",
-  "catalogo/machines/pve-01.yaml":
+  "catalog/machines/pve-01.yaml":
     "name: PVE-01\nip: 192.168.1.10\nkind: physical\nlocation: home\n",
-  "catalogo/services/_tipo.yaml": [
+  "catalog/services/_type.yaml": [
     "nombre: Service",
     "plural: Services",
     "etiqueta: name",
@@ -47,20 +47,20 @@ const FILES: Record<string, string> = {
     "  machine: { tipo: ref, a: machines }",
     "  page: { tipo: ficha, opcional: true }",
   ].join("\n"),
-  "catalogo/services/komodo.yaml":
+  "catalog/services/komodo.yaml":
     "name: Komodo\ncategory: containers\nurl: https://komodo.example\nmachine: docker-01\npage: containers/komodo\n",
-  "catalogo/services/adguard.yaml":
+  "catalog/services/adguard.yaml":
     "name: AdGuard\ncategory: network\nmachine: docker-01\n",
-  "catalogo/services/duplicati.yaml":
+  "catalog/services/duplicati.yaml":
     "name: Duplicati\ncategory: backups\nmachine: docker-01\n",
-  "catalogo/stacks/_tipo.yaml": [
+  "catalog/stacks/_type.yaml": [
     "nombre: Stack",
     "plural: Stacks",
     "campos:",
     "  machine: { tipo: ref, a: machines }",
   ].join("\n"),
-  "catalogo/stacks/apps.yaml": "machine: docker-01\n",
-  "catalogo/vlans/_tipo.yaml": [
+  "catalog/stacks/apps.yaml": "machine: docker-01\n",
+  "catalog/vlans/_type.yaml": [
     "nombre: VLAN",
     "plural: VLANs",
     "campos:",
@@ -176,7 +176,7 @@ describe("entitiesTable", () => {
       '<td><a href="/casa/containers/komodo">Komodo</a></td>'
     )
     expect(html).toContain(
-      '<td><a href="/casa/catalogo/services/adguard">AdGuard</a></td>'
+      '<td><a href="/casa/catalog/services/adguard">AdGuard</a></td>'
     )
   })
 
@@ -226,7 +226,7 @@ describe("entitiesTable", () => {
   test("an unknown or missing type is a notice naming the types", () => {
     const unknown = render({ type: "servers" })
     expect(unknown.problems).toEqual([
-      '<Entities type="servers">: no hay ese tipo en catalogo/ (hay: locations, machines, services, stacks, vlans)',
+      '<Entities type="servers">: no hay ese tipo en catalog/ (hay: locations, machines, services, stacks, vlans)',
     ])
     expect(unknown.html).toContain('class="doc-component-notice"')
     const missing = render({})
@@ -266,7 +266,7 @@ describe("entitiesTable with an invalid entity", () => {
   test("the file is reported and the rest of the table renders", async () => {
     broken = await createContentDir({
       ...FILES,
-      "catalogo/machines/nas.yaml": "kind: physical\nlocation: home\n",
+      "catalog/machines/nas.yaml": "kind: physical\nlocation: home\n",
     })
     const loaded = await loadContent(broken.root)
     if (!loaded.ok) throw new Error(JSON.stringify(loaded.problems))
@@ -276,7 +276,7 @@ describe("entitiesTable with an invalid entity", () => {
       context({ catalog: withNas })
     )
     expect(problems).toHaveLength(1)
-    expect(problems[0]).toStartWith("catalogo/machines/nas.yaml: ip: ")
+    expect(problems[0]).toStartWith("catalog/machines/nas.yaml: ip: ")
     expect(rowsOf(toHtml(element)).map(([name]) => name)).toEqual([
       "docker-01",
       "PVE-01",

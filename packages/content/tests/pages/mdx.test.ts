@@ -137,20 +137,20 @@ describe("accepted MDX", () => {
     )
     expect(found.problems).toEqual([])
     expect(htmlOf(found.tree)).toBe(
-      '<p>Antes</p>\n<div class="doc-entities"><table><thead><tr><th>id</th><th>ip</th></tr></thead><tbody><tr><td><a href="/casa/catalogo/maquinas/nas">nas</a></td><td>192.168.1.30</td></tr></tbody></table></div>\n<p>Después</p>'
+      '<p>Antes</p>\n<div class="doc-entities"><table><thead><tr><th>id</th><th>ip</th></tr></thead><tbody><tr><td><a href="/casa/catalog/maquinas/nas">nas</a></td><td>192.168.1.30</td></tr></tbody></table></div>\n<p>Después</p>'
     )
   })
 
   test("an Entities cell of a ficha field shows the page's title", async () => {
     const site = await siteOf({
-      "catalogo/maquinas/_tipo.yaml": [
+      "catalog/maquinas/_type.yaml": [
         "nombre: Máquina",
         "plural: Máquinas",
         "campos:",
         "  ip: { tipo: ip }",
         "  ficha: { tipo: ficha, opcional: true }",
       ].join("\n"),
-      "catalogo/maquinas/nas.yaml": "ip: 192.168.1.30\nficha: red/nas\n",
+      "catalog/maquinas/nas.yaml": "ip: 192.168.1.30\nficha: red/nas\n",
       "docs/red/nas.mdx": page("El NAS de casa"),
       "docs/notas.mdx": page(
         "Notas",
@@ -171,7 +171,7 @@ describe("accepted MDX", () => {
         file: "docs/notas.mdx",
         line: 8,
         message:
-          '<Entities type="servidores">: no hay ese tipo en catalogo/ (hay: maquinas)',
+          '<Entities type="servidores">: no hay ese tipo en catalog/ (hay: maquinas)',
       },
     ])
     expect(htmlOf(found.tree)).toContain(
@@ -295,17 +295,17 @@ describe("links and images", () => {
     ])
   })
 
-  describe("catalogo: links", () => {
+  describe("catalog: links", () => {
     const withPages = {
-      "catalogo/maquinas/_tipo.yaml": [
+      "catalog/maquinas/_type.yaml": [
         "nombre: Máquina",
         "plural: Máquinas",
         "campos:",
         "  ip: { tipo: ip }",
         "  ficha: { tipo: ficha, opcional: true }",
       ].join("\n"),
-      "catalogo/maquinas/nas.yaml": "ip: 192.168.1.30\nficha: red/dns\n",
-      "catalogo/maquinas/pve-01.yaml": "ip: 192.168.1.10\n",
+      "catalog/maquinas/nas.yaml": "ip: 192.168.1.30\nficha: red/dns\n",
+      "catalog/maquinas/pve-01.yaml": "ip: 192.168.1.10\n",
       "docs/red/dns.mdx": page("DNS"),
     }
 
@@ -318,34 +318,34 @@ describe("links and images", () => {
     }
 
     test("an entity with a page links to it", async () => {
-      const found = await notasWith("[NAS](catalogo:maquinas/nas)")
+      const found = await notasWith("[NAS](catalog:maquinas/nas)")
       expect(found.problems).toEqual([])
       expect(htmlOf(found.tree)).toBe('<p><a href="/casa/red/dns">NAS</a></p>')
     })
 
     test("an entity without a page links to its catalog page, without a problem", async () => {
-      const found = await notasWith("[pve-01](catalogo:maquinas/pve-01)")
+      const found = await notasWith("[pve-01](catalog:maquinas/pve-01)")
       expect(found.problems).toEqual([])
       expect(htmlOf(found.tree)).toBe(
-        '<p><a href="/casa/catalogo/maquinas/pve-01">pve-01</a></p>'
+        '<p><a href="/casa/catalog/maquinas/pve-01">pve-01</a></p>'
       )
     })
 
     test("a type links to its catalog page", async () => {
-      const found = await notasWith("[Máquinas](catalogo:maquinas)")
+      const found = await notasWith("[Máquinas](catalog:maquinas)")
       expect(found.problems).toEqual([])
       expect(htmlOf(found.tree)).toBe(
-        '<p><a href="/casa/catalogo/maquinas">Máquinas</a></p>'
+        '<p><a href="/casa/catalog/maquinas">Máquinas</a></p>'
       )
     })
 
     test("a missing entity or type is a broken link", async () => {
       const found = await notasWith(
-        "[viejo](catalogo:maquinas/old-01) [x](catalogo:servidores/x)"
+        "[viejo](catalog:maquinas/old-01) [x](catalog:servidores/x)"
       )
       expect(messagesOf(found)).toEqual([
-        "Enlace roto: catalogo:maquinas/old-01 no es ninguna entidad del catálogo",
-        "Enlace roto: catalogo:servidores/x no es ninguna entidad del catálogo",
+        "Enlace roto: catalog:maquinas/old-01 no es ninguna entidad del catálogo",
+        "Enlace roto: catalog:servidores/x no es ninguna entidad del catálogo",
       ])
       expect(htmlOf(found.tree)).toContain(
         '<span class="doc-broken-link">viejo</span>'
@@ -353,9 +353,9 @@ describe("links and images", () => {
     })
 
     test("an image can't point at the catalog", async () => {
-      const found = await notasWith("![nas](catalogo:maquinas/nas)")
+      const found = await notasWith("![nas](catalog:maquinas/nas)")
       expect(messagesOf(found)).toEqual([
-        "Imagen rota: catalogo:maquinas/nas no es una imagen",
+        "Imagen rota: catalog:maquinas/nas no es una imagen",
       ])
     })
   })

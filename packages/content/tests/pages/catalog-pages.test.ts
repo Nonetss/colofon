@@ -13,7 +13,7 @@ const FILES: Record<string, string> = {
     "    opcional: true",
     "    de: { tipo: ref, a: machines }",
   ].join("\n"),
-  "catalogo/machines/_tipo.yaml": [
+  "catalog/machines/_type.yaml": [
     "nombre: Machine",
     "plural: Machines",
     "icono: server",
@@ -27,12 +27,12 @@ const FILES: Record<string, string> = {
     "vista:",
     "  columnas: [name, ip]",
   ].join("\n"),
-  "catalogo/machines/pve-01.yaml":
+  "catalog/machines/pve-01.yaml":
     "name: PVE-01\nip: 192.168.1.10\npage: red/dns\n",
-  "catalogo/machines/docker-01.yaml":
+  "catalog/machines/docker-01.yaml":
     "ip: 192.168.1.20\nhost: pve-01\nfuente: komodo\nactualizado: 2026-10-01\n",
-  "catalogo/machines/broken.yaml": "name: Broken\n",
-  "catalogo/stacks/_tipo.yaml": [
+  "catalog/machines/broken.yaml": "name: Broken\n",
+  "catalog/stacks/_type.yaml": [
     "nombre: Stack",
     "plural: Stacks",
     "campos:",
@@ -44,32 +44,29 @@ const FILES: Record<string, string> = {
     "        name: { tipo: texto }",
     "        machine: { tipo: ref, a: machines }",
   ].join("\n"),
-  "catalogo/stacks/docker-01-adguard.yaml":
+  "catalog/stacks/docker-01-adguard.yaml":
     "services:\n  - name: adguard\n    machine: docker-01\n",
   "docs/red/dns.mdx": page("DNS", "", "machines: [docker-01]\n"),
-  "docs/copias.mdx": page(
-    "Copias",
-    "Van al [VM](catalogo:machines/docker-01)."
-  ),
+  "docs/copias.mdx": page("Copias", "Van al [VM](catalog:machines/docker-01)."),
 }
 
 describe("generated catalog pages", () => {
   test("the catalog page lists every type with its counts", async () => {
     const site = await siteOf(FILES)
-    const catalog = pageAt(site, "catalogo")
+    const catalog = pageAt(site, "catalog")
     expect(catalog.header.titulo).toBe("Catálogo")
     const html = htmlOf(catalog.tree)
     expect(html).toContain(
-      '<tr><td><a href="/casa/catalogo/machines">Machines</a></td><td>Servers and VMs</td><td>2</td><td>1</td></tr>'
+      '<tr><td><a href="/casa/catalog/machines">Machines</a></td><td>Servers and VMs</td><td>2</td><td>1</td></tr>'
     )
     expect(html).toContain(
-      '<tr><td><a href="/casa/catalogo/stacks">Stacks</a></td><td></td><td>1</td><td>0</td></tr>'
+      '<tr><td><a href="/casa/catalog/stacks">Stacks</a></td><td></td><td>1</td><td>0</td></tr>'
     )
   })
 
   test("a type's page is its table, titled and iconed by the type, with its invalid entities as problems", async () => {
     const site = await siteOf(FILES)
-    const machines = pageAt(site, "catalogo/machines")
+    const machines = pageAt(site, "catalog/machines")
     expect(machines.header).toMatchObject({
       titulo: "Machines",
       descripcion: "Servers and VMs",
@@ -78,11 +75,11 @@ describe("generated catalog pages", () => {
     const html = htmlOf(machines.tree)
     expect(html).toContain("<th>name</th><th>Dirección IP</th>")
     expect(html).toContain(
-      '<td><a href="/casa/catalogo/machines/docker-01">docker-01</a></td>'
+      '<td><a href="/casa/catalog/machines/docker-01">docker-01</a></td>'
     )
     expect(html).toContain('<td><a href="/casa/red/dns">PVE-01</a></td>')
     expect(machines.problems.map((problem) => problem.file)).toEqual([
-      "catalogo/machines/broken.yaml",
+      "catalog/machines/broken.yaml",
     ])
     expect(machines.headings).toEqual([])
   })
@@ -91,32 +88,32 @@ describe("generated catalog pages", () => {
     const site = await siteOf(
       FILES,
       new Map([
-        ["catalogo/machines/docker-01.yaml", "2026-09-30"],
-        ["catalogo/machines/pve-01.yaml", "2026-08-01"],
-        ["catalogo/machines/_tipo.yaml", "2026-07-01"],
+        ["catalog/machines/docker-01.yaml", "2026-09-30"],
+        ["catalog/machines/pve-01.yaml", "2026-08-01"],
+        ["catalog/machines/_type.yaml", "2026-07-01"],
       ])
     )
-    expect(pageAt(site, "catalogo/machines/docker-01").header).toMatchObject({
+    expect(pageAt(site, "catalog/machines/docker-01").header).toMatchObject({
       actualizado: "2026-10-01",
       editado: "2026-09-30",
     })
-    expect(pageAt(site, "catalogo/machines/pve-01").header.editado).toBe(
+    expect(pageAt(site, "catalog/machines/pve-01").header.editado).toBe(
       "2026-08-01"
     )
-    expect(pageAt(site, "catalogo/machines").header.editado).toBeNull()
-    expect(pageAt(site, "catalogo").header.editado).toBeNull()
+    expect(pageAt(site, "catalog/machines").header.editado).toBeNull()
+    expect(pageAt(site, "catalog").header.editado).toBeNull()
   })
 
   test("a type without a description gets one from its plural", async () => {
     const site = await siteOf(FILES)
-    expect(pageAt(site, "catalogo/stacks").header.descripcion).toBe(
+    expect(pageAt(site, "catalog/stacks").header.descripcion).toBe(
       "Datos de Stacks"
     )
   })
 
   test("an entity's page shows its fields, who cites it and who points at it", async () => {
     const site = await siteOf(FILES)
-    const docker = pageAt(site, "catalogo/machines/docker-01")
+    const docker = pageAt(site, "catalog/machines/docker-01")
     expect(docker.header).toMatchObject({
       titulo: "docker-01",
       descripcion: "Machine",
@@ -124,8 +121,8 @@ describe("generated catalog pages", () => {
       actualizado: "2026-10-01",
     })
     expect(docker.breadcrumbs).toEqual([
-      { path: "catalogo", title: "Catálogo" },
-      { path: "catalogo/machines", title: "Machines" },
+      { path: "catalog", title: "Catálogo" },
+      { path: "catalog/machines", title: "Machines" },
     ])
     const html = htmlOf(docker.tree)
     expect(html).toContain(
@@ -144,7 +141,7 @@ describe("generated catalog pages", () => {
     )
     expect(html).toContain('<h3 id="stacks">Stacks</h3>')
     expect(html).toContain(
-      '<a href="/casa/catalogo/stacks/docker-01-adguard">docker-01-adguard</a>'
+      '<a href="/casa/catalog/stacks/docker-01-adguard">docker-01-adguard</a>'
     )
     expect(docker.headings.map((heading) => heading.text)).toEqual([
       "Páginas que la citan",
@@ -155,17 +152,17 @@ describe("generated catalog pages", () => {
 
   test("an entity with a page links to it, and empty sections are left out", async () => {
     const site = await siteOf(FILES)
-    const html = htmlOf(pageAt(site, "catalogo/machines/pve-01").tree)
+    const html = htmlOf(pageAt(site, "catalog/machines/pve-01").tree)
     expect(html).toContain('<p>Página: <a href="/casa/red/dns">DNS</a></p>')
     expect(html).not.toContain("Páginas que la citan")
     expect(html).toContain('<h3 id="machines">Machines</h3>')
     expect(html).toContain(
-      '<a href="/casa/catalogo/machines/docker-01">docker-01</a>'
+      '<a href="/casa/catalog/machines/docker-01">docker-01</a>'
     )
   })
 
   test("an invalid entity has no page", async () => {
     const site = await siteOf(FILES)
-    expect(site.pages.has("catalogo/machines/broken")).toBe(false)
+    expect(site.pages.has("catalog/machines/broken")).toBe(false)
   })
 })

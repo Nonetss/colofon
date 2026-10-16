@@ -28,14 +28,14 @@ export const VALID_SITE: Record<string, string> = {
     "    tipo: lista",
     "    de: { tipo: ref, a: maquinas }",
   ].join("\n"),
-  "catalogo/ubicaciones/_tipo.yaml": [
+  "catalog/ubicaciones/_type.yaml": [
     "nombre: Ubicación",
     "plural: Ubicaciones",
     "campos:",
     "  nombre: { tipo: texto }",
   ].join("\n"),
-  "catalogo/ubicaciones/casa.yaml": "nombre: Casa\n",
-  "catalogo/maquinas/_tipo.yaml": [
+  "catalog/ubicaciones/casa.yaml": "nombre: Casa\n",
+  "catalog/maquinas/_type.yaml": [
     "nombre: Máquina",
     "plural: Máquinas",
     "campos:",
@@ -43,8 +43,8 @@ export const VALID_SITE: Record<string, string> = {
     "  ubicacion: { tipo: ref, a: ubicaciones }",
     "  ficha: { tipo: ficha, opcional: true }",
   ].join("\n"),
-  "catalogo/maquinas/pve-01.yaml": "ip: 192.168.1.10\nubicacion: casa\n",
-  "catalogo/maquinas/nas.yaml": "ip: 192.168.1.30\nubicacion: casa\n",
+  "catalog/maquinas/pve-01.yaml": "ip: 192.168.1.10\nubicacion: casa\n",
+  "catalog/maquinas/nas.yaml": "ip: 192.168.1.30\nubicacion: casa\n",
   "docs/index.mdx": "---\ntitulo: Inicio\n---\n",
   "docs/red/index.mdx": "---\ntitulo: Red\n---\n",
   "docs/red/dns.mdx": "---\ntitulo: DNS\n---\n",

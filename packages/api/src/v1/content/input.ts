@@ -83,7 +83,7 @@ export const contentInput = {
     type: z
       .string()
       .min(1)
-      .describe("Catalog type id: the name of its folder under catalogo/"),
+      .describe("Catalog type id: the name of its folder under catalog/"),
   }),
   createRepository: z
     .object({

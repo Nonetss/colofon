@@ -42,7 +42,7 @@ describe("readCatalog", () => {
 
   test("the label is the etiqueta value, or the id when it is left out", async () => {
     const catalog = await catalogOf({
-      "catalogo/maquinas/_tipo.yaml": [
+      "catalog/maquinas/_type.yaml": [
         "nombre: Máquina",
         "plural: Máquinas",
         "etiqueta: nombre",
@@ -51,7 +51,7 @@ describe("readCatalog", () => {
         "  ip: { tipo: ip }",
         "  ubicacion: { tipo: ref, a: ubicaciones }",
       ].join("\n"),
-      "catalogo/maquinas/pve-01.yaml":
+      "catalog/maquinas/pve-01.yaml":
         "nombre: PVE-01\nip: 192.168.1.10\nubicacion: casa\n",
     })
     const entities = typeOf(catalog, "maquinas").entities
@@ -68,7 +68,7 @@ describe("readCatalog", () => {
 
   test("the page is the value of the first ficha field", async () => {
     const catalog = await catalogOf({
-      "catalogo/maquinas/nas.yaml":
+      "catalog/maquinas/nas.yaml":
         "ip: 192.168.1.30\nubicacion: casa\nficha: red/dns\n",
     })
     const entities = typeOf(catalog, "maquinas").entities
@@ -78,19 +78,19 @@ describe("readCatalog", () => {
 
   test("an invalid file is left out and kept as a problem of its type", async () => {
     const catalog = await catalogOf({
-      "catalogo/maquinas/nas.yaml": "ubicacion: casa\n",
+      "catalog/maquinas/nas.yaml": "ubicacion: casa\n",
     })
     const maquinas = typeOf(catalog, "maquinas")
     expect([...maquinas.entities.keys()]).toEqual(["pve-01"])
     expect(maquinas.problems).toHaveLength(1)
-    expect(maquinas.problems[0]?.file).toBe("catalogo/maquinas/nas.yaml")
+    expect(maquinas.problems[0]?.file).toBe("catalog/maquinas/nas.yaml")
     expect(maquinas.problems[0]?.message).toStartWith("ip: ")
   })
 
   test("an empty file is a problem", async () => {
-    const catalog = await catalogOf({ "catalogo/maquinas/nas.yaml": "" })
+    const catalog = await catalogOf({ "catalog/maquinas/nas.yaml": "" })
     expect(typeOf(catalog, "maquinas").problems).toEqual([
-      { file: "catalogo/maquinas/nas.yaml", message: "Está vacío" },
+      { file: "catalog/maquinas/nas.yaml", message: "Está vacío" },
     ])
   })
 })

@@ -45,7 +45,7 @@ describe("complexity budgets", () => {
     })
     const read = readDiagram(
       "red",
-      "diagramas/red.json",
+      "diagrams/red.json",
       JSON.stringify({
         title: "Red",
         desc: "La red",

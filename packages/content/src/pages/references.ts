@@ -3,7 +3,7 @@ import { entityPath } from "#contract/catalog-paths"
 import type { FieldDefinition } from "#contract/meta-schema"
 
 // Who points at an entity, for its generated page: the pages that cite it
-// (a `ref` field of their header, or a `catalogo:` link in their body) and
+// (a `ref` field of their header, or a `catalog:` link in their body) and
 // the entities of other types whose `ref` fields name it, at any depth.
 
 /** An entity named by a `ref` value. */

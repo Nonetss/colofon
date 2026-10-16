@@ -127,7 +127,7 @@ export type Diagram = {
 /** A diagram file read: what could be kept of it, and what went wrong. */
 export type DiagramFile = {
   id: string
-  /** Path relative to the content root (`diagramas/red.json`). */
+  /** Path relative to the content root (`diagrams/red.json`). */
   file: string
   /** `null` when the file is not JSON or not an object. */
   diagram: Diagram | null

@@ -160,7 +160,7 @@ const COMMIT_MARK = "\u0001"
 
 /**
  * The date (`YYYY-MM-DD`, the committer's) of the last commit that touched
- * each file under `docs/` and `catalogo/` of the checkout at `root`, keyed
+ * each file under `docs/` and `catalog/` of the checkout at `root`, keyed
  * by its path relative to `root`. One `git log` pass over the history.
  */
 export async function readEditDates(

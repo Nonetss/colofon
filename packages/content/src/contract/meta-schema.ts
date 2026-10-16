@@ -4,7 +4,7 @@ import { iconName } from "#contract/icon-name"
 
 // The meta-schema: what a content repository may declare. The platform
 // knows nothing about the domain (machines, fruits…); it only fixes the
-// shape of `doc.config.yaml`, of each `catalogo/<type>/_tipo.yaml` and the
+// shape of `doc.config.yaml`, of each `catalog/<type>/_type.yaml` and the
 // field kinds both use. Descriptions and messages are in Spanish: they are
 // shown to whoever writes the content, in the editor and in the errors.
 
@@ -80,7 +80,7 @@ const fieldName = z.string().regex(/^[a-z][a-z0-9_]*$/, {
 
 function typeIdSchema(typeIds: readonly string[] | undefined) {
   if (typeIds === undefined) return z.string().min(1)
-  return enumOf(typeIds, "No hay ningún tipo en catalogo/")
+  return enumOf(typeIds, "No hay ningún tipo en catalog/")
 }
 
 function menuPathSchema(menuPaths: readonly string[] | undefined) {
@@ -264,7 +264,7 @@ export function createMetaSchemas(options: MetaSchemaOptions = {}) {
 
   const menuPath = menuPathSchema(options.menuPaths).meta({
     description:
-      "Una página o carpeta de docs/ (network, network/dns), el catálogo (catalogo) o un tipo (catalogo/machines)",
+      "Una página o carpeta de docs/ (network, network/dns), el catálogo (catalog) o un tipo (catalog/machines)",
   })
 
   const menuEntry = z.union([
@@ -292,7 +292,7 @@ export function createMetaSchemas(options: MetaSchemaOptions = {}) {
           }),
           paginas: z.array(menuEntry).min(1).meta({
             description:
-              "Lo que muestra el grupo, en orden: páginas, carpetas (con todas sus páginas), catalogo o catalogo/<tipo>",
+              "Lo que muestra el grupo, en orden: páginas, carpetas (con todas sus páginas), catalog o catalog/<tipo>",
           }),
         })
       )
@@ -305,7 +305,7 @@ export function createMetaSchemas(options: MetaSchemaOptions = {}) {
 
 type MetaSchemas = ReturnType<typeof createMetaSchemas>
 
-/** A parsed `catalogo/<type>/_tipo.yaml`. */
+/** A parsed `catalog/<type>/_type.yaml`. */
 export type TypeDefinition = z.output<MetaSchemas["typeDefinition"]>
 
 /** A parsed `doc.config.yaml`. */

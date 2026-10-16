@@ -20,7 +20,7 @@ import { checkAccents } from "#diagrams/types/kit/budget"
 import { FORM_KEYS } from "#diagrams/types/kit/form"
 import type { Scene, Tools } from "#diagrams/types/kit/scene"
 
-// The diagrams of a repository: one `diagramas/<id>.json` each, shown in any
+// The diagrams of a repository: one `diagrams/<id>.json` each, shown in any
 // page with `<Diagram id="…" />`. A file without `type` is in the format of
 // the reference site's scheme drawer (`lib.mjs`, see `schema.ts`), where the
 // content places every box, arrow and zone (`drawn.ts`). A file with `type`

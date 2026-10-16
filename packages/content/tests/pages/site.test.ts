@@ -130,38 +130,89 @@ describe("readSite", () => {
     expect(titles(site.nav)).toEqual(["Catálogo"])
     expect([...site.pages.keys()].sort()).toEqual([
       "",
-      "catalogo",
-      "catalogo/maquinas",
-      "catalogo/maquinas/nas",
+      "catalog",
+      "catalog/maquinas",
+      "catalog/maquinas/nas",
     ])
   })
 
   test("without menu.yaml the catalog section lists every type and its pages have no previous or next", async () => {
     const site = await siteOf(SITE)
     expect(titles(section(site.nav, "Catálogo").children)).toEqual(["Máquinas"])
-    const machines = pageAt(site, "catalogo/maquinas")
+    const machines = pageAt(site, "catalog/maquinas")
     expect(machines.source).toBe("generated")
     expect(machines.previous).toBeNull()
     expect(machines.next).toBeNull()
     expect(machines.breadcrumbs).toEqual([
-      { path: "catalogo", title: "Catálogo" },
+      { path: "catalog", title: "Catálogo" },
     ])
-    expect(pageAt(site, "catalogo/maquinas/nas").breadcrumbs).toEqual([
-      { path: "catalogo", title: "Catálogo" },
-      { path: "catalogo/maquinas", title: "Máquinas" },
+    expect(pageAt(site, "catalog/maquinas/nas").breadcrumbs).toEqual([
+      { path: "catalog", title: "Catálogo" },
+      { path: "catalog/maquinas", title: "Máquinas" },
     ])
   })
 
-  test("a page under docs/catalogo is reported on the home and not served", async () => {
+  test("a page under docs/catalog is reported on the home and not served", async () => {
     const site = await siteOf({
       ...SITE,
-      "docs/catalogo/index.mdx": page("Mío"),
+      "docs/catalog/index.mdx": page("Mío"),
     })
-    expect(pageAt(site, "catalogo").source).toBe("generated")
-    expect(pageAt(site, "catalogo").header.titulo).toBe("Catálogo")
+    expect(pageAt(site, "catalog").source).toBe("generated")
+    expect(pageAt(site, "catalog").header.titulo).toBe("Catálogo")
     expect(pageAt(site, "").problems.map((p) => p.file)).toEqual([
-      "docs/catalogo/index.mdx",
+      "docs/catalog/index.mdx",
     ])
+  })
+
+  test("the former Spanish folders are reported on the home and not read", async () => {
+    const site = await siteOf({
+      ...SITE,
+      "catalogo/routers/_tipo.yaml": "nombre: Router\nplural: Routers\n",
+      "diagramas/red.json": "{}",
+      "estilos/tema.css": ":root { --primary: red }",
+      "docs/mapa.mdx": page("Mapa", '<Diagram id="red" />'),
+    })
+    expect(pageAt(site, "").problems).toEqual([
+      {
+        file: "catalogo",
+        line: null,
+        message:
+          "El catálogo va ahora en catalog/: catalogo/ no se lee hasta que la renombres",
+      },
+      {
+        file: "diagramas",
+        line: null,
+        message:
+          "Los diagramas van ahora en diagrams/: diagramas/ no se lee hasta que la renombres",
+      },
+      {
+        file: "estilos",
+        line: null,
+        message:
+          "Los estilos van ahora en styles/: estilos/ no se lee hasta que la renombres",
+      },
+    ])
+    expect(site.pages.has("catalog/routers")).toBe(false)
+    expect(pageAt(site, "mapa").problems[0]?.message).toContain(
+      "no hay ningún diagrams/red.json"
+    )
+    expect(site.styles).toBe("")
+  })
+
+  test("a former _tipo.yaml in a type folder is reported", async () => {
+    const site = await siteOf({
+      ...SITE,
+      "catalog/maquinas/_tipo.yaml": "nombre: Viejo\nplural: Viejos\n",
+    })
+    expect(pageAt(site, "").problems).toEqual([
+      {
+        file: "catalog/maquinas/_tipo.yaml",
+        line: null,
+        message:
+          "La declaración de un tipo se llama ahora _type.yaml: _tipo.yaml no se lee hasta que lo renombres",
+      },
+    ])
+    expect(pageAt(site, "catalog/maquinas").header.titulo).toBe("Máquinas")
   })
 })
 
@@ -225,7 +276,7 @@ describe("readSite with menu.yaml", () => {
       ...SITE,
       "menu.yaml": menuOf(
         ["Básico", ["suelta", "red"]],
-        ["Resto", ["varios", "catalogo"]]
+        ["Resto", ["varios", "catalog"]]
       ),
     })
     expect(titles(site.nav)).toEqual(["Básico", "Resto"])
@@ -249,17 +300,17 @@ describe("readSite with menu.yaml", () => {
       ...SITE,
       "menu.yaml": menuOf(
         ["Críticas", ["red"]],
-        ["Resto", ["varios", "suelta", "catalogo"]]
+        ["Resto", ["varios", "suelta", "catalog"]]
       ),
     })
     expect(pageAt(site, "red/dns").breadcrumbs).toEqual([
       { path: null, title: "Críticas" },
       { path: "red", title: "Red" },
     ])
-    expect(pageAt(site, "catalogo/maquinas/nas").breadcrumbs).toEqual([
+    expect(pageAt(site, "catalog/maquinas/nas").breadcrumbs).toEqual([
       { path: null, title: "Resto" },
-      { path: "catalogo", title: "Catálogo" },
-      { path: "catalogo/maquinas", title: "Máquinas" },
+      { path: "catalog", title: "Catálogo" },
+      { path: "catalog/maquinas", title: "Máquinas" },
     ])
   })
 
@@ -268,7 +319,7 @@ describe("readSite with menu.yaml", () => {
       ...SITE,
       "menu.yaml": menuOf(
         ["Uno", ["suelta"]],
-        ["Dos", ["red", "varios", "catalogo"]]
+        ["Dos", ["red", "varios", "catalog"]]
       ),
     })
     expect(pageAt(site, "").next).toEqual({ path: "suelta", title: "Suelta" })
@@ -284,7 +335,7 @@ describe("readSite with menu.yaml", () => {
       ...SITE,
       "menu.yaml": menuOf(
         ["Red", ["red", "red/vpnn", "index"]],
-        ["Más", ["red/dns", "varios", "suelta", "catalogo"]]
+        ["Más", ["red/dns", "varios", "suelta", "catalog"]]
       ),
     })
     expect(titles(group(site.nav, "Red").children)).toEqual(["Red"])
@@ -298,7 +349,7 @@ describe("readSite with menu.yaml", () => {
         file: "menu.yaml",
         line: null,
         message:
-          "secciones.0.paginas.1: `red/vpnn` no es ninguna página ni carpeta de docs/, ni catalogo, ni un tipo del catálogo",
+          "secciones.0.paginas.1: `red/vpnn` no es ninguna página ni carpeta de docs/, ni catalog, ni un tipo del catálogo",
       },
       {
         file: "menu.yaml",
@@ -329,8 +380,8 @@ describe("readSite with menu.yaml", () => {
         message: "Esta página no está en menu.yaml: sale en «Otros»",
       },
     ])
-    expect(pageAt(site, "catalogo/maquinas").problems[0]?.file).toBe(
-      "catalogo/maquinas"
+    expect(pageAt(site, "catalog/maquinas").problems[0]?.file).toBe(
+      "catalog/maquinas"
     )
     expect(pageAt(site, "red/dns").problems).toEqual([])
   })
@@ -340,7 +391,7 @@ describe("readSite with menu.yaml", () => {
       ...SITE,
       "menu.yaml": menuOf([
         "Todo",
-        ["red", "varios", "suelta", "catalogo/maquinas"],
+        ["red", "varios", "suelta", "catalog/maquinas"],
       ]),
     })
     expect(titles(site.nav)).toEqual(["Todo"])
@@ -357,7 +408,7 @@ describe("readSite with menu.yaml", () => {
           "{ ruta: red, icono: layers, titulo: Redes }",
           "varios",
           "suelta",
-          "{ ruta: catalogo, titulo: Datos }",
+          "{ ruta: catalog, titulo: Datos }",
         ],
       ]),
     })
@@ -377,21 +428,21 @@ describe("readSite with menu.yaml", () => {
     ])
     expect(pageAt(site, "varios/zeta").header.icono).toBe("globe")
     expect(pageAt(site, "varios/zeta").problems).toEqual([])
-    expect(pageAt(site, "catalogo").header.titulo).toBe("Datos")
+    expect(pageAt(site, "catalog").header.titulo).toBe("Datos")
   })
 
   test("a folder entry holding only its index is a page with the menu's title and icon", async () => {
     const site = await siteOf({
       ...SITE,
-      "docs/diagramas/index.mdx": page("Diagramas"),
+      "docs/diagrams/index.mdx": page("Diagramas"),
       "menu.yaml": menuOf([
         "Todo",
         [
           "red",
-          "{ ruta: diagramas, titulo: Dibujos, icono: workflow }",
+          "{ ruta: diagrams, titulo: Dibujos, icono: workflow }",
           "varios",
           "suelta",
-          "catalogo",
+          "catalog",
         ],
       ]),
     })
@@ -400,7 +451,7 @@ describe("readSite with menu.yaml", () => {
     )
     expect(node?.kind).toBe("page")
     expect(node?.icon).toBe("workflow")
-    expect(pageAt(site, "diagramas").children).toEqual([])
+    expect(pageAt(site, "diagrams").children).toEqual([])
   })
 
   test("a folder without index takes the menu's title and icon", async () => {
@@ -412,7 +463,7 @@ describe("readSite with menu.yaml", () => {
           "red",
           "{ ruta: varios, titulo: Varios, icono: box }",
           "suelta",
-          "catalogo",
+          "catalog",
         ],
       ]),
     })
@@ -422,12 +473,12 @@ describe("readSite with menu.yaml", () => {
   })
 })
 
-describe("readSite with estilos/", () => {
+describe("readSite with styles/", () => {
   test("the repository's cleaned stylesheet is on the site, with its images rewritten", async () => {
     const site = await siteOf({
       ...SITE,
-      "estilos/tema.css": ":root { --primary: red }",
-      "estilos/pagina.css":
+      "styles/theme.css": ":root { --primary: red }",
+      "styles/page.css":
         ".typeset.doc { background: url(../docs/varios/img/foto.png) }",
     })
     expect(site.styles).toBe(
@@ -439,16 +490,16 @@ describe("readSite with estilos/", () => {
   test("a style problem goes on the home and in the site's problems", async () => {
     const site = await siteOf({
       ...SITE,
-      "estilos/codigo.css": "@import 'x.css';\n.a { color: red }",
+      "styles/code.css": "@import 'x.css';\n.a { color: red }",
     })
     expect(site.styles).toBe(".a{color:red}")
     expect(pageAt(site, "").problems.map((p) => p.file)).toEqual([
-      "estilos/codigo.css",
+      "styles/code.css",
     ])
-    expect(site.problems.map((p) => p.file)).toEqual(["estilos/codigo.css"])
+    expect(site.problems.map((p) => p.file)).toEqual(["styles/code.css"])
   })
 
-  test("a repository without estilos/ has an empty stylesheet and no new problem", async () => {
+  test("a repository without styles/ has an empty stylesheet and no new problem", async () => {
     const site = await siteOf(SITE)
     expect(site.styles).toBe("")
     expect(site.problems).toEqual([])

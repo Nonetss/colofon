@@ -16,6 +16,7 @@ import {
   catalogPages,
   withCatalogBody,
 } from "#pages/catalog-pages"
+import { formerNameProblems } from "#pages/former-names"
 import { type HeaderSchema, headerSchema, readHeader } from "#pages/header"
 import {
   folderNav,
@@ -44,7 +45,7 @@ import { readStyles } from "#styles/read"
 // every page its previous and next page; catalog pages are left out of it.
 // Pages are read in two passes: every header first, with what menu.yaml says
 // about it applied (the YAML wins), so a page can show another page's title,
-// then every body. The repository's style modules (`estilos/`) are read with
+// then every body. The repository's style modules (`styles/`) are read with
 // them, so their stylesheet follows the same checkout.
 
 export type { NavEntry, NavNode } from "#pages/nav"
@@ -77,7 +78,7 @@ export type Site = {
   pages: ReadonlyMap<string, SitePage>
   /** Every page's problems, in reading order. */
   problems: PageProblem[]
-  /** The cleaned stylesheet of `estilos/` (`content-styles`); empty without. */
+  /** The cleaned stylesheet of `styles/` (`content-styles`); empty without. */
   styles: string
 }
 
@@ -114,6 +115,7 @@ export async function readSite(
     }
     mdxFiles.push(file)
   }
+  siteProblems.push(...(await formerNameProblems(root)))
   const pagePaths = new Set(mdxFiles.map(pagePathOf))
   const folders = foldersWithPages(mdxFiles)
   for (const folder of folders) pagePaths.add(folder)
@@ -277,7 +279,7 @@ function reservedProblem(file: string): PageProblem {
     file: `${DOCS_DIR}/${file}`,
     line: null,
     message:
-      "docs/catalogo/ está reservada para las páginas que la plataforma hace del catálogo: esta ficha no se publica",
+      "docs/catalog/ está reservada para las páginas que la plataforma hace del catálogo: esta ficha no se publica",
   }
 }
 

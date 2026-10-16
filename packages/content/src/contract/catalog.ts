@@ -12,7 +12,7 @@ import {
 import { ID_COLUMN, type TypeDefinition } from "#contract/meta-schema"
 
 // Reads every entity of a repository's catalog for the pages that show it
-// (`<Entities>`, `catalogo:` links). Each file is validated against its
+// (`<Entities>`, `catalog:` links). Each file is validated against its
 // type; the valid ones keep their values, a label and the page they point
 // at, and the invalid ones are kept as problems of their type.
 

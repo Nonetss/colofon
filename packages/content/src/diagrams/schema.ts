@@ -1,7 +1,7 @@
 import { z } from "zod"
 import { enumOf } from "#contract/enum-of"
 
-// The shape of a diagram file, `diagramas/<id>.json`, in the format of the
+// The shape of a diagram file, `diagrams/<id>.json`, in the format of the
 // reference site's scheme drawer (`lib.mjs`): the content gives every
 // position. The same pieces check each part of a file while it is read
 // (`drawn.ts`, so one bad box never hides the rest) and make the editor's
@@ -124,7 +124,7 @@ export function entityRef(entityKeys: readonly string[] | undefined) {
     return z.string().regex(/^[a-z0-9-]+\/[a-z0-9-]+$/, {
       error: "Es <tipo>/<id> de una entidad del catálogo (machines/nas)",
     })
-  return enumOf(entityKeys, "No hay ninguna entidad en catalogo/")
+  return enumOf(entityKeys, "No hay ninguna entidad en catalog/")
 }
 
 export function pageRef(pagePaths: readonly string[] | undefined) {

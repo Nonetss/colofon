@@ -201,7 +201,7 @@ describe("docs.page", () => {
         {
           name: "maquinas",
           label: "maquinas",
-          values: [{ text: "nas", href: "/casa/catalogo/maquinas/nas" }],
+          values: [{ text: "nas", href: "/casa/catalog/maquinas/nas" }],
         },
       ],
     })
@@ -282,13 +282,13 @@ describe("docs.page", () => {
 })
 
 describe("docs.page styles", () => {
-  test("every page of a repository with estilos/ carries its cleaned stylesheet", async () => {
+  test("every page of a repository with styles/ carries its cleaned stylesheet", async () => {
     const { handler } = await setup(
       [casa],
       inClone(casa, {
         ...SITE,
-        "estilos/tema.css": ":root { --primary: red }",
-        "estilos/pagina.css":
+        "styles/theme.css": ":root { --primary: red }",
+        "styles/page.css":
           "@import 'x.css';\n.a { background: url(../docs/red/img/zonas.svg) }",
       })
     )
@@ -305,11 +305,11 @@ describe("docs.page styles", () => {
     expect(dns.styles).toBe(expected)
     expect(home.styles).toBe(expected)
     expect(home.problems.map((problem) => problem.file)).toContain(
-      "estilos/pagina.css"
+      "styles/page.css"
     )
   })
 
-  test("a repository without estilos/ gives null styles", async () => {
+  test("a repository without styles/ gives null styles", async () => {
     const { handler } = await setup([casa], inClone(casa, SITE))
     const page = await handler.page({
       context: userContext(),
@@ -321,7 +321,7 @@ describe("docs.page styles", () => {
 
 describe("docs with menu.yaml and the catalog", () => {
   const MENU =
-    "secciones:\n  - titulo: Infra\n    icono: network\n    paginas: [red, catalogo]\n"
+    "secciones:\n  - titulo: Infra\n    icono: network\n    paginas: [red, catalog]\n"
 
   test("the navigation is the menu's groups and breadcrumbs carry the group without a link", async () => {
     const { handler } = await setup(
@@ -350,23 +350,23 @@ describe("docs with menu.yaml and the catalog", () => {
     const { handler } = await setup([casa], inClone(casa, SITE))
     const nas = await handler.page({
       context: userContext(),
-      input: { repository: "casa", path: "catalogo/maquinas/nas" },
+      input: { repository: "casa", path: "catalog/maquinas/nas" },
     })
     expect(nas.source).toBe("generated")
-    expect(nas.href).toBe("/casa/catalogo/maquinas/nas")
+    expect(nas.href).toBe("/casa/catalog/maquinas/nas")
     expect(nas.header.title).toBe("nas")
     expect(nas.previous).toBeNull()
     expect(nas.tree).not.toBeNull()
     expect(nas.breadcrumbs.map((crumb) => crumb.href)).toEqual([
-      "/casa/catalogo",
-      "/casa/catalogo/maquinas",
+      "/casa/catalog",
+      "/casa/catalog/maquinas",
     ])
   })
 
   test("an unknown entity or type of the catalog is NOT_FOUND", async () => {
     const { handler } = await setup([casa], inClone(casa, SITE))
     const context = userContext()
-    for (const path of ["catalogo/maquinas/old-01", "catalogo/servidores"]) {
+    for (const path of ["catalog/maquinas/old-01", "catalog/servidores"]) {
       await expectErrorCode(
         handler.page({ context, input: { repository: "casa", path } }),
         "NOT_FOUND"

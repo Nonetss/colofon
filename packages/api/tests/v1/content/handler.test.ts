@@ -119,7 +119,7 @@ describe("content.schemaCatalog", () => {
     const { handler, root } = await setup()
     await root.write(
       inClone(repository.id, {
-        "catalogo/proveedores/_tipo.yaml":
+        "catalog/proveedores/_type.yaml":
           "nombre: Proveedor\nplural: Proveedores\ncampos:\n  nombre: { tipo: texto }\n",
       })
     )
@@ -201,20 +201,20 @@ describe("content.configSchema / menuSchema / diagramSchema / typeSchema", () =>
   test("the menu schema lists the repository's paths and the diagram schema its entities", async () => {
     const { handler } = await setup()
     const menu = JSON.stringify(await handler.menuSchema({ input }))
-    expect(menu).toContain('"catalogo/maquinas"')
+    expect(menu).toContain('"catalog/maquinas"')
     const diagram = JSON.stringify(await handler.diagramSchema({ input }))
     expect(diagram).toContain('"maquinas/nas"')
   })
 })
 
 describe("last valid content", () => {
-  test("a broken _tipo.yaml after a valid read keeps the previous schemas and warns once, naming the repository", async () => {
+  test("a broken _type.yaml after a valid read keeps the previous schemas and warns once, naming the repository", async () => {
     const { handler, root, logger } = await setup()
     await handler.schemaCatalog({ input })
 
     await root.write(
       inClone(repository.id, {
-        "catalogo/maquinas/_tipo.yaml": "nombre: Máquina\n",
+        "catalog/maquinas/_type.yaml": "nombre: Máquina\n",
       })
     )
     const schema = await handler.entitySchema({

@@ -294,7 +294,7 @@ function linkOrNull(link: PageLink | null, routes: SiteRoutes) {
   return withHref(link, routes)
 }
 
-/** The repository's stylesheet, `null` when its `estilos/` gives none. */
+/** The repository's stylesheet, `null` when its `styles/` gives none. */
 function stylesOf(site: Site): string | null {
   if (site.styles === "") return null
   return site.styles

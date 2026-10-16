@@ -102,16 +102,16 @@ in Spanish.
   or `menu.yaml`), a repository select ("Todos" or one repository), an "En
   esta página" table of contents and sortable, filterable tables; pages can
   use `<Callout>`, `<Entities>` and `<Diagram>`
-- **Catalog pages**: generated without any MDX at `/<slug>/catalogo`, one
+- **Catalog pages**: generated without any MDX at `/<slug>/catalog`, one
   table per type and one page per entity with its fields, the pages that cite
   it, the entities pointing at it and the diagrams it appears in
-- **Diagrams**: `diagramas/<id>.json` files in three forms: drawn (the
+- **Diagrams**: `diagrams/<id>.json` files in three forms: drawn (the
   content places every box, arrow and zone), a self-laid chain, or one of 30
   typed forms the platform lays out from data (flowchart, sequence, timeline,
   Gantt, swimlane, bar, line, Sankey, Wardley map…, each with a complexity
   budget). Drawn as SVG on the server in light and dark, with hover
   highlighting, paths, "what falls with it" and a card per box; boxes and typed
-  items can be catalog entities. A `diagramas/<id>.svg` is a hand-drawn
+  items can be catalog entities. A `diagrams/<id>.svg` is a hand-drawn
   illustration, read through a whitelist
 - **For AI agents**: every page also as Markdown at `<page>/llm.txt`, and the
   `/llms.txt` and `/<slug>/llms.txt` indexes ([llmstxt.org](https://llmstxt.org)),
@@ -147,7 +147,7 @@ Every page except login and signup requires a session.
 | `/` | The "Todos" home: every content repository with its description and top-level sections; redirects to `/<slug>` when the selected scope is one repository or there is only one |
 | `/<slug>` | A repository's home (its `docs/index.mdx`) |
 | `/<slug>/<path>` | A documentation page, with breadcrumbs, previous/next and its table of contents; admins also see the page's problems |
-| `/<slug>/catalogo`, `/<slug>/catalogo/<type>`, `/<slug>/catalogo/<type>/<id>` | The generated catalog pages: every type, a type's table and an entity's page |
+| `/<slug>/catalog`, `/<slug>/catalog/<type>`, `/<slug>/catalog/<type>/<id>` | The generated catalog pages: every type, a type's table and an entity's page |
 | `/llms.txt`, `/<slug>/llms.txt`, `<page>/llm.txt` | The indexes and the Markdown of every page, for AI agents (session or API key) |
 | `/login`, `/signup` | Sign in and create an account (email/password, plus OIDC when configured) |
 | `/me` | The signed-in user's account: name, email, role, changing the name and password, and their own API keys (to hand to an AI that reads `/llms.txt`) |
@@ -170,11 +170,11 @@ documentacion/
 ├── doc.config.yaml        # name, platform version (plataforma: "1"), extra header fields
 ├── menu.yaml              # optional: the sidebar's groups, which win over page headers
 ├── docs/                  # MDX pages; each folder is a section with its index.mdx
-├── catalogo/
+├── catalog/
 │   └── maquinas/
-│       ├── _tipo.yaml     # the type's schema
+│       ├── _type.yaml     # the type's schema
 │       └── nas.yaml       # one entity per file; the file name is its id
-├── diagramas/             # optional: <id>.json diagrams or <id>.svg illustrations, shown with <Diagram id="…" />
+├── diagrams/              # optional: <id>.json diagrams or <id>.svg illustrations, shown with <Diagram id="…" />
 ├── skills/                # this site's own agent skills
 ├── .vscode/settings.json  # optional: editor autocompletion from the platform (below)
 └── AGENTS.md, .agents/    # optional: instructions for the agents that write it; the platform never reads them
@@ -211,7 +211,7 @@ support:
   "yaml.schemaStore.url": "https://<site>/api/v1/content/schemas/<slug>",
   "json.schemas": [
     {
-      "fileMatch": ["/diagramas/*.json"],
+      "fileMatch": ["/diagrams/*.json"],
       "url": "https://<site>/api/v1/content/schemas/<slug>/diagram"
     }
   ]

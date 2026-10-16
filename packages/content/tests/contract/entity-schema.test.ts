@@ -93,7 +93,7 @@ describe("entitySchema", () => {
     )
     const result = empty.safeParse({ centro: "c11" })
     expect(result.error?.issues.map((issue) => issue.message)).toEqual([
-      "No hay ninguna entidad en catalogo/vacio/",
+      "No hay ninguna entidad en catalog/vacio/",
     ])
   })
 })

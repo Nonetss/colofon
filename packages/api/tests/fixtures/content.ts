@@ -7,10 +7,10 @@ import type { RepositoryStore, StoredRepository } from "#v1/content/reader"
 /** A small valid content repository: two types, one pointing at the other. */
 export const CONTENT_SITE: Record<string, string> = {
   "doc.config.yaml": 'nombre: Homelab\nplataforma: "1"\n',
-  "catalogo/ubicaciones/_tipo.yaml":
+  "catalog/ubicaciones/_type.yaml":
     "nombre: Ubicación\nplural: Ubicaciones\ncampos:\n  nombre: { tipo: texto }\n",
-  "catalogo/ubicaciones/casa.yaml": "nombre: Casa\n",
-  "catalogo/maquinas/_tipo.yaml": [
+  "catalog/ubicaciones/casa.yaml": "nombre: Casa\n",
+  "catalog/maquinas/_type.yaml": [
     "nombre: Máquina",
     "plural: Máquinas",
     "campos:",
@@ -18,7 +18,7 @@ export const CONTENT_SITE: Record<string, string> = {
     "  ubicacion: { tipo: ref, a: ubicaciones }",
     "  ficha: { tipo: ficha, opcional: true }",
   ].join("\n"),
-  "catalogo/maquinas/nas.yaml": "ip: 192.168.1.30\nubicacion: casa\n",
+  "catalog/maquinas/nas.yaml": "ip: 192.168.1.30\nubicacion: casa\n",
   "docs/index.mdx": "---\ntitulo: Inicio\n---\n",
   "docs/red/dns.mdx": "---\ntitulo: DNS\n---\n",
 }

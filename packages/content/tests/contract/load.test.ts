@@ -44,22 +44,22 @@ describe("loadContent", () => {
     expect(result.content.config.nombre).toBe("Homelab")
   })
 
-  test("a missing doc.config.yaml or _tipo.yaml is a problem", async () => {
+  test("a missing doc.config.yaml or _type.yaml is a problem", async () => {
     const {
       "doc.config.yaml": _config,
-      "catalogo/ubicaciones/_tipo.yaml": _type,
+      "catalog/ubicaciones/_type.yaml": _type,
       ...rest
     } = VALID_SITE
     expect(problemsOf(await load(rest))).toEqual([
       { file: "doc.config.yaml", message: "No existe" },
-      { file: "catalogo/ubicaciones/_tipo.yaml", message: "No existe" },
+      { file: "catalog/ubicaciones/_type.yaml", message: "No existe" },
     ])
   })
 
   test("a ref to a type that does not exist names the field and the types", async () => {
     const result = await load({
       ...VALID_SITE,
-      "catalogo/ubicaciones/_tipo.yaml": [
+      "catalog/ubicaciones/_type.yaml": [
         "nombre: Ubicación",
         "plural: Ubicaciones",
         "campos:",
@@ -68,9 +68,9 @@ describe("loadContent", () => {
     })
     expect(problemsOf(result)).toEqual([
       {
-        file: "catalogo/ubicaciones/_tipo.yaml",
+        file: "catalog/ubicaciones/_type.yaml",
         message:
-          "centro.de: `a: centros` no es ningún tipo de catalogo/ (hay: maquinas, ubicaciones)",
+          "centro.de: `a: centros` no es ningún tipo de catalog/ (hay: maquinas, ubicaciones)",
       },
     ])
   })
@@ -92,7 +92,7 @@ describe("loadContent", () => {
   test("schema problems carry the path of the field, in Spanish", async () => {
     const result = await load({
       ...VALID_SITE,
-      "catalogo/ubicaciones/_tipo.yaml": "nombre: Ubicación\ncampos: {}\n",
+      "catalog/ubicaciones/_type.yaml": "nombre: Ubicación\ncampos: {}\n",
     })
     const messages = problemsOf(result).map((problem) => problem.message)
     expect(messages).toContain("campos: Declara al menos un campo")
@@ -104,22 +104,22 @@ describe("loadContent", () => {
   test("badly named types and entity files are problems; .yml is refused", async () => {
     const result = await load({
       ...VALID_SITE,
-      "catalogo/Equipos/_tipo.yaml": "nombre: Equipo\n",
-      "catalogo/maquinas/PVE-02.yaml": "ip: 192.168.1.11\n",
-      "catalogo/maquinas/vps.yml": "ip: 203.0.113.42\n",
+      "catalog/Equipos/_type.yaml": "nombre: Equipo\n",
+      "catalog/maquinas/PVE-02.yaml": "ip: 192.168.1.11\n",
+      "catalog/maquinas/vps.yml": "ip: 203.0.113.42\n",
     })
     expect(problemsOf(result).map((problem) => problem.file)).toEqual([
-      "catalogo/Equipos",
-      "catalogo/maquinas/PVE-02.yaml",
-      "catalogo/maquinas/vps.yml",
+      "catalog/Equipos",
+      "catalog/maquinas/PVE-02.yaml",
+      "catalog/maquinas/vps.yml",
     ])
   })
 
-  test("folder paths list every folder holding a page; docs/catalogo is left out", async () => {
+  test("folder paths list every folder holding a page; docs/catalog is left out", async () => {
     const result = await load({
       ...VALID_SITE,
       "docs/contenedores/komodo/nuevo-stack.mdx": "---\ntitulo: Nuevo\n---\n",
-      "docs/catalogo/index.mdx": "---\ntitulo: Mío\n---\n",
+      "docs/catalog/index.mdx": "---\ntitulo: Mío\n---\n",
     })
     if (!result.ok) throw new Error(JSON.stringify(result.problems))
     expect(result.content.index.folderPaths).toEqual([
@@ -127,7 +127,7 @@ describe("loadContent", () => {
       "contenedores/komodo",
       "red",
     ])
-    expect(result.content.index.pagePaths).not.toContain("catalogo")
+    expect(result.content.index.pagePaths).not.toContain("catalog")
   })
 })
 
@@ -198,7 +198,7 @@ describe("menu.yaml", () => {
 describe("parseJson", () => {
   function parsed(text: string) {
     const problems: ContentProblem[] = []
-    const data = parseJson(text, "diagramas/red.json", problems)
+    const data = parseJson(text, "diagrams/red.json", problems)
     return { data, problems }
   }
 
@@ -214,7 +214,7 @@ describe("parseJson", () => {
     expect(data).toBeUndefined()
     expect(problems).toEqual([
       {
-        file: "diagramas/red.json",
+        file: "diagrams/red.json",
         message:
           "JSON no válido en la línea 3, columna 3: falta una coma entre dos elementos",
       },
@@ -234,7 +234,7 @@ describe("parseJson", () => {
 
   test("an empty file is reported as empty", () => {
     expect(parsed("  \n").problems).toEqual([
-      { file: "diagramas/red.json", message: "Está vacío" },
+      { file: "diagrams/red.json", message: "Está vacío" },
     ])
   })
 })

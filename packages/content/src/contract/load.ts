@@ -27,13 +27,13 @@ import {
 // so a renamed page never throws the whole menu away.
 
 export const CONFIG_FILE = "doc.config.yaml"
-export const CATALOG_DIR = "catalogo"
+export const CATALOG_DIR = "catalog"
 export const DOCS_DIR = "docs"
-export const TYPE_FILE = "_tipo.yaml"
+export const TYPE_FILE = "_type.yaml"
 export const MENU_FILE = "menu.yaml"
-export const DIAGRAMS_DIR = "diagramas"
+export const DIAGRAMS_DIR = "diagrams"
 /** The page path the generated catalog pages own; docs/ can't use it. */
-export const CATALOG_PATH = "catalogo"
+export const CATALOG_PATH = "catalog"
 
 /** A problem in one file, with a path relative to the content root. */
 export type ContentProblem = { file: string; message: string }
@@ -68,7 +68,7 @@ export async function loadContent(root: string): Promise<LoadResult> {
     problems
   )
 
-  // A type exists when its folder does, even if its _tipo.yaml is broken:
+  // A type exists when its folder does, even if its _type.yaml is broken:
   // refs to it are not reported again on top of that file's own problem.
   const menu = await readOptionalDeclaration(
     root,
@@ -378,12 +378,12 @@ function checkFieldRefs(
   }
 }
 
-/** Whether a docs/ path is under the reserved `catalogo` folder. */
+/** Whether a docs/ path is under the reserved `catalog` folder. */
 export function isReservedDocsPath(docsPath: string): boolean {
   return docsPath === CATALOG_PATH || docsPath.startsWith(`${CATALOG_PATH}/`)
 }
 
-/** The `.mdx` files of docs/, with `/` separators, outside `catalogo/`. */
+/** The `.mdx` files of docs/, with `/` separators, outside `catalog/`. */
 async function docMdxFiles(root: string): Promise<string[]> {
   const entries = await listDocFiles(path.join(root, DOCS_DIR))
   return entries

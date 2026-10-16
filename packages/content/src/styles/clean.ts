@@ -26,7 +26,7 @@ import { STYLES_DIR } from "#styles/modules"
 
 /** What cleaning a module needs to know about its repository. */
 export type StyleModuleContext = {
-  /** The module's path relative to the content root (`estilos/tema.css`). */
+  /** The module's path relative to the content root (`styles/theme.css`). */
   file: string
   /** The files under `docs/`, relative to it (`img/logo.png`). */
   docsFiles: ReadonlySet<string>

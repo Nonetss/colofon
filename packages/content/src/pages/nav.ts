@@ -122,7 +122,7 @@ export function resolveMenu(menu: Menu, targets: MenuTargets): ResolvedMenu {
       if (target === undefined) {
         report(
           at,
-          `\`${value}\` no es ninguna página ni carpeta de docs/, ni catalogo, ni un tipo del catálogo`
+          `\`${value}\` no es ninguna página ni carpeta de docs/, ni catalog, ni un tipo del catálogo`
         )
         return
       }

@@ -52,7 +52,7 @@ export function readTyped(
 ) {
   return readDiagram(
     "d",
-    "diagramas/d.json",
+    "diagrams/d.json",
     JSON.stringify({ title: "Título", desc: "Descripción", ...spec }),
     context
   )

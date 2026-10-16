@@ -278,7 +278,7 @@ describe("readEditDates", () => {
       {
         "docs/red/dns.mdx": "uno\n",
         "docs/red/vpn.mdx": "uno\n",
-        "catalogo/machines/nas.yaml": "id: nas\n",
+        "catalog/machines/nas.yaml": "id: nas\n",
       },
       "2026-03-02T10:00:00+01:00"
     )
@@ -290,7 +290,7 @@ describe("readEditDates", () => {
     const dates = await readEditDates(await synced(origin))
     expect(dates.get("docs/red/dns.mdx")).toBe("2026-03-02")
     expect(dates.get("docs/red/vpn.mdx")).toBe("2026-10-14")
-    expect(dates.get("catalogo/machines/nas.yaml")).toBe("2026-03-02")
+    expect(dates.get("catalog/machines/nas.yaml")).toBe("2026-03-02")
   })
 
   test("the date is the committer's day in the committer's time zone", async () => {
@@ -318,7 +318,7 @@ describe("readEditDates", () => {
     expect(dates.get("docs/guía.mdx")).toBe("2026-02-14")
   })
 
-  test("files outside docs and catalogo are left out", async () => {
+  test("files outside docs and catalog are left out", async () => {
     const origin = await remote()
     await origin.commit({
       "doc.config.yaml": "nombre: Uno\n",

@@ -108,7 +108,7 @@ describe("typed diagram files", () => {
     expect(diagram.nodes[0]?.name).toBe("NAS")
     expect(diagram.entities.map((entity) => entity.id)).toEqual(["nas"])
     expect(textOf(diagram)).toContain(
-      '<li><a href="/casa/catalogo/maquinas/nas">NAS</a> → Dos: SIGUE</li>'
+      '<li><a href="/casa/catalog/maquinas/nas">NAS</a> → Dos: SIGUE</li>'
     )
   })
 })

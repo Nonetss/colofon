@@ -67,7 +67,7 @@ export const contentRouter = {
       openapi({
         summary: "Schema of a diagram",
         description:
-          "JSON Schema of every diagramas/<id>.json of a content repository, listing the entities a box can stand for as <type>/<id> and the pages it can link to.",
+          "JSON Schema of every diagrams/<id>.json of a content repository, listing the entities a box can stand for as <type>/<id> and the pages it can link to.",
         tags,
         method: "GET",
         path: "/v1/content/schemas/{repository}/diagram",
@@ -82,7 +82,7 @@ export const contentRouter = {
       openapi({
         summary: "Schema of a catalog type",
         description:
-          "JSON Schema of every catalogo/<type>/_tipo.yaml of a content repository, listing the catalog types a reference can point at.",
+          "JSON Schema of every catalog/<type>/_type.yaml of a content repository, listing the catalog types a reference can point at.",
         tags,
         method: "GET",
         path: "/v1/content/schemas/{repository}/type",

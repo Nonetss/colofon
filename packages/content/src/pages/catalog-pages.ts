@@ -22,8 +22,8 @@ import { SANITIZE_SCHEMA } from "#pages/to-hast"
 import type { Page, PageHeader, PageHeading } from "#pages/types"
 
 // The reader pages the platform makes for the catalog, with no MDX behind
-// them: `catalogo` (every type), `catalogo/<type>` (its table) and
-// `catalogo/<type>/<id>` (one entity: its fields and source, the pages that cite it,
+// them: `catalog` (every type), `catalog/<type>` (its table) and
+// `catalog/<type>/<id>` (one entity: its fields and source, the pages that cite it,
 // the entities that point at it and the diagrams it is in). They are plain
 // `Page`s, so the reader serves them like any page of docs/. Their headers
 // come first, so the navigation can list them; their bodies need the

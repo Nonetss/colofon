@@ -93,7 +93,7 @@ function diagramProblems(
 describe("diagram files", () => {
   test("a valid diagram reports nothing and renders, with its caption and text, in every page that shows it", async () => {
     const site = await siteOf({
-      "diagramas/komodo.json": json(KOMODO),
+      "diagrams/komodo.json": json(KOMODO),
       "docs/index.mdx": page("Casa", '<Diagram id="komodo" />'),
       "docs/komodo.mdx": page("Komodo", 'Así:\n\n<Diagram id="komodo" />'),
     })
@@ -104,10 +104,10 @@ describe("diagram files", () => {
       '<figure class="doc-diagram" data-diagram="komodo" data-drawn=""><figcaption><strong>Cómo despliega Komodo</strong>. Komodo manda a Periphery, que levanta los stacks</figcaption>'
     )
     expect(html).toContain(
-      '<ul class="doc-diagram-zones"><li>CASA: <a href="/casa/catalogo/maquinas/nas">nas</a>, Periphery</li></ul>'
+      '<ul class="doc-diagram-zones"><li>CASA: <a href="/casa/catalog/maquinas/nas">nas</a>, Periphery</li></ul>'
     )
     expect(html).toContain(
-      '<li><a href="/casa/catalogo/maquinas/nas">nas</a> → Periphery: DEPLOY</li>'
+      '<li><a href="/casa/catalog/maquinas/nas">nas</a> → Periphery: DEPLOY</li>'
     )
     expect(html).toContain("<li>Periphery → Stacks</li>")
     expect(htmlOf(pageAt(site, "").tree)).toContain("<figure")
@@ -115,7 +115,7 @@ describe("diagram files", () => {
 
   test("a diagram is drawn at its positions, with its legend, and its text kept off screen", async () => {
     const site = await siteOf({
-      "diagramas/komodo.json": json(KOMODO),
+      "diagrams/komodo.json": json(KOMODO),
       "docs/index.mdx": page("Casa", '<Diagram id="komodo" />'),
     })
     const html = htmlOf(pageAt(site, "").tree)
@@ -155,7 +155,7 @@ describe("diagram files", () => {
 
   test("an entity box links to the entity's page, carries its data and content text stays text", async () => {
     const site = await siteOf({
-      "diagramas/komodo.json": komodoWith((diagram) => {
+      "diagrams/komodo.json": komodoWith((diagram) => {
         const [, , stacks] = diagram.nodes
         if (stacks !== undefined) stacks.name = "<script>alert(1)</script>"
       }),
@@ -163,7 +163,7 @@ describe("diagram files", () => {
     })
     const html = htmlOf(pageAt(site, "").tree)
     expect(html).toContain(
-      '<a class="doc-diagram-box doc-diagram-link" href="/casa/catalogo/maquinas/nas" data-node="komodo" data-zone="casa">'
+      '<a class="doc-diagram-box doc-diagram-link" href="/casa/catalog/maquinas/nas" data-node="komodo" data-zone="casa">'
     )
     expect(html).toContain(
       '<path class="doc-diagram-hit" data-edge="0" data-from="komodo" data-to="periphery" data-label="DEPLOY"'
@@ -174,7 +174,7 @@ describe("diagram files", () => {
 
   test("a box can link to a page, and one that does not exist is reported", async () => {
     const site = await siteOf({
-      "diagramas/red.json": drawn({
+      "diagrams/red.json": drawn({
         nodes: [
           box("a", 24, { page: "notas" }),
           box("b", 200, { page: "red/vpn" }),
@@ -182,7 +182,7 @@ describe("diagram files", () => {
       }),
       "docs/notas.mdx": page("Notas", '<Diagram id="red" />'),
     })
-    expect(diagramProblems(site, "diagramas/red.json")).toEqual([
+    expect(diagramProblems(site, "diagrams/red.json")).toEqual([
       "nodes.1.page: `red/vpn` no es ninguna página de docs/",
     ])
     const html = htmlOf(pageAt(site, "notas").tree)
@@ -192,7 +192,7 @@ describe("diagram files", () => {
 
   test("a missing description and an unknown key are reported with their paths", async () => {
     const site = await siteOf({
-      "diagramas/red.json": json({
+      "diagrams/red.json": json({
         title: "Red",
         orden: 1,
         width: 100,
@@ -200,7 +200,7 @@ describe("diagram files", () => {
         nodes: [box("a", 0)],
       }),
     })
-    expect(diagramProblems(site, "diagramas/red.json")).toEqual([
+    expect(diagramProblems(site, "diagrams/red.json")).toEqual([
       "`orden` no es una clave de un diagrama ($schema, title, desc, kindNames, edgeNames, badgeName, shapes, colorEdges, width, height, nodes, edges, zones, notes)",
       "desc: Falta: es obligatorio",
     ])
@@ -208,7 +208,7 @@ describe("diagram files", () => {
 
   test("an entity that does not exist is reported and the box keeps its id as name, unlinked", async () => {
     const site = await siteOf({
-      "diagramas/red.json": drawn({
+      "diagrams/red.json": drawn({
         nodes: [
           { id: "viejo", entity: "maquinas/old-01", x: 0, y: 0, w: 120, h: 60 },
           { id: "nas", entity: "maquinas/nas", x: 200, y: 0, w: 120, h: 60 },
@@ -228,20 +228,20 @@ describe("diagram files", () => {
       }),
       "docs/red.mdx": page("Red", '<Diagram id="red" />'),
     })
-    expect(diagramProblems(site, "diagramas/red.json")).toEqual([
+    expect(diagramProblems(site, "diagrams/red.json")).toEqual([
       "nodes.0.entity: `maquinas/old-01` no es ninguna entidad del catálogo",
     ])
     expect(htmlOf(pageAt(site, "red").tree)).toContain(
-      '<li>viejo → <a href="/casa/catalogo/maquinas/nas">nas</a>: COPIA</li>'
+      '<li>viejo → <a href="/casa/catalog/maquinas/nas">nas</a>: COPIA</li>'
     )
     expect(messagesOf(pageAt(site, "red"))).toEqual([
-      "diagramas/red.json: nodes.0.entity: `maquinas/old-01` no es ninguna entidad del catálogo",
+      "diagrams/red.json: nodes.0.entity: `maquinas/old-01` no es ninguna entidad del catálogo",
     ])
   })
 
   test("an arrow to an undeclared box is reported and drawn without that end", async () => {
     const site = await siteOf({
-      "diagramas/komodo.json": drawn({
+      "diagrams/komodo.json": drawn({
         nodes: [box("komodo", 24)],
         edges: [
           {
@@ -256,7 +256,7 @@ describe("diagram files", () => {
       }),
       "docs/k.mdx": page("K", '<Diagram id="komodo" />'),
     })
-    expect(diagramProblems(site, "diagramas/komodo.json")).toEqual([
+    expect(diagramProblems(site, "diagrams/komodo.json")).toEqual([
       "edges.0.to: `stacks` no es ninguna de las cajas",
     ])
     const html = htmlOf(pageAt(site, "k").tree)
@@ -268,7 +268,7 @@ describe("diagram files", () => {
 
   test("a diagonal segment is reported and its arrow left out", async () => {
     const site = await siteOf({
-      "diagramas/red.json": drawn({
+      "diagrams/red.json": drawn({
         nodes: [box("a", 0)],
         edges: [
           {
@@ -281,7 +281,7 @@ describe("diagram files", () => {
       }),
       "docs/red.mdx": page("Red", '<Diagram id="red" />'),
     })
-    expect(diagramProblems(site, "diagramas/red.json")).toEqual([
+    expect(diagramProblems(site, "diagrams/red.json")).toEqual([
       "edges.0.points: tramo en diagonal 100,40 → 200,80",
     ])
     expect(htmlOf(pageAt(site, "red").tree)).not.toContain("doc-diagram-edge")
@@ -289,7 +289,7 @@ describe("diagram files", () => {
 
   test("a box in two zones, an unknown zone and a repeated id are reported", async () => {
     const site = await siteOf({
-      "diagramas/red.json": drawn({
+      "diagrams/red.json": drawn({
         zones: [{ id: "home", x: 0, y: 0, w: 300, h: 150, label: "HOME" }],
         nodes: [
           box("nas", 0, { zone: ["home", "outside"] }),
@@ -298,7 +298,7 @@ describe("diagram files", () => {
         ],
       }),
     })
-    expect(diagramProblems(site, "diagramas/red.json")).toEqual([
+    expect(diagramProblems(site, "diagrams/red.json")).toEqual([
       "nodes.0.zone: Una caja está en una zona: el id de esa zona",
       "nodes.1.zone: `casa` no es ninguna de las zonas",
       "nodes.2.id: `nas` ya es el id de otra caja",
@@ -307,7 +307,7 @@ describe("diagram files", () => {
 
   test("a label without `at` is reported and its arrow drawn without it", async () => {
     const site = await siteOf({
-      "diagramas/red.json": drawn({
+      "diagrams/red.json": drawn({
         nodes: [box("a", 0), box("b", 200)],
         edges: [
           {
@@ -323,7 +323,7 @@ describe("diagram files", () => {
       }),
       "docs/red.mdx": page("Red", '<Diagram id="red" />'),
     })
-    expect(diagramProblems(site, "diagramas/red.json")).toEqual([
+    expect(diagramProblems(site, "diagrams/red.json")).toEqual([
       "edges.0: Una etiqueta (label) necesita at: dónde va",
     ])
     const html = htmlOf(pageAt(site, "red").tree)
@@ -333,7 +333,7 @@ describe("diagram files", () => {
 
   test("a badge is a chip on its from box in its to box's hue, named in the legend", async () => {
     const site = await siteOf({
-      "diagramas/red.json": drawn({
+      "diagrams/red.json": drawn({
         zones: [
           {
             id: "auth",
@@ -350,7 +350,7 @@ describe("diagram files", () => {
       }),
       "docs/red.mdx": page("Red", '<Diagram id="red" />'),
     })
-    expect(diagramProblems(site, "diagramas/red.json")).toEqual([])
+    expect(diagramProblems(site, "diagrams/red.json")).toEqual([])
     const html = htmlOf(pageAt(site, "red").tree)
     expect(html).toContain(
       '<g class="doc-diagram-badge doc-diagram-hued doc-diagram-hue-teal" data-edge="0" data-from="grafana" data-to="authentik" data-label="SSO">'
@@ -365,24 +365,24 @@ describe("diagram files", () => {
 
   test("a badge without both ends is reported and left out", async () => {
     const site = await siteOf({
-      "diagramas/red.json": drawn({
+      "diagrams/red.json": drawn({
         nodes: [box("grafana", 0)],
         edges: [{ from: "grafana", badge: "SSO" }],
       }),
     })
-    expect(diagramProblems(site, "diagramas/red.json")).toEqual([
+    expect(diagramProblems(site, "diagrams/red.json")).toEqual([
       "edges.0: Una insignia (badge) lleva from y to, dos cajas que existan",
     ])
   })
 
   test("a name too wide for its box is reported and the box still renders", async () => {
     const site = await siteOf({
-      "diagramas/red.json": drawn({
+      "diagrams/red.json": drawn({
         nodes: [box("a", 0, { name: "Registro de contenedores de Gitea" })],
       }),
       "docs/red.mdx": page("Red", '<Diagram id="red" />'),
     })
-    expect(diagramProblems(site, "diagramas/red.json")).toEqual([
+    expect(diagramProblems(site, "diagrams/red.json")).toEqual([
       'nodes.0: "Registro de contenedores de Gitea" (230px) no cabe en 120px',
     ])
     expect(htmlOf(pageAt(site, "red").tree)).toContain(
@@ -392,18 +392,18 @@ describe("diagram files", () => {
 
   test("a box without h that is not a table is reported and left out", async () => {
     const site = await siteOf({
-      "diagramas/red.json": drawn({
+      "diagrams/red.json": drawn({
         nodes: [{ id: "a", name: "A", x: 0, y: 0, w: 120 }],
       }),
     })
-    expect(diagramProblems(site, "diagramas/red.json")).toEqual([
+    expect(diagramProblems(site, "diagrams/red.json")).toEqual([
       "nodes.0.h: Falta: una caja que no es una tabla lleva h",
     ])
   })
 
   test("a chain lays its items in a row joined by its links", async () => {
     const site = await siteOf({
-      "diagramas/copias.json": json({
+      "diagrams/copias.json": json({
         title: "Copias",
         desc: "De la máquina al NAS y a la nube",
         items: [
@@ -416,7 +416,7 @@ describe("diagram files", () => {
       }),
       "docs/copias.mdx": page("Copias", '<Diagram id="copias" />'),
     })
-    expect(diagramProblems(site, "diagramas/copias.json")).toEqual([])
+    expect(diagramProblems(site, "diagrams/copias.json")).toEqual([])
     const html = htmlOf(pageAt(site, "copias").tree)
     // 24 + 120 + 76 (the label's gap) + 120 + 48 + 120 + 24
     expect(html).toContain('viewBox="0 0 532 ')
@@ -430,27 +430,27 @@ describe("diagram files", () => {
 
   test("a YAML diagram, a .yml file and a badly named file are reported", async () => {
     const site = await siteOf({
-      "diagramas/pipeline.yaml": "titulo: Pipeline\n",
-      "diagramas/viejo.yml": "titulo: Viejo\n",
-      "diagramas/Mapa.json": "{}",
+      "diagrams/pipeline.yaml": "titulo: Pipeline\n",
+      "diagrams/viejo.yml": "titulo: Viejo\n",
+      "diagrams/Mapa.json": "{}",
     })
-    expect(diagramProblems(site, "diagramas/pipeline.yaml")).toEqual([
-      "Los diagramas se escriben ahora en JSON: pásalo a diagramas/pipeline.json",
+    expect(diagramProblems(site, "diagrams/pipeline.yaml")).toEqual([
+      "Los diagramas se escriben ahora en JSON: pásalo a diagrams/pipeline.json",
     ])
-    expect(diagramProblems(site, "diagramas/viejo.yml")).toEqual([
-      "Los diagramas se escriben ahora en JSON: pásalo a diagramas/viejo.json",
+    expect(diagramProblems(site, "diagrams/viejo.yml")).toEqual([
+      "Los diagramas se escriben ahora en JSON: pásalo a diagrams/viejo.json",
     ])
-    expect(diagramProblems(site, "diagramas/Mapa.json")).toHaveLength(1)
+    expect(diagramProblems(site, "diagrams/Mapa.json")).toHaveLength(1)
   })
 
   test("a JSON syntax error is reported with its line and column, and pages showing it get a notice", async () => {
     const site = await siteOf({
-      "diagramas/red.json": '{\n  "title": "Red"\n  "desc": "x"\n}',
-      "diagramas/komodo.json": json(KOMODO),
+      "diagrams/red.json": '{\n  "title": "Red"\n  "desc": "x"\n}',
+      "diagrams/komodo.json": json(KOMODO),
       "docs/red.mdx": page("Red", '<Diagram id="red" />'),
       "docs/k.mdx": page("K", '<Diagram id="komodo" />'),
     })
-    expect(diagramProblems(site, "diagramas/red.json")).toEqual([
+    expect(diagramProblems(site, "diagrams/red.json")).toEqual([
       "JSON no válido en la línea 3, columna 3: falta una coma entre dos elementos",
     ])
     expect(htmlOf(pageAt(site, "red").tree)).toContain(
@@ -461,14 +461,14 @@ describe("diagram files", () => {
 
   test("a diagram without a valid size shows its caption and text instead of a drawing", async () => {
     const site = await siteOf({
-      "diagramas/red.json": json({
+      "diagrams/red.json": json({
         title: "Red",
         desc: "La red",
         nodes: [box("a", 0)],
       }),
       "docs/red.mdx": page("Red", '<Diagram id="red" />'),
     })
-    expect(diagramProblems(site, "diagramas/red.json")).toEqual([
+    expect(diagramProblems(site, "diagrams/red.json")).toEqual([
       "width: Falta: es obligatorio",
       "height: Falta: es obligatorio",
     ])
@@ -483,7 +483,7 @@ describe("diagram files", () => {
 describe("<Diagram> and ```diagram", () => {
   test("an unknown id, a missing id and an unknown attribute are reported on the line", async () => {
     const site = await siteOf({
-      "diagramas/komodo.json": json(KOMODO),
+      "diagrams/komodo.json": json(KOMODO),
       "docs/notas.mdx": page(
         "Notas",
         '<Diagram id="mapa" />\n\n<Diagram />\n\n<Diagram id="komodo" size="big" />'
@@ -491,8 +491,8 @@ describe("<Diagram> and ```diagram", () => {
     })
     const notas = pageAt(site, "notas")
     expect(messagesOf(notas)).toEqual([
-      '<Diagram id="mapa">: no hay ningún diagramas/mapa.json ni diagramas/mapa.svg que se pueda leer (hay: komodo)',
-      "<Diagram> necesita id, el nombre de un fichero de diagramas/ (hay: komodo)",
+      '<Diagram id="mapa">: no hay ningún diagrams/mapa.json ni diagrams/mapa.svg que se pueda leer (hay: komodo)',
+      "<Diagram> necesita id, el nombre de un fichero de diagrams/ (hay: komodo)",
       "<Diagram> no tiene el atributo size",
     ])
     expect(notas.problems.map((problem) => problem.line)).toEqual([6, 8, 10])
@@ -501,7 +501,7 @@ describe("<Diagram> and ```diagram", () => {
 
   test("a <Diagram> inside a paragraph needs its own block", async () => {
     const site = await siteOf({
-      "diagramas/komodo.json": json(KOMODO),
+      "diagrams/komodo.json": json(KOMODO),
       "docs/notas.mdx": page("Notas", 'Mira <Diagram id="komodo" /> aquí'),
     })
     expect(messagesOf(pageAt(site, "notas"))).toEqual([
@@ -519,36 +519,36 @@ describe("<Diagram> and ```diagram", () => {
         file: "docs/notas.mdx",
         line: 6,
         message:
-          'Los diagramas van en diagramas/<id>.json y se muestran con <Diagram id="…" />',
+          'Los diagramas van en diagrams/<id>.json y se muestran con <Diagram id="…" />',
       },
     ])
     expect(htmlOf(notas.tree)).toBe(
-      '<div class="doc-component-notice">Los diagramas van en diagramas/&#x3C;id>.json y se muestran con &#x3C;Diagram id="…" /></div>'
+      '<div class="doc-component-notice">Los diagramas van en diagrams/&#x3C;id>.json y se muestran con &#x3C;Diagram id="…" /></div>'
     )
   })
 
   test("an entity's catalog page lists the diagrams it is a box of", async () => {
-    const site = await siteOf({ "diagramas/komodo.json": json(KOMODO) })
-    const nas = pageAt(site, "catalogo/maquinas/nas")
+    const site = await siteOf({ "diagrams/komodo.json": json(KOMODO) })
+    const nas = pageAt(site, "catalog/maquinas/nas")
     expect(nas.headings.map((heading) => heading.text)).toEqual(["Diagramas"])
     expect(htmlOf(nas.tree)).toContain('data-diagram="komodo"')
   })
 
   test("ops without rows are reported and the box drawn without them", async () => {
     const site = await siteOf({
-      "diagramas/red.json": drawn({
+      "diagrams/red.json": drawn({
         nodes: [box("a", 24, { ops: [{ name: "login()" }] })],
       }),
       "docs/index.mdx": page("Casa", '<Diagram id="red" />'),
     })
-    expect(diagramProblems(site, "diagramas/red.json")).toEqual([
+    expect(diagramProblems(site, "diagrams/red.json")).toEqual([
       "nodes.0.ops: ops va bajo las filas de una tabla: lleva rows",
     ])
   })
 
   test("an entity that is an item of a typed diagram lists that diagram too", async () => {
     const site = await siteOf({
-      "diagramas/flujo.json": json({
+      "diagrams/flujo.json": json({
         type: "flowchart",
         title: "Flujo",
         desc: "El flujo",
@@ -559,7 +559,7 @@ describe("<Diagram> and ```diagram", () => {
         links: [{ from: "a", to: "b" }],
       }),
     })
-    const nas = pageAt(site, "catalogo/maquinas/nas")
+    const nas = pageAt(site, "catalog/maquinas/nas")
     expect(htmlOf(nas.tree)).toContain('data-diagram="flujo"')
   })
 })

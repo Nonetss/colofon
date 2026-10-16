@@ -83,8 +83,8 @@ describe("sectionsAbove", () => {
   })
 
   test("a page outside the navigation opens the sections above its closest listed page", () => {
-    expect(sectionsAbove(menuNodes, "/casa/catalogo/maquinas/nas")).toEqual([
-      "/casa/catalogo",
+    expect(sectionsAbove(menuNodes, "/casa/catalog/maquinas/nas")).toEqual([
+      "/casa/catalog",
     ])
   })
 })
@@ -99,8 +99,8 @@ const menuNodes: DocsRepository["nodes"] = [
     children: [
       {
         kind: "section",
-        ...entry("catalogo", "Referencia"),
-        children: [{ kind: "page", ...entry("catalogo/maquinas", "Máquinas") }],
+        ...entry("catalog", "Referencia"),
+        children: [{ kind: "page", ...entry("catalog/maquinas", "Máquinas") }],
       },
     ],
   },
@@ -112,8 +112,8 @@ describe("currentHref", () => {
   })
 
   test("a page outside the navigation takes the deepest listed page above it", () => {
-    expect(currentHref(menuNodes, "/casa/catalogo/maquinas/nas")).toBe(
-      "/casa/catalogo/maquinas"
+    expect(currentHref(menuNodes, "/casa/catalog/maquinas/nas")).toBe(
+      "/casa/catalog/maquinas"
     )
     expect(currentHref(casa.nodes, "/casa/red/vpn/wg/extra")).toBe(
       "/casa/red/vpn/wg"
@@ -171,9 +171,9 @@ const withMenu: DocsRepository = {
       children: [
         {
           kind: "section",
-          ...entry("catalogo", "Catálogo"),
+          ...entry("catalog", "Catálogo"),
           children: [
-            { kind: "page", ...entry("catalogo/machines", "Machines") },
+            { kind: "page", ...entry("catalog/machines", "Machines") },
           ],
         },
       ],
@@ -191,8 +191,8 @@ describe("navigation with menu groups", () => {
       ["/casa/red/dns", ["Infraestructura", "Red"]],
       ["/casa/red/vpn", ["Infraestructura", "Red"]],
       ["/casa/red/vpn/wg", ["Infraestructura", "Red", "VPN"]],
-      ["/casa/catalogo", ["Datos"]],
-      ["/casa/catalogo/machines", ["Datos", "Catálogo"]],
+      ["/casa/catalog", ["Datos"]],
+      ["/casa/catalog/machines", ["Datos", "Catálogo"]],
     ])
   })
 
@@ -201,8 +201,8 @@ describe("navigation with menu groups", () => {
       "/casa/red",
       "/casa/red/vpn",
     ])
-    expect(sectionsAbove(withMenu.nodes, "/casa/catalogo/machines")).toEqual([
-      "/casa/catalogo",
+    expect(sectionsAbove(withMenu.nodes, "/casa/catalog/machines")).toEqual([
+      "/casa/catalog",
     ])
   })
 

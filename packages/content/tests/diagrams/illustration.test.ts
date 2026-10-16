@@ -14,7 +14,7 @@ function svg(
 }
 
 function read(text: string) {
-  return illustrationFile("despiece", "diagramas/despiece.svg", text)
+  return illustrationFile("despiece", "diagrams/despiece.svg", text)
 }
 
 function messages(text: string): string[] {
@@ -115,9 +115,9 @@ describe("illustrations", () => {
 
   test("a page shows an illustration by its id, with no text version, and a JSON of the same id wins", async () => {
     const site = await siteOf({
-      "diagramas/despiece.svg": svg("<path class='ink' d='M0 0'/>"),
-      "diagramas/planta.svg": svg("<path d='M0 0'/>"),
-      "diagramas/planta.json": JSON.stringify({
+      "diagrams/despiece.svg": svg("<path class='ink' d='M0 0'/>"),
+      "diagrams/planta.svg": svg("<path d='M0 0'/>"),
+      "diagrams/planta.json": JSON.stringify({
         title: "Planta",
         desc: "La planta",
         type: "flowchart",
@@ -131,10 +131,10 @@ describe("illustrations", () => {
     const home = pageAt(site, "")
     expect(
       home.problems
-        .filter((problem) => problem.file === "diagramas/planta.svg")
+        .filter((problem) => problem.file === "diagrams/planta.svg")
         .map((problem) => problem.message)
     ).toEqual([
-      "diagramas/planta.json ya es el diagrama planta: este fichero no se usa",
+      "diagrams/planta.json ya es el diagrama planta: este fichero no se usa",
     ])
     const html = htmlOf(home.tree)
     expect(html).toContain(

@@ -25,7 +25,7 @@ function ruleOf(bytes: number): string {
 }
 
 describe("readStyles", () => {
-  test("a repository without estilos/ has an empty stylesheet and no problem", async () => {
+  test("a repository without styles/ has an empty stylesheet and no problem", async () => {
     expect(await stylesOf({ "doc.config.yaml": "nombre: Casa\n" })).toEqual({
       css: "",
       problems: [],
@@ -34,9 +34,9 @@ describe("readStyles", () => {
 
   test("modules are joined in the platform's order, whatever their names sort to", async () => {
     const styles = await stylesOf({
-      "estilos/avisos.css": ".avisos { color: red }",
-      "estilos/tablas.css": ".tablas { color: red }",
-      "estilos/tema.css": ":root { --primary: red }",
+      "styles/callouts.css": ".avisos { color: red }",
+      "styles/tables.css": ".tablas { color: red }",
+      "styles/theme.css": ":root { --primary: red }",
     })
     expect(styles.css).toBe(
       ":root{--primary:red}\n.tablas{color:red}\n.avisos{color:red}"
@@ -46,19 +46,19 @@ describe("readStyles", () => {
 
   test("an entry that is not a module is reported naming the modules, and ignored", async () => {
     const dir = await createContentDir({
-      "estilos/tables.css": ".a { color: red }",
-      "estilos/tema.css": ":root { --primary: red }",
-      "estilos/.gitkeep": "",
+      "styles/tablas.css": ".a { color: red }",
+      "styles/theme.css": ":root { --primary: red }",
+      "styles/.gitkeep": "",
     })
-    await mkdir(path.join(dir.root, "estilos/extra"))
+    await mkdir(path.join(dir.root, "styles/extra"))
     try {
       const styles = await readStyles(dir.root, new Set(), fileUrlOf)
       expect(styles.css).toBe(":root{--primary:red}")
       expect(styles.problems.map((problem) => problem.file)).toEqual([
-        "estilos/extra",
-        "estilos/tables.css",
+        "styles/extra",
+        "styles/tablas.css",
       ])
-      expect(styles.problems[1]?.message).toContain("tema.css, pagina.css")
+      expect(styles.problems[1]?.message).toContain("theme.css, page.css")
     } finally {
       await dir.remove()
     }
@@ -66,17 +66,17 @@ describe("readStyles", () => {
 
   test("the cleaning's problems are reported on the module's path", async () => {
     const styles = await stylesOf({
-      "estilos/codigo.css": "@import 'x.css';\n.a { color: red }",
+      "styles/code.css": "@import 'x.css';\n.a { color: red }",
     })
     expect(styles.css).toBe(".a{color:red}")
     expect(styles.problems).toEqual([
-      expect.objectContaining({ file: "estilos/codigo.css", line: 1 }),
+      expect.objectContaining({ file: "styles/code.css", line: 1 }),
     ])
   })
 
   test("images under docs/ are rewritten with the reader's route", async () => {
     const styles = await stylesOf(
-      { "estilos/pagina.css": ".a { background: url(../docs/img/f.png) }" },
+      { "styles/page.css": ".a { background: url(../docs/img/f.png) }" },
       new Set(["img/f.png"])
     )
     expect(styles.css).toBe(".a{background:url(/files/img/f.png)}")
@@ -84,13 +84,13 @@ describe("readStyles", () => {
 
   test("a module over 64 KiB is left out and the others are used", async () => {
     const styles = await stylesOf({
-      "estilos/tema.css": ":root { --primary: red }",
-      "estilos/diagramas.css": ruleOf(80 * 1024),
+      "styles/theme.css": ":root { --primary: red }",
+      "styles/diagrams.css": ruleOf(80 * 1024),
     })
     expect(styles.css).toBe(":root{--primary:red}")
     expect(styles.problems).toEqual([
       expect.objectContaining({
-        file: "estilos/diagramas.css",
+        file: "styles/diagrams.css",
         message: expect.stringContaining("64 KiB"),
       }),
     ])
@@ -98,17 +98,17 @@ describe("readStyles", () => {
 
   test("the module that takes the stylesheet over 128 KiB is left out with every one after it", async () => {
     const styles = await stylesOf({
-      "estilos/tema.css": ":root { --primary: red }",
-      "estilos/pagina.css": ruleOf(60 * 1024),
-      "estilos/codigo.css": ruleOf(60 * 1024),
-      "estilos/tablas.css": ruleOf(60 * 1024),
-      "estilos/secciones.css": ".s { color: red }",
+      "styles/theme.css": ":root { --primary: red }",
+      "styles/page.css": ruleOf(60 * 1024),
+      "styles/code.css": ruleOf(60 * 1024),
+      "styles/tables.css": ruleOf(60 * 1024),
+      "styles/sections.css": ".s { color: red }",
     })
     expect(styles.css).not.toContain(".s{")
     expect(styles.css.split("\n")).toHaveLength(3)
     expect(styles.problems.map((problem) => problem.file)).toEqual([
-      "estilos/tablas.css",
-      "estilos/secciones.css",
+      "styles/tables.css",
+      "styles/sections.css",
     ])
   })
 })

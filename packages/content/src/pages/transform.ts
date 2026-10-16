@@ -32,7 +32,7 @@ import type { PageHeading } from "#pages/types"
 // alerts and points links and images at the reader's routes. The platform's
 // components are replaced here: `<Callout>` by an alert, `<Entities>` by its
 // catalog table (`entities.ts`) and `<Diagram>` by its figure
-// (`diagrams/figure.ts`); a ```diagram block, which belongs in diagramas/, by a
+// (`diagrams/figure.ts`); a ```diagram block, which belongs in diagrams/, by a
 // notice. Other MDX nodes are left in place and `to-hast.ts` drops them or
 // renders them as notices.
 
@@ -49,7 +49,7 @@ export type TransformContext = {
   routeOf: (pagePath: string) => string
   /** The URL of a file under `docs/` (`red/img/zonas.svg`). */
   fileUrlOf: (docsPath: string) => string
-  /** The catalog `<Entities>` and `catalogo:` links read from. */
+  /** The catalog `<Entities>` and `catalog:` links read from. */
   catalog: Catalog
   /** The title of a page path, for links that show it. */
   titleOf: (pagePath: string) => string
@@ -70,7 +70,7 @@ type AlertKind = keyof typeof ALERT_TITLES
 /** The component pages may use, rendered as an alert. */
 export const CALLOUT = "Callout"
 
-/** The component that shows a diagram of diagramas/. */
+/** The component that shows a diagram of diagrams/. */
 export const DIAGRAM = "Diagram"
 
 /** `<Callout type="…">`: the alert kind and default title of each type. */
@@ -96,7 +96,7 @@ export function transformPage(
 ): {
   headings: PageHeading[]
   problems: PageProblem[]
-  /** The generated pages of the entities its `catalogo:` links name. */
+  /** The generated pages of the entities its `catalog:` links name. */
   citations: string[]
 } {
   const citations = new Set<string>()
@@ -223,7 +223,7 @@ const BLOCK_COMPONENTS: ReadonlySet<string> = new Set([
 
 /** What a ```diagram block is told: diagrams live in their own files. */
 const DIAGRAM_FENCE_MESSAGE =
-  'Los diagramas van en diagramas/<id>.json y se muestran con <Diagram id="…" />'
+  'Los diagramas van en diagrams/<id>.json y se muestran con <Diagram id="…" />'
 
 /** A block that renders as the platform's notice, holding `message`. */
 function noticeBlock(message: string, node: Code): Blockquote {
@@ -284,12 +284,12 @@ function diagramElement(
   }
   const known = [...context.diagrams.keys()].join(", ")
   if (id === null) {
-    const message = `<${DIAGRAM}> necesita id, el nombre de un fichero de diagramas/ (hay: ${known})`
+    const message = `<${DIAGRAM}> necesita id, el nombre de un fichero de diagrams/ (hay: ${known})`
     return { element: diagramNotice(message), problems: [...problems, message] }
   }
   const found = context.diagrams.get(id)
   if (found === undefined || found.diagram === null) {
-    const message = `<${DIAGRAM} id="${id}">: no hay ningún diagramas/${id}.json ni diagramas/${id}.svg que se pueda leer (hay: ${known})`
+    const message = `<${DIAGRAM} id="${id}">: no hay ningún diagrams/${id}.json ni diagrams/${id}.svg que se pueda leer (hay: ${known})`
     const fileProblems = (found?.problems ?? []).map(
       (problem) => `${problem.file}: ${problem.message}`
     )
@@ -493,11 +493,11 @@ type Target =
   | { kind: "url"; url: string }
   | { kind: "broken"; message: string }
 
-const CATALOG_SCHEME = "catalogo:"
+const CATALOG_SCHEME = "catalog:"
 
 /**
- * `catalogo:<type>/<id>`: the entity's page, or its generated catalog page
- * when it has none. `catalogo:<type>`: the type's generated page.
+ * `catalog:<type>/<id>`: the entity's page, or its generated catalog page
+ * when it has none. `catalog:<type>`: the type's generated page.
  */
 function entityTarget(url: string, context: LinkContext): Target {
   const [typeId = "", id, ...rest] = url.slice(CATALOG_SCHEME.length).split("/")

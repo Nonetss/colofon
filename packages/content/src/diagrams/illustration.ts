@@ -2,7 +2,7 @@ import type { Element, ElementContent, Properties } from "hast"
 import { fromHtml } from "hast-util-from-html"
 import { HUES } from "#diagrams/schema"
 
-// A diagram drawn by hand: `diagramas/<id>.svg`, for the figures no typed
+// A diagram drawn by hand: `diagrams/<id>.svg`, for the figures no typed
 // form lays out (an exploded axonometric, a floor plan). It is read through
 // a whitelist: shapes, text, groups and transforms, colours only through the
 // role classes, which become the theme's colours. Everything else is

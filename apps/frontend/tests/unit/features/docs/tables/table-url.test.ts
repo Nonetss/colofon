@@ -15,7 +15,7 @@ const model = tableModel(
   Array.from({ length: 120 }, (_, n) => [`m${n}`, "vm", `10.0.0.${n}`, ""])
 )
 const base = initialState(model)
-const page = "https://docs.example.org/casa/catalogo/machines?x=1"
+const page = "https://docs.example.org/casa/catalog/machines?x=1"
 
 describe("tableId", () => {
   test("the heading's id and the table's place under it", () => {

@@ -50,7 +50,7 @@ function valueSchema(field: FieldDefinition, index: CatalogIndex): z.ZodType {
     case "ref":
       return enumOf(
         index.entityIds.get(field.a) ?? [],
-        `No hay ninguna entidad en catalogo/${field.a}/`
+        `No hay ninguna entidad en catalog/${field.a}/`
       )
     case "lista":
       return z.array(fieldSchema(field.de, index))
