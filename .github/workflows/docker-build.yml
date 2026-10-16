@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - "main"
+  # Run by hand from the Actions tab to rebuild every image of a branch.
+  workflow_dispatch:
 
 # A newer push to the same branch cancels the running build, so an older run
 # can never finish last and leave the branch tag pointing at stale code.
@@ -45,7 +47,8 @@ jobs:
           )
           COMMON=".github/workflows/docker-build.yml .dockerignore"
 
-          # New branch or force push: there is no usable base, so build all.
+          # Manual run, new branch or force push: there is no usable base, so
+          # build all.
           if [ -z "$BEFORE" ] || [ "$BEFORE" = "0000000000000000000000000000000000000000" ] \
             || ! git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then
             CHANGED="__all__"
