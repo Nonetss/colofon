@@ -231,10 +231,10 @@ Dark theme mirrors the same roles with a slightly warm dark surface (`oklch(0.26
 
 ### Scoped Palettes
 
-Three palettes in `apps/frontend/src/styles/global.css` carry hues other than terracotta. Each is confined to the one place named here; none of them may leak into chrome, status or copy.
+Three palettes carry hues other than terracotta; the chart and entity icon ones are tokens in `apps/frontend/src/styles/theme.css`. Each is confined to the one place named here; none of them may leak into chrome, status or copy.
 
 - **Chart palette** (`--chart-1` … `--chart-6`, read by the `Chart` primitive through `.ts-chart-host`): categorical series in data visualisations only. `--chart-1` is Brand Terracotta. A chart that encodes *status* (the cron run pulse) ignores it and paints with the status vocabulary instead: ink for success, destructive for failure, muted for skipped, primary for running.
-- **Syntax palette** (`--th-*`, for `@tanstack/highlight` tokens): code inside `JsonView`. Properties use the primary, comments the mute; operators and punctuation keep the text color.
+- **Syntax palette** (`--th-*` in `apps/frontend/src/styles/app/syntax.css`, for `@tanstack/highlight` tokens): code inside `JsonView`. Properties use the primary, comments the mute; operators and punctuation keep the text color.
 - **Entity icon palette** (`--icon-*`, keyed by name in `features/entity-icons/picker/model/palette.ts`): the user-selectable color of an entity's icon. No entity type is registered yet (`entityIconTargets` is empty); a consumer that passes `allowColor={false}` renders in `--icon-orange` (= primary), and the other hues stay dormant until a screen opts in.
 
 ### Named Rules
@@ -253,7 +253,7 @@ Three palettes in `apps/frontend/src/styles/global.css` carry hues other than te
 
 ### Hierarchy
 
-Every role below is a `variant` of the `Text` component (`components/shared/brand/typography.tsx`), which owns its full recipe on top of the `--font-size-*` / `--line-height-*` / `--tracking-*` tokens in `global.css`. Call sites pick a role and a tone (`default`, `muted`, `primary`, `destructive`) and keep only layout in `className`; components that can't be a `Text` (shadcn primitives, `button`, `summary`, `Input`) take the same classes through `textVariants({ role, tone })`.
+Every role below is a `variant` of the `Text` component (`components/shared/brand/typography.tsx`), which owns its full recipe on top of the `--font-size-*` / `--line-height-*` / `--tracking-*` tokens in `theme.css`. Call sites pick a role and a tone (`default`, `muted`, `primary`, `destructive`) and keep only layout in `className`; components that can't be a `Text` (shadcn primitives, `button`, `summary`, `Input`) take the same classes through `textVariants({ role, tone })`.
 
 - **Display** (`font-semibold`, `text-lg`, `tracking-tight`, `line-height: 1.2`): the page `<h1>` — the `PageHero` title on overview and detail pages, the name on the `/me` identity row, the 404 heading — and the title of a celebrate `StateCard`. Single line, never eyebrowed.
 - **Headline** (`font-medium`, `text-base`, `tracking-tight`): the title of a muted or destructive `StateCard`, list/tile/dialog titles. Never resized with a `text-*` override; a title that needs more weight takes Display.
@@ -273,7 +273,7 @@ Every role below is a `variant` of the `Text` component (`components/shared/bran
 
 **The Label-Not-Badge Rule.** Field labels, counts, and statuses are typeset as **micro-caps text**, not as `Badge` components. If a value can be expressed as `<FieldLabel/>` it must be.
 
-**The Role-Not-Utility Rule.** Text is set through a `Text` role, never by rebuilding `font-medium text-label uppercase tracking-[0.12em]` or `text-xs text-muted-foreground` at the call site. A new recurring type style becomes a new role (token in `global.css`, recipe in `textVariants`, name registered in `cn()`), not a copied class string.
+**The Role-Not-Utility Rule.** Text is set through a `Text` role, never by rebuilding `font-medium text-label uppercase tracking-[0.12em]` or `text-xs text-muted-foreground` at the call site. A new recurring type style becomes a new role (token in `theme.css`, recipe in `textVariants`, name registered in `cn()`), not a copied class string.
 
 ## Layout
 
