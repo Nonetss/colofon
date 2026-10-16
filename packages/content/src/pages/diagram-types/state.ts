@@ -21,7 +21,7 @@ import {
   type Tools,
   type TypeModule,
 } from "#pages/diagram-types/scene"
-import type { DiagramBox, DiagramEdge } from "#pages/diagrams"
+import { accentPaths, type DiagramBox, type DiagramEdge } from "#pages/diagrams"
 
 // State machine (diagram-design's `type-state.md`): states and the
 // transitions between them, laid out as a flowchart. States are rounded
@@ -143,7 +143,7 @@ function read(data: Record<string, unknown>, tools: Tools): Scene | null {
   }
   scene.accents =
     read.filter(({ item }) => item.focal).length +
-    edges.filter((edge) => edge.kind === "accent").length
+    accentPaths(edges.filter((edge) => edge.kind === "accent"))
   scene.legend = legendOf(
     read.some(({ written }) => written.initial === true),
     read.some(({ written }) => written.final === true),

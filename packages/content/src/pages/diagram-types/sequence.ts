@@ -20,7 +20,12 @@ import {
   type Tools,
   type TypeModule,
 } from "#pages/diagram-types/scene"
-import type { DiagramBox, DiagramEdge, Point } from "#pages/diagrams"
+import {
+  accentPaths,
+  type DiagramBox,
+  type DiagramEdge,
+  type Point,
+} from "#pages/diagrams"
 
 // Sequence diagram (diagram-design's `type-sequence.md`): actors as headed
 // lifelines left to right, messages as arrows between them from top to
@@ -221,7 +226,7 @@ function read(data: Record<string, unknown>, tools: Tools): Scene | null {
   }
   scene.accents =
     items.filter((item) => item.focal).length +
-    messages.filter(({ message }) => message.kind === "accent").length
+    accentPaths(edges.filter((edge) => edge.kind === "accent"))
   scene.legend = legendOf(messages.map(({ message }) => message))
   scene.text = [
     { kind: "list", ordered: false, items: textLines(messages, frames) },

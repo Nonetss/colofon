@@ -35,7 +35,12 @@ import {
   type Tools,
   type TypeModule,
 } from "#pages/diagram-types/scene"
-import type { DiagramBox, DiagramEdge, DiagramZone } from "#pages/diagrams"
+import {
+  accentPaths,
+  type DiagramBox,
+  type DiagramEdge,
+  type DiagramZone,
+} from "#pages/diagrams"
 
 // Swimlane (diagram-design's `type-swimlane.md` and, as its `process`
 // variant, `type-process.md`): one horizontal band per actor, each step in
@@ -281,7 +286,7 @@ function read(
   }
   scene.accents =
     read.filter((step) => step.item.focal).length +
-    edges.filter((edge) => edge.kind === "accent").length
+    accentPaths(edges.filter((edge) => edge.kind === "accent"))
   scene.legend = legendOf(read, edges, process)
   scene.text = [
     { kind: "list", ordered: false, items: laneLines(laneItems, read) },

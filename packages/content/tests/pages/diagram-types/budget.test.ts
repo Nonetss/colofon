@@ -74,4 +74,24 @@ describe("complexity budgets", () => {
       })
     ).toEqual([])
   })
+
+  test("a state machine's main path of joined accent transitions counts once too", () => {
+    const state = (id: string) => ({ id, name: id.toUpperCase() })
+    expect(
+      problemsOf({
+        type: "state",
+        states: [
+          { ...state("a"), initial: true },
+          state("b"),
+          state("c"),
+          state("d"),
+        ],
+        transitions: [
+          { from: "a", to: "b", kind: "accent" },
+          { from: "b", to: "c", kind: "accent" },
+          { from: "c", to: "d", kind: "accent" },
+        ],
+      })
+    ).toEqual([])
+  })
 })

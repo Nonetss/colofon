@@ -20,7 +20,7 @@ import {
   type Tools,
   type TypeModule,
 } from "#pages/diagram-types/scene"
-import type { DiagramBox, DiagramEdge } from "#pages/diagrams"
+import { accentPaths, type DiagramBox, type DiagramEdge } from "#pages/diagrams"
 
 // Dependency graph (diagram-design's `type-dependency.md`): what depends on
 // what. Ranked layers from the nodes nothing depends on, at the top, down to
@@ -122,9 +122,7 @@ function read(data: Record<string, unknown>, tools: Tools): Scene | null {
   // A cycle counts as one accent, whatever its length.
   scene.accents =
     read.filter(({ item }) => item.focal).length +
-    edges.filter((edge) => edge.kind === "accent" && !onCycle.has(edge.index))
-      .length +
-    Math.min(1, layout.cycles.length)
+    accentPaths(edges.filter((edge) => edge.kind === "accent"))
   scene.legend = legendOf(edges, layout.cycles.length > 0)
   scene.text = textOf(
     read.map(({ item }) => item.id),
