@@ -35,6 +35,16 @@ export {
 export type { PageProblem } from "#contract/problems"
 export { isReservedSlug, RESERVED_SLUGS } from "#contract/reserved-slugs"
 export {
+  type ContentSkill,
+  isSkillName,
+  MAX_SKILL_NAME,
+  type RepositorySkills,
+  readSkills,
+  SKILL_FILE,
+  SKILLS_DIR,
+  withSkillName,
+} from "#contract/skills"
+export {
   CONFIG_SCHEMA,
   DIAGRAM_SCHEMA,
   type EditorSchema,

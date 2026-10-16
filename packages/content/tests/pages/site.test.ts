@@ -505,3 +505,25 @@ describe("readSite with styles/", () => {
     expect(site.problems).toEqual([])
   })
 })
+
+describe("readSite with skills/", () => {
+  const deploy = "---\nname: deploy\ndescription: Cómo se despliega.\n---\n"
+
+  test("the repository's valid skills are on the site", async () => {
+    const site = await siteOf({ ...SITE, "skills/deploy/SKILL.md": deploy })
+    expect(site.skills).toEqual([
+      { name: "deploy", description: "Cómo se despliega.", text: deploy },
+    ])
+    expect(site.problems).toEqual([])
+  })
+
+  test("a broken skill goes on the home and the pages still read", async () => {
+    const site = await siteOf({ ...SITE, "skills/red/SKILL.md": "# Red\n" })
+    expect(site.skills).toEqual([])
+    expect(pageAt(site, "").problems.map((p) => p.file)).toEqual([
+      "skills/red/SKILL.md",
+    ])
+    expect(site.problems.map((p) => p.file)).toEqual(["skills/red/SKILL.md"])
+    expect(site.pages.size).toBeGreaterThan(1)
+  })
+})

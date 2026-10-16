@@ -8,6 +8,7 @@ import type { CatalogIndex } from "#contract/entity-schema"
 import { DOCS_DIR, isReservedDocsPath } from "#contract/load"
 import type { Menu, SiteConfig } from "#contract/meta-schema"
 import type { PageProblem } from "#contract/problems"
+import { type ContentSkill, readSkills } from "#contract/skills"
 import { diagramFigure } from "#diagrams/figure"
 import type { DiagramFile } from "#diagrams/model"
 import { diagramsByEntity, readDiagrams } from "#diagrams/read"
@@ -46,7 +47,8 @@ import { readStyles } from "#styles/read"
 // Pages are read in two passes: every header first, with what menu.yaml says
 // about it applied (the YAML wins), so a page can show another page's title,
 // then every body. The repository's style modules (`styles/`) are read with
-// them, so their stylesheet follows the same checkout.
+// them, so their stylesheet follows the same checkout, and so are its skills
+// (`skills/`), whose problems go on the home with the site's own.
 
 export type { NavEntry, NavNode } from "#pages/nav"
 
@@ -80,6 +82,8 @@ export type Site = {
   problems: PageProblem[]
   /** The cleaned stylesheet of `styles/` (`content-styles`); empty without. */
   styles: string
+  /** The valid skills of `skills/`, by name; empty without. */
+  skills: ContentSkill[]
 }
 
 export type SiteRoutes = {
@@ -137,6 +141,8 @@ export async function readSite(
 
   const styles = await readStyles(root, fileSet, routes.fileUrlOf)
   siteProblems.push(...styles.problems)
+  const skills = await readSkills(root)
+  siteProblems.push(...skills.problems)
   const { diagrams } = diagramRead
 
   const schema = headerSchema(config, index)
@@ -194,7 +200,10 @@ export async function readSite(
     if (page !== undefined)
       read.set(pagePath, withCatalogBody(page, bodyContext))
   }
-  return arrange(home, nav, read, siteProblems, styles.css)
+  return arrange(home, nav, read, siteProblems, {
+    styles: styles.css,
+    skills: skills.skills,
+  })
 }
 
 /**
@@ -506,7 +515,7 @@ function arrange(
   nav: NavNode[],
   read: ReadonlyMap<string, Page>,
   siteProblems: readonly PageProblem[],
-  styles: string
+  { styles, skills }: Pick<Site, "styles" | "skills">
 ): Site {
   const visits: Visit[] = [{ entry: home, breadcrumbs: [], children: nav }]
   const walk = (nodes: NavNode[], breadcrumbs: Breadcrumb[]) => {
@@ -567,7 +576,7 @@ function arrange(
       children: [],
     })
   }
-  return { home, nav, pages, problems, styles }
+  return { home, nav, pages, problems, styles, skills }
 }
 
 /** The site's own problems (menu.yaml, reserved files, styles) go on the home. */
