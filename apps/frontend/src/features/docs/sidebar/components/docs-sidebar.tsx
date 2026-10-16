@@ -118,7 +118,6 @@ function SidebarBody({ initialNav, initialScope }: DocsSidebarProps) {
   )
   const scroller = useRef<HTMLDivElement>(null)
   const { open, toggle } = useSidebarMemory(scroller, required)
-  useMobileSheet(pathname)
   useCurrentInView(scroller, pathname)
 
   const choose = (value: string) => {
@@ -218,8 +217,11 @@ function RepositoryGroup({
 
 function ResponsiveSidebar(props: DocsSidebarProps) {
   // On phones the shadcn sidebar becomes a sheet; on wider screens it is a
-  // plain column that the layout keeps in place below the navbar.
+  // plain column that the layout keeps in place below the navbar. The sheet
+  // doesn't mount its body while closed, so the navbar's request is heard
+  // here, outside it.
   const isMobile = useIsMobile()
+  useMobileSheet(usePathname())
   return (
     <Sidebar
       id="docs-sidebar"
