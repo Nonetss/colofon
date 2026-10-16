@@ -52,7 +52,7 @@ Each sync reads in two steps:
 | Where | What | Who |
 | --- | --- | --- |
 | Above the page's body | That page's problems: file, line, message (header, MDX, links, components, menu overrides, "Otros") | Admins only |
-| The repository's home | `menu.yaml`, the diagrams, files under `docs/catalogo/` | Admins |
+| The repository's home | `menu.yaml`, the diagrams, `estilos/`, files under `docs/catalogo/` | Admins |
 | The log | Every problem, once per commit, with repository and file | Whoever runs the platform |
 | `/admin/content` | A sync that failed (remote unreachable) | Admins |
 

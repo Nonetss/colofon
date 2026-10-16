@@ -1,6 +1,6 @@
 ---
 name: documentation
-description: Map and conventions of this content repository as a whole, the "Escribir documentación" guide of the doc platform, which documents the content contract and uses every part of it. A decision guide for what goes where and which folder skill to load (docs, catalogo, diagramas, skills), the root files doc.config.yaml and menu.yaml, contract names vs this site's names, the rules that always apply, how content is validated (editor schemas, the platform's sync and reports) and question rounds (/doc:questions). Use before any change, to check where something belongs, before touching doc.config.yaml or menu.yaml, when the platform reports a problem, and before a question round.
+description: Map and conventions of this content repository as a whole, the "Escribir documentación" guide of the doc platform, which documents the content contract and uses every part of it. A decision guide for what goes where and which folder skill to load (docs, catalogo, diagramas, estilos, skills), the root files doc.config.yaml and menu.yaml, contract names vs this site's names, the rules that always apply, how content is validated (editor schemas, the platform's sync and reports) and question rounds (/doc:questions). Use before any change, to check where something belongs, before touching doc.config.yaml or menu.yaml, when the platform reports a problem, and before a question round.
 ---
 
 # Documentation
@@ -41,12 +41,13 @@ this repository                         platform
   docs/**.mdx       pages         ──┼──▶ syncs the repo ──▶ reader, catalog pages,
   catalogo/<type>/  data          ──┤    validates it       editor schemas, llms.txt
   diagramas/        diagrams      ──┤
+  estilos/          own styles    ──┤
   skills/<name>/    agent skills  ──┘
 ```
 
 Declarations (`doc.config.yaml`, `menu.yaml`, each `_tipo.yaml`) are read
 first and, when broken, the last valid version is kept. Content (pages,
-entities, diagrams) is checked one by one: a broken one is reported, the rest
+entities, diagrams, styles) is checked one by one: a broken one is reported, the rest
 published.
 
 ## 3. Where to look
@@ -60,6 +61,7 @@ folders loads several.
 | Writing, moving or renaming a page under `docs/` | the `docs` skill |
 | Adding or changing a type, a field or an entity under `catalogo/` | the `catalogo` skill |
 | Drawing, changing or reusing a diagram under `diagramas/` | the `diagramas` skill |
+| Restyling this site's pages with `estilos/` (theme variables, a module) | the `estilos` skill |
 | Writing a skill under `skills/` for other agents | the `skills` skill |
 | Where a file goes, the repository tree, naming | [layout.md](references/layout.md) |
 | `menu.yaml`: its keys, this site's groups, adding an entry, "Otros" | [menu.md](references/menu.md) |

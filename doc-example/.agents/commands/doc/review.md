@@ -1,6 +1,6 @@
 ---
-description: Review a page, entity or diagram against this site's conventions and list what to improve, without editing
-argument-hint: <path> (a page, an entity or a diagram)
+description: Review a page, entity, diagram or style module against this site's conventions and list what to improve, without editing
+argument-hint: <path> (a page, an entity, a diagram or a style module)
 ---
 
 Review one file the way an editor of this guide would. `/doc:check` covers what
@@ -27,6 +27,9 @@ one.
 - **A diagram** (`diagramas` skill): whether it earns its place, whether the
   form fits, the universal anti-patterns and those of its form's reference,
   the density (4/10) and the accent.
+- **A style module** (`estilos` skill): a variable where one would do instead
+  of rules, both themes, only the classes and variables the guide documents,
+  contrast in each theme, and the anti-patterns of the skill.
 - **Always**: the contract's names untouched (`documentation` skill,
   `references/contract-names.md`), and no secret anywhere.
 

@@ -26,13 +26,16 @@ diagramas/
 ├── repository.json      # what a repository holds
 ├── <type>-<topic>.json  # one working example of each diagram type and variant
 └── repository-exploded.svg # the illustration example
+estilos/
+└── tema.css             # this site's theme: the accent, in both themes
 skills/
 └── doc-writing/SKILL.md # served to other agents
 .agents/skills/          # for you, the agent writing here (linked from .claude/skills/)
 ├── documentation/       # the repository as a whole: this skill
 ├── docs/                # one skill per folder: how this site writes its pages,
 ├── catalogo/            # its catalog,
-├── diagramas/           # its diagrams
+├── diagramas/           # its diagrams,
+├── estilos/             # its own styles
 └── skills/              # and its served skills
 .agents/commands/doc/     # the /doc:<name> commands (linked from .claude/commands/doc)
 ├── questions.md         # question rounds
@@ -53,6 +56,7 @@ AGENTS.md, CLAUDE.md, README.md
 | How things connect, a flow, values to compare | A file in `diagramas/` shown with `<Diagram>` | `diagramas` |
 | A new page or folder the sidebar must show | An entry in `menu.yaml` | `references/menu.md` |
 | A new field every page header may carry | `cabecera` in `doc.config.yaml` | `references/doc-config.md` |
+| Another colour, font or look for a piece of this site's pages | A theme variable or a module in `estilos/` | `estilos` |
 | How another agent should work with any content repository | `skills/doc-writing/SKILL.md` | `skills` |
 | A convention for **you**, the agent writing here | The folder's skill in `.agents/skills/`; repository-wide, a reference here | — |
 | An image a page shows | `docs/<topic>/img/` next to the page | `docs` |
@@ -74,6 +78,6 @@ AGENTS.md, CLAUDE.md, README.md
 - Files and folders: lowercase, digits and hyphens (`getting-started.mdx`).
   They are the URL and the path other pages link to.
 - Pages, entities, diagrams and served skills have their own naming rules in
-  their folder's skill (`docs`, `catalogo`, `diagramas`, `skills`).
+  their folder's skill (`docs`, `catalogo`, `diagramas`, `estilos`, `skills`).
 - Which names are the contract's and can't change: `contract-names.md`.
 - The menu, its groups and its entries: `menu.md`.

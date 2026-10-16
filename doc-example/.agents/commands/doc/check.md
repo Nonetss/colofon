@@ -33,9 +33,13 @@ repository even when the scope is one file.
 5. **Diagrams** (`diagramas/*.json`): valid JSON, a known `type` or none,
    every `entity` and `page` exists, ids unique and every link names one of
    them (`diagramas` skill, `references/checking.md`, sections 1 and 2).
-6. **Leftovers**: diagrams no page shows, images under an `img/` no page
+6. **Styles** (`estilos/`): every file is a module name, no `@import` and
+   no URL from outside, every `url()` to an image under `docs/` that exists,
+   every theme variable set in both `:root` and `.dark` (`estilos` skill,
+   `references/writing-a-module.md`).
+7. **Leftovers**: diagrams no page shows, images under an `img/` no page
    uses. These are warnings, not errors.
-7. **Secrets**: anything that looks like a password, token, key or passphrase
+8. **Secrets**: anything that looks like a password, token, key or passphrase
    in any file. Stop and tell me before anything else if you find one.
 
 Use `rg` and `ls` to check; don't probe the running platform.
