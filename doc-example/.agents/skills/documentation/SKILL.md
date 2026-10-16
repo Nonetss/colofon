@@ -1,22 +1,38 @@
 ---
 name: documentation
-description: Map and conventions of this content repository, the "Writing documentation" guide of the doc platform, which documents the content contract and uses every part of it. Covers what goes where (doc.config.yaml, menu.yaml, docs/ pages, catalogo/ types and entities describing the contract, diagramas/, skills/ served to other agents), contract names vs this site's names, the page header and how this guide's pages are written, MDX without code and its components, the catalog, diagrams, question rounds (/questions) and how content is validated. Use before writing or changing any page, menu entry, entity, type, diagram or served skill, before a question round, and to check where something belongs.
+description: Map and conventions of this content repository as a whole, the "Escribir documentación" guide of the doc platform, which documents the content contract and uses every part of it. A decision guide for what goes where and which folder skill to load (docs, catalogo, diagramas, skills), the root files doc.config.yaml and menu.yaml, contract names vs this site's names, the rules that always apply, how content is validated (editor schemas, the platform's sync and reports) and question rounds (/questions). Use before any change, to check where something belongs, before touching doc.config.yaml or menu.yaml, when the platform reports a problem, and before a question round.
 ---
 
 # Documentation
 
 This repository is **content only**: the pages, data and diagrams of the
-**"Writing documentation" guide**, which explains how to write a content
+guide **«Escribir documentación»**, which explains how to write a content
 repository for the doc platform. The platform (a separate repository) clones
 it, validates it against its contract and publishes it. Nothing here is built
 or run.
 
-The guide **documents the contract and uses it**: its menu is a `menu.yaml`,
-its reference tables come from its own catalog and its diagrams are files in
-`diagramas/`. Every feature it describes should be shown working somewhere in
-it.
+## 1. Philosophy
 
-## Mental model
+**The guide documents the contract and uses it.** Its menu is a `menu.yaml`,
+its reference tables come from its own catalog, its diagrams are files in
+`diagramas/`. Every feature it describes should be shown working somewhere in
+it, so its own files are the examples a reader copies.
+
+- **The guide's pages are the source of truth for the contract.** When you
+  need a rule (a header field, a menu key, a field kind, a diagram key), read
+  the page that explains it under `docs/`; these skills only hold what is
+  particular to writing *this* repository.
+- **Two vocabularies.** The contract's names are Spanish and fixed
+  (`references/contract-names.md`). Everything else is this site's own: its
+  type ids, field names, enum values, folders and file names are English and
+  stay so; its prose is Spanish.
+- **The catalog describes the contract:** `files`, `field-kinds`,
+  `header-fields`, `components` and `diagram-types`. A page that lists them
+  uses `<Entities>`, never a hand-written table.
+- **When the platform changes, this guide changes with it.** A page or entity
+  that describes something the platform no longer does is a bug.
+
+## 2. Mental model
 
 ```
 this repository                         platform
@@ -28,57 +44,70 @@ this repository                         platform
   skills/<name>/    agent skills  ──┘
 ```
 
-- **The guide's pages are the source of truth for the contract.** When you
-  need a rule (a header field, a menu key, a field kind, a diagram key), read
-  the page that explains it under `docs/`; these references only hold what is
-  particular to writing *this* repository.
-- **Two vocabularies.** The contract's names are Spanish and fixed (the table
-  is in `docs/repository/index.mdx`). Everything else is this site's own, in
-  English: type ids, field names, enum values, folders, file names and prose.
-- **The catalog describes the contract:** `files` (the files of a content
-  repository), `field-kinds`, `header-fields`, `components` and `diagram-types`. A page that
-  lists them uses `<Entities>`, never a hand-written table.
-- **When the platform changes, this guide changes with it.** A page that
-  describes something the platform no longer does is a bug.
+Declarations (`doc.config.yaml`, `menu.yaml`, each `_tipo.yaml`) are read
+first and, when broken, the last valid version is kept. Content (pages,
+entities, diagrams) is checked one by one: a broken one is reported, the rest
+published.
 
-## Where to look
+## 3. Where to look
 
-| Task | Read |
+Each content folder has its own skill (`.agents/skills/<folder>/`); load the
+one for the folder you are about to change, plus this one. A task crossing
+folders loads several.
+
+| Task | Load or read |
 | --- | --- |
-| Where a file goes, the menu, naming files and folders | `references/layout.md` |
-| Writing or changing a page: header, structure of this guide's pages, MDX rules, components, links | `references/pages.md` |
-| Adding or changing a type or an entity of this site's catalog | `references/catalog.md` |
-| Drawing or changing a diagram | `references/diagrams.md` |
-| Writing a skill under `skills/` for other agents | `references/served-skills.md` |
-| Running a question round (`/questions`) | `references/question-rounds.md` |
+| Writing, moving or renaming a page under `docs/` | the `docs` skill |
+| Adding or changing a type, a field or an entity under `catalogo/` | the `catalogo` skill |
+| Drawing, changing or reusing a diagram under `diagramas/` | the `diagramas` skill |
+| Writing a skill under `skills/` for other agents | the `skills` skill |
+| Where a file goes, the repository tree, naming | [layout.md](references/layout.md) |
+| `menu.yaml`: its keys, this site's groups, adding an entry, "Otros" | [menu.md](references/menu.md) |
+| `doc.config.yaml`: its keys, `cabecera` fields and their kinds, `plataforma` | [doc-config.md](references/doc-config.md) |
+| Which names are the contract's and which are this site's | [contract-names.md](references/contract-names.md) |
+| The editor's schemas, the platform's sync, where problems show, final checks | [validation.md](references/validation.md) |
+| Running a question round (`/questions`) | [question-rounds.md](references/question-rounds.md) |
 
-## Always true
+## 4. Always true
 
-- **No secret ever enters this repository**, not even in an example.
+- **No secret ever enters this repository**, not even in an example: write
+  where it lives and which account to use.
+- **Don't rename the contract.** Its names are fixed and Spanish (diagram
+  keys English); translating one breaks validation.
 - **Declare before use.** An entity field must be declared in its
   `_tipo.yaml`; a header field under `cabecera` in `doc.config.yaml`.
 - **MDX has no code**, and nothing in the prose starts JSX or an expression:
   write component names, `<placeholders>` and braces inside backticks or code
   blocks, never bare in a sentence.
-- **YAML wins over MDX.** Icons of the pages the menu shows go in `menu.yaml`;
-  a title set in the menu must match the page's `titulo`.
+- **YAML wins over MDX.** Every page is shown by `menu.yaml`, none in
+  "Otros"; icons of the pages the menu shows go in `menu.yaml`; a title set in
+  the menu must match the page's `titulo`.
 - **Every `icono` is a Lucide icon name** the platform knows.
-- **One entity per file, one diagram per file.**
-- **Ids are lowercase**, digits and hyphens for files and folders; lowercase
+- **One entity per file, one diagram per file.** Structured data goes to the
+  catalog; explanations to a page.
+- **Ids are lowercase**: digits and hyphens for files and folders; lowercase
   and underscores for field names.
-- **Validate before calling it done** (below).
+- **Validate before calling it done** (`references/validation.md`).
+- **Commits only when the user asks**, one sentence on what changes and why,
+  never crediting an AI tool.
 
-## Validation
+## 5. Anti-patterns
 
-- **In the editor:** `.vscode/settings.json` points `yaml.schemaStore.url` at
-  the platform's schema catalog for this repository. It completes and
-  validates `doc.config.yaml`, `menu.yaml`, every `_tipo.yaml` and every
-  entity; `json.schemas` there points `diagramas/*.json` at the diagram
-  schema.
-- **On the platform:** after a push and a sync, every problem shows to admins
-  on its page (those of `menu.yaml` and the diagrams on the home) and in the
-  log. The platform keeps serving the last valid declarations while one is
-  broken.
-- Before finishing, check that every link, `ref`, `ficha`, menu entry and
-  diagram `entity` or `page` points at something that exists, and that no page lands in
-  the "Otros" group.
+| Anti-pattern | Why it fails |
+| --- | --- |
+| Writing a rule into a skill instead of reading the guide's page | Two sources; the skill goes stale first |
+| Translating `titulo`, `catalogo/`, `_tipo.yaml`, or a diagram's `nodes` | The platform no longer reads it; the file fails validation |
+| Renaming an existing English id, field or folder "to Spanish" | Breaks every link, `ref`, `ficha`, menu entry and header citing it |
+| A new folder under `docs/` without a menu entry | Its pages land in "Otros" and are reported |
+| A feature described but shown nowhere in the guide | The guide stops being its own example |
+| Fixing only the file the platform reported | The cause is often a declaration (`_tipo.yaml`, `doc.config.yaml`, `menu.yaml`) |
+| A credential pasted "just for the example" | Content is cloned to servers and read by agents |
+
+## 6. Before finishing
+
+- Every YAML and JSON you touched validates in the editor.
+- Every link, `ref`, `ficha`, menu entry and diagram `entity` or `page`
+  points at something that exists, and no page lands in "Otros".
+- A convention you changed is updated in the file that states it (`AGENTS.md`,
+  this skill or a folder skill), in the same change.
+- No secret anywhere.

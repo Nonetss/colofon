@@ -1,5 +1,9 @@
 # Layout
 
+What goes where in this repository. The contract behind every file is
+explained in `docs/repository/index.mdx`, and each file is an entity of
+`catalogo/files/`.
+
 ```
 doc.config.yaml          # the site: name, contract version, extra header fields
 menu.yaml                # the sidebar's groups
@@ -24,36 +28,47 @@ diagramas/
 └── repository-exploded.svg # the illustration example
 skills/
 └── doc-writing/SKILL.md # served to other agents
+.agents/skills/          # for you, the agent writing here (linked from .claude/skills/)
+├── documentation/       # the repository as a whole: this skill
+├── docs/                # one skill per folder: how this site writes its pages,
+├── catalogo/            # its catalog,
+├── diagramas/           # its diagrams
+└── skills/              # and its served skills
+.claude/commands/questions.md # /questions, the question rounds
+.vscode/settings.json    # the platform's schema catalog for the editor
+AGENTS.md, CLAUDE.md, README.md
 ```
 
-The contract behind every file is explained in `docs/repository/index.mdx`.
+## Where does it go?
 
-## The menu
+| You have… | It goes in | Skill |
+| --- | --- | --- |
+| An explanation, a procedure, a rule of the contract | A page in `docs/<topic>/` | `docs` |
+| A part of the contract writers need as a table row | An entity in `catalogo/<type>/` | `catalogo` |
+| How things connect, a flow, values to compare | A file in `diagramas/` shown with `<Diagram>` | `diagramas` |
+| A new page or folder the sidebar must show | An entry in `menu.yaml` | `references/menu.md` |
+| A new field every page header may carry | `cabecera` in `doc.config.yaml` | `references/doc-config.md` |
+| How another agent should work with any content repository | `skills/doc-writing/SKILL.md` | `skills` |
+| A convention for **you**, the agent writing here | The folder's skill in `.agents/skills/`; repository-wide, a reference here | — |
+| An image a page shows | `docs/<topic>/img/` next to the page | `docs` |
+| Unanswered questions for a round | `questions.md` at the root, temporarily | `references/question-rounds.md` |
 
-`menu.yaml` has four groups: **Start**, **Writing**, **Data** and
-**Publishing**. Every page must be shown by an entry; a page that lands in
-"Otros" is a mistake to fix.
+## Skills for you
 
-- A new page inside an existing folder needs nothing: the folder's entry
-  brings it, ordered by its `orden`.
-- A new folder or loose page gets an entry in the group it belongs to.
-- Icons of the entries go in the menu, not in the page headers. A menu
-  `titulo` is only for when the sidebar needs a different title, and then the
-  page's `titulo` must be the same.
-- The catalog is shown as `{ ruta: catalogo, titulo: Reference }` in "Data".
-
-## Sections and pages
-
-- Every folder under `docs/` is a section and has its `index.mdx`.
-- One folder per topic of the guide, flat: no deeper than
-  `docs/<topic>/<page>.mdx`.
-- Order within a section comes from each page's `orden`.
+- Skills live in `.agents/skills/<name>/`; `.claude/skills/<name>` is a
+  symlink to `../../.agents/skills/<name>`. A new skill goes in
+  `.agents/skills/` and gets the same symlink.
+- A new convention goes in the skill of the folder it affects; what affects
+  the whole repository (root files, the menu, question rounds), in a
+  reference of this skill. A new content folder gets its own skill and a row
+  in this skill's routing table.
+- `CLAUDE.md` only imports `AGENTS.md`: never add instructions to it.
 
 ## Naming
 
 - Files and folders: lowercase, digits and hyphens (`getting-started.mdx`).
   They are the URL and the path other pages link to.
-- Renaming a page means updating every link to it, every `ficha` field that
-  names it (`page:` in `catalogo/files/` and `catalogo/components/`) and its
-  menu entry.
-- `docs/catalogo/` is reserved by the platform: never create it.
+- Pages, entities, diagrams and served skills have their own naming rules in
+  their folder's skill (`docs`, `catalogo`, `diagramas`, `skills`).
+- Which names are the contract's and can't change: `contract-names.md`.
+- The menu, its groups and its entries: `menu.md`.

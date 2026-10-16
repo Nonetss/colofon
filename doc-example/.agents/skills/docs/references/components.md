@@ -1,0 +1,91 @@
+# Components
+
+The only JSX the platform reads: `<Callout>`, `<Entities>` and `<Diagram>`.
+Their attributes are the `components` entities in `catalogo/components/`
+(the source of truth for this list); the contract page is
+`docs/pages/components.mdx`.
+
+## Rules for all three
+
+- **A block of its own**, with a blank line before and after. Inside a
+  paragraph it is reported ("El componente <X> va en su propio bloque…").
+- **Attributes are literal strings in quotes**, never `{…}`: "El atributo X de
+  <Y> va entre comillas", "<Y> no admite atributos entre llaves {…}".
+- An unknown attribute is reported ("<Y> no tiene el atributo X") and ignored.
+- Any other component is reported and replaced by a notice that names it.
+
+## `<Callout>`
+
+A highlighted note around Markdown.
+
+```mdx
+<Callout type="tip" title="Antes de empezar">
+Mantén configurado el catálogo de esquemas del editor: marca la mayoría de los errores antes de que hagas push.
+</Callout>
+```
+
+| Attribute | What it is |
+| --- | --- |
+| `type` | Optional. `note` (default), `info`, `tip`, `important`, `warning`, `caution` or `danger`. An unknown type is reported and renders as a note. |
+| `title` | Optional. Its title; without it, the type's ("Nota", "Información", "Consejo", "Importante", "Aviso", "Precaución", "Peligro"). |
+
+- The body is Markdown (links, lists, code).
+- For a one-line warning with no title, the Markdown alert
+  (`> [!WARNING]`) does the same with less markup.
+- **Use sparingly:** one per page section at most, for what the reader must
+  not miss (a reported mistake, a trap). A page of callouts has none.
+
+## `<Entities>`
+
+The table of a catalog type, rebuilt from its entities every time the site is
+read, so it never goes stale.
+
+```mdx
+<Entities type="files" group="kind" columns="path,required,purpose" />
+```
+
+| Attribute | What it is |
+| --- | --- |
+| `type` | Required. The type, as its folder name in `catalogo/` (`files`, `field-kinds`, `header-fields`, `components`, `diagram-types`). |
+| `columns` | Optional. The fields shown, comma-separated, `id` included. Without it, the type's `vista.columnas`; without that, its label and every field. |
+| `group` | Optional. A field that splits the table into one block per value, in `valores` order for an `enum`, entities without it last. The group field is not repeated as a column. |
+
+- Rows are sorted by label; each label links to the entity's page (its
+  `ficha`) or its generated catalog page. `ref` cells show the target's label,
+  linked.
+- Only valid entities appear. An unknown type, column or group field, and
+  every entity that fails its type, is reported on the page; the rest of the
+  table renders.
+- Picking columns and groups for this site's types: `catalogo` skill,
+  `references/entities-tables.md`.
+
+## `<Diagram>`
+
+A diagram written in its own file under `diagramas/`, shown where the page
+needs it.
+
+```mdx
+<Diagram id="pipeline" />
+```
+
+| Attribute | What it is |
+| --- | --- |
+| `id` | Required. The file name in `diagramas/` without `.json` or `.svg`. |
+
+- The same diagram can be in any number of pages (`pipeline` is on the home,
+  `docs/diagrams/index.mdx`, `docs/publishing/index.mdx`…). Before reusing
+  one, check it still says what this page needs.
+- A missing or unreadable file is reported ("<Diagram id="…">: no hay ningún
+  diagramas/….json ni diagramas/….svg que se pueda leer (hay: …)") and shows a
+  notice; the diagram's own problems are reported on the page too.
+- Choosing and writing the diagram: `diagramas` skill.
+
+## Which one
+
+| You want… | Use |
+| --- | --- |
+| Every entity of a catalog type as a table | `<Entities>` |
+| A note or warning the reader must not miss | `<Callout>` (or a `> [!…]` alert) |
+| How things connect, a flow, a structure | `<Diagram>` of a file in `diagramas/` |
+| A small table of options that are not catalog data | A Markdown table |
+| One entity mentioned in a sentence | A `catalogo:` link (`links.md`) |

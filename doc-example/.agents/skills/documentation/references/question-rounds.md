@@ -76,3 +76,10 @@ Also:
   asked.
 - **Never ask for a secret's value.** Ask where it is stored and which account
   uses it.
+
+## Related
+
+- `open_questions` is a header field this site declares in `doc.config.yaml`
+  (`doc-config.md`); how pages fill it: `docs` skill, `references/header.md`.
+- Closing the round means validating what you touched: `validation.md`.
+- `/questions` is `.claude/commands/questions.md`; it defers to this file.

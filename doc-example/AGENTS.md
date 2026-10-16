@@ -10,8 +10,10 @@ publica. Aquí no se compila ni se ejecuta nada.
 
 ## Sobre este documento
 
-- Las instrucciones para agentes son este `AGENTS.md` más la skill
-  `documentation` (`.agents/skills/documentation/`). `CLAUDE.md` solo importa
+- Las instrucciones para agentes son este `AGENTS.md` más las skills de
+  `.agents/skills/`: `documentation`, la del repositorio entero, y una por
+  cada carpeta de contenido (`docs`, `catalogo`, `diagramas`, `skills`).
+  `CLAUDE.md` solo importa
   este fichero (`@AGENTS.md`) para que todos los agentes lean el mismo texto:
   nunca añadas instrucciones a `CLAUDE.md`.
 - Este fichero contiene solo lo que se aplica a **toda** tarea: qué es este
@@ -20,9 +22,11 @@ publica. Aquí no se compila ni se ejecuta nada.
 - Las skills viven en `.agents/skills/<name>/`; `.claude/skills/<name>` es un
   enlace simbólico a ellas (`../../.agents/skills/<name>`). Una skill nueva va
   en `.agents/skills/` y recibe el mismo enlace simbólico.
-- El detalle de una convención nueva va en una referencia bajo
-  `.agents/skills/documentation/references/` más una fila en la tabla de rutas
-  de la skill, no en una skill nueva.
+- El detalle de una convención nueva va en la skill de la carpeta a la que
+  afecta; lo que afecta al repositorio entero (los ficheros de la raíz, el
+  menú, las rondas de preguntas), en una referencia de `documentation`. Una
+  carpeta de contenido nueva recibe su propia skill y una fila en la tabla de
+  rutas de `documentation`.
 - Un cambio en una convención actualiza el fichero que la enuncia, en el mismo
   commit.
 
@@ -38,22 +42,28 @@ publica. Aquí no se compila ni se ejecuta nada.
 | `diagramas/<id>.json` | Un diagrama, dibujado a mano o de un tipo (`type`) que la plataforma coloca sola, mostrado en las páginas con `<Diagram id="…" />` |
 | `diagramas/<id>.svg` | Una ilustración dibujada a mano en SVG, filtrada y pintada con los colores del tema |
 | `skills/<name>/SKILL.md` | Skills que la plataforma **sirve a otros agentes** para trabajar con este sitio |
-| `.agents/skills/documentation/` | La skill para **ti**, el agente que escribe aquí |
+| `.agents/skills/documentation/` | La skill para **ti**, el agente que escribe aquí: el repositorio entero |
+| `.agents/skills/<carpeta>/` | Una skill por carpeta de contenido (`docs`, `catalogo`, `diagramas`, `skills`): cómo se escribe lo que va en ella |
 | `.claude/commands/questions.md` | `/questions`: rondas de preguntas para terminar de documentar una sección |
 | `.vscode/settings.json` | El catálogo de esquemas de la plataforma, para el autocompletado en el editor |
 
-Detalles y convenciones: la skill `documentation`.
+Detalles y convenciones: la skill `documentation` y la de cada carpeta.
 
-## Skill del proyecto
+## Skills del proyecto
 
 Antes de escribir o cambiar nada, carga la skill `documentation` (la
-herramienta Skill en Claude Code, o lee `.agents/skills/documentation/SKILL.md`).
-Su `SKILL.md` contiene el modelo mental (la guía documenta el contrato y lo usa;
-nombres del contrato frente a los de este sitio), las reglas que se aplican
-siempre y una tabla de rutas hacia la referencia de cada tarea: estructura y
-menú, páginas, catálogo, diagramas, skills servidas y rondas de preguntas. Lee
-solo las referencias que necesite la tarea; una tarea que cruza áreas lee
-varias.
+herramienta Skill en Claude Code, o lee `.agents/skills/documentation/SKILL.md`)
+y la skill de la carpeta que vas a tocar:
+
+| Carpeta | Skill | Qué contiene |
+| --- | --- | --- |
+| La raíz (`doc.config.yaml`, `menu.yaml`) | `documentation` | El modelo mental (la guía documenta el contrato y lo usa; nombres del contrato frente a los de este sitio), las reglas que se aplican siempre, la estructura y el menú, la validación y las rondas de preguntas |
+| `docs/` | `docs` | Las secciones, la cabecera, cómo se lee una página de la guía, el MDX sin código, los componentes y los enlaces |
+| `catalogo/` | `catalogo` | Los tipos de este sitio, cómo se escriben sus entidades y cómo se mantienen al día con la plataforma |
+| `diagramas/` | `diagramas` | Qué forma elegir, los diagramas de este sitio y sus ejemplos, y cómo se escriben y se comprueban |
+| `skills/` | `skills` | Las skills que la plataforma sirve a otros agentes |
+
+Una tarea que cruza carpetas carga varias.
 
 ## Reglas estrictas
 
