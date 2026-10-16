@@ -1,0 +1,164 @@
+## MODIFIED Requirements
+
+### Requirement: Server-searched record sources
+
+A search source SHALL obtain its records through an endpoint of its own record
+entity: its list endpoint when the entity is listed in full, its search endpoint
+when the entity is listed in pages or its records are found by more than their
+labels. A full-list source keeps the behavior of
+"Searchable records of dynamic surfaces": it loads the list once while the
+dialog is open and the dialog matches it locally. A server-searched source SHALL
+instead ask its entity's search endpoint for the records matching the user's
+text, with the same API permissions as the pages that list those records, and
+SHALL list at most a fixed number of records per source in the order the
+endpoint returns them. The documentation pages source SHALL be server-searched
+(`documentation-reader`).
+
+A server-searched source SHALL be queried with the text the user settled on,
+about 150 ms after the last keystroke, not once per keystroke. The words of the
+query that match the labels of the source's own surface or of the concrete-path
+surfaces its route sits under SHALL NOT be sent to the server, while the dialog
+still matches them locally against the record. The source SHALL NOT be queried
+when no word remains or when what remains is shorter than two characters, and
+then it SHALL list no records. While the next answer loads, the records of the
+previous answer SHALL stay listed.
+
+A record SHALL be able to carry extra match terms besides its label and
+description (for example an address the server matched on, or the query words a
+full-text search found in a record's body or with a typo), and the dialog
+SHALL match the query against them too, so a record the endpoint returned is not
+filtered out because its match is not visible in its label. The rules of
+"Searchable records of dynamic surfaces" on the dialog being open, empty
+queries, `adminOnly` surfaces, loading or failing sources and recent pages SHALL
+apply to server-searched sources as well.
+
+#### Scenario: A paginated source asks its own search endpoint
+
+- **WHEN** a source is declared as server-searched and the user types "lectura"
+- **THEN** the records listed for that source SHALL be the ones its entity's
+  search endpoint returns for "lectura", not a page of its list endpoint
+
+#### Scenario: Documentation pages are server-searched
+
+- **WHEN** the user types "inversa" in the search dialog
+- **THEN** the documentation pages source SHALL list what `v1.docs.search`
+  returns for "inversa", in that order
+
+#### Scenario: Server search waits for the user to pause
+
+- **WHEN** the user types a word into the dialog one character after another
+  without pausing, with a server-searched source declared
+- **THEN** that source SHALL be queried for the settled text, not once per
+  keystroke
+
+#### Scenario: Section words are not sent to the server
+
+- **WHEN** a server-searched source sits under a section labelled "Dispositivos"
+  and the user types "dispositivos lectura"
+- **THEN** that source SHALL be asked for "lectura" only, and the records it
+  returns SHALL still match the full query in the dialog
+
+#### Scenario: A bare section name does not query the server
+
+- **WHEN** the user types only the label of a server-searched source's section,
+  or a single character besides it
+- **THEN** that source SHALL NOT be queried and SHALL list no records, while the
+  section's surface still appears
+
+#### Scenario: Results are bounded
+
+- **WHEN** more records match than the source's limit
+- **THEN** that source's group SHALL list at most that many records
+
+#### Scenario: Extra match terms keep a server match
+
+- **WHEN** the search endpoint returns a record because its address contains the
+  typed text, and the address is one of the record's extra match terms but not
+  its label or description
+- **THEN** that record SHALL be listed
+
+#### Scenario: A typo matched by the server is kept
+
+- **WHEN** the user types "confguracion" and the documentation search returns a
+  page that says "configuración"
+- **THEN** that page SHALL be listed
+
+#### Scenario: Previous answer stays while the next loads
+
+- **WHEN** a server-searched source has listed records for one text and the user
+  extends the text
+- **THEN** the earlier records SHALL stay listed until the new answer arrives,
+  and SHALL disappear when the text no longer qualifies for a server query
+
+### Requirement: Searchable records
+
+The surface search SHALL include records of dynamic surfaces. A surface whose path has a dynamic segment can declare a search source in the
+application-surface registry. The source SHALL enumerate the records the
+signed-in user can open on that surface, using the same API permissions as the
+pages that list them. Each record SHALL become a search result whose path is the
+surface's path with its dynamic segments filled from that record, or the route
+the record gives, and whose label and description come from the record. The
+documentation page surface SHALL list the pages of the current documentation
+scope (`documentation-reader`).
+Record results SHALL be shown only while the query is non-empty, SHALL be
+matched case- and accent-insensitively against the record's label, description,
+group label and extra match terms, and against the labels of its surface and of
+the concrete-path surfaces its route sits under, and SHALL appear in a group of
+their own per source with a Spanish heading. Each record result SHALL show the
+icon of its surface, and its label SHALL be preceded by its trail: the labels of
+the concrete-path surfaces its route sits under, or the trail the record itself
+gives ("Red › DNS"). A record SHALL be able to carry an excerpt with ranges of
+matched words; the result SHALL then show the excerpt in place of the
+description, with those words highlighted.
+A source declared on an `adminOnly` surface SHALL NOT be queried for users
+without the `admin` role. Records SHALL be loaded only while the search dialog
+is open, unless the source reads a query the page already holds. While they
+load, or if loading fails, the static surface results SHALL still be shown and
+searchable. Opening a record page SHALL NOT add it to the "Recientes" group.
+
+#### Scenario: Finding a documentation page by title
+
+- **WHEN** the scope is "Casa" and the user types "dns"
+- **THEN** a result reading "Red › DNS" SHALL appear in the documentation
+  group, and selecting it SHALL close the dialog and navigate to
+  `/casa/red/dns`
+
+#### Scenario: Excerpt replaces the description
+
+- **WHEN** a documentation result carries an excerpt for the typed word
+  "inversa"
+- **THEN** the result SHALL show that excerpt under its label with "inversa"
+  highlighted, and SHALL NOT show the page's description
+
+#### Scenario: Empty query shows no records
+
+- **WHEN** the user opens the search dialog without typing
+- **THEN** no record results SHALL be listed
+
+#### Scenario: Accent-insensitive record match
+
+- **WHEN** a page is titled "Sincronización" and the user types
+  "sincronizacion"
+- **THEN** that page SHALL appear in the results
+
+#### Scenario: Loading or failing source does not block the search
+
+- **WHEN** a search source is still loading or its request fails
+- **THEN** matching surface results SHALL still be shown, and no error SHALL
+  replace the dialog content
+
+#### Scenario: Current record is marked
+
+- **WHEN** the user is on `/casa/red/dns` and that page appears in the results
+- **THEN** that result SHALL be visually marked as the current page
+
+#### Scenario: Record pages are not recorded as recent
+
+- **WHEN** the user visits `/casa/red/dns` and later opens the search dialog
+  without typing
+- **THEN** the "Recientes" group SHALL NOT include that page
+
+#### Scenario: Dynamic surface without a source stays out
+
+- **WHEN** a surface with a dynamic segment declares no search source
+- **THEN** neither the surface nor any of its records SHALL appear in the results
