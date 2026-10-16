@@ -170,6 +170,12 @@ export const docsOutput = {
       description: z.string(),
       icon: z.string().nullable(),
       updated: z.string().nullable().describe("`actualizado`, YYYY-MM-DD"),
+      edited: z
+        .string()
+        .nullable()
+        .describe(
+          "Date of the last commit that touched the page's file, YYYY-MM-DD; null for pages that come from no file"
+        ),
       fields: z
         .array(
           z.object({

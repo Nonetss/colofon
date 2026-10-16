@@ -102,6 +102,7 @@ export function createDocsHandler({
           description: found.header.descripcion,
           icon: found.header.icono,
           updated: found.header.actualizado,
+          edited: found.header.editado,
           fields: headerFields(found, cabecera, read.site, routes),
         },
         tree: toWire(found.tree),

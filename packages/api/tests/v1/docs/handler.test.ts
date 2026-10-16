@@ -4,6 +4,7 @@ import path from "node:path"
 import {
   CONTENT_SITE,
   createContentFolder,
+  createContentRemote,
   memoryRepositoryStore,
   storedRepository,
 } from "#tests/fixtures/content"
@@ -86,7 +87,11 @@ async function setup(
     resolveSource: (stored) => gitSourceOf(stored, "/nonexistent/hosted"),
     logger: { info: mock(() => {}), warn: mock(() => {}) },
   })
-  return { root, handler: createDocsHandler({ reader, repositories: store }) }
+  return {
+    root,
+    reader,
+    handler: createDocsHandler({ reader, repositories: store }),
+  }
 }
 
 describe("docs.nav", () => {
@@ -145,6 +150,34 @@ describe("docs.nav", () => {
 })
 
 describe("docs.page", () => {
+  test("the header carries actualizado as updated and the file's last commit as edited, independently", async () => {
+    const remote = await createContentRemote(
+      {
+        ...SITE,
+        "docs/red/vpn.mdx":
+          "---\ntitulo: VPN\ndescripcion: Túnel\nactualizado: 2026-01-10\n---\n",
+      },
+      "2026-10-14T09:00:00+02:00"
+    )
+    cleanups.push(remote.remove)
+    const synced = { ...casa, url: remote.url }
+    const { reader, handler } = await setup([synced], {})
+    await reader.sync(synced)
+
+    const vpn = await handler.page({
+      context: adminContext(),
+      input: { repository: "casa", path: "red/vpn" },
+    })
+    expect(vpn.header.updated).toBe("2026-01-10")
+    expect(vpn.header.edited).toBe("2026-10-14")
+    const dns = await handler.page({
+      context: adminContext(),
+      input: { repository: "casa", path: "red/dns" },
+    })
+    expect(dns.header.updated).toBeNull()
+    expect(dns.header.edited).toBe("2026-10-14")
+  })
+
   test("a page carries its header, tree, headings, links and its header fields with their labels and routes", async () => {
     const { handler } = await setup([casa], inClone(casa, SITE))
     const page = await handler.page({
@@ -158,6 +191,7 @@ describe("docs.page", () => {
       description: "Nombres",
       icon: null,
       updated: null,
+      edited: null,
       fields: [
         {
           name: "ver",
