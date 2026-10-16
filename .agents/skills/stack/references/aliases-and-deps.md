@@ -33,5 +33,5 @@ import { db } from "@nonete/db"
 
 - Versions are pinned in root `workspaces.catalog`. A dependency declared by **two or more** workspaces is `catalog:` in each of them.
 - Bun 1.4.2, `linker = "isolated"` (`bunfig.toml`): a workspace can only import what its own `package.json` declares.
-- The backend build inlines every dependency (`tsdown` `deps.alwaysBundle`) and the frontend build bundles them into `dist/server` (`vite.ssr.noExternal`); runtime images ship no `node_modules`.
+- The backend build inlines every dependency (`tsdown` `deps.alwaysBundle`) and the frontend build bundles them into `dist/server` (`vite.ssr.noExternal`); runtime images ship no `node_modules`. A dependency that reads its own files at runtime (`createRequire(import.meta.url)`, `fs` next to the module) can't be inlined that way and crashes the image at start: alias it in `apps/backend/tsdown.config.ts` to the package's self-contained build, as `css-tree` → `css-tree/dist/csstree.esm`, and check the built `dist/` starts from a folder without `node_modules`.
 - **Adding a Bun workspace** means adding its `package.json` `COPY` line to `apps/backend/Dockerfile`, `apps/frontend/Dockerfile` and their `Dockerfile.dev` twins, a `sync` entry for its `src` in `compose.dev.yml` for each service that imports it, and updating `references/workspaces.md`.
