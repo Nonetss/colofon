@@ -35,6 +35,7 @@ import { refsIn, reverseRefs } from "#pages/references"
 import { pageToHast } from "#pages/to-hast"
 import { pagePathOf, transformPage } from "#pages/transform"
 import type { Page, PageHeader } from "#pages/types"
+import { readStyles } from "#styles/read"
 
 // Reads every page of a repository's docs/, adds the generated catalog pages
 // and arranges them: the home (docs/index.mdx), then the navigation (the
@@ -43,7 +44,8 @@ import type { Page, PageHeader } from "#pages/types"
 // every page its previous and next page; catalog pages are left out of it.
 // Pages are read in two passes: every header first, with what menu.yaml says
 // about it applied (the YAML wins), so a page can show another page's title,
-// then every body.
+// then every body. The repository's style modules (`estilos/`) are read with
+// them, so their stylesheet follows the same checkout.
 
 export type { NavEntry, NavNode } from "#pages/nav"
 
@@ -75,6 +77,8 @@ export type Site = {
   pages: ReadonlyMap<string, SitePage>
   /** Every page's problems, in reading order. */
   problems: PageProblem[]
+  /** The cleaned stylesheet of `estilos/` (`content-styles`); empty without. */
+  styles: string
 }
 
 export type SiteRoutes = {
@@ -128,6 +132,9 @@ export async function readSite(
     pages: pagePaths,
   })
   siteProblems.push(...diagramRead.problems)
+
+  const styles = await readStyles(root, fileSet, routes.fileUrlOf)
+  siteProblems.push(...styles.problems)
   const { diagrams } = diagramRead
 
   const schema = headerSchema(config, index)
@@ -185,7 +192,7 @@ export async function readSite(
     if (page !== undefined)
       read.set(pagePath, withCatalogBody(page, bodyContext))
   }
-  return arrange(home, nav, read, siteProblems)
+  return arrange(home, nav, read, siteProblems, styles.css)
 }
 
 /**
@@ -496,7 +503,8 @@ function arrange(
   home: NavEntry,
   nav: NavNode[],
   read: ReadonlyMap<string, Page>,
-  siteProblems: readonly PageProblem[]
+  siteProblems: readonly PageProblem[],
+  styles: string
 ): Site {
   const visits: Visit[] = [{ entry: home, breadcrumbs: [], children: nav }]
   const walk = (nodes: NavNode[], breadcrumbs: Breadcrumb[]) => {
@@ -557,10 +565,10 @@ function arrange(
       children: [],
     })
   }
-  return { home, nav, pages, problems }
+  return { home, nav, pages, problems, styles }
 }
 
-/** The site's own problems (menu.yaml, reserved files) go on the home. */
+/** The site's own problems (menu.yaml, reserved files, styles) go on the home. */
 function withSiteProblems(
   page: Page,
   siteProblems: readonly PageProblem[]

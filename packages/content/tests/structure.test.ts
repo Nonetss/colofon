@@ -13,7 +13,8 @@ const ALLOWED: Record<string, readonly string[]> = {
   contract: [],
   git: ["contract"],
   diagrams: ["contract"],
-  pages: ["contract", "diagrams"],
+  styles: ["contract"],
+  pages: ["contract", "diagrams", "styles"],
   editor: ["contract", "diagrams"],
 }
 
@@ -79,6 +80,24 @@ function cyclesOf(graph: ReadonlyMap<string, readonly string[]>): string[][] {
   return cycles
 }
 
+/** The imports that cross areas against `ALLOWED`, as `from → #to`. */
+function forbiddenImports(
+  graph: ReadonlyMap<string, readonly string[]>
+): string[] {
+  const forbidden: string[] = []
+  for (const [id, imports] of graph) {
+    if (id === BARREL) continue
+    const area = areaOf(id)
+    const allowed = ALLOWED[area] ?? []
+    for (const target of imports) {
+      const targetArea = areaOf(target)
+      if (targetArea === area || allowed.includes(targetArea)) continue
+      forbidden.push(`${id} → #${target}`)
+    }
+  }
+  return forbidden
+}
+
 describe("packages/content structure", () => {
   test("the source root holds only the barrel and the area folders", async () => {
     const names = (await readdir(SRC)).sort()
@@ -86,19 +105,15 @@ describe("packages/content structure", () => {
   })
 
   test("areas import each other only in the allowed direction", async () => {
-    const graph = await importGraph()
-    const forbidden: string[] = []
-    for (const [id, imports] of graph) {
-      if (id === BARREL) continue
-      const area = areaOf(id)
-      const allowed = ALLOWED[area] ?? []
-      for (const target of imports) {
-        const targetArea = areaOf(target)
-        if (targetArea === area || allowed.includes(targetArea)) continue
-        forbidden.push(`${id} → #${target}`)
-      }
-    }
-    expect(forbidden).toEqual([])
+    expect(forbiddenImports(await importGraph())).toEqual([])
+  })
+
+  test("styles may not import pages, while pages may import styles", () => {
+    const graph = new Map([
+      ["styles/read", ["pages/site", "contract/problems"]],
+      ["pages/site", ["styles/read"]],
+    ])
+    expect(forbiddenImports(graph)).toEqual(["styles/read → #pages/site"])
   })
 
   test("no module imports itself back through others", async () => {

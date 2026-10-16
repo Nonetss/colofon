@@ -421,3 +421,36 @@ describe("readSite with menu.yaml", () => {
     expect(pageAt(site, "varios").header.titulo).toBe("Varios")
   })
 })
+
+describe("readSite with estilos/", () => {
+  test("the repository's cleaned stylesheet is on the site, with its images rewritten", async () => {
+    const site = await siteOf({
+      ...SITE,
+      "estilos/tema.css": ":root { --primary: red }",
+      "estilos/pagina.css":
+        ".typeset.doc { background: url(../docs/varios/img/foto.png) }",
+    })
+    expect(site.styles).toBe(
+      ":root{--primary:red}\n.typeset.doc{background:url(/files/casa/varios/img/foto.png)}"
+    )
+    expect(site.problems).toEqual([])
+  })
+
+  test("a style problem goes on the home and in the site's problems", async () => {
+    const site = await siteOf({
+      ...SITE,
+      "estilos/codigo.css": "@import 'x.css';\n.a { color: red }",
+    })
+    expect(site.styles).toBe(".a{color:red}")
+    expect(pageAt(site, "").problems.map((p) => p.file)).toEqual([
+      "estilos/codigo.css",
+    ])
+    expect(site.problems.map((p) => p.file)).toEqual(["estilos/codigo.css"])
+  })
+
+  test("a repository without estilos/ has an empty stylesheet and no new problem", async () => {
+    const site = await siteOf(SITE)
+    expect(site.styles).toBe("")
+    expect(site.problems).toEqual([])
+  })
+})
