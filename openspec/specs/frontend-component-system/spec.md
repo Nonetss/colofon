@@ -10,7 +10,7 @@ Defines the shadcn-based component system, typography roles, application-surface
 
 The frontend SHALL configure shadcn through `apps/frontend/components.json` with
 the `base-nova` style (shadcn on Base UI), `rsc` disabled, `tsx` enabled,
-Tailwind v4 CSS at `src/styles/global.css` with `baseColor` `neutral` and
+Tailwind v4 CSS at `src/styles/theme.css` with `baseColor` `neutral` and
 `cssVariables` enabled, `lucide` as the icon library, and the aliases
 `components` → `@/components`, `utils` → `@/lib/utils`, `ui` →
 `@/components/ui`, `lib` → `@/lib` and `hooks` → `@/hooks`. New primitives
@@ -33,7 +33,7 @@ registry before writing a primitive by hand.
 
 The frontend SHALL expose a single `cn` class-merging helper from
 `@/lib/utils`, built with `createCn` from the `cn` package and extended so the
-role-based type utilities defined in `global.css` (`text-display`,
+role-based type utilities defined in `theme.css` (`text-display`,
 `text-headline`, `text-body`, `text-meta`, `text-meta-sm`, `text-label`,
 `text-status`, `text-stat`) are registered as font sizes rather than text
 colors. Components added with `shadcn add` that import `cn` from `"cn"` SHALL
@@ -65,7 +65,7 @@ instead of hand-built size, weight, tracking and case utilities. Monospaced,
 tabular data such as identifiers, cron expressions, durations or counts SHALL
 use the `data` role. Role tokens (`--font-size-*`, `--line-height-*`, tracking
 tokens and a `--text-<role>` theme entry per role) SHALL live in
-`src/styles/global.css`. Adding a role that defines its own font size SHALL
+`src/styles/theme.css`. Adding a role that defines its own font size SHALL
 update the tokens, `textVariants` and the `typeRoles` list in `lib/utils.ts`
 together. `components/ui` primitives keep their own classes and are styled from
 call sites through `className={textVariants(...)}`.

@@ -89,7 +89,7 @@ The repository SHALL provide a developer-run script, exposed as the root `packag
 
 ### Requirement: Fixed icon color palette
 
-The frontend SHALL define a fixed palette of named icon colors as flat theme tokens with light and dark values in `apps/frontend/src/styles/global.css`, with no gradients. The palette keys SHALL be the same set the API validates, and `orange` SHALL map to the theme's primary color and be the default. Stored values SHALL be palette keys, never raw color values, so the theme can restyle every stored icon.
+The frontend SHALL define a fixed palette of named icon colors as flat theme tokens with light and dark values in `apps/frontend/src/styles/theme.css`, with no gradients. The palette keys SHALL be the same set the API validates, and `orange` SHALL map to the theme's primary color and be the default. Stored values SHALL be palette keys, never raw color values, so the theme can restyle every stored icon.
 
 #### Scenario: Theme switch
 
