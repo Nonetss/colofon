@@ -40,7 +40,7 @@ This skill says how to work, not what the contract holds. …
 | May say | Example in `doc-writing` |
 | --- | --- |
 | Where to read the live contract | "Read the guide's index (`/llms.txt`)…, every page has its Markdown at its address followed by `/llm.txt`" |
-| Which of the site's own files decide what exists | "Look at the repository's own `doc.config.yaml`, `menu.yaml` and `catalogo/*/_tipo.yaml` first" |
+| Which of the site's own files decide what exists | "Look at the repository's own `doc.config.yaml`, `menu.yaml` and `catalog/*/_type.yaml` first" |
 | The rules that never change, each in one line | "Pages have no code", "YAML wins over MDX", "Every `icono` is a Lucide icon name" |
 | How to check the work | "After the push and the sync, open the changed pages as an admin" |
 | Where to send the reader for detail | "The guide's Diagrams section has the keys of each" |

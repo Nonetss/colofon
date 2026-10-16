@@ -25,7 +25,7 @@ secciones:
       - backups/duplicati/create-backup             # una sola página
   - titulo: Datos
     icono: database
-    paginas: [catalogo]                           # el catálogo; o catalogo/machines
+    paginas: [catalog]                           # el catálogo; o catalog/machines
 ```
 
 | Clave | Qué es |
@@ -36,7 +36,7 @@ secciones:
 | `descripcion` | Opcional. Una frase sobre qué contiene el grupo. |
 | `paginas` | Obligatoria. Sus entradas: una ruta, o `ruta` con un `titulo` e `icono` opcionales. |
 
-Una entrada nombra una página (`network/dns`), una carpeta de `docs/` (`network`, que trae todas sus páginas en su orden habitual), el catálogo (`catalogo`) o un tipo del catálogo (`catalogo/machines`). **Las carpetas guardan las páginas; el menú decide dónde se muestran.** Un grupo puede reunir carpetas de cualquier sitio, y cada página conserva su URL.
+Una entrada nombra una página (`network/dns`), una carpeta de `docs/` (`network`, que trae todas sus páginas en su orden habitual), el catálogo (`catalog`) o un tipo del catálogo (`catalog/machines`). **Las carpetas guardan las páginas; el menú decide dónde se muestran.** Un grupo puede reunir carpetas de cualquier sitio, y cada página conserva su URL.
 
 El menú de este propio sitio es un buen ejemplo: consulta su `menu.yaml`.
 

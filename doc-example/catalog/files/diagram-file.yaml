@@ -1,0 +1,7 @@
+path: diagrams/<id>.json
+kind: content
+required: false
+purpose: Un diagrama en JSON, dibujado a mano o de un tipo que la plataforma coloca sola, mostrado con <Diagram>
+page: diagrams
+fuente: manual
+actualizado: 2026-10-16

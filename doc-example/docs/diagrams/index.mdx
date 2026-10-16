@@ -1,6 +1,6 @@
 ---
 titulo: Diagramas
-descripcion: Un diagrama es un fichero propio bajo diagramas/, dibujado a mano, de un tipo que la plataforma coloca sola a partir de los datos o una ilustración en SVG, y se muestra en cualquier página con el componente Diagram
+descripcion: Un diagrama es un fichero propio bajo diagrams/, dibujado a mano, de un tipo que la plataforma coloca sola a partir de los datos o una ilustración en SVG, y se muestra en cualquier página con el componente Diagram
 files: [diagram-file, diagram-illustration]
 components: [diagram]
 actualizado: 2026-10-16
@@ -8,7 +8,7 @@ actualizado: 2026-10-16
 
 ## Un fichero por diagrama
 
-Cada diagrama es un fichero propio en `diagramas/`, así que se escribe una vez y se muestra donde ayude, en un bloque propio:
+Cada diagrama es un fichero propio en `diagrams/`, así que se escribe una vez y se muestra donde ayude, en un bloque propio:
 
 ```mdx
 <Diagram id="pipeline" />
@@ -22,9 +22,9 @@ El nombre del fichero, sin la extensión, es su id: en minúsculas, con dígitos
 
 | Fichero | Qué es | Dónde se explica |
 | --- | --- | --- |
-| `diagramas/<id>.json` sin `type` | Un diagrama **dibujado a mano**: el contenido coloca cada caja, flecha y zona. Para arquitecturas, despliegues y modelos de datos. | [Dibujados a mano](drawn.mdx) |
-| `diagramas/<id>.json` con `type` | Un diagrama **de un tipo**: el contenido da los datos (pasos, mensajes, tareas, valores) y la plataforma lo coloca sola. | Las páginas de cada familia, abajo |
-| `diagramas/<id>.svg` | Una **ilustración** dibujada a mano, para lo que ningún tipo coloca: un despiece, un plano. | [Ilustraciones](illustrations.mdx) |
+| `diagrams/<id>.json` sin `type` | Un diagrama **dibujado a mano**: el contenido coloca cada caja, flecha y zona. Para arquitecturas, despliegues y modelos de datos. | [Dibujados a mano](drawn.mdx) |
+| `diagrams/<id>.json` con `type` | Un diagrama **de un tipo**: el contenido da los datos (pasos, mensajes, tareas, valores) y la plataforma lo coloca sola. | Las páginas de cada familia, abajo |
+| `diagrams/<id>.svg` | Una **ilustración** dibujada a mano, para lo que ningún tipo coloca: un despiece, un plano. | [Ilustraciones](illustrations.mdx) |
 
 Todos se dibujan con el aspecto de la plataforma (papel, rayas finas, un solo color de acento y diez tonos) y en claro u oscuro según el lector, nunca más anchos de lo que son y con un botón "Ampliar" que los abre en grande.
 
@@ -81,7 +81,7 @@ Las piezas de un tipo (un paso, un estado, un actor, una tarea, una tarjeta, un 
 
 La plataforma valida cada diagrama contra el catálogo y las páginas. Se reportan, en el fichero con la ruta del campo (`steps.3.entity`) **y** en cada página que lo muestra: el JSON mal escrito (con su línea y columna), una clave desconocida, un `type` o una `variant` que no existe (con la lista de los que hay), una entidad o una página que no existe, una pieza que nombra un id que no está, un id repetido, un valor o una fecha que no lo son, el límite pasado y los acentos de más. Lo que sea válido se sigue dibujando.
 
-Un `Diagram` con un id desconocido muestra un aviso, un `diagramas/<id>.yaml` se reporta (los diagramas son JSON) y un bloque de código con el lenguaje `diagram` dentro de una página también: los diagramas viven en `diagramas/`.
+Un `Diagram` con un id desconocido muestra un aviso, un `diagrams/<id>.yaml` se reporta (los diagramas son JSON) y un bloque de código con el lenguaje `diagram` dentro de una página también: los diagramas viven en `diagrams/`.
 
 ## En el editor
 
@@ -91,7 +91,7 @@ El editor de JSON de VS Code completa y valida los diagramas con el esquema que 
 {
   "json.schemas": [
     {
-      "fileMatch": ["/diagramas/*.json"],
+      "fileMatch": ["/diagrams/*.json"],
       "url": "https://<sitio>/api/v1/content/schemas/<slug>/diagram"
     }
   ]

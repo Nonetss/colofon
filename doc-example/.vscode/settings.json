@@ -17,7 +17,7 @@
   // editor's own JSON support takes their schema from the same repository.
   "json.schemas": [
     {
-      "fileMatch": ["/diagramas/*.json"],
+      "fileMatch": ["/diagrams/*.json"],
       "url": "https://localhost:4321/api/v1/content/schemas/test/diagram"
     }
   ]

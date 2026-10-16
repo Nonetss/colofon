@@ -1,0 +1,80 @@
+{
+  "title": "Qué contiene un repositorio de contenido",
+  "desc": "Las declaraciones dicen qué puede contener el contenido y cómo se muestra; las páginas citan las entidades y muestran los diagramas",
+  "width": 980,
+  "height": 392,
+  "zones": [
+    { "id": "declarations", "x": 16, "y": 16, "w": 268, "h": 352, "label": "DECLARACIONES" },
+    { "id": "content", "x": 396, "y": 16, "w": 568, "h": 352, "label": "CONTENIDO" }
+  ],
+  "nodes": [
+    {
+      "id": "config", "entity": "files/doc-config", "tag": "Configuración",
+      "x": 40, "y": 48, "w": 220, "h": 72, "zone": "declarations",
+      "info": "El nombre del sitio, la versión del contrato y los campos adicionales de la cabecera"
+    },
+    {
+      "id": "menu", "entity": "files/menu", "tag": "Menú",
+      "x": 40, "y": 160, "w": 220, "h": 72, "zone": "declarations",
+      "info": "La barra lateral; prevalece sobre las cabeceras de las páginas"
+    },
+    {
+      "id": "types", "entity": "files/type-declaration", "tag": "Tipos",
+      "x": 40, "y": 272, "w": 220, "h": 72, "zone": "declarations",
+      "info": "Los campos de cada tipo del catálogo y su tabla"
+    },
+    {
+      "id": "pages", "entity": "files/page", "kind": "focal", "tag": "Páginas",
+      "x": 420, "y": 104, "w": 220, "h": 72, "zone": "content",
+      "needs": ["config", "menu"],
+      "info": "MDX sin código; cada carpeta es una sección"
+    },
+    {
+      "id": "entities", "entity": "files/entity", "kind": "store", "tag": "Entidades",
+      "x": 420, "y": 272, "w": 220, "h": 72, "zone": "content",
+      "needs": ["types"]
+    },
+    {
+      "id": "diagrams", "entity": "files/diagram-file", "tag": "Diagramas",
+      "x": 720, "y": 188, "w": 220, "h": 72, "zone": "content"
+    }
+  ],
+  "edges": [
+    {
+      "from": "config", "to": "pages",
+      "points": [[260, 84], [340, 84], [340, 124], [420, 124]],
+      "label": "CABECERA", "at": [300, 74],
+      "info": "Declara los campos adicionales de su cabecera"
+    },
+    {
+      "from": "menu", "to": "pages",
+      "points": [[260, 196], [340, 196], [340, 156], [420, 156]],
+      "label": "ORDEN", "at": [300, 186],
+      "info": "Las agrupa y ordena en la barra lateral"
+    },
+    {
+      "from": "types", "to": "entities",
+      "points": [[260, 308], [420, 308]],
+      "label": "DECLARAN SUS CAMPOS", "at": [340, 298]
+    },
+    {
+      "from": "pages", "to": "entities", "kind": "accent",
+      "points": [[530, 176], [530, 272]],
+      "label": "LAS CITAN", "at": [542, 228], "anchor": "start",
+      "info": "Con enlaces catalog: y campos de cabecera"
+    },
+    {
+      "from": "pages", "to": "diagrams", "kind": "accent",
+      "points": [[640, 140], [830, 140], [830, 188]],
+      "label": "LOS MUESTRAN", "at": [735, 130],
+      "info": "Con el componente Diagram"
+    },
+    {
+      "from": "diagrams", "to": "entities",
+      "points": [[830, 260], [830, 308], [640, 308]],
+      "label": "SUS CAJAS", "at": [735, 298],
+      "info": "Una caja puede ser una entidad del catálogo"
+    }
+  ],
+  "kindNames": { "service": "Declaración", "focal": "Páginas", "store": "Datos" }
+}

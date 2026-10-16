@@ -12,7 +12,7 @@ publica. Aquí no se compila ni se ejecuta nada.
 
 - Las instrucciones para agentes son este `AGENTS.md` más las skills de
   `.agents/skills/`: `documentation`, la del repositorio entero, y una por
-  cada carpeta de contenido (`docs`, `catalogo`, `diagramas`, `estilos`, `skills`).
+  cada carpeta de contenido (`docs`, `catalog`, `diagrams`, `styles`, `skills`).
   `CLAUDE.md` solo importa
   este fichero (`@AGENTS.md`) para que todos los agentes lean el mismo texto:
   nunca añadas instrucciones a `CLAUDE.md`.
@@ -41,21 +41,21 @@ publica. Aquí no se compila ni se ejecuta nada.
 | `doc.config.yaml` | El sitio: nombre, versión del contrato de la plataforma, campos extra de cabecera de las páginas |
 | `menu.yaml` | Los grupos de la barra lateral; lo que dice sobre una entrada prevalece sobre las cabeceras de las páginas |
 | `docs/` | Las páginas de la guía (`.mdx`). Cada carpeta es una sección con su `index.mdx` |
-| `catalogo/<type>/_tipo.yaml` | La declaración de un tipo de datos (los de este sitio describen el propio contrato) |
-| `catalogo/<type>/<id>.yaml` | Una entidad: el nombre del fichero es su id |
-| `diagramas/<id>.json` | Un diagrama, dibujado a mano o de un tipo (`type`) que la plataforma coloca sola, mostrado en las páginas con `<Diagram id="…" />` |
-| `diagramas/<id>.svg` | Una ilustración dibujada a mano en SVG, filtrada y pintada con los colores del tema |
-| `estilos/<módulo>.css` | Los estilos propios del sitio (opcional), un fichero por módulo de la plataforma (`tema.css`, `tablas.css`…), aplicados encima de los suyos en sus páginas |
+| `catalog/<type>/_type.yaml` | La declaración de un tipo de datos (los de este sitio describen el propio contrato) |
+| `catalog/<type>/<id>.yaml` | Una entidad: el nombre del fichero es su id |
+| `diagrams/<id>.json` | Un diagrama, dibujado a mano o de un tipo (`type`) que la plataforma coloca sola, mostrado en las páginas con `<Diagram id="…" />` |
+| `diagrams/<id>.svg` | Una ilustración dibujada a mano en SVG, filtrada y pintada con los colores del tema |
+| `styles/<módulo>.css` | Los estilos propios del sitio (opcional), un fichero por módulo de la plataforma (`theme.css`, `tables.css`…), aplicados encima de los suyos en sus páginas |
 | `skills/<name>/SKILL.md` | Skills que la plataforma **sirve a otros agentes** para trabajar con este sitio |
 | `.agents/skills/documentation/` | La skill para **ti**, el agente que escribe aquí: el repositorio entero |
-| `.agents/skills/<carpeta>/` | Una skill por carpeta de contenido (`docs`, `catalogo`, `diagramas`, `estilos`, `skills`): cómo se escribe lo que va en ella |
+| `.agents/skills/<carpeta>/` | Una skill por carpeta de contenido (`docs`, `catalog`, `diagrams`, `styles`, `skills`): cómo se escribe lo que va en ella |
 | `.agents/commands/doc/questions.md` | `/doc:questions`: rondas de preguntas para terminar de documentar una sección |
 | `.agents/commands/doc/pending.md` | `/doc:pending`: lo que queda por resolver o revisar en el sitio, por sección |
 | `.agents/commands/doc/check.md` | `/doc:check`: comprueba que el contenido valida y lista los problemas, sin editar |
 | `.agents/commands/doc/review.md` | `/doc:review`: revisa una página, entidad, diagrama o módulo de estilos contra las convenciones, sin editar |
 | `.agents/commands/doc/sync-platform.md` | `/doc:sync-platform`: compara el catálogo y la guía con el contrato actual de la plataforma |
 | `.agents/commands/doc/new-page.md` | `/doc:new-page`: escribe una página nueva con su cabecera y su entrada en el menú |
-| `.agents/commands/doc/diagram.md` | `/doc:diagram`: elige la forma de un diagrama, lo escribe en `diagramas/` y lo comprueba |
+| `.agents/commands/doc/diagram.md` | `/doc:diagram`: elige la forma de un diagrama, lo escribe en `diagrams/` y lo comprueba |
 | `.vscode/settings.json` | El catálogo de esquemas de la plataforma, para el autocompletado en el editor |
 
 Detalles y convenciones: la skill `documentation` y la de cada carpeta.
@@ -70,9 +70,9 @@ y la skill de la carpeta que vas a tocar:
 | --- | --- | --- |
 | La raíz (`doc.config.yaml`, `menu.yaml`) | `documentation` | El modelo mental (la guía documenta el contrato y lo usa; nombres del contrato frente a los de este sitio), las reglas que se aplican siempre, la estructura y el menú, la validación y las rondas de preguntas |
 | `docs/` | `docs` | Las secciones, la cabecera, cómo se lee una página de la guía, el MDX sin código, los componentes y los enlaces |
-| `catalogo/` | `catalogo` | Los tipos de este sitio, cómo se escriben sus entidades y cómo se mantienen al día con la plataforma |
-| `diagramas/` | `diagramas` | Qué forma elegir, los diagramas de este sitio y sus ejemplos, y cómo se escriben y se comprueban |
-| `estilos/` | `estilos` | Los estilos propios del sitio: variable del tema o regla de un módulo, el `tema.css` de este sitio, cómo se escribe un módulo y dónde se reportan sus problemas |
+| `catalog/` | `catalog` | Los tipos de este sitio, cómo se escriben sus entidades y cómo se mantienen al día con la plataforma |
+| `diagrams/` | `diagrams` | Qué forma elegir, los diagramas de este sitio y sus ejemplos, y cómo se escriben y se comprueban |
+| `styles/` | `styles` | Los estilos propios del sitio: variable del tema o regla de un módulo, el `theme.css` de este sitio, cómo se escribe un módulo y dónde se reportan sus problemas |
 | `skills/` | `skills` | Las skills que la plataforma sirve a otros agentes |
 
 Una tarea que cruza carpetas carga varias.
@@ -94,13 +94,13 @@ agentes; lo que entra aquí deja de ser secreto.
 
 ### No renombres el contrato
 
-La plataforma lee un conjunto fijo de nombres, escritos en español: `catalogo/`,
-`_tipo.yaml`, `menu.yaml`, `diagramas/`, las claves de todo fichero YAML (las de
-los diagramas JSON son las de los esquemas de la documentación anterior, en
-inglés), los
-tipos de campo, la cabecera común de página (`titulo`, `descripcion`, `icono`,
-`orden`, `actualizado`), `fuente` y los enlaces `catalogo:`. Traducirlos rompe
-la validación. Todo lo demás (ids de tipo, nombres de campo, valores, carpetas,
+La plataforma lee un conjunto fijo de nombres. En inglés: los ficheros y
+carpetas (`catalog/`, `_type.yaml`, `menu.yaml`, `diagrams/`, `styles/` y sus
+módulos), los enlaces `catalog:` y las claves de los diagramas JSON (las de los
+esquemas de la documentación anterior). En español: las claves de todo fichero
+YAML, los tipos de campo, la cabecera común de página (`titulo`,
+`descripcion`, `icono`, `orden`, `actualizado`) y `fuente`. Cambiarlos rompe la
+validación. Todo lo demás (ids de tipo, nombres de campo, valores, carpetas,
 prosa) es propio de este sitio y se escribe en español; los ids de tipo, los
 nombres de campo, los valores y las carpetas que ya existen están en inglés y
 no se renombran, y la prosa va en español. La tabla completa está en la skill
@@ -109,7 +109,7 @@ no se renombran, y la prosa va en español. La tabla completa está en la skill
 ### Declara antes de usar
 
 La plataforma no sabe nada del dominio: los tipos y sus campos se declaran
-aquí. Nunca añadas a una entidad un campo que su `_tipo.yaml` no declare, ni a
+aquí. Nunca añadas a una entidad un campo que su `_type.yaml` no declare, ni a
 una página un campo de cabecera que `doc.config.yaml` no declare bajo
 `cabecera`.
 
@@ -130,7 +130,7 @@ y un título fijado en el menú debe coincidir con el `titulo` de la página. To
 ### Una entidad por fichero
 
 Nunca pongas varias entidades en un mismo YAML ni mantengas catálogos fuera de
-`catalogo/<type>/`. Los datos estructurados van al catálogo; las explicaciones,
+`catalog/<type>/`. Los datos estructurados van al catálogo; las explicaciones,
 a una página.
 
 ## Validación
@@ -142,10 +142,10 @@ a una página.
 - La plataforma valida cada push al sincronizar (al instante en un repositorio
   alojado en ella, en cinco minutos como máximo, o de inmediato desde
   `/admin/content`). Las declaraciones inválidas (`doc.config.yaml`,
-  `menu.yaml`, un `_tipo.yaml`) nunca sustituyen a las válidas; una página,
+  `menu.yaml`, un `_type.yaml`) nunca sustituyen a las válidas; una página,
   entidad o diagrama roto se reporta y el resto se publica. Los administradores
   ven cada problema en su página (los de `menu.yaml`, los diagramas y
-  `estilos/`, en la portada), y el log los recoge todos.
+  `styles/`, en la portada), y el log los recoge todos.
 - Antes de dar algo por terminado: todo YAML que hayas tocado valida, y todo
   enlace, campo `ficha`, referencia, entrada de menú y `entity` o `page` de
   diagrama apunta a algo que existe.

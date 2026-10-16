@@ -1,0 +1,24 @@
+{
+  "type": "wardley",
+  "title": "La cadena de publicar documentación",
+  "desc": "Lo que hay entre una página escrita y quien la lee, de lo más visible a lo menos y de lo hecho a medida a lo que ya es commodity; los diagramas tipados van camino de producto",
+  "components": [
+    { "id": "lector", "name": "Lector", "visibility": 96, "evolution": 62 },
+    { "id": "paginas", "name": "Páginas", "entity": "files/page", "visibility": 78, "evolution": 42 },
+    { "id": "diagramas", "name": "Diagramas tipados", "page": "diagrams", "visibility": 60, "evolution": 18, "info": "Hoy los coloca la plataforma a partir de los datos; mañana, un formato que cualquiera reconoce" },
+    { "id": "catalog", "name": "Catálogo", "page": "data", "visibility": 54, "evolution": 40 },
+    { "id": "plataforma", "name": "Plataforma doc", "visibility": 36, "evolution": 58 },
+    { "id": "git", "name": "Git", "visibility": 16, "evolution": 88 },
+    { "id": "servidor", "name": "Servidor", "visibility": 6, "evolution": 94 }
+  ],
+  "links": [
+    { "from": "lector", "to": "paginas" },
+    { "from": "paginas", "to": "diagramas" },
+    { "from": "paginas", "to": "catalog" },
+    { "from": "paginas", "to": "plataforma" },
+    { "from": "diagramas", "to": "plataforma" },
+    { "from": "plataforma", "to": "git" },
+    { "from": "plataforma", "to": "servidor" }
+  ],
+  "moves": [{ "id": "diagramas", "to": 56 }]
+}

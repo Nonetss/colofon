@@ -1,0 +1,7 @@
+path: styles/*.css
+kind: content
+required: false
+purpose: Los estilos propios del sitio, un fichero por módulo de la plataforma (theme.css, tables.css…), limpiados y aplicados encima de los de la plataforma en sus páginas
+page: repository/styles
+fuente: manual
+actualizado: 2026-10-16

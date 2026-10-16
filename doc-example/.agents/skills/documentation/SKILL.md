@@ -1,6 +1,6 @@
 ---
 name: documentation
-description: Map and conventions of this content repository as a whole, the "Escribir documentación" guide of the doc platform, which documents the content contract and uses every part of it. A decision guide for what goes where and which folder skill to load (docs, catalogo, diagramas, estilos, skills), the root files doc.config.yaml and menu.yaml, contract names vs this site's names, the rules that always apply, how content is validated (editor schemas, the platform's sync and reports) and question rounds (/doc:questions). Use before any change, to check where something belongs, before touching doc.config.yaml or menu.yaml, when the platform reports a problem, and before a question round.
+description: Map and conventions of this content repository as a whole, the "Escribir documentación" guide of the doc platform, which documents the content contract and uses every part of it. A decision guide for what goes where and which folder skill to load (docs, catalog, diagramas, estilos, skills), the root files doc.config.yaml and menu.yaml, contract names vs this site's names, the rules that always apply, how content is validated (editor schemas, the platform's sync and reports) and question rounds (/doc:questions). Use before any change, to check where something belongs, before touching doc.config.yaml or menu.yaml, when the platform reports a problem, and before a question round.
 ---
 
 # Documentation
@@ -15,7 +15,7 @@ or run.
 
 **The guide documents the contract and uses it.** Its menu is a `menu.yaml`,
 its reference tables come from its own catalog, its diagrams are files in
-`diagramas/`. Every feature it describes should be shown working somewhere in
+`diagrams/`. Every feature it describes should be shown working somewhere in
 it, so its own files are the examples a reader copies.
 
 - **The guide's pages are the source of truth for the contract.** When you
@@ -39,13 +39,13 @@ this repository                         platform
   doc.config.yaml   site config   ──┐
   menu.yaml         sidebar       ──┤
   docs/**.mdx       pages         ──┼──▶ syncs the repo ──▶ reader, catalog pages,
-  catalogo/<type>/  data          ──┤    validates it       editor schemas, llms.txt
-  diagramas/        diagrams      ──┤
-  estilos/          own styles    ──┤
+  catalog/<type>/  data          ──┤    validates it       editor schemas, llms.txt
+  diagrams/        diagrams      ──┤
+  styles/          own styles    ──┤
   skills/<name>/    agent skills  ──┘
 ```
 
-Declarations (`doc.config.yaml`, `menu.yaml`, each `_tipo.yaml`) are read
+Declarations (`doc.config.yaml`, `menu.yaml`, each `_type.yaml`) are read
 first and, when broken, the last valid version is kept. Content (pages,
 entities, diagrams, styles) is checked one by one: a broken one is reported, the rest
 published.
@@ -59,9 +59,9 @@ folders loads several.
 | Task | Load or read |
 | --- | --- |
 | Writing, moving or renaming a page under `docs/` | the `docs` skill |
-| Adding or changing a type, a field or an entity under `catalogo/` | the `catalogo` skill |
-| Drawing, changing or reusing a diagram under `diagramas/` | the `diagramas` skill |
-| Restyling this site's pages with `estilos/` (theme variables, a module) | the `estilos` skill |
+| Adding or changing a type, a field or an entity under `catalog/` | the `catalog` skill |
+| Drawing, changing or reusing a diagram under `diagrams/` | the `diagrams` skill |
+| Restyling this site's pages with `styles/` (theme variables, a module) | the `styles` skill |
 | Writing a skill under `skills/` for other agents | the `skills` skill |
 | Where a file goes, the repository tree, naming | [layout.md](references/layout.md) |
 | `menu.yaml`: its keys, this site's groups, adding an entry, "Otros" | [menu.md](references/menu.md) |
@@ -77,7 +77,7 @@ folders loads several.
 - **Don't rename the contract.** Its names are fixed and Spanish (diagram
   keys English); translating one breaks validation.
 - **Declare before use.** An entity field must be declared in its
-  `_tipo.yaml`; a header field under `cabecera` in `doc.config.yaml`.
+  `_type.yaml`; a header field under `cabecera` in `doc.config.yaml`.
 - **MDX has no code**, and nothing in the prose starts JSX or an expression:
   write component names, `<placeholders>` and braces inside backticks or code
   blocks, never bare in a sentence.
@@ -98,11 +98,11 @@ folders loads several.
 | Anti-pattern | Why it fails |
 | --- | --- |
 | Writing a rule into a skill instead of reading the guide's page | Two sources; the skill goes stale first |
-| Translating `titulo`, `catalogo/`, `_tipo.yaml`, or a diagram's `nodes` | The platform no longer reads it; the file fails validation |
+| Translating `titulo`, `catalog/`, `_type.yaml`, or a diagram's `nodes` | The platform no longer reads it; the file fails validation |
 | Renaming an existing English id, field or folder "to Spanish" | Breaks every link, `ref`, `ficha`, menu entry and header citing it |
 | A new folder under `docs/` without a menu entry | Its pages land in "Otros" and are reported |
 | A feature described but shown nowhere in the guide | The guide stops being its own example |
-| Fixing only the file the platform reported | The cause is often a declaration (`_tipo.yaml`, `doc.config.yaml`, `menu.yaml`) |
+| Fixing only the file the platform reported | The cause is often a declaration (`_type.yaml`, `doc.config.yaml`, `menu.yaml`) |
 | A credential pasted "just for the example" | Content is cloned to servers and read by agents |
 
 ## 6. Before finishing

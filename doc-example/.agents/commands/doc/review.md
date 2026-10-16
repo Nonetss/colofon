@@ -22,12 +22,12 @@ one.
   rules restated from another page instead of linked, unknowns buried in the
   prose instead of in `open_questions`, platform UI words as the platform
   shows them.
-- **An entity** (`catalogo` skill): `references/writing-an-entity.md`, and
+- **An entity** (`catalog` skill): `references/writing-an-entity.md`, and
   whether its values still match the platform (`references/keeping-in-step.md`).
-- **A diagram** (`diagramas` skill): whether it earns its place, whether the
+- **A diagram** (`diagrams` skill): whether it earns its place, whether the
   form fits, the universal anti-patterns and those of its form's reference,
   the density (4/10) and the accent.
-- **A style module** (`estilos` skill): a variable where one would do instead
+- **A style module** (`styles` skill): a variable where one would do instead
   of rules, both themes, only the classes and variables the guide documents,
   contrast in each theme, and the anti-patterns of the skill.
 - **Always**: the contract's names untouched (`documentation` skill,

@@ -2,7 +2,7 @@
 
 What goes where in this repository. The contract behind every file is
 explained in `docs/repository/index.mdx`, and each file is an entity of
-`catalogo/files/`.
+`catalog/files/`.
 
 ```
 doc.config.yaml          # the site: name, contract version, extra header fields
@@ -12,30 +12,30 @@ docs/
 ├── getting-started.mdx  # a page at the top level
 ├── repository/          # a section: index.mdx plus its pages
 ├── pages/
-├── catalog/             # explains the catalog (not catalogo/: that path is reserved)
+├── catalog/             # explains the catalog (not catalog/: that path is reserved)
 ├── diagrams/
 └── publishing/
-catalogo/
+catalog/
 ├── files/               # the files of a content repository
 ├── field-kinds/         # the kinds of a field
 ├── header-fields/       # the fields every page header has
 ├── components/          # the page components
 └── diagram-types/       # the diagram types the platform lays out
-diagramas/
+diagrams/
 ├── pipeline.json        # from a push to the published site
 ├── repository.json      # what a repository holds
 ├── <type>-<topic>.json  # one working example of each diagram type and variant
 └── repository-exploded.svg # the illustration example
-estilos/
-└── tema.css             # this site's theme: the accent, in both themes
+styles/
+└── theme.css             # this site's theme: the accent, in both themes
 skills/
 └── doc-writing/SKILL.md # served to other agents
 .agents/skills/          # for you, the agent writing here (linked from .claude/skills/)
 ├── documentation/       # the repository as a whole: this skill
 ├── docs/                # one skill per folder: how this site writes its pages,
-├── catalogo/            # its catalog,
-├── diagramas/           # its diagrams,
-├── estilos/             # its own styles
+├── catalog/            # its catalog,
+├── diagrams/           # its diagrams,
+├── styles/             # its own styles
 └── skills/              # and its served skills
 .agents/commands/doc/     # the /doc:<name> commands (linked from .claude/commands/doc)
 ├── questions.md         # question rounds
@@ -52,11 +52,11 @@ AGENTS.md, CLAUDE.md, README.md
 | You have… | It goes in | Skill |
 | --- | --- | --- |
 | An explanation, a procedure, a rule of the contract | A page in `docs/<topic>/` | `docs` |
-| A part of the contract writers need as a table row | An entity in `catalogo/<type>/` | `catalogo` |
-| How things connect, a flow, values to compare | A file in `diagramas/` shown with `<Diagram>` | `diagramas` |
+| A part of the contract writers need as a table row | An entity in `catalog/<type>/` | `catalog` |
+| How things connect, a flow, values to compare | A file in `diagrams/` shown with `<Diagram>` | `diagrams` |
 | A new page or folder the sidebar must show | An entry in `menu.yaml` | `references/menu.md` |
 | A new field every page header may carry | `cabecera` in `doc.config.yaml` | `references/doc-config.md` |
-| Another colour, font or look for a piece of this site's pages | A theme variable or a module in `estilos/` | `estilos` |
+| Another colour, font or look for a piece of this site's pages | A theme variable or a module in `styles/` | `styles` |
 | How another agent should work with any content repository | `skills/doc-writing/SKILL.md` | `skills` |
 | A convention for **you**, the agent writing here | The folder's skill in `.agents/skills/`; repository-wide, a reference here | — |
 | An image a page shows | `docs/<topic>/img/` next to the page | `docs` |
@@ -78,6 +78,6 @@ AGENTS.md, CLAUDE.md, README.md
 - Files and folders: lowercase, digits and hyphens (`getting-started.mdx`).
   They are the URL and the path other pages link to.
 - Pages, entities, diagrams and served skills have their own naming rules in
-  their folder's skill (`docs`, `catalogo`, `diagramas`, `estilos`, `skills`).
+  their folder's skill (`docs`, `catalog`, `diagrams`, `styles`, `skills`).
 - Which names are the contract's and can't change: `contract-names.md`.
 - The menu, its groups and its entries: `menu.md`.

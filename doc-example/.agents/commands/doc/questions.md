@@ -1,6 +1,6 @@
 ---
 description: Run a question round to finish documenting a section, or apply the answers already written in questions.md
-argument-hint: <section> (e.g. repository, pages, catalog, publishing)
+argument-hint: <section> (e.g. repository, pages, data, publishing)
 ---
 
 Run a **question round** as described in the `documentation` skill,
@@ -21,7 +21,7 @@ Pick the phase from the state of the repository:
 1. Read every page of the section (`docs/<section>/**/*.mdx`), the
    `open_questions` in their headers and any "_Pending…_" line in the text, and
    the catalog entities they cite.
-2. Before asking anything, search the rest of `docs/` and `catalogo/` for the
+2. Before asking anything, search the rest of `docs/` and `catalog/` for the
    answer. Do not ask what is already answered or what can be looked up.
 3. Write `questions.md` at the repository root in the format of the reference:
    a `# Questions: <Section>` title, the three lines of instructions, the

@@ -13,8 +13,8 @@ secciones:
     icono: database
     descripcion: El catálogo, desde declarar un tipo hasta explorarlo en el lector
     paginas:
-      - { ruta: catalog, icono: table }
-      - { ruta: catalogo, titulo: Referencia }
+      - { ruta: data, icono: table }
+      - { ruta: catalog, titulo: Referencia }
 ```
 
 | Key | What it is |
@@ -31,8 +31,8 @@ An entry is a path, or `{ ruta, titulo?, icono? }`:
 | --- | --- | --- |
 | A page | `getting-started`, `network/dns` | That page |
 | A folder of `docs/` | `pages` | The section and all its pages, in their `orden` |
-| The catalog | `catalogo` | Every type's generated page |
-| One catalog type | `catalogo/files` | That type's page |
+| The catalog | `catalog` | Every type's generated page |
+| One catalog type | `catalog/files` | That type's page |
 
 `titulo` on an entry overrides the page's title everywhere; `icono` its icon.
 Any other key is rejected. **Folders store the pages; the menu decides where
@@ -45,7 +45,7 @@ URL.
 | --- | --- | --- |
 | Inicio | `rocket` | `{ ruta: getting-started, icono: compass }`, `{ ruta: repository, icono: folder-tree }` |
 | Escritura | `pen-line` | `{ ruta: pages, icono: file-text }`, `{ ruta: diagrams, icono: workflow }` |
-| Datos | `database` | `{ ruta: catalog, icono: table }`, `{ ruta: catalogo, titulo: Referencia }` |
+| Datos | `database` | `{ ruta: data, icono: table }`, `{ ruta: catalog, titulo: Referencia }` |
 | Publicación | `send` | `{ ruta: publishing, icono: git-branch }` |
 
 Every entry is a section folder with its icon, so every page of the guide is
@@ -66,7 +66,7 @@ always shows as «Inicio».
 - A menu `titulo` is only for when the sidebar needs a different title, and
   then the page's `titulo` must be the same (it is required in every header
   anyway).
-- The catalog is shown as `{ ruta: catalogo, titulo: Referencia }` in
+- The catalog is shown as `{ ruta: catalog, titulo: Referencia }` in
   "Datos".
 - Group titles and descriptions are Spanish, like the rest of the site.
 
@@ -85,7 +85,7 @@ All on the repository's home, to admins:
 
 | Written | Message | Effect |
 | --- | --- | --- |
-| An entry that names nothing | "secciones.N.paginas.M: `x` no es ninguna página ni carpeta de docs/, ni catalogo, ni un tipo del catálogo" | Entry dropped, the rest used |
+| An entry that names nothing | "secciones.N.paginas.M: `x` no es ninguna página ni carpeta de docs/, ni catalog, ni un tipo del catálogo" | Entry dropped, the rest used |
 | The home as an entry (`index`) | "…: la portada no va en el menú: sale siempre como «Inicio»" | Entry dropped |
 | Something an earlier entry already shows (same path, its folder, a page inside it) | "…: `x` ya sale en el menú con `y`" | Entry dropped |
 | A page or type no entry shows | "Esta página no está en menu.yaml: sale en «Otros»", on the page | Listed in a last group "Otros" |

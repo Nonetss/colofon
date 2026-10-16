@@ -1,0 +1,18 @@
+{
+  "type": "quadrant",
+  "title": "Qué documentar primero",
+  "desc": "Las partes de un repositorio de contenido según lo que le valen al lector y el esfuerzo de escribirlas: empieza por las de arriba a la izquierda",
+  "x": { "label": "Esfuerzo de escribirla", "low": "Poco", "high": "Mucho" },
+  "y": { "label": "Valor para el lector", "low": "Bajo", "high": "Alto" },
+  "quadrants": ["Hazlo ya", "Planifícalo", "Si sobra tiempo", "Déjalo"],
+  "items": [
+    { "name": "Primeros pasos", "page": "getting-started", "x": 22, "y": 88, "focal": true, "info": "Lo primero que lee quien llega: cómo se escribe la primera página" },
+    { "entity": "files/menu", "x": 14, "y": 66 },
+    { "name": "Cabecera de página", "page": "pages/header", "x": 36, "y": 74 },
+    { "name": "Catálogo", "page": "data", "x": 76, "y": 82 },
+    { "name": "Diagramas", "page": "diagrams", "x": 70, "y": 60 },
+    { "name": "Skills servidas", "page": "publishing/agents", "x": 62, "y": 30 },
+    { "name": "Icono de cada página", "x": 20, "y": 22 },
+    { "name": "Rehacer todo el menú", "x": 84, "y": 14 }
+  ]
+}

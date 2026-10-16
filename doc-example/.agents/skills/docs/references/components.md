@@ -1,7 +1,7 @@
 # Components
 
 The only JSX the platform reads: `<Callout>`, `<Entities>` and `<Diagram>`.
-Their attributes are the `components` entities in `catalogo/components/`
+Their attributes are the `components` entities in `catalog/components/`
 (the source of truth for this list); the contract page is
 `docs/pages/components.mdx`.
 
@@ -46,7 +46,7 @@ read, so it never goes stale.
 
 | Attribute | What it is |
 | --- | --- |
-| `type` | Required. The type, as its folder name in `catalogo/` (`files`, `field-kinds`, `header-fields`, `components`, `diagram-types`). |
+| `type` | Required. The type, as its folder name in `catalog/` (`files`, `field-kinds`, `header-fields`, `components`, `diagram-types`). |
 | `columns` | Optional. The fields shown, comma-separated, `id` included. Without it, the type's `vista.columnas`; without that, its label and every field. |
 | `group` | Optional. A field that splits the table into one block per value, in `valores` order for an `enum`, entities without it last. The group field is not repeated as a column. |
 
@@ -56,12 +56,12 @@ read, so it never goes stale.
 - Only valid entities appear. An unknown type, column or group field, and
   every entity that fails its type, is reported on the page; the rest of the
   table renders.
-- Picking columns and groups for this site's types: `catalogo` skill,
+- Picking columns and groups for this site's types: `catalog` skill,
   `references/entities-tables.md`.
 
 ## `<Diagram>`
 
-A diagram written in its own file under `diagramas/`, shown where the page
+A diagram written in its own file under `diagrams/`, shown where the page
 needs it.
 
 ```mdx
@@ -70,15 +70,15 @@ needs it.
 
 | Attribute | What it is |
 | --- | --- |
-| `id` | Required. The file name in `diagramas/` without `.json` or `.svg`. |
+| `id` | Required. The file name in `diagrams/` without `.json` or `.svg`. |
 
 - The same diagram can be in any number of pages (`pipeline` is on the home,
   `docs/diagrams/index.mdx`, `docs/publishing/index.mdx`…). Before reusing
   one, check it still says what this page needs.
 - A missing or unreadable file is reported ("<Diagram id="…">: no hay ningún
-  diagramas/….json ni diagramas/….svg que se pueda leer (hay: …)") and shows a
+  diagrams/….json ni diagrams/….svg que se pueda leer (hay: …)") and shows a
   notice; the diagram's own problems are reported on the page too.
-- Choosing and writing the diagram: `diagramas` skill.
+- Choosing and writing the diagram: `diagrams` skill.
 
 ## Which one
 
@@ -86,6 +86,6 @@ needs it.
 | --- | --- |
 | Every entity of a catalog type as a table | `<Entities>` |
 | A note or warning the reader must not miss | `<Callout>` (or a `> [!…]` alert) |
-| How things connect, a flow, a structure | `<Diagram>` of a file in `diagramas/` |
+| How things connect, a flow, a structure | `<Diagram>` of a file in `diagrams/` |
 | A small table of options that are not catalog data | A Markdown table |
-| One entity mentioned in a sentence | A `catalogo:` link (`links.md`) |
+| One entity mentioned in a sentence | A `catalog:` link (`links.md`) |

@@ -3,7 +3,7 @@
 The YAML block every page starts with: the five fields every page of every
 site has, plus the ones this site declares in `doc.config.yaml` under
 `cabecera`. The contract is `docs/pages/header.mdx`; the common fields are the
-`header-fields` entities in `catalogo/header-fields/`.
+`header-fields` entities in `catalog/header-fields/`.
 
 ## A real header
 
@@ -59,7 +59,7 @@ Declared in `doc.config.yaml` under `cabecera` (`documentation` skill,
   lists this page under "Páginas que la citan". Cite the entities the page
   **explains**, not every one it mentions.
 - Ids are the entity file names: `files: [doc-config]` for
-  `catalogo/files/doc-config.yaml`.
+  `catalog/files/doc-config.yaml`.
 - `open_questions` are closed by a question round (`documentation` skill,
   `references/question-rounds.md`), removed completely once answered.
 - A field `doc.config.yaml` doesn't declare is reported ("La cabecera no
@@ -83,5 +83,5 @@ Declared in `doc.config.yaml` under `cabecera` (`documentation` skill,
 - `titulo` and `descripcion` present; `orden` unless it is an `index.mdx`; no
   `icono`.
 - Quote a value that contains `: ` or starts with `[`, `{` and the like (same
-  YAML traps as entities: `catalogo` skill, `references/writing-an-entity.md`).
-- Every cited id exists in `catalogo/<type>/`.
+  YAML traps as entities: `catalog` skill, `references/writing-an-entity.md`).
+- Every cited id exists in `catalog/<type>/`.

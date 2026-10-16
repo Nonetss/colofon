@@ -1,7 +1,0 @@
-path: diagramas/<id>.svg
-kind: content
-required: false
-purpose: Una ilustración dibujada a mano en SVG, filtrada y pintada con los colores del tema, mostrada con <Diagram>
-page: diagrams/illustrations
-fuente: manual
-actualizado: 2026-10-16

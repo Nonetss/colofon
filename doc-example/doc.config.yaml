@@ -1,7 +1,7 @@
 # Configuración del sitio. El menú está en menu.yaml, las páginas en docs/,
-# los datos estructurados en catalogo/ y los diagramas en diagramas/.
+# los datos estructurados en catalog/ y los diagramas en diagrams/.
 #
-# Las claves de este fichero y de cada _tipo.yaml (nombre, cabecera, campos,
+# Las claves de este fichero y de cada _type.yaml (nombre, cabecera, campos,
 # tipo: texto...) son el contrato de la plataforma y se leen tal cual. Los
 # valores, los ids de tipo y los nombres de campo son propios de este sitio.
 
@@ -11,7 +11,7 @@ plataforma: "1" # versión mayor del contrato de la plataforma a la que apunta e
 
 # Campos extra de cabecera para las páginas. La plataforma ya da a cada página
 # titulo, descripcion, icono, orden y actualizado. Estos usan los mismos tipos
-# de campo que el catálogo (ver catalogo/*/_tipo.yaml).
+# de campo que el catálogo (ver catalog/*/_type.yaml).
 cabecera:
   files:
     tipo: lista

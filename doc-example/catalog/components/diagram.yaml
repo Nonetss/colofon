@@ -1,0 +1,9 @@
+tag: "<Diagram>"
+purpose: Un diagrama de diagrams/, mostrado donde está el componente
+attributes:
+  - name: id
+    required: true
+    meaning: El diagrama, como el nombre de su fichero en diagrams/ sin .json ni .svg
+page: diagrams
+fuente: manual
+actualizado: 2026-10-16

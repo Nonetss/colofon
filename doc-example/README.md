@@ -18,21 +18,21 @@ no se compila ni se ejecuta nada.
 | `doc.config.yaml` | El sitio: su nombre, la versión del contrato de la plataforma y los campos extra de cabecera que usan sus páginas |
 | `menu.yaml` | La barra lateral: cuatro grupos (Inicio, Escritura, Datos, Publicación) y lo que muestra cada uno |
 | `docs/` | Las páginas de la guía, en MDX. Cada carpeta es una sección con su `index.mdx` |
-| `catalogo/<type>/` | El propio contrato como datos: los `files` de un repositorio, los `field-kinds`, los `header-fields`, los `components` de página y los `diagram-types`. Las tablas de referencia de la guía se construyen a partir de él |
-| `diagramas/` | Los diagramas de la guía, mostrados con `<Diagram id="…" />`: los dibujados a mano, un ejemplo de cada tipo que la plataforma coloca sola y una ilustración en SVG |
+| `catalog/<type>/` | El propio contrato como datos: los `files` de un repositorio, los `field-kinds`, los `header-fields`, los `components` de página y los `diagram-types`. Las tablas de referencia de la guía se construyen a partir de él |
+| `diagrams/` | Los diagramas de la guía, mostrados con `<Diagram id="…" />`: los dibujados a mano, un ejemplo de cada tipo que la plataforma coloca sola y una ilustración en SVG |
 | `skills/doc-writing/SKILL.md` | Una skill que la plataforma sirve a otros agentes que escriben documentación |
 | `AGENTS.md`, `.agents/`, `.claude/` | Instrucciones para el agente de IA que escribe en este repositorio |
 | `.vscode/settings.json` | Autocompletado y validación de todos los ficheros YAML, a partir de la plataforma |
 
 ## Nombres del contrato frente a los tuyos
 
-La plataforma lee un conjunto fijo de nombres, escritos en **español**, que
-deben quedarse exactamente como están: los ficheros y carpetas
-(`doc.config.yaml`, `menu.yaml`, `docs/`, `catalogo/`, `_tipo.yaml`,
-`diagramas/`), las claves de cada fichero YAML (las de los diagramas, que son
-JSON, van en inglés), los tipos de campo (`texto`,
-`ref`, `lista`…), la cabecera que tiene toda página (`titulo`, `descripcion`,
-`icono`, `orden`, `actualizado`) y los enlaces `catalogo:`. Todo lo demás es
+La plataforma lee un conjunto fijo de nombres que deben quedarse exactamente
+como están: los ficheros y carpetas, en inglés (`doc.config.yaml`,
+`menu.yaml`, `docs/`, `catalog/`, `_type.yaml`, `diagrams/`, `styles/`), las
+claves de cada fichero YAML, en español (las de los diagramas, que son JSON,
+van en inglés), los tipos de campo (`texto`, `ref`, `lista`…), la cabecera que
+tiene toda página (`titulo`, `descripcion`, `icono`, `orden`, `actualizado`) y
+los enlaces `catalog:`. Todo lo demás es
 tuyo, en el idioma en que escribas. La tabla completa está en
 `docs/repository/index.mdx`.
 
@@ -65,7 +65,7 @@ su página «Primeros pasos».
 `AGENTS.md` (importado por `CLAUDE.md`) y las skills de `.agents/skills/` le
 indican a un agente cómo está organizado este repositorio y cómo se escribe lo
 de cada carpeta: `documentation` para el repositorio entero y una skill por
-carpeta (`docs`, `catalogo`, `diagramas`, `estilos`, `skills`). `/doc:questions <section>` ejecuta una ronda de preguntas para
+carpeta (`docs`, `catalog`, `diagrams`, `styles`, `skills`). `/doc:questions <section>` ejecuta una ronda de preguntas para
 terminar una sección: el agente escribe las preguntas en `questions.md`,
 alguien las responde y, al ejecutar `/doc:questions` de nuevo, pasa las respuestas
 a las páginas.

@@ -55,7 +55,7 @@ wrong, say:
   `menu.yaml` and diagrams, in the log);
 - **what still works** ("el resto del menú se usa", "el resto de la tabla se
   renderiza igualmente");
-- for a declaration (`doc.config.yaml`, `menu.yaml`, `_tipo.yaml`), that the
+- for a declaration (`doc.config.yaml`, `menu.yaml`, `_type.yaml`), that the
   platform keeps the last valid one.
 
 Use a `| Escrito | Qué ocurre |` table when there are several cases
@@ -72,8 +72,8 @@ that writes it**, so the reader sees source and result together:
 ```
 
 followed by the same line unfenced. For a diagram, the `<Diagram>` of a real
-file of `diagramas/`; for the catalog, a link to its generated page
-(`[menu.yaml](catalogo:files/menu)`).
+file of `diagrams/`; for the catalog, a link to its generated page
+(`[menu.yaml](catalog:files/menu)`).
 
 ## "¿Dónde encuentro…?" tables
 
@@ -97,7 +97,7 @@ One row per question a reader brings, phrased as they would ("Quiero…" or
 - **Platform UI words as the platform shows them**: "Otros", "Catálogo",
   "Referencia", "Páginas que la citan", "Sincronizar", "Revisar", "Ampliar",
   "Copiar en Markdown".
-- Contract names (`titulo`, `catalogo:`, `_tipo.yaml`) and this site's ids are
+- Contract names (`titulo`, `catalog:`, `_type.yaml`) and this site's ids are
   code: in backticks.
 - A procedure is its own page with numbered steps, so a person and an agent
   follow it the same way.

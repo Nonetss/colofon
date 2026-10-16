@@ -1,7 +1,0 @@
-path: catalogo/<type>/_tipo.yaml
-kind: declaration
-required: false
-purpose: La declaración de un tipo del catálogo, sus campos y su tabla
-page: catalog/types
-fuente: manual
-actualizado: 2026-10-15

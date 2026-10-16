@@ -4,9 +4,9 @@ argument-hint: "[type] (files, field-kinds, header-fields, components, diagram-t
 ---
 
 Check this guide against what the platform reads today. The rules are in the
-`catalogo` skill, `references/keeping-in-step.md`: where each type's truth
+`catalog` skill, `references/keeping-in-step.md`: where each type's truth
 lives on the platform and what each kind of change means here. Load the
-`documentation` and `catalogo` skills and read that reference first.
+`documentation` and `catalog` skills and read that reference first.
 
 Scope: the catalog type in `$ARGUMENTS`, otherwise every type in the
 reference's table.
@@ -26,7 +26,7 @@ check facts; never edit it.
    variants, keys) of each pair with the code.
 3. For each difference, find what else the reference says must change: the
    page that explains it, the headers that cite it, a diagram type's family
-   section, `<type>-<topic>` example and `diagramas` reference, and
+   section, `<type>-<topic>` example and `diagrams` reference, and
    `skills/doc-writing/SKILL.md` when a rule it states changed.
 4. Reply with one table per type: what the platform has that the guide
    lacks, what the guide has that the platform dropped, and what differs,

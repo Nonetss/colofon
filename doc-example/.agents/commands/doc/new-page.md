@@ -35,7 +35,7 @@ of it.
 4. Add the menu entry in `menu.yaml` and a row in the section's "¿Dónde
    encuentro…?" table.
 5. If it explains a catalog entity, cite it in the header; if the entity's
-   `page` should point here, update it (`catalogo` skill).
+   `page` should point here, update it (`catalog` skill).
 
 ## 3. Finish
 

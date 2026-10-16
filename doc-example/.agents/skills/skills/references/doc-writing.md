@@ -24,7 +24,7 @@ agent the copy may be out of date and the guide is the truth.
 | Rule | Why it is there |
 | --- | --- |
 | Read `/llms.txt`, then the page for what you are about to write (`llm.txt`) | The contract lives in the guide and is read live; the skill never copies it |
-| Look at the repository's own `doc.config.yaml`, `menu.yaml` and `catalogo/*/_tipo.yaml` first; never use a field they don't declare | "Declare before use": every site declares its own header fields and types, and the platform rejects anything undeclared |
+| Look at the repository's own `doc.config.yaml`, `menu.yaml` and `catalog/*/_type.yaml` first; never use a field they don't declare | "Declare before use": every site declares its own header fields and types, and the platform rejects anything undeclared |
 
 ### Rules that never change
 
@@ -34,8 +34,8 @@ agent the copy may be out of date and the guide is the truth.
 | Pages have no code: Markdown and `Callout`, `Entities`, `Diagram` only | The platform never runs MDX; `import`, `export` and `{…}` are reported and dropped | `docs/pages/markdown.mdx`, `docs/pages/components.mdx` |
 | YAML wins over MDX: the menu's title or icon is the one shown; icons go in the menu | Agents edit a header value nobody sees, then get a report | `docs/repository/menu.mdx`, `docs/pages/header.mdx` |
 | Every `icono` is a Lucide icon name | Any other name is reported and not drawn | `docs/pages/header.mdx` |
-| One entity per file, one diagram per file (drawn JSON, typed JSON, or `.svg`) | The platform reads one per file; it also tells the agent the three diagram forms exist and where their keys are | `docs/catalog/entities.mdx`, `docs/diagrams/index.mdx` |
-| Never write a secret: where it lives and which account | Content is cloned to servers and read by agents | `docs/pages/index.mdx`, `docs/catalog/entities.mdx` |
+| One entity per file, one diagram per file (drawn JSON, typed JSON, or `.svg`) | The platform reads one per file; it also tells the agent the three diagram forms exist and where their keys are | `docs/data/entities.mdx`, `docs/diagrams/index.mdx` |
+| Never write a secret: where it lives and which account | Content is cloned to servers and read by agents | `docs/pages/index.mdx`, `docs/data/entities.mdx` |
 
 ### After writing
 

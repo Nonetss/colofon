@@ -21,14 +21,14 @@ acepta", "Qué rechaza").
 
 MDX treats `<` followed by a letter as the start of JSX, and `{` as the start
 of an expression, **anywhere in prose**, including inside a table cell or a
-list item. This guide talks about `<Diagram>`, `catalogo/<type>` and
+list item. This guide talks about `<Diagram>`, `catalog/<type>` and
 `{ ruta: … }` constantly, so:
 
 | Written in prose | What happens | Write instead |
 | --- | --- | --- |
 | `Usa <Diagram> para…` (bare) | Read as a component inside a paragraph: reported, or the parse fails | `` Usa `<Diagram>` para… `` |
-| `catalogo/<type>/` (bare) | `<type>` read as an unknown component | `` `catalogo/<type>/` `` |
-| `{ ruta: catalogo }` (bare) | Read as an expression: reported and dropped | `` `{ ruta: catalogo }` `` |
+| `catalog/<type>/` (bare) | `<type>` read as an unknown component | `` `catalog/<type>/` `` |
+| `{ ruta: catalog }` (bare) | Read as an expression: reported and dropped | `` `{ ruta: catalog }` `` |
 | `a < b` | Usually fine (space after `<`), but don't rely on it | `` `a < b` `` or "menor que" |
 
 **Rule:** anything with `<` or `{` goes inside backticks or a code block,
@@ -39,8 +39,8 @@ always. Inside backticks and fences MDX reads nothing.
 - Examples of pages, components and files go in fenced blocks with their
   language: ` ```mdx `, ` ```yaml `, ` ```json `.
 - **Never the language `diagram`:** the platform reports it ("Los diagramas
-  van en diagramas/<id>.json y se muestran con `<Diagram id="…" />`") and
-  shows a notice instead. A diagram is a file in `diagramas/`.
+  van en diagrams/<id>.json y se muestran con `<Diagram id="…" />`") and
+  shows a notice instead. A diagram is a file in `diagrams/`.
 - To show a component *and* have it render, write it once fenced and once
   unfenced below.
 - To show a fence inside a fence, use a longer outer fence (four backticks).

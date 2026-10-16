@@ -29,8 +29,8 @@ actualizado: 2026-10-15
 | Para enlazar a… | Escribe | Lleva a |
 | --- | --- | --- |
 | Otra página | Su ruta relativa con `.mdx`: `[DNS](../network/dns.mdx#zones)` | Esa página, conservando el ancla |
-| Una entidad | `[docker-01](catalogo:machines/docker-01)` | La página de la entidad, o su [página de catálogo](../catalog/reader.mdx) cuando no tiene |
-| Un tipo del catálogo | `[Machines](catalogo:machines)` | La página de catálogo del tipo |
+| Una entidad | `[docker-01](catalog:machines/docker-01)` | La página de la entidad, o su [página de catálogo](../data/reader.mdx) cuando no tiene |
+| Un tipo del catálogo | `[Machines](catalog:machines)` | La página de catálogo del tipo |
 | Un sitio externo | La URL `https://` completa | Ese sitio, en una pestaña nueva |
 
 Un enlace a una página, tipo o entidad que no existe se reporta y se muestra como texto plano. Enlazar a una entidad también cuenta como citarla: su página lista la tuya.
@@ -53,7 +53,7 @@ El lector las abre ampliadas con zoom. Una imagen que falta, o un enlace a cualq
 | Una expresión entre llaves | Se reporta y se omite; el texto que la rodea se renderiza |
 | Un componente que la plataforma no tiene | Se reporta, y en su lugar se renderiza un aviso que lo nombra |
 | Un componente de la plataforma dentro de un párrafo | Se reporta: va en un bloque propio |
-| Un bloque delimitado con el lenguaje `diagram` | Se reporta: los diagramas van en `diagramas/` |
+| Un bloque delimitado con el lenguaje `diagram` | Se reporta: los diagramas van en `diagrams/` |
 | Una página que no se puede analizar | Se reporta con la línea del analizador; solo se muestra su cabecera |
 
 Cada problema nombra el fichero y la línea. Los administradores los ven sobre la página; el resto de lectores solo ve la página.

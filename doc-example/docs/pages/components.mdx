@@ -39,7 +39,7 @@ La tabla de un tipo del catálogo, construida a partir de sus entidades cuando s
 
 <Entities type="field-kinds" group="family" columns="id,value,takes" />
 
-- `type` es el nombre de la carpeta del tipo en `catalogo/`.
+- `type` es el nombre de la carpeta del tipo en `catalog/`.
 - `columns` elige los campos, `id` incluido. Sin él, se usa el `vista.columnas` del tipo; sin eso, su etiqueta y todos sus campos.
 - `group` divide la tabla en un bloque por valor, en el orden de `valores` para un `enum`, con las entidades que no lo tienen al final.
 - Las filas se ordenan por etiqueta, y cada etiqueta enlaza a la página de la entidad o a su página de catálogo. Las referencias muestran la etiqueta de aquello a lo que apuntan, con enlace.
@@ -47,7 +47,7 @@ La tabla de un tipo del catálogo, construida a partir de sus entidades cuando s
 
 ## Diagram
 
-Un diagrama escrito en su propio fichero bajo `diagramas/`, mostrado donde una página lo necesite:
+Un diagrama escrito en su propio fichero bajo `diagrams/`, mostrado donde una página lo necesite:
 
 ```mdx
 <Diagram id="pipeline" />

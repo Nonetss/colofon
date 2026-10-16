@@ -21,14 +21,14 @@ docs/
 └── network/             # una sección
     ├── index.mdx        # su página de entrada
     └── dns.mdx          # una de sus páginas
-catalogo/
+catalog/
 └── machines/            # un tipo: el nombre de la carpeta es su id
-    ├── _tipo.yaml       # su declaración
+    ├── _type.yaml       # su declaración
     └── nas.yaml         # una entidad: el nombre del fichero es su id
-diagramas/
+diagrams/
 └── network.json         # un diagrama: el nombre del fichero es su id
-estilos/
-└── tema.css             # los estilos propios (opcional): un fichero por módulo
+styles/
+└── theme.css            # los estilos propios (opcional): un fichero por módulo
 skills/
 └── homelab/SKILL.md     # una skill servida a otros agentes
 ```
@@ -37,19 +37,19 @@ skills/
 
 ## Nombres del contrato y nombres tuyos
 
-La plataforma lee un conjunto fijo de nombres, y están en español salvo las claves de los diagramas, que son las de los esquemas de la documentación anterior. Deben escribirse exactamente así, o el contenido deja de validar:
+La plataforma lee un conjunto fijo de nombres: los ficheros y carpetas, en inglés; las claves de los YAML, en español, salvo las de los diagramas, que son las de los esquemas de la documentación anterior. Deben escribirse exactamente así, o el contenido deja de validar:
 
 | Dónde | Nombres del contrato |
 | --- | --- |
-| Ficheros y carpetas | `doc.config.yaml`, `menu.yaml`, `docs/`, `index.mdx`, `catalogo/`, `_tipo.yaml`, `diagramas/`, `estilos/` y sus módulos (`tema.css`, `pagina.css`, `controles.css`, `codigo.css`, `tablas.css`, `diagramas.css`, `imagenes.css`, `avisos.css`, `secciones.css`), `skills/` |
+| Ficheros y carpetas | `doc.config.yaml`, `menu.yaml`, `docs/`, `index.mdx`, `catalog/`, `_type.yaml`, `diagrams/`, `styles/` y sus módulos (`theme.css`, `page.css`, `controls.css`, `code.css`, `tables.css`, `diagrams.css`, `images.css`, `callouts.css`, `sections.css`), `skills/` |
 | `doc.config.yaml` | `nombre`, `descripcion`, `plataforma`, `cabecera` |
 | `menu.yaml` | `secciones`, `titulo`, `icono`, `descripcion`, `paginas`, `ruta` |
-| `_tipo.yaml` | `nombre`, `plural`, `icono`, `descripcion`, `etiqueta`, `campos`, `vista`, `columnas` |
+| `_type.yaml` | `nombre`, `plural`, `icono`, `descripcion`, `etiqueta`, `campos`, `vista`, `columnas` |
 | Un campo | `tipo`, `opcional`, `descripcion`, `valores`, `a`, `de`, `campos` |
 | Cada cabecera de página | `titulo`, `descripcion`, `icono`, `orden`, `actualizado` |
 | Cada entidad | `fuente`, `actualizado` |
 | Un diagrama (JSON) | `type`, `variant`, `title`, `desc` y las de su forma: `width`, `height`, `nodes`, `edges`, `zones`, `notes` si se dibuja a mano, `items` y `links` en una cadena, las de su tipo si lleva `type` (ver [Diagramas](../diagrams/index.mdx)) |
-| Enlaces | `catalogo:` seguido de un tipo, o de un tipo y un id |
+| Enlaces | `catalog:` seguido de un tipo, o de un tipo y un id |
 
 Todo lo demás es tuyo, en el idioma que escribas: ids de tipo, nombres de campo, valores de enum, los campos de cabecera que declares, carpetas, nombres de fichero y cada palabra de las páginas. La plataforma no sabe nada de tu dominio: un homelab declara máquinas y servicios, una tienda declararía productos y proveedores.
 
@@ -57,4 +57,5 @@ Todo lo demás es tuyo, en el idioma que escribas: ids de tipo, nombres de campo
 
 - Los ficheros y carpetas van en minúsculas, con dígitos y guiones: `new-stack.mdx`, `docker-01.yaml`. Se convierten en URL e ids.
 - Los nombres de campo van en minúsculas, con dígitos y guiones bajos, y empiezan por una letra: `public_ip`.
-- `docs/catalogo/` está reservada: la plataforma genera ahí las páginas del catálogo, así que una página bajo esa ruta se reporta y no se publica.
+- `docs/catalog/` está reservada: la plataforma genera ahí las páginas del catálogo, así que una página bajo esa ruta se reporta y no se publica.
+- Las carpetas y ficheros que antes se llamaban en español (`catalogo/`, `_tipo.yaml`, `diagramas/`, `estilos/`) ya no se leen: si un repositorio aún los tiene, cada uno se reporta en su portada con el nombre nuevo.

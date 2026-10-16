@@ -26,7 +26,7 @@ validation) is in the `documentation` skill.
   `<Entities>` table, the real `<Diagram>` right after the block that writes
   it.
 - **Data lives in the catalog, explanations on pages.** A page never retypes
-  what `catalogo/` holds; it lists it with `<Entities>` or links it.
+  what `catalog/` holds; it lists it with `<Entities>` or links it.
 - One idea per paragraph, straight to the point: it is read by someone who
   wasn't there, and by agents through its `llm.txt`.
 
@@ -41,15 +41,15 @@ validation) is in the `documentation` skill.
 | `<Callout>`, `<Entities>` and `<Diagram>`, with their attributes | [components.md](references/components.md) |
 | Links to pages, entities, catalog tables, images and other files | [links.md](references/links.md) |
 
-A diagram itself is written in `diagramas/` (`diagramas` skill); a type or an
-entity in `catalogo/` (`catalogo` skill).
+A diagram itself is written in `diagrams/` (`diagrams` skill); a type or an
+entity in `catalog/` (`catalog` skill).
 
 ## 3. Always true
 
 - **Every folder under `docs/` is a section with its `index.mdx`**, at most
   `docs/<topic>/<page>.mdx` deep; files and folders lowercase, digits and
   hyphens.
-- **`docs/catalogo/` is reserved** by the platform: never create it.
+- **`docs/catalog/` is reserved** by the platform: never create it.
 - **Every page is shown by `menu.yaml`**, never in "Otros"
   (`documentation` skill, `references/menu.md`).
 - **`titulo` and `descripcion` on every page**, `orden` on every page that is
@@ -75,11 +75,11 @@ entity in `catalogo/` (`catalogo` skill).
 | --- | --- |
 | A page that opens with "Esta página explica…" | The `descripcion` and the title already say it; lead with the example |
 | A hand-typed table of keys the catalog holds | It goes stale; `<Entities>` is rebuilt from the data on every read |
-| `<Diagram>` or `catalogo/<type>` bare in a sentence | MDX reads `<` and `{` as code: the page is reported or loses text |
+| `<Diagram>` or `catalog/<type>` bare in a sentence | MDX reads `<` and `{` as code: the page is reported or loses text |
 | `# Título` in the body | The title is `titulo`; a level-1 heading is reported |
 | An emoji in a `##` heading | The anchor no longer matches the heading text |
 | `icono` in the header of a page the menu shows | The menu wins; a different value is reported and never shown |
-| A ```` ```diagram ```` fence | Reported; diagrams are files in `diagramas/` |
+| A ```` ```diagram ```` fence | Reported; diagrams are files in `diagrams/` |
 | A new folder without a menu entry | Its pages land in "Otros" and are reported |
 | Renaming a page without updating links, `page:` fields and the menu | Broken links show as plain text and are reported |
 | Copying a procedure instead of linking its page | Two copies, one of them wrong after the next change |
@@ -89,7 +89,7 @@ entity in `catalogo/` (`catalogo` skill).
 - Every page has `titulo` and `descripcion`, and its folder has an
   `index.mdx`.
 - Every header field is declared in `doc.config.yaml`, and every id it cites
-  exists in `catalogo/`.
+  exists in `catalog/`.
 - Every link, image and `<Diagram id>` points at something that exists.
 - The page is shown by `menu.yaml` (not in "Otros"), and a title set in the
   menu equals its `titulo`.

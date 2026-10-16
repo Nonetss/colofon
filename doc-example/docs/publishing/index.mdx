@@ -20,13 +20,13 @@ Cada sincronización deja el clon exactamente como está la rama. Si el remoto n
 
 Cada sincronización lee el repositorio en dos pasos:
 
-1. **Las declaraciones:** `doc.config.yaml`, `menu.yaml` y cada `_tipo.yaml`. Si alguna está rota, la plataforma conserva las últimas declaraciones válidas y registra cada problema. Nada más cambia hasta que se corrijan.
+1. **Las declaraciones:** `doc.config.yaml`, `menu.yaml` y cada `_type.yaml`. Si alguna está rota, la plataforma conserva las últimas declaraciones válidas y registra cada problema. Nada más cambia hasta que se corrijan.
 2. **El contenido:** páginas, entidades y diagramas. Cada uno se valida por separado; el que esté roto se reporta y el resto se publica.
 
 ## Dónde se muestran los problemas
 
 - **En la página,** solo a los administradores, encima de su cuerpo: el fichero, la línea y qué falla. Los demás lectores ven la página tal como se puede leer.
-- **En la portada del repositorio,** a los administradores: los problemas de `menu.yaml`, de los diagramas y de los ficheros bajo `docs/catalogo/`.
+- **En la portada del repositorio,** a los administradores: los problemas de `menu.yaml`, de los diagramas, de los ficheros bajo `docs/catalog/` y de las carpetas con los nombres antiguos.
 - **En el log,** una vez por commit, con el repositorio y el fichero.
 
 ## ¿Dónde encuentro…?

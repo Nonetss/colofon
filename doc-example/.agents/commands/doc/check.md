@@ -18,24 +18,24 @@ repository even when the scope is one file.
 1. **Pages** (`docs/**/*.mdx`): `titulo` and `descripcion` present, `orden`
    unless it is an `index.mdx`, no `icono`, every header field declared under
    `cabecera` in `doc.config.yaml`, every id it cites present in
-   `catalogo/<type>/`, every folder with its `index.mdx`, nothing outside
+   `catalog/<type>/`, every folder with its `index.mdx`, nothing outside
    backticks or code blocks that MDX reads as code (`docs` skill,
    `references/mdx.md`).
-2. **Links**: every link to a page, `catalogo:` entity or table, image and
+2. **Links**: every link to a page, `catalog:` entity or table, image and
    `<Diagram id>` points at a file that exists (`docs` skill,
    `references/links.md`).
 3. **Menu**: every page is shown by `menu.yaml` (none lands in "Otros"),
    every entry names a page or folder that exists, and a title set in the menu
    equals the page's `titulo` (`documentation` skill, `references/menu.md`).
-4. **Catalog**: every entity declares only fields its `_tipo.yaml` declares,
+4. **Catalog**: every entity declares only fields its `_type.yaml` declares,
    every `ref` and `ficha` (`page:`) points at something that exists, one
-   entity per file (`catalogo` skill, `references/writing-an-entity.md`).
-5. **Diagrams** (`diagramas/*.json`): valid JSON, a known `type` or none,
+   entity per file (`catalog` skill, `references/writing-an-entity.md`).
+5. **Diagrams** (`diagrams/*.json`): valid JSON, a known `type` or none,
    every `entity` and `page` exists, ids unique and every link names one of
-   them (`diagramas` skill, `references/checking.md`, sections 1 and 2).
-6. **Styles** (`estilos/`): every file is a module name, no `@import` and
+   them (`diagrams` skill, `references/checking.md`, sections 1 and 2).
+6. **Styles** (`styles/`): every file is a module name, no `@import` and
    no URL from outside, every `url()` to an image under `docs/` that exists,
-   every theme variable set in both `:root` and `.dark` (`estilos` skill,
+   every theme variable set in both `:root` and `.dark` (`styles` skill,
    `references/writing-a-module.md`).
 7. **Leftovers**: diagrams no page shows, images under an `img/` no page
    uses. These are warnings, not errors.

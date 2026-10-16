@@ -26,7 +26,7 @@ and `docs/repository/index.mdx` ("Nombres y rutas").
 | `docs/` (top) | Escribir documentación (home), Primeros pasos | `index.mdx`, `getting-started.mdx` |
 | `docs/repository/` | El repositorio | `config` (1), `menu` (2) |
 | `docs/pages/` | Páginas | `header` (1), `markdown` (2), `components` (3) |
-| `docs/catalog/` | El catálogo | `types` (1), `entities` (2), `reader` (3) |
+| `docs/data/` | El catálogo | `types` (1), `entities` (2), `reader` (3) |
 | `docs/diagrams/` | Diagramas | `drawn` (1), `graphs` (2), `time` (3), `concepts` (4), `charts` (5), `proportions` (6), `comparison` (7), `illustrations` (8) |
 | `docs/publishing/` | Sincronización y problemas | `editor` (1), `agents` (2), `writing-agents` (3) |
 
@@ -45,10 +45,10 @@ and `docs/repository/index.mdx` ("Nombres y rutas").
   the URL and the path other pages link to. Existing names are English and
   stay as they are; the page's words are Spanish.
 - **`.mdx`**, always: the platform reads `docs/**/*.mdx` only.
-- **`docs/catalogo/` is reserved:** the platform generates the catalog's pages
-  there. A page under it is reported ("docs/catalogo/ está reservada para las
+- **`docs/catalog/` is reserved:** the platform generates the catalog's pages
+  there. A page under it is reported ("docs/catalog/ está reservada para las
   páginas que la plataforma hace del catálogo: esta ficha no se publica") and
-  not published. This guide explains the catalog in `docs/catalog/`.
+  not published. This guide explains the catalog in `docs/data/`.
 - **Images** go in an `img/` folder next to the page that uses them
   (`links.md`).
 
@@ -72,9 +72,9 @@ Renaming changes the URL. In the same change, update:
 | What names it | Where |
 | --- | --- |
 | Relative links `[…](….mdx)` | Every page under `docs/` (`grep -rn "menu.mdx" docs`) |
-| `ficha` fields (`page:`) | Entities under `catalogo/` |
+| `ficha` fields (`page:`) | Entities under `catalog/` |
 | Menu entries | `menu.yaml`, when it names the page or its folder |
-| Diagram pieces with `"page"` | `diagramas/*.json` |
+| Diagram pieces with `"page"` | `diagrams/*.json` |
 | Served skill or skills text | `skills/`, `.agents/skills/`, when they cite the path |
 
 Every one left behind is reported: a broken link shows as plain text, a

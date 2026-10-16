@@ -26,7 +26,7 @@ field names are the site's own. Keep it.
 
 Every page header already has `titulo`, `descripcion`, `icono`, `orden` and
 `actualizado`; `cabecera` adds the site's own, each declared with a field kind
-exactly like a catalog field (`catalogo` skill,
+exactly like a catalog field (`catalog` skill,
 `references/writing-a-type.md`).
 
 ```yaml
@@ -77,6 +77,6 @@ How pages fill them: `docs` skill, `references/header.md`.
 - `cabecera` **can't redeclare** the common fields: "`titulo` no se puede
   declarar: toda ficha lo tiene sin declararlo".
 - A `ref` whose `a` names no type is reported: "…: `a: x` no es ningún tipo de
-  catalogo/ (hay: …)".
+  catalog/ (hay: …)".
 - Changing or removing a field: update every page that uses it in the same
   change (`grep -rn "^<field>:" docs`).

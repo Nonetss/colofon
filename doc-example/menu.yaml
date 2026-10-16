@@ -1,6 +1,6 @@
 # La barra lateral. Cada grupo lista, en orden, las páginas y carpetas de docs/
 # que muestra (una carpeta trae todas sus páginas) y las páginas del catálogo
-# (catalogo, o catalogo/<tipo>). Lo que ningún grupo muestra acaba en un último
+# (catalog, o catalog/<tipo>). Lo que ningún grupo muestra acaba en un último
 # grupo "Otros". Los títulos e iconos escritos aquí mandan sobre los de las
 # cabeceras de las páginas.
 
@@ -23,8 +23,8 @@ secciones:
     icono: database
     descripcion: El catálogo, desde declarar un tipo hasta explorarlo en el lector
     paginas:
-      - { ruta: catalog, icono: table }
-      - { ruta: catalogo, titulo: Referencia }
+      - { ruta: data, icono: table }
+      - { ruta: catalog, titulo: Referencia }
 
   - titulo: Publicación
     icono: send

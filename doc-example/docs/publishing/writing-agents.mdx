@@ -14,8 +14,8 @@ CLAUDE.md                        # solo una línea: @AGENTS.md
 ├── skills/
 │   ├── documentation/SKILL.md   # el repositorio entero
 │   ├── docs/SKILL.md            # una por carpeta de contenido
-│   ├── catalogo/SKILL.md
-│   └── diagramas/SKILL.md
+│   ├── catalog/SKILL.md
+│   └── diagrams/SKILL.md
 └── commands/doc/
     ├── questions.md             # /doc:questions
     └── check.md                 # /doc:check
@@ -52,7 +52,7 @@ la plataforma lo clona, lo valida y lo publica.
 | Ruta | Qué contiene |
 | --- | --- |
 | `docs/` | Las páginas (`.mdx`) |
-| `catalogo/<type>/` | Los tipos y sus entidades |
+| `catalog/<type>/` | Los tipos y sus entidades |
 
 ## Reglas estrictas
 
@@ -65,7 +65,7 @@ la plataforma lo clona, lo valida y lo publica.
 
 Una skill es una carpeta con su `SKILL.md`: un front matter con `name` y `description`, y las instrucciones debajo. Las reglas largas van en `references/` y la skill dice cuándo leer cada una.
 
-- **Una por carpeta de contenido** (`docs`, `catalogo`, `diagramas`, `skills`) y una para el repositorio entero, que dice qué cargar para cada tarea.
+- **Una por carpeta de contenido** (`docs`, `catalog`, `diagrams`, `skills`) y una para el repositorio entero, que dice qué cargar para cada tarea.
 - **Lo propio de este sitio,** no el contrato: las reglas que valen para todo sitio ya están en las páginas de esta guía, y la skill las enlaza.
 - No son las [skills servidas](agents.mdx#skills-servidas). Las de `skills/` las sirve la plataforma a agentes que trabajan desde otro proyecto; las de `.agents/skills/` solo las lee el agente que escribe aquí.
 
@@ -81,7 +81,7 @@ Un comando es un fichero Markdown con un front matter (`description` y, si recib
 | `/doc:review` | Revisa una página, entidad o diagrama contra las convenciones del sitio, sin editar |
 | `/doc:sync-platform` | Compara el catálogo y la guía con lo que la plataforma lee hoy |
 | `/doc:new-page` | Escribe una página nueva, con su cabecera, su entrada en el menú y su fila en "¿Dónde encuentro…?" |
-| `/doc:diagram` | Elige la forma de un diagrama, lo escribe en `diagramas/` y lo comprueba |
+| `/doc:diagram` | Elige la forma de un diagrama, lo escribe en `diagrams/` y lo comprueba |
 
 Los que escriben algo (`/doc:new-page`, `/doc:diagram`) proponen antes un plan y esperan a que lo apruebes. Los que revisan solo informan, y corrigen cuando se lo pides.
 
@@ -98,4 +98,4 @@ Cuando una página no puede afirmar algo, el agente lo deja en `open_questions`,
 
 ## Qué se reporta
 
-Nada de esto se valida, así que nada se reporta: una skill o un comando mal escrito solo hace que el agente trabaje peor. Lo único que la plataforma comprueba es lo que el agente escribe en `docs/`, `catalogo/` y `diagramas/`. Un enlace desde una página a uno de estos ficheros sí se reporta ("Enlace roto: … queda fuera de docs/"): nómbralos entre comillas invertidas.
+Nada de esto se valida, así que nada se reporta: una skill o un comando mal escrito solo hace que el agente trabaje peor. Lo único que la plataforma comprueba es lo que el agente escribe en `docs/`, `catalog/` y `diagrams/`. Un enlace desde una página a uno de estos ficheros sí se reporta ("Enlace roto: … queda fuera de docs/"): nómbralos entre comillas invertidas.
