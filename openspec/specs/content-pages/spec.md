@@ -29,6 +29,25 @@ A page SHALL start with a YAML front matter block holding its header. `titulo` a
 - **WHEN** `docs/red/index.mdx` says `icono: netwrok`
 - **THEN** the page SHALL be reported on `icono` as not being a Lucide icon name, and SHALL render without that icon
 
+### Requirement: Last edit date
+
+A page read from an `.mdx` file SHALL carry, as `editado`, the last commit date the source read for that file (`content-source` "Full history and last edit dates"), or nothing when none is recorded. `editado` SHALL NOT be a header key: a page header that says `editado` SHALL be reported like any other unknown key. `editado` SHALL be independent of `actualizado`: setting one SHALL NOT change the other. A folder page with no `index.mdx` SHALL have no `editado`.
+
+#### Scenario: Page without `actualizado`
+
+- **WHEN** `docs/red/dns.mdx` sets no `actualizado` and its last commit is of 2026-03-02
+- **THEN** its header SHALL have no `actualizado` and `editado` 2026-03-02
+
+#### Scenario: Page with both
+
+- **WHEN** `docs/red/vpn.mdx` says `actualizado: 2026-01-10` and its last commit is of 2026-10-14
+- **THEN** its header SHALL have `actualizado` 2026-01-10 and `editado` 2026-10-14
+
+#### Scenario: Folder without index
+
+- **WHEN** the folder `docs/red/` has pages but no `index.mdx`
+- **THEN** its folder page SHALL have no `editado`
+
 ### Requirement: Accepted MDX
 
 A page body SHALL be read as MDX with GitHub-flavoured Markdown (tables, task lists, strikethrough, autolinks and footnotes) and SHALL NOT be executed. `import` and `export` statements and `{…}` expressions SHALL be refused, each reported with its line, and left out of the render tree; an expression that holds only a comment (`{/* … */}`) SHALL be dropped without a problem. The platform provides three components, `<Callout>`, `<Entities>` (see "Entities component") and `<Diagram>` (`content-diagrams`). `<Callout>`, written as a block (on its own lines, or alone on one line), SHALL render as an alert holding its Markdown, of the kind its `type` names (`note` by default; `info` a note titled "Información", `tip`, `important`, `warning`, `caution`, and `danger` a caution titled "Peligro"), titled by its `title` when given and by its kind otherwise. An unknown `type`, an attribute other than `type` and `title`, or an attribute value in braces SHALL be reported with its line while the alert still renders, and a `<Callout>` inside a paragraph's text SHALL be reported as needing its own block and rendered as a notice. Every other JSX element SHALL be reported as a component the platform does not provide, with its name and line, and SHALL be rendered as a visible notice naming it in place of the element. A fenced code block whose language is `diagram` SHALL be reported with its line as a diagram that belongs in `diagramas/` and is shown with `<Diagram id="…" />`, and SHALL render as a notice saying so. A page that cannot be parsed SHALL be reported with the parser's line and message, and SHALL have no body.

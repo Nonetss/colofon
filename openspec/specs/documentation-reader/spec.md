@@ -146,7 +146,7 @@ The top of the sidebar SHALL offer a select listing "Todos" and every stored rep
 
 ### Requirement: Page view
 
-A page SHALL show a header with its breadcrumbs (the repository, and the groups and sections above it, each section as a link and each group as text), its icon, title and description, its `actualizado` date (marked for review when older than six months) and, when present, the site's header fields as a list of values, each named by the field's `etiqueta` (its field name when it has none), a `ficha` value linking to that page and a `ref` value linking to the entity's catalog page, titled with its label; then its body with the documentation prose styles; then links to the previous and next pages. Code blocks SHALL show their language and a "Copiar" control that copies the code. External links SHALL open in a new tab. Tables SHALL fit the reading column, their cells wrapping their text (a word longer than its column breaks), and SHALL scroll horizontally inside their frame, without widening the page, only when their columns cannot fit even wrapped. Headings SHALL show an anchor link on hover. A section page SHALL list its pages and subsections, with their titles and descriptions, after its body.
+A page SHALL show a header with its breadcrumbs (the repository, and the groups and sections above it, each section as a link and each group as text), its icon, title and description, its date (its `actualizado` as "Datos del …", marked for review as "Revisar · datos del …" when older than six months; when it sets none, its `editado` from `content-pages` "Last edit date" as "Editado el …", muted and never marked for review; no date when it has neither) and, when present, the site's header fields as a list of values, each named by the field's `etiqueta` (its field name when it has none), a `ficha` value linking to that page and a `ref` value linking to the entity's catalog page, titled with its label; then its body with the documentation prose styles; then links to the previous and next pages. Code blocks SHALL show their language and a "Copiar" control that copies the code. External links SHALL open in a new tab. Tables SHALL fit the reading column, their cells wrapping their text (a word longer than its column breaks), and SHALL scroll horizontally inside their frame, without widening the page, only when their columns cannot fit even wrapped. Headings SHALL show an anchor link on hover. A section page SHALL list its pages and subsections, with their titles and descriptions, after its body.
 
 #### Scenario: Copying a code block
 
@@ -157,6 +157,16 @@ A page SHALL show a header with its breadcrumbs (the repository, and the groups 
 
 - **WHEN** a page says `actualizado: 2026-01-10` and today is 2026-10-15
 - **THEN** its header SHALL mark the date for review
+
+#### Scenario: Page dated only by git
+
+- **WHEN** a page sets no `actualizado`, its `editado` is 2025-11-03 and today is 2026-10-15
+- **THEN** its header SHALL show "Editado el" with that date, without marking it for review
+
+#### Scenario: `actualizado` takes precedence
+
+- **WHEN** a page says `actualizado: 2026-09-01` and its `editado` is 2026-10-14
+- **THEN** its header SHALL show "Datos del" with 2026-09-01 and not the `editado` date
 
 #### Scenario: Previous and next
 
