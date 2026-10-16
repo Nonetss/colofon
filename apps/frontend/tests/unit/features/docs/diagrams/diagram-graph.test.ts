@@ -6,6 +6,8 @@ import {
   type Graph,
   type GraphBox,
   type GraphEdge,
+  markHighlight,
+  seriesHighlight,
   zoneHighlight,
 } from "@/features/docs/diagrams/model/diagram-graph"
 
@@ -19,6 +21,8 @@ function box(id: string, extra: Partial<GraphBox> = {}): GraphBox {
     zone: null,
     trace: false,
     needs: [],
+    series: null,
+    value: null,
     ...extra,
   }
 }
@@ -174,5 +178,42 @@ describe("edgeHighlight and zoneHighlight", () => {
       text: "Nas · Pve",
       lists: [],
     })
+  })
+})
+
+describe("data marks", () => {
+  const CHART = graphOf(
+    [
+      box("m0", {
+        name: "Marzo",
+        series: "Altas",
+        value: "1.200 usuarios",
+        info: "Récord",
+      }),
+      box("m1", { name: "Abril", series: "Altas", value: "900 usuarios" }),
+      box("m2", { name: "Marzo", series: "Bajas", value: "300 usuarios" }),
+    ],
+    []
+  )
+
+  test("hovering a mark lights its series and its card says its label, series and value", () => {
+    const highlight = markHighlight(CHART, "m0")
+    expect([...(highlight?.boxes ?? [])]).toEqual(["m0", "m1"])
+    expect(highlight?.card).toEqual({
+      title: "Marzo",
+      tag: "Altas",
+      text: "1.200 usuarios · Récord",
+      lists: [],
+    })
+  })
+
+  test("a box is not a mark", () => {
+    expect(markHighlight(KOMODO, "komodo")).toBeNull()
+  })
+
+  test("a legend entry lights every mark of its series", () => {
+    const highlight = seriesHighlight(CHART, "Bajas")
+    expect([...highlight.boxes]).toEqual(["m2"])
+    expect(highlight.card.tag).toBe("1 valor")
   })
 })

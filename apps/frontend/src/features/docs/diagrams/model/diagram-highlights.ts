@@ -3,8 +3,9 @@
 // wide invisible twin), a badge or a zone title lights up what it touches and
 // fades the rest (`diagram-graph.ts` works out what), and a card next to the
 // pointer says what it is. On a touch screen the first tap does that and the
-// second one follows the box's link. It listens on the document, so it also
-// works on the pages the router swaps in and in the lightbox's copy.
+// second one follows the box's link. A typed diagram's data marks and legend
+// entries light their series. It listens on the document, so it also works
+// on the pages the router swaps in and in the lightbox's copy.
 
 import {
   boxHighlight,
@@ -14,17 +15,21 @@ import {
   type GraphBox,
   type GraphEdge,
   type Highlight,
+  markHighlight,
+  seriesHighlight,
   zoneHighlight,
 } from "@/features/docs/diagrams/model/diagram-graph"
 
 const SVG = "svg.doc-diagram-svg"
 const ARROW = ".doc-diagram-hit, .doc-diagram-badge"
 const ZONE_TITLE = ".doc-diagram-zone-title[data-zone]"
+const LEGEND_ENTRY = ".doc-diagram-legend-entry[data-series]"
 const TARGET = [
   `${SVG} [data-node]`,
   `${SVG} .doc-diagram-hit`,
   `${SVG} .doc-diagram-badge`,
   `${SVG} ${ZONE_TITLE}`,
+  `${SVG} ${LEGEND_ENTRY}`,
 ].join(", ")
 
 const ON = "doc-diagram-on"
@@ -48,6 +53,8 @@ function textIn(element: Element, selector: string): string | null {
 }
 
 function boxName(element: Element, id: string): string {
+  const label = optionalAttribute(element, "data-label")
+  if (label !== null && element.hasAttribute("data-value")) return label
   const name = textIn(element, ".doc-diagram-name, .doc-diagram-table-name")
   if (name === null || name === "") return id
   return name
@@ -66,6 +73,8 @@ export function graphOf(svg: Element): Graph {
       zone: optionalAttribute(element, "data-zone"),
       trace: element.getAttribute("data-trace") === "true",
       needs: attribute(element, "data-needs").split(" ").filter(Boolean),
+      series: optionalAttribute(element, "data-series"),
+      value: element.getAttribute("data-value"),
     })
   }
   const edges: GraphEdge[] = []
@@ -119,8 +128,11 @@ function highlightFor(target: Element, graph: Graph): Highlight | null {
     return edgeHighlight(graph, attribute(target, "data-edge"))
   if (target.matches(ZONE_TITLE))
     return zoneHighlight(graph, attribute(target, "data-zone"))
+  if (target.matches(LEGEND_ENTRY))
+    return seriesHighlight(graph, attribute(target, "data-series"))
   const id = optionalAttribute(target, "data-node")
   if (id === null) return null
+  if (target.hasAttribute("data-value")) return markHighlight(graph, id)
   return boxHighlight(graph, id)
 }
 

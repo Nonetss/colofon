@@ -74,6 +74,8 @@ describe("graphOf", () => {
       zone: "casa",
       trace: false,
       needs: [],
+      series: null,
+      value: null,
     })
     expect(graph.boxes.get("periphery")?.needs).toEqual(["komodo"])
     expect(graph.edges).toEqual([
@@ -122,6 +124,59 @@ describe("showFor", () => {
     expect(lit(svg)).toContain("doc-diagram-zone-title:casa")
     expect(lit(svg)).toContain("doc-diagram-box:komodo")
     expect(lit(svg)).not.toContain("doc-diagram-box:otro")
+  })
+})
+
+describe("data marks", () => {
+  const CHART = `
+<svg class="doc-diagram-svg" viewBox="0 0 400 200">
+  <rect class="doc-diagram-fill-hue doc-diagram-mark" data-node="m0" data-label="Marzo" data-value="1.200 usuarios" data-series="Altas" x="0" y="0" width="10" height="40"></rect>
+  <rect class="doc-diagram-fill-hue doc-diagram-mark" data-node="m1" data-label="Abril" data-value="900 usuarios" data-series="Altas" x="20" y="0" width="10" height="30"></rect>
+  <rect class="doc-diagram-fill-hue doc-diagram-mark" data-node="m2" data-label="Marzo" data-value="300 usuarios" data-series="Bajas" x="40" y="0" width="10" height="10"></rect>
+  <g class="doc-diagram-legend-entry" data-series="Bajas"><text class="doc-diagram-legend-item">Bajas</text></g>
+</svg>`
+
+  function chart(): Element {
+    const root = document.createElement("div")
+    root.innerHTML = CHART
+    document.body.append(root)
+    const svg = root.querySelector("svg")
+    if (svg === null) throw new Error("no svg")
+    return svg
+  }
+
+  test("hovering a bar lights its series and says its label, series and value", () => {
+    const svg = chart()
+    const card = showFor(part(svg, '[data-node="m0"]'))
+    expect(lit(svg)).toEqual([
+      "doc-diagram-fill-hue:m0",
+      "doc-diagram-fill-hue:m1",
+    ])
+    expect(card).toEqual({
+      title: "Marzo",
+      tag: "Altas",
+      text: "1.200 usuarios",
+      lists: [],
+    })
+  })
+
+  test("hovering a legend entry lights the marks of its series", () => {
+    const svg = chart()
+    const card = showFor(part(svg, ".doc-diagram-legend-entry"))
+    expect(lit(svg)).toEqual(["doc-diagram-fill-hue:m2"])
+    expect(card?.title).toBe("Bajas")
+  })
+})
+
+describe("illustrations", () => {
+  test("a hand-drawn illustration has nothing to light up", () => {
+    const root = document.createElement("div")
+    root.innerHTML = `<svg class="doc-diagram-svg doc-diagram-illustration" viewBox="0 0 10 10"><path class="doc-diagram-ill-ink" d="M0 0"></path></svg>`
+    document.body.append(root)
+    const path = root.querySelector("path")
+    if (path === null) throw new Error("no path")
+    expect(showFor(path)).toBeNull()
+    expect(root.querySelector(".doc-diagram-focus")).toBeNull()
   })
 })
 

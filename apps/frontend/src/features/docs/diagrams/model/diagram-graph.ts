@@ -4,6 +4,8 @@
 // far ends, plus every box that falls with it (`needs`); a box with `trace`
 // lights everything reached from it along the accent arrows; an arrow or a
 // badge lights its ends; a zone title lights the zone's boxes and arrows.
+// A typed diagram's data mark (a bar, a dot, a cell…) lights its series and
+// says its label and value; a legend entry lights its series.
 // `diagram-highlights.ts` reads the graph from the drawing and applies it.
 
 export type GraphBox = {
@@ -16,6 +18,10 @@ export type GraphBox = {
   trace: boolean
   /** The ids of the boxes it depends on. */
   needs: string[]
+  /** A data mark's series, `null` for none. */
+  series: string | null
+  /** A data mark's value, as drawn ("1.200 usuarios"); `null` for a box. */
+  value: string | null
 }
 
 export type GraphEdge = {
@@ -254,4 +260,46 @@ function traceHighlight(graph: Graph, box: GraphBox): Highlight {
     down: new Set(),
     card: { title: box.name, tag: box.tag, text: box.info, lists },
   }
+}
+
+/** What hovering the data mark `id` lights up: it and the rest of its series. */
+export function markHighlight(graph: Graph, id: string): Highlight | null {
+  const mark = graph.boxes.get(id)
+  if (mark === undefined || mark.value === null) return null
+  const boxes = new Set([id])
+  if (mark.series !== null)
+    for (const other of seriesMarks(graph, mark.series)) boxes.add(other)
+  const text = [mark.value, mark.info].filter((part) => part !== "").join(" · ")
+  return {
+    boxes,
+    edges: new Set(),
+    zone: null,
+    down: new Set(),
+    card: { title: mark.name, tag: mark.series ?? "", text, lists: [] },
+  }
+}
+
+/** What hovering the legend entry of `series` lights up: its marks. */
+export function seriesHighlight(graph: Graph, series: string): Highlight {
+  const boxes = new Set(seriesMarks(graph, series))
+  const count = boxes.size === 1 ? "1 valor" : `${boxes.size} valores`
+  return {
+    boxes,
+    edges: new Set(),
+    zone: null,
+    down: new Set(),
+    card: {
+      title: series,
+      tag: count,
+      text: "",
+      lists: [],
+    },
+  }
+}
+
+function seriesMarks(graph: Graph, series: string): string[] {
+  const ids: string[] = []
+  for (const box of graph.boxes.values())
+    if (box.series === series) ids.push(box.id)
+  return ids
 }

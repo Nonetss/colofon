@@ -1454,6 +1454,168 @@ html.theme-transitioning::view-transition-new(root) {
       fill: var(--d-accent);
     }
 
+    & :where(.doc-diagram-head-hollow) {
+      fill: var(--d-paper);
+      stroke: var(--d-muted);
+      stroke-width: 1.2;
+    }
+    & :where(.doc-diagram-head-hollow.doc-diagram-head-accent) {
+      stroke: var(--d-accent);
+    }
+
+    /* The paint of the typed forms' shapes (`diagram-types/scene.ts`):
+       a fill, a line and a text role each, tinted by the shape's hue. */
+    & :where(.doc-diagram-tick) {
+      fill: var(--d-muted);
+      font: 8px var(--font-mono);
+    }
+    & :where(.doc-diagram-value) {
+      fill: var(--d-ink);
+      font: 9px var(--font-mono);
+    }
+    & :where(.doc-diagram-item) {
+      fill: var(--d-ink);
+      font: 11px var(--font-sans);
+    }
+    & :where(.doc-diagram-fill-none) {
+      fill: none;
+    }
+    & :where(.doc-diagram-fill-paper) {
+      fill: var(--d-paper);
+    }
+    & :where(.doc-diagram-fill-surface) {
+      fill: var(--d-surface);
+    }
+    & :where(.doc-diagram-fill-soft) {
+      fill: var(--d-store);
+    }
+    & :where(.doc-diagram-fill-muted) {
+      fill: var(--d-muted);
+    }
+    & :where(.doc-diagram-fill-ink) {
+      fill: var(--d-ink);
+    }
+    & :where(.doc-diagram-fill-accent) {
+      fill: var(--d-accent);
+    }
+    & :where(.doc-diagram-fill-accent-tint) {
+      fill: var(--d-accent-tint);
+    }
+    & :where(.doc-diagram-fill-hue) {
+      fill: var(--d-hue, var(--d-muted));
+    }
+    & :where(.doc-diagram-fill-hue-tint) {
+      fill: color-mix(
+        in oklch,
+        var(--d-hue, var(--d-muted)) 14%,
+        var(--d-paper)
+      );
+    }
+    & :where([class*="doc-diagram-line-"]) {
+      stroke-width: 1;
+    }
+    & :where(.doc-diagram-line-ink) {
+      stroke: var(--d-ink);
+    }
+    & :where(.doc-diagram-line-muted) {
+      stroke: var(--d-muted);
+    }
+    & :where(.doc-diagram-line-soft) {
+      stroke: var(--d-soft);
+    }
+    & :where(.doc-diagram-line-rule) {
+      stroke: var(--d-rule);
+      stroke-width: 0.8;
+    }
+    & :where(.doc-diagram-line-paper) {
+      stroke: var(--d-paper);
+      stroke-width: 2;
+    }
+    & :where(.doc-diagram-line-accent) {
+      stroke: var(--d-accent);
+    }
+    & :where(.doc-diagram-line-hue) {
+      stroke: var(--d-hue, var(--d-muted));
+    }
+    & :where(.doc-diagram-line-bold) {
+      stroke-width: 2;
+    }
+    & :where(.doc-diagram-line-dash) {
+      stroke-dasharray: 4 3;
+    }
+    & :where(.doc-diagram-text-ink) {
+      fill: var(--d-ink);
+    }
+    & :where(.doc-diagram-text-muted) {
+      fill: var(--d-muted);
+    }
+    & :where(.doc-diagram-text-soft) {
+      fill: var(--d-soft);
+    }
+    & :where(.doc-diagram-text-accent) {
+      fill: var(--d-accent);
+    }
+    & :where(.doc-diagram-text-hue) {
+      fill: var(--d-hue, var(--d-ink));
+    }
+    & :where(.doc-diagram-text-paper) {
+      fill: var(--d-paper);
+    }
+    & :where(.doc-diagram-text-bold) {
+      font-weight: 700;
+    }
+    & :where(.doc-diagram-mark, .doc-diagram-legend-entry) {
+      cursor: help;
+    }
+
+    /* A hand-drawn illustration (`diagram-illustration.ts`): a shape takes
+       its role's colour as its fill, unless it says fill="none", and as its
+       stroke when it gives a stroke-width; with no role it is ink. */
+    &:where(.doc-diagram-illustration) {
+      & :where(path, rect, circle, ellipse, polygon, polyline, line, text) {
+        fill: var(--d-ink);
+      }
+      & :where([stroke-width]) {
+        stroke: var(--d-ink);
+      }
+      & :where(text, tspan) {
+        font-family: var(--font-sans);
+      }
+      & :where(.doc-diagram-ill-ink) {
+        --d-ill: var(--d-ink);
+      }
+      & :where(.doc-diagram-ill-muted) {
+        --d-ill: var(--d-muted);
+      }
+      & :where(.doc-diagram-ill-soft) {
+        --d-ill: var(--d-soft);
+      }
+      & :where(.doc-diagram-ill-paper) {
+        --d-ill: var(--d-paper);
+      }
+      & :where(.doc-diagram-ill-accent) {
+        --d-ill: var(--d-accent);
+      }
+      & :where(.doc-diagram-ill-accent-soft) {
+        --d-ill: var(--d-accent-tint);
+      }
+      & :where(.doc-diagram-ill-hue) {
+        --d-ill: var(--d-hue);
+      }
+      & :where([class*="doc-diagram-ill-"]:not([fill="none"])) {
+        fill: var(--d-ill);
+      }
+      & :where([class*="doc-diagram-ill-"][stroke-width]:not([stroke="none"])) {
+        stroke: var(--d-ill);
+      }
+      & :where([fill="none"]) {
+        fill: none;
+      }
+      & :where([stroke="none"]) {
+        stroke: none;
+      }
+    }
+
     /* A hue tints its zone, the tags of its boxes, the arrows that take it,
        their labels and the badges that point at it. */
     & :where(.doc-diagram-hue-rose) {
