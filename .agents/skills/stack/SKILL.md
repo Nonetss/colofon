@@ -35,7 +35,7 @@ Read only the references the task needs. A task crossing layers reads several (a
 
 | Task touches | Read |
 |---|---|
-| Which workspace owns something, entrypoints, ports, what git tracks | `references/workspaces.md` |
+| Which workspace owns something, entrypoints, ports, what git tracks, the `doc-example/` sample content repository and its subtree sync | `references/workspaces.md` |
 | Running, building, type-checking, formatting, the dev database, Docker scripts | `references/commands.md` |
 | Imports between files/packages (`@/`, `#…`), adding a dependency or workspace | `references/aliases-and-deps.md` |
 | Env vars, auth URLs, cookies, proxies, middleware gating, oRPC handler plugins (error logging, body limit, SSE keep-alive), request ids | `references/env.md` |

@@ -221,6 +221,7 @@ doc/
 │   └── config/         # Shared tsconfig base
 ├── docs/               # human/ guides (Spanish), diagrams/ HTML sources, img/ exported SVGs
 ├── openspec/           # Capability specs (openspec/specs) and change proposals
+├── doc-example/        # Sample content repository (git subtree, not a workspace)
 └── scripts/
     ├── setup-dev.sh    # Generates the local root .env with real secrets
     └── bootstrap.sh    # Interactive installer: .env + docker compose (prod)
@@ -250,8 +251,11 @@ bun run dev         # Docker dev stack at https://localhost:4321
 ```
 
 Then sign in as the admin `setup:dev` printed and register a content
-repository at `/admin/content`. The example content repository is
-`https://git.noneweb.online/nonete/documentacion`.
+repository at `/admin/content`. A sample content repository lives in
+`doc-example/`, a git subtree of `git@github.com:Nonetss/doc-example.git`;
+register that URL to see it rendered. Sync it with
+`git subtree pull --prefix=doc-example <url> main --squash` and publish
+local edits with `git subtree push --prefix=doc-example <url> main`.
 
 ### Configuration
 

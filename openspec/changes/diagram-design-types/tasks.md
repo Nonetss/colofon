@@ -98,7 +98,7 @@
 ## 12. Documentation
 
 - [ ] 12.1 `docs/human/contenido.md` "Diagramas": `type` and the list of types with a short example each, the drawn-form recipes for the architecture-like types, budgets and the accent rule, illustrations and their whitelist, and the credit to diagram-design (MIT)
-- [ ] 12.2 Add a content fixture per type to the local `doc-test/` repository only if the user wants it (ask; it is untracked)
+- [ ] 12.2 Add a content fixture per type to the `doc-example/` sample repository (a git subtree) only if the user wants it (ask)
 
 ## 13. Validation
 
