@@ -11,6 +11,7 @@ import { healthRouter } from "#v1/health/router"
 import { organizationRouter } from "#v1/organization/router"
 import { pluginsRouter } from "#v1/plugins/router"
 import { privateRouter } from "#v1/private/router"
+import { secretRouter } from "#v1/secret/router"
 import { sessionHistoryRouter } from "#v1/session-history/router"
 import { skillsRouter } from "#v1/skills/router"
 
@@ -29,6 +30,7 @@ export const appRouter = {
   content: contentRouter,
   docs: docsRouter,
   skills: skillsRouter,
+  secret: secretRouter,
 }
 export type AppRouter = typeof appRouter
 export type AppRouterClient = RouterClient<typeof appRouter>
