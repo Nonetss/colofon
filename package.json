@@ -38,6 +38,7 @@
       "@types/hast": "^3.0.5",
       "hast-util-to-html": "^9.0.5",
       "lucide-react": "1.55.0",
+      "@modelcontextprotocol/server": "2.3.1",
       "mdast-util-gfm": "^3.1.0"
     }
   },

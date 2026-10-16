@@ -16,7 +16,7 @@ The package root holds infrastructure shared by every API version:
 
 - `shared/` holds cross-feature helpers: `pagination.ts` (`paginate`, `paginateWithTotal`, keyset cursor codec, `paginationLimit`/`paginationCursor`, the `sortedCursor` codec and `sortedPaginationCursor`), `sorted-keyset.ts` (`cursorFor` plus `sortedKeyset` re-exported from `@nonete/db/sorted-keyset`: caller-ordered keyset pages, `references/api/sorted-lists.md`), `search.ts` (inputs and `likePattern` for `search` procedures, see `references/api/free-text-search.md`), `dates.ts` (`toIso`, `toIsoOrNull`), `not-found.ts` (`assertFound`), `procedure-docs.ts` (a procedure's OpenAPI summary/description/tags and input JSON Schema, used by cron discovery). `lib/permissions.ts` wraps the organization permission check.
 - `router.ts` assembles the top-level `appRouter` by nesting each version's router under its own key (`v1: v1Router`) — the only place a new version gets wired in.
-- `lifecycle.ts` exports `closeStreams()`, which the backend's shutdown calls before the HTTP drain. It calls each version's own `src/<version>/lifecycle.ts`, which ends that version's streams that outlive their requests (today the `v1.cron.watchRuns`/`watchJobs` watchers). A feature that adds such a stream registers its closer in its version's `lifecycle.ts`, never in `apps/backend`. A new version adds one call here.
+- `lifecycle.ts` exports the async `closeStreams()`, which the backend's shutdown awaits before the HTTP drain. It calls each version's own `src/<version>/lifecycle.ts`, which ends that version's streams that outlive their requests (today the `v1.cron.watchRuns`/`watchJobs` watchers and the MCP exchanges still open). A feature that adds such a stream registers its closer in its version's `lifecycle.ts`, never in `apps/backend`. A new version adds one call here.
 
 Procedure metadata (`cron`): see `references/cron-and-mcp/cron.md`.
 
@@ -40,7 +40,7 @@ Everything version-specific lives under `src/<version>/` (currently only `src/v1
 - `src/<version>/router.ts` nests each feature's router under its own key (`apiKey: apiKeyRouter`, `health: healthRouter`).
 - `packages/api/tests/v1/<feature>/handler.test.ts` — the unit tests of the handler, written with it (`references/writing-unit-tests.md`). A feature isn't done without them.
 
-Some features also carry feature-specific modules beside those four (`cron/discovery.ts`, `cron/events.ts`, `cron/runtime.ts`, `entity-icon/targets.ts`, `content/reader.ts`). Routes come from the router keys; `content` is the one feature that sets `openapi({ path })` (with the `/v1` prefix), because its public schema URLs are part of a contract with editors.
+Some features also carry feature-specific modules beside those four (`cron/discovery.ts`, `cron/events.ts`, `cron/runtime.ts`, `entity-icon/targets.ts`, `content/reader.ts`, and in `docs/` the Markdown and `llms.txt` builders `markdown.ts`, `full-links.ts` and `llm-text.ts`, which the frontend imports by path). `src/v1/mcp/` is not a feature: it holds the documentation MCP, outside `appRouter` (`references/api/mcp.md`). Routes come from the router keys; `content` is the one feature that sets `openapi({ path })` (with the `/v1` prefix), because its public schema URLs are part of a contract with editors.
 
 OpenAPI `summary`/`description`/`.describe()` texts are English.
 

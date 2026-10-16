@@ -19,6 +19,7 @@
     "test": "bun test --only-failures"
   },
   "dependencies": {
+    "@modelcontextprotocol/server": "catalog:",
     "@nonete/auth": "workspace:*",
     "@nonete/content": "workspace:*",
     "@nonete/cron": "workspace:*",
@@ -42,6 +43,7 @@
     "zod": "catalog:"
   },
   "devDependencies": {
+    "@modelcontextprotocol/client": "2.3.1",
     "@nonete/config": "workspace:*",
     "@types/bun": "catalog:",
     "hono": "catalog:",

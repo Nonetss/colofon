@@ -29,7 +29,7 @@ handle /health {
 	respond "ok" 200
 }
 
-@backend path /rpc/* /api/* /git/* /scalar* /openapi.json
+@backend path /rpc/* /api/* /git/* /mcp /scalar* /openapi.json
 handle @backend {
 	reverse_proxy {$BACKEND_HTTP_UPSTREAM:backend:3000}
 }

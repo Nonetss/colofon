@@ -6,6 +6,6 @@ import { closeStreams as closeV1Streams } from "#v1/lifecycle"
  * own, so they would otherwise hold the drain until its timeout, and the
  * clients reconnect to the next instance.
  */
-export function closeStreams(): void {
-  closeV1Streams()
+export async function closeStreams(): Promise<void> {
+  await closeV1Streams()
 }

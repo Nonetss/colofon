@@ -11,6 +11,7 @@ export const RESERVED_SLUGS = [
   "git",
   "health",
   "login",
+  "mcp",
   "me",
   "pwa",
   "rpc",

@@ -29,7 +29,7 @@ Project `stack`, started by `bun run docker:up` (`up -d --build`); `docker:build
 | --- | --- | --- |
 | `frontend` | `expose` 4321 | Astro SSR only, reached through the gateway. Waits for a healthy backend. Healthcheck `bun -e fetch('http://localhost:4321/login')`. |
 | `backend` | `expose` 3000 | Waits for a healthy `db`. Healthcheck `bun -e fetch('http://localhost:3000/')`. |
-| `gateway` | `${FRONTEND_PORT:-4444}` → 80 | Caddy (`apps/gateway/`): `/rpc/*`, `/api/*`, `/scalar*`, `/openapi.json` → backend, the rest → frontend. Waits for a healthy frontend. Healthcheck `wget http://localhost/health`. |
+| `gateway` | `${FRONTEND_PORT:-4444}` → 80 | Caddy (`apps/gateway/`): `/rpc/*`, `/api/*`, `/git/*`, `/mcp`, `/scalar*`, `/openapi.json` → backend, the rest → frontend. Waits for a healthy frontend. Healthcheck `wget http://localhost/health`. |
 | `db` | none | `postgres:17`, password `${POSTGRES_PASSWORD:-postgres}`, database `stack`, volume `db_data`. |
 
 Every app reads the root `.env` (`required: false`); container addresses are overridden in `environment` (`references/env.md`).

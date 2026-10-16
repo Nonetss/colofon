@@ -13,7 +13,7 @@ const repoRoot = fileURLToPath(new URL("../..", import.meta.url))
 config({ path: `${repoRoot}/.env`, quiet: true })
 
 // Where the backend is reached: SSR session lookups (`astro:env` below) and
-// the dev server's proxy for /rpc, /api, /scalar and /openapi.json.
+// the dev server's proxy for /rpc, /api, /mcp, /scalar and /openapi.json.
 const backendUrl = process.env.BACKEND_URL ?? "http://localhost:3000"
 
 // https://astro.build/config
@@ -99,6 +99,10 @@ export default defineConfig({
           changeOrigin: true,
         },
         "/api": {
+          target: backendUrl,
+          changeOrigin: true,
+        },
+        "/mcp": {
           target: backendUrl,
           changeOrigin: true,
         },

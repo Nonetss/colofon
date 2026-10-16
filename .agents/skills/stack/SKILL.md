@@ -11,7 +11,7 @@ This repo, `colofon`, is the user's project (started from the `stack` template).
 
 ```
 browser ──▶ apps/gateway :80 (Caddy, only published port) ──rest──▶ apps/frontend (Astro SSR :4321)
-                 │ /rpc/*, /api/*, /git/*, /scalar*, /openapi.json        │ SSR session lookups
+                 │ /rpc/*, /api/*, /git/*, /mcp, /scalar*, /openapi.json  │ SSR session lookups
                  │ (dev: astro dev's proxy does the same)                 │ (BACKEND_URL)
                  ▼                                                        ▼
           apps/backend (Hono + oRPC on Bun, HTTP :3000) ◀──────────────────┘
@@ -24,7 +24,7 @@ browser ──▶ apps/gateway :80 (Caddy, only published port) ──rest──
 ```
 
 - `packages/api`, `auth`, `content`, `cron`, `db`, `env` and `logger` are consumed as **raw TS source** (no build step; their `build` script is `true`).
-- `apps/gateway` (one Caddy, one HTTP site) is the only routing map: `/rpc/*`, `/api/*`, `/git/*`, `/scalar*` and `/openapi.json` go to the backend, `/health` answers `ok`, everything else goes to the frontend. Only the gateway publishes a port in `compose.yml` and `compose.prod.yml` (`${FRONTEND_PORT:-4444}:80`); a new public route goes in its `routes.caddy`, never as a `ports` entry on another service. In dev, the gateway (`Caddyfile.dev`) serves `https://localhost:4321` (HTTP/2, local CA) in front of `astro dev` on `:4320`.
+- `apps/gateway` (one Caddy, one HTTP site) is the only routing map: `/rpc/*`, `/api/*`, `/git/*`, `/mcp`, `/scalar*` and `/openapi.json` go to the backend, `/health` answers `ok`, everything else goes to the frontend. Only the gateway publishes a port in `compose.yml` and `compose.prod.yml` (`${FRONTEND_PORT:-4444}:80`); a new public route goes in its `routes.caddy`, never as a `ports` entry on another service. In dev, the gateway (`Caddyfile.dev`) serves `https://localhost:4321` (HTTP/2, local CA) in front of `astro dev` on `:4320`.
 - Foundation features (admin/API-key/organization plugins, cron, comments, entity icons…) exist because they came with the foundation, not because the current task needs them.
 
 ## Where to look
@@ -65,6 +65,7 @@ Read only the references the task needs. A task crossing layers reads several (a
 | New feature or procedure; file split (`input`/`output`/`handler`/`router`, plus `events.ts` for a feature that streams events); builders, access and errors; shared helpers and pagination; checking whether a procedure or helper already exists; adding an API version | `references/api/layering.md` |
 | Choosing a procedure's HTTP `method` (`GET`/`QUERY`/`POST`/`PUT`/`PATCH`/`DELETE`) and `successStatus`, how `/rpc` sends reads as `QUERY`, or which `errors.<CODE>()` to throw (400 vs 403 vs 404 vs 409) | `references/api/http-semantics.md` |
 | Letting the caller choose a paginated list's order: `sort`/`order` inputs, `sortedKeyset` + `cursorFor` and the sorted cursor, `withKeysetPagination`'s direction, store-native ordering | `references/api/sorted-lists.md` |
+| The documentation MCP (`/mcp`): its tools, adding one, how they read through the `v1.docs` procedures as the caller, the shared Markdown and `llms.txt` builders, configuring a client | `references/api/mcp.md` |
 | A `search` procedure or a free-text filter on a `list`; matching text across several tables; GIN trigram indexes (`pg_trgm`) and when they pay off | `references/api/free-text-search.md` |
 
 ### Cron meta
