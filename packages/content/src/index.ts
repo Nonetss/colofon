@@ -74,6 +74,15 @@ export {
 export { fieldLabel } from "#pages/entities"
 export { type HeaderSchema, headerSchema, readHeader } from "#pages/header"
 export {
+  compareHits,
+  createSiteSearch,
+  type SearchExcerpt,
+  type SearchHighlight,
+  type SearchHit,
+  type SiteSearch,
+  searchSite,
+} from "#pages/search"
+export {
   type Breadcrumb,
   type NavEntry,
   type NavNode,
