@@ -1,0 +1,38 @@
+---
+titulo: Páginas
+descripcion: Una página es un fichero MDX bajo docs/; su ruta es su URL, y se lee sin ejecutar nada
+files: [page]
+actualizado: 2026-10-15
+---
+
+## Ficheros y rutas
+
+Todo fichero `docs/**/*.mdx` es una página. Su ruta es la ruta del fichero sin `.mdx`, y se publica en el slug del repositorio seguido de esa ruta:
+
+| Fichero | Ruta |
+| --- | --- |
+| `docs/index.mdx` | La página de inicio del repositorio |
+| `docs/getting-started.mdx` | `getting-started` |
+| `docs/network/index.mdx` | `network`: la página de entrada de la carpeta |
+| `docs/network/dns.mdx` | `network/dns` |
+
+Toda carpeta es una sección, titulada por su `index.mdx`, o por el nombre de la carpeta cuando no lo tiene. La página de una sección lista sus páginas y subsecciones como tarjetas tras su cuerpo.
+
+## No se ejecuta nada
+
+Una página es Markdown más los [componentes](components.mdx) de la plataforma. La plataforma la convierte en un árbol sin ejecutar nada, así que `import`, `export` y las expresiones entre llaves se reportan y se omiten. Lo que no puede leer lo reporta como un problema y renderiza el resto: una página rota nunca tumba a las demás.
+
+## ¿Dónde encuentro…?
+
+| Quiero… | Página |
+| --- | --- |
+| Saber qué campos de cabecera tiene una página | [La cabecera](header.mdx) |
+| Escribir el cuerpo: Markdown, alertas, enlaces, imágenes | [Markdown](markdown.mdx) |
+| Mostrar una tabla del catálogo, una nota o un diagrama | [Componentes](components.mdx) |
+
+## Buenos hábitos
+
+- Una idea por párrafo, directo al grano: lo lee alguien que no estaba allí.
+- Un procedimiento es una página propia con pasos numerados, para que una persona y un agente puedan seguirlo del mismo modo.
+- Los hechos repetidos con la misma forma van al [catálogo](../catalog/index.mdx), y la página los cita en lugar de copiarlos.
+- Nunca escribas un secreto: escribe dónde vive y qué cuenta usar.

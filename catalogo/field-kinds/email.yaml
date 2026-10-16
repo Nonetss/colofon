@@ -1,0 +1,5 @@
+family: scalar
+value: "Una dirección de correo electrónico; se muestra como un enlace mailto"
+example: "owner: { tipo: email } → owner: ana@example.org"
+fuente: manual
+actualizado: 2026-10-15

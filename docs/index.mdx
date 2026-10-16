@@ -1,0 +1,31 @@
+---
+titulo: Escribir documentación
+descripcion: Cómo escribir un repositorio de contenido que la plataforma doc publique, desde la primera página hasta el menú, el catálogo y los diagramas
+---
+
+La plataforma no guarda ninguna documentación por sí misma: la lee de un **repositorio de contenido**, un repositorio git con páginas en MDX y datos en YAML. Este sitio es uno de ellos y explica cómo escribir otro. Todo lo que describe también lo usa, así que sus propios ficheros son los ejemplos: su [menú](repository/menu.mdx) es un `menu.yaml`, sus [tablas de referencia](catalogo:files) salen de su catálogo y los diagramas de abajo son ficheros de `diagramas/`.
+
+Si es la primera vez, empieza por [Primeros pasos](getting-started.mdx).
+
+## Cómo encaja todo
+
+<Diagram id="pipeline" />
+
+Solo escribes ficheros y haces push. La plataforma sincroniza el repositorio, comprueba cada fichero contra su contrato y publica lo que es válido: la web para las personas, los esquemas con los que tu editor autocompleta y el Markdown que leen los agentes.
+
+## Qué contiene un repositorio
+
+<Entities type="files" />
+
+<Diagram id="repository" />
+
+## ¿Dónde encuentro…?
+
+| Quiero… | Página |
+| --- | --- |
+| Crear un repositorio y verlo publicado | [Primeros pasos](getting-started.mdx) |
+| Elegir qué se muestra en la barra lateral | [El menú](repository/menu.mdx) |
+| Escribir una página | [Páginas](pages/index.mdx) |
+| Mantener como datos los hechos que se repiten | [El catálogo](catalog/index.mdx) |
+| Dibujar cómo se conectan las cosas | [Diagramas](diagrams/index.mdx) |
+| Saber por qué no aparece mi cambio | [Sincronización y problemas](publishing/index.mdx) |

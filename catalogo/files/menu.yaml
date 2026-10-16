@@ -1,0 +1,7 @@
+path: menu.yaml
+kind: declaration
+required: false
+purpose: La barra lateral, como grupos de páginas, carpetas y páginas del catálogo; prevalece sobre las cabeceras de las páginas
+page: repository/menu
+fuente: manual
+actualizado: 2026-10-15

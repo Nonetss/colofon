@@ -1,0 +1,24 @@
+{
+  // Completion and validation of the content's YAML files. The platform
+  // serves the schema catalog from the content it reads, so there are no
+  // schemas to generate or commit: a new type, entity or page shows up on its
+  // own after the next sync. Point the URL at your platform and your
+  // repository's slug (copy it from /admin/content).
+  //
+  // In development (https://localhost:4321) the YAML extension does not trust
+  // the certificate of Caddy's local CA and won't download the catalog. The
+  // fix goes in the editor's USER settings, not here: http.* settings only
+  // apply at user level and the editor ignores them in .vscode/. It turns off
+  // certificate checks for every extension, so remove it once the catalog
+  // comes from production.
+  //   "http.proxyStrictSSL": false
+  "yaml.schemaStore.url": "https://localhost:4321/api/v1/content/schemas/test",
+  // The diagrams are JSON, which the YAML extension does not read: the
+  // editor's own JSON support takes their schema from the same repository.
+  "json.schemas": [
+    {
+      "fileMatch": ["/diagramas/*.json"],
+      "url": "https://localhost:4321/api/v1/content/schemas/test/diagram"
+    }
+  ]
+}

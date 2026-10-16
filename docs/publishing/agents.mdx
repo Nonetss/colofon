@@ -1,0 +1,29 @@
+---
+titulo: Agentes
+descripcion: Cómo un agente de IA lee la documentación publicada, y las skills que un sitio sirve a los agentes
+files: [served-skill]
+orden: 2
+actualizado: 2026-10-15
+---
+
+## El Markdown de cada página
+
+Cada página, incluidas las del catálogo, tiene su texto en Markdown en su dirección seguida de `/llm.txt`: el mismo texto que copia "Copiar en Markdown", con cada enlace como dirección completa. Dos índices, siguiendo llmstxt.org, las listan:
+
+| Dirección | Qué es |
+| --- | --- |
+| `/llms.txt` | Todos los repositorios, con cada página enlazada a su `llm.txt` y con su descripción |
+| El slug del repositorio seguido de `/llms.txt` | Lo mismo, para un solo repositorio |
+
+Las páginas se etiquetan con su grupo y sus secciones ("Escritura / Páginas / La cabecera"). Requieren las mismas credenciales que el lector: una sesión, o una clave de API en la cabecera `x-api-key`. Cada usuario crea sus claves en `/me`, donde obtiene las instrucciones listas para pegar en su IA.
+
+## Skills servidas
+
+`skills/<name>/SKILL.md` son skills que la plataforma sirve a otros agentes, para que sepan cómo trabajar con este sitio desde cualquier proyecto. Siguen el formato Agent Skills: front matter con `name` y `description`, y las instrucciones debajo.
+
+- **Delgadas:** dicen cómo trabajar y dónde mirar, nunca qué hay. Una skill descargada es una instantánea que se queda obsoleta; la documentación se lee en vivo.
+- **Apuntan a páginas** en lugar de copiar procedimientos.
+- **Solo lo específico del sitio:** lo que comparten todos los sitios, lo explica la propia plataforma.
+- **Ningún secreto,** y tampoco pedírselo a una persona.
+
+Este sitio sirve `doc-writing`: consulta `skills/doc-writing/SKILL.md`.

@@ -1,0 +1,7 @@
+path: doc.config.yaml
+kind: declaration
+required: true
+purpose: El nombre del sitio, la versión del contrato a la que apunta y los campos adicionales de la cabecera de sus páginas
+page: repository/config
+fuente: manual
+actualizado: 2026-10-15

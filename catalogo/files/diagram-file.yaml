@@ -1,0 +1,7 @@
+path: diagramas/<id>.json
+kind: content
+required: false
+purpose: Un diagrama en JSON, con sus cajas, flechas y zonas colocadas a mano, mostrado con <Diagram>
+page: diagrams
+fuente: manual
+actualizado: 2026-10-15

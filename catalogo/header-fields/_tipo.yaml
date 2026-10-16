@@ -1,0 +1,23 @@
+nombre: Campo de cabecera
+plural: Campos de cabecera
+icono: heading
+descripcion: Los campos que toda cabecera de página acepta sin declararlos. El id es el campo tal como se escribe
+
+campos:
+  required:
+    tipo: booleano
+    descripcion: Si se reporta una página que no lo tiene
+  kind:
+    tipo: ref
+    a: field-kinds
+    descripcion: El tipo de su valor
+  meaning:
+    tipo: texto
+    descripcion: Para qué sirve y dónde se muestra
+  rule:
+    tipo: texto
+    opcional: true
+    descripcion: La regla que sigue su valor, cuando el tipo dice demasiado poco
+
+vista:
+  columnas: [id, required, kind, meaning]

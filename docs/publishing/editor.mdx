@@ -1,0 +1,53 @@
+---
+titulo: El editor
+descripcion: Dos ajustes del editor dan a los ficheros YAML y a los diagramas del repositorio autocompletado y validación desde la plataforma
+files: [doc-config, menu, type-declaration, entity, diagram-file]
+orden: 1
+actualizado: 2026-10-16
+---
+
+## El ajuste
+
+La plataforma sirve, sin iniciar sesión, un **catálogo de esquemas** por repositorio. Con la extensión YAML de Red Hat (`redhat.vscode-yaml`, en VS Code y Cursor), basta un ajuste:
+
+```json
+{
+  "yaml.schemaStore.url": "https://<platform>/api/v1/content/schemas/<slug>"
+}
+```
+
+Copia la URL exacta de la tarjeta del repositorio en `/admin/content`.
+
+- **El repositorio de contenido por sí solo:** en su `.vscode/settings.json`, con commit, para que quien lo clone tenga autocompletado.
+- **Un espacio de trabajo con varias carpetas:** en los ajustes del espacio de trabajo; la extensión ignora este ajuste en el `.vscode/` de una carpeta.
+
+Los diagramas son JSON, que la extensión YAML no lee. El editor de JSON de VS Code, sin extensión, toma su esquema con otro ajuste en el mismo sitio:
+
+```json
+{
+  "json.schemas": [
+    {
+      "fileMatch": ["/diagramas/*.json"],
+      "url": "https://<platform>/api/v1/content/schemas/<slug>/diagram"
+    }
+  ]
+}
+```
+
+## Qué autocompleta
+
+| Fichero | Qué sabe el editor |
+| --- | --- |
+| `doc.config.yaml` | Cada clave y los tipos de campo de `cabecera` |
+| `menu.yaml` | Cada clave, las rutas que puede nombrar una entrada (páginas, carpetas, `catalogo` y cada tipo) y los nombres de icono |
+| `diagramas/*.json` | Cada clave, las entidades y páginas a las que puede enlazar una caja, y los tipos, formas y colores |
+| `_tipo.yaml` | Cada clave, los tipos de campo, los tipos a los que puede apuntar un `ref` y los nombres de icono |
+| Una entidad | Los campos de su tipo con sus descripciones, los valores de cada `enum`, los ids que acepta cada `ref` y las páginas que puede nombrar una `ficha` |
+
+No se genera ni se hace commit de nada: un tipo, una entidad o una página nuevos aparecen en las sugerencias tras la sincronización que los trae. Si no aparecen, vuelve a abrir el fichero o recarga la ventana.
+
+## Conviene saber
+
+- El ajuste sustituye el catálogo público de SchemaStore en esa ventana, así que ficheros como `compose.yml` pierden su autocompletado mientras esté activo.
+- El catálogo expone nombres, descripciones, ids y rutas de página; nunca el texto de las páginas, los valores de las entidades ni la URL del repositorio.
+- En desarrollo, el editor no confía en el certificado local: apúntalo a producción, o define `"http.proxyStrictSSL": false` en tus ajustes de usuario mientras desarrollas.

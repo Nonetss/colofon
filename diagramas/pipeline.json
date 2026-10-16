@@ -1,0 +1,101 @@
+{
+  "title": "De un push al sitio publicado",
+  "desc": "Quien escribe hace push al repositorio de contenido, la plataforma lo sincroniza y lo valida, y lo publica para el lector, el editor y los agentes de IA",
+  "width": 920,
+  "height": 376,
+  "zones": [
+    { "id": "yours", "x": 16, "y": 16, "w": 248, "h": 344, "label": "TU LADO" },
+    { "id": "platform", "x": 344, "y": 16, "w": 560, "h": 344, "label": "LA PLATAFORMA" }
+  ],
+  "nodes": [
+    {
+      "id": "writer",
+      "kind": "input",
+      "shape": "pill",
+      "tag": "Origen",
+      "name": "Autor",
+      "sub": "una persona o un agente",
+      "x": 40, "y": 48, "w": 200, "h": 72,
+      "zone": "yours",
+      "trace": true,
+      "info": "Escribe páginas, entidades y diagramas, y hace push"
+    },
+    {
+      "id": "repo",
+      "kind": "store",
+      "shape": "cylinder",
+      "name": "Repositorio de contenido",
+      "sub": "git",
+      "x": 40, "y": 160, "w": 200, "h": 72,
+      "zone": "yours",
+      "info": "Un repositorio git externo, o alojado por la plataforma"
+    },
+    {
+      "id": "editor",
+      "name": "Editor",
+      "sub": "autocompletado de YAML",
+      "x": 40, "y": 272, "w": 200, "h": 72,
+      "zone": "yours",
+      "needs": ["platform"],
+      "info": "Completa y valida los YAML y los diagramas con los esquemas de la plataforma"
+    },
+    {
+      "id": "platform",
+      "kind": "focal",
+      "tag": "Núcleo",
+      "name": "Plataforma",
+      "sub": "sincroniza y valida",
+      "x": 368, "y": 160, "w": 200, "h": 72,
+      "zone": "platform",
+      "needs": ["repo"],
+      "info": "Lee el contenido, lo valida y conserva la última versión válida"
+    },
+    {
+      "id": "reader",
+      "name": "Lector",
+      "sub": "la web, para personas",
+      "x": 680, "y": 48, "w": 200, "h": 72,
+      "zone": "platform",
+      "needs": ["platform"]
+    },
+    {
+      "id": "agents",
+      "name": "Agentes de IA",
+      "sub": "llms.txt y llm.txt",
+      "x": 680, "y": 272, "w": 200, "h": 72,
+      "zone": "platform",
+      "needs": ["platform"]
+    }
+  ],
+  "edges": [
+    {
+      "from": "writer", "to": "repo", "kind": "accent",
+      "points": [[140, 120], [140, 160]],
+      "label": "GIT PUSH", "at": [152, 144], "anchor": "start"
+    },
+    {
+      "from": "repo", "to": "platform", "kind": "accent",
+      "points": [[240, 196], [368, 196]],
+      "label": "SINCRONIZA", "at": [304, 186],
+      "info": "Al hacer push, o cada cinco minutos"
+    },
+    {
+      "from": "platform", "to": "reader", "kind": "accent",
+      "points": [[536, 160], [536, 84], [680, 84]],
+      "label": "PÁGINAS Y CATÁLOGO", "at": [608, 74],
+      "info": "Las páginas, el menú y las páginas del catálogo"
+    },
+    {
+      "from": "platform", "to": "editor",
+      "points": [[400, 232], [400, 308], [240, 308]],
+      "label": "ESQUEMAS", "at": [320, 298],
+      "info": "El catálogo de esquemas del repositorio"
+    },
+    {
+      "from": "platform", "to": "agents",
+      "points": [[536, 232], [536, 308], [680, 308]],
+      "label": "MARKDOWN", "at": [608, 298],
+      "info": "Cada página como Markdown"
+    }
+  ]
+}
