@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Monorepo `doc`: Astro + Hono + oRPC + Better Auth + Drizzle/PostgreSQL on Bun, Caddy gateway, Biome and Turborepo. It derives from the user's original `stack` template (the earlier repo, with Python services, gRPC and agent chat) and keeps its packages (`@nonete/*`), conventions and visual system so code can move between both repos unchanged.
+Monorepo `colofon`: Astro + Hono + oRPC + Better Auth + Drizzle/PostgreSQL on Bun, Caddy gateway, Biome and Turborepo. It derives from the user's original `stack` template (the earlier repo, with Python services, gRPC and agent chat) and keeps its packages (`@nonete/*`), conventions and visual system so code can move between both repos unchanged.
 
 ## About this document
 
