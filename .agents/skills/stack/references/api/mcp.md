@@ -37,4 +37,6 @@ The URL is `<public origin>/mcp` (in dev, `https://localhost:4321/mcp`), and the
 claude mcp add --transport http colofon https://docs.example.org/mcp --header "x-api-key: <key>"
 ```
 
+The dialog that shows a new key on `/me` offers this command, Codex's `config.toml` entry and the `mcpServers` JSON with the key already filled in (`apps/frontend/src/features/api-keys/manage/model/agent-setups.ts`). Keep them in step with the endpoint.
+
 There is no OAuth discovery (`/.well-known/oauth-protected-resource`). A client that tries it after a 401 needs the header set in its config.

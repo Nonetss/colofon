@@ -2,7 +2,13 @@ import { getIcon } from "@/lib/icon-registry"
 
 const ShieldAlert = getIcon("security", "warning")
 
+import { createHighlighter } from "@tanstack/highlight/core"
+import { json } from "@tanstack/highlight/languages/json"
+import { plaintext } from "@tanstack/highlight/languages/plaintext"
+import { shell } from "@tanstack/highlight/languages/shell"
+import { toml } from "@tanstack/highlight/languages/toml"
 import { Text, textVariants } from "@/components/shared/brand/typography"
+import { HighlightedTokens } from "@/components/shared/data-display/highlighted-tokens"
 import { CopyButton } from "@/components/shared/form/copy-button"
 import { FormField } from "@/components/shared/form/field-label"
 import { Button } from "@/components/ui/button"
@@ -15,8 +21,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { agentPrompt } from "@/features/api-keys/manage/model/agent-prompt"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import {
+  type AgentSetup,
+  agentSetups,
+} from "@/features/api-keys/manage/model/agent-setups"
 import { cn } from "@/lib/utils"
 
 export type ApiKeyCreatedDialogProps = {
@@ -32,7 +41,7 @@ export function ApiKeyCreatedDialog({
 }: ApiKeyCreatedDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="gap-0 overflow-hidden p-0 sm:max-w-lg">
+      <DialogContent className="gap-0 overflow-hidden p-0 sm:max-w-2xl">
         <DialogHeader className="gap-1.5 border-b px-6 py-5 text-left">
           <DialogTitle className={textVariants({ role: "display" })}>
             API key creada
@@ -72,33 +81,10 @@ export function ApiKeyCreatedDialog({
           ) : null}
 
           {fullKey ? (
-            <FormField
-              label="Para tu IA"
-              htmlFor="api-key-prompt"
-              hint="Pégale esto para que lea la documentación con tu clave."
-            >
-              <div className="flex items-start gap-2">
-                <Textarea
-                  id="api-key-prompt"
-                  readOnly
-                  rows={4}
-                  value={agentPrompt(window.location.origin, fullKey)}
-                  className={cn(
-                    textVariants({ role: "data" }),
-                    "min-w-0 flex-1 resize-none leading-relaxed"
-                  )}
-                />
-                <CopyButton
-                  text={agentPrompt(window.location.origin, fullKey)}
-                  label="Copiar instrucciones"
-                  copiedLabel="Copiadas"
-                  showSuccessToast
-                  onError="No se pudieron copiar las instrucciones"
-                  size="icon"
-                  variant="outline"
-                  className="shrink-0"
-                />
-              </div>
+            <FormField label="Conecta tu IA">
+              <AgentSetupTabs
+                setups={agentSetups(window.location.origin, fullKey)}
+              />
             </FormField>
           ) : null}
 
@@ -124,5 +110,59 @@ export function ApiKeyCreatedDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  )
+}
+
+/** Only the languages the setups are written in. */
+const setupHighlighter = createHighlighter({
+  languages: [shell, toml, json, plaintext],
+})
+
+/** One tab per agent client, each with its text to copy and where it goes. */
+function AgentSetupTabs({ setups }: { setups: AgentSetup[] }) {
+  return (
+    <Tabs defaultValue={setups[0]?.id}>
+      <TabsList variant="line" className="w-full justify-start">
+        {setups.map((setup) => (
+          <TabsTrigger key={setup.id} value={setup.id} className="flex-none">
+            {setup.label}
+          </TabsTrigger>
+        ))}
+      </TabsList>
+      {setups.map((setup) => (
+        <TabsContent key={setup.id} value={setup.id} className="space-y-2">
+          <div className="flex items-start gap-2">
+            <pre
+              id={`api-key-setup-${setup.id}`}
+              className={cn(
+                textVariants({ role: "data" }),
+                "max-h-48 min-w-0 flex-1 overflow-auto rounded-md border bg-muted/40 px-3 py-2.5 text-foreground/90 leading-relaxed whitespace-pre-wrap break-all"
+              )}
+            >
+              <HighlightedTokens
+                tokens={
+                  setupHighlighter.tokenize(setup.text, {
+                    lang: setup.language,
+                  }).tokens
+                }
+              />
+            </pre>
+            <CopyButton
+              text={setup.text}
+              label={`Copiar para ${setup.label}`}
+              copiedLabel="Copiado"
+              showSuccessToast
+              onError="No se pudo copiar"
+              size="icon"
+              variant="outline"
+              className="shrink-0"
+            />
+          </div>
+          <Text as="p" variant="meta" tone="muted">
+            {setup.hint}
+          </Text>
+        </TabsContent>
+      ))}
+    </Tabs>
   )
 }
