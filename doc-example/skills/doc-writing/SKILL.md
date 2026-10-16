@@ -14,7 +14,7 @@ This skill says how to work, not what the contract holds. The contract is explai
 
 ## Rules that never change
 
-- **The contract's names are Spanish and fixed** (`titulo`, `descripcion`, `catalogo/`, `_tipo.yaml`, `menu.yaml`, `diagramas/`…), except a diagram's keys, which are English (`title`, `nodes`, `edges`…). Never translate or rename them; everything else is the site's own.
+- **The contract's names are Spanish and fixed** (`titulo`, `descripcion`, `catalogo/`, `_tipo.yaml`, `menu.yaml`, `diagramas/`, `estilos/` and its module names…), except a diagram's keys, which are English (`title`, `nodes`, `edges`…). Never translate or rename them; everything else is the site's own.
 - **Pages have no code:** Markdown and the platform's components (`Callout`, `Entities`, `Diagram`) only. No `import`, `export` or expressions between braces.
 - **YAML wins over MDX:** a title or icon `menu.yaml` gives an entry is the one shown everywhere. Put the icons of the pages the menu shows in the menu, not in their headers.
 - **Every `icono` is a Lucide icon name.**

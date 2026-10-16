@@ -17,7 +17,7 @@ and a `ficha`, `header-fields` a `ref`, `components` a `lista` of `objeto`,
 
 `nombre: Fichero`, `icono: file-code`. The id is a short name for each file
 (`doc-config`, `menu`, `page`, `type-declaration`, `entity`, `diagram-file`,
-`diagram-illustration`, `served-skill`).
+`diagram-illustration`, `served-skill`, `styles`).
 
 | Field | Kind | Why |
 | --- | --- | --- |

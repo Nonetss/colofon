@@ -1,0 +1,97 @@
+---
+titulo: Estilos propios
+descripcion: estilos/ cambia el aspecto del sitio en sus propias páginas, módulo a módulo, por encima de los estilos de la plataforma
+files: [styles]
+orden: 3
+actualizado: 2026-10-16
+---
+
+## La carpeta estilos/
+
+Un repositorio puede traer una carpeta `estilos/` con ficheros CSS que cambian cómo se ven **sus** páginas en el lector: los colores de la marca, la letra, las tablas, los avisos. Es opcional, igual que cada uno de sus ficheros. Sin `estilos/`, el sitio se ve con los estilos de la plataforma.
+
+Cada fichero se llama como uno de los módulos de estilos de la plataforma, y solo esos nombres valen:
+
+| Fichero | Qué cambia |
+| --- | --- |
+| `tema.css` | Las variables del tema: colores, letra, radios. Cambiarlas recolorea todo a la vez |
+| `pagina.css` | El cuerpo de la página: títulos, enlaces, negritas, código en línea, anclas |
+| `controles.css` | Los botones de solo icono de la página (copiar, ampliar) y su burbuja |
+| `codigo.css` | Los bloques de código: el marco, la barra con el lenguaje y el botón de copiar |
+| `tablas.css` | Las tablas del catálogo, las de las páginas y sus controles (ordenar, filtrar, redimensionar) |
+| `diagramas.css` | Los diagramas y la tarjeta que aparece junto al puntero |
+| `imagenes.css` | Las imágenes de la página y el visor a pantalla completa |
+| `avisos.css` | Los avisos (`Callout` y `> [!NOTE]`) y las citas |
+| `secciones.css` | Las secciones repetidas de cada página, como «¿Dónde busco…?» y «Trampas y decisiones» |
+
+Los módulos se aplican en ese orden: donde dos módulos tocan lo mismo, gana el que va después. Y todos van **después** de los estilos de la plataforma, así que, a igual selector, gana el repositorio.
+
+Los estilos solo se aplican en las páginas de este repositorio. Las de otros repositorios, la portada «Todos» y la administración nunca los ven.
+
+## El tema
+
+Casi siempre basta con `tema.css`. Este sitio trae el suyo: por eso su acento es azul y no el terracota de la plataforma. Las piezas de la página se dibujan con las variables del tema, así que cambiar una variable cambia todo lo que la usa. Declara cada una en `:root` (tema claro) y en `.dark` (tema oscuro):
+
+```css
+:root {
+  --primary: oklch(0.55 0.2 250);
+  --radius: 0.5rem;
+}
+
+.dark {
+  --primary: oklch(0.7 0.15 250);
+}
+```
+
+| Variable | Qué colorea |
+| --- | --- |
+| `--primary` | El acento: enlaces, negritas, la página actual de la barra lateral, el foco y los botones principales |
+| `--background`, `--foreground` | El fondo y el texto |
+| `--card`, `--card-foreground` | Los marcos: código, tablas, diagramas |
+| `--muted`, `--muted-foreground` | Los fondos suaves y el texto secundario |
+| `--border` | Las líneas y los bordes |
+| `--sidebar`, `--sidebar-foreground` | La barra lateral |
+| `--radius` | El redondeo de las esquinas |
+| `--font-sans`, `--font-mono` | La letra del texto y la del código |
+
+## Los módulos
+
+Para cambiar una pieza concreta, escribe reglas con las clases que pone la plataforma. Todas las del cuerpo de la página empiezan por `.typeset.doc`:
+
+| Módulo | Clases y variables principales |
+| --- | --- |
+| `pagina.css` | `.typeset.doc h2`, `.typeset.doc a`, `.typeset.doc strong`, `.doc-anchor` |
+| `controles.css` | `.typeset.doc button[data-hint]` |
+| `codigo.css` | `.doc-code`, `.doc-code-bar`, `.doc-code-copy` |
+| `tablas.css` | `.doc-table`, `.doc-table[data-table-kv]`, `.doc-entities`, `.doc-table-sort` |
+| `diagramas.css` | `figure.doc-diagram`, y sus colores `--d-paper`, `--d-ink`, `--d-accent` y `--d-hue-blue`… |
+| `imagenes.css` | `.typeset.doc img`, `img[data-zoomable]`, `.doc-lightbox` |
+| `avisos.css` | `.doc-alert`, `.doc-alert-note`, `.doc-alert-tip`, `.doc-alert-warning`…, y su color `--alert` |
+| `secciones.css` | `.doc-section`, `.doc-section[data-kind="where"]`, `.doc-section[data-kind="pitfalls"]`, y su color `--section` |
+
+Por ejemplo, para que los avisos de nota sean violetas:
+
+```css
+.typeset.doc .doc-alert-note {
+  --alert: oklch(0.6 0.16 295);
+}
+```
+
+<Callout type="warning" title="Las clases son parte del contrato">
+Escribe solo con estas clases y variables. Las demás pueden cambiar en cualquier versión de la plataforma sin aviso.
+</Callout>
+
+## Lo que la plataforma quita
+
+Cualquiera puede escribir un repositorio, así que la plataforma limpia cada fichero antes de usarlo y quita:
+
+- `@import` y cualquier regla `@` que no sea `@media`, `@supports`, `@container`, `@layer`, `@keyframes`, `@font-face`, `@property`, `@scope` o `@starting-style`.
+- Toda declaración que cargue algo de fuera: una `url()` absoluta (`https://…`, `//…`) o de otro tipo. Solo valen las imágenes y fuentes en `data:` y las imágenes del propio `docs/`, escritas desde `estilos/`: `url(../docs/img/fondo.png)`. Las fuentes de Google y similares no se pueden traer; usa `data:` o una fuente del sistema.
+- Las propiedades que ejecutaban código en navegadores antiguos (`behavior`, `-moz-binding`).
+- Los comentarios, y lo que no se puede leer como CSS (solo esa regla o declaración; el resto del fichero se usa).
+
+Cada fichero puede ocupar hasta 64 KiB, y todos juntos, ya limpios, hasta 128 KiB. A partir del módulo que pase del total, ese y los siguientes se dejan fuera.
+
+## Qué se reporta
+
+Todo lo que se quita, un fichero de `estilos/` con otro nombre (`tables.css`) y un fichero demasiado grande se reportan a los administradores en la página de inicio del repositorio, con el fichero y la línea, igual que los problemas de `menu.yaml`. Los estilos rotos nunca impiden que se publiquen las páginas.

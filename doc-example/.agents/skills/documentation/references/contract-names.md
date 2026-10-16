@@ -10,7 +10,7 @@ Everything else is this site's own. The source is `docs/repository/index.mdx`
 
 | Where | Contract names |
 | --- | --- |
-| Files and folders | `doc.config.yaml`, `menu.yaml`, `docs/`, `index.mdx`, `catalogo/`, `_tipo.yaml`, `diagramas/`, `skills/` |
+| Files and folders | `doc.config.yaml`, `menu.yaml`, `docs/`, `index.mdx`, `catalogo/`, `_tipo.yaml`, `diagramas/`, `estilos/` and its modules (`tema.css`, `pagina.css`, `controles.css`, `codigo.css`, `tablas.css`, `diagramas.css`, `imagenes.css`, `avisos.css`, `secciones.css`), `skills/` |
 | `doc.config.yaml` | `nombre`, `descripcion`, `plataforma`, `cabecera` |
 | `menu.yaml` | `secciones`, `titulo`, `icono`, `descripcion`, `paginas`, `ruta` |
 | `_tipo.yaml` | `nombre`, `plural`, `icono`, `descripcion`, `etiqueta`, `campos`, `vista`, `columnas` |
