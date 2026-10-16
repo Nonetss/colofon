@@ -310,4 +310,3 @@ crons, comentarios, iconos de entidad, Docker, OpenSpec) sigue disponible.
 | Contrato del contenido (código) | `packages/content` |
 | Specs | `openspec/specs/content-contract`, `content-editor-schemas` y `content-repository-management` |
 | Cambios ya hechos y su porqué | `openspec/changes/archive/` |
-| Repositorio de contenido de ejemplo | `https://git.noneweb.online/nonete/documentacion` |
