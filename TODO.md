@@ -44,16 +44,32 @@ que el MCP porque el MCP tiene que respetarlos.
 
 ### 6. MCP para agentes
 
-- [ ] Endpoint en el backend, en la URL de colofon, autenticado con API key
-      (`x-api-key`).
-- [ ] Herramientas, todas filtradas por los permisos de la key:
-  - [ ] `buscar`: la misma búsqueda del Ctrl+K (`documentation-search`).
-  - [ ] `indice`: el `llms.txt` global o el de un repositorio.
-  - [ ] `leer(ruta)`: una ficha en Markdown (reutiliza la ruta `.md`).
-  - [ ] `entidad(tipo, id)`: una entidad con sus relaciones y las fichas que
-        la citan.
-  - [ ] `skills()` / `skill(nombre)`.
-  - [ ] `repositorios()`.
+- [x] Endpoint `/mcp` en el backend, autenticado con API key (`x-api-key`).
+      Las herramientas leen con los procedimientos de `v1.docs` como el
+      dueño de la key, así que heredarán los permisos del punto 2.
+- [x] `repositories`, `index`, `search` y `read` (`add-docs-mcp`).
+- [ ] `entity(type, id)`: una entidad con sus relaciones y las fichas que
+      la citan.
+- [ ] `skills()` / `skill(name)` (depende del punto 5).
+- [ ] `read` de una sola sección: con `#ancla`, devolver solo esa sección
+      (y sus subsecciones) en vez de la página entera.
+
+### 7. Búsqueda y Markdown (de la primera prueba del MCP)
+
+- [ ] Ranking: un prefijo corto ("tip") pesa más por el campo (título,
+      encabezado) que la palabra exacta en el cuerpo. La spec ya dice que la
+      palabra exacta pesa más; revisar el reparto de pesos. Afecta también
+      al Ctrl+K.
+- [ ] Extractos de tablas: las celdas salen unidas con espacios, cabecera
+      incluida. Aplanarlas como `columna: valor`, como ya salen los
+      atributos de los componentes.
+- [ ] Markdown (`llm.txt`, "Copiar en Markdown" y `read`):
+  - [ ] El Callout pierde su tipo; valorar `> [!TIP]` en vez de la cita
+        con el título en negrita (hoy es una decisión a propósito).
+  - [ ] Listas de objetos dentro de una celda: se separan con `, ` y no se
+        ve dónde acaba cada objeto.
+  - [ ] El título de grupo de `<Entities group>` sale como párrafo suelto;
+        debería ser un encabezado o ir en negrita.
 
 ### 7. Documentación en una subcarpeta del repositorio
 
