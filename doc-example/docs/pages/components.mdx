@@ -1,0 +1,56 @@
+---
+titulo: Componentes
+descripcion: Los tres componentes que puede usar una página, Callout, Entities y Diagram, y cómo escribirlos
+files: [page]
+components: [callout, entities, diagram]
+orden: 3
+actualizado: 2026-10-15
+---
+
+## Los componentes
+
+<Entities type="components" columns="tag,purpose,attributes" />
+
+Cada uno va en un bloque propio, con una línea en blanco antes y después. Los atributos son cadenas literales entre comillas, nunca expresiones entre llaves. Cualquier otro componente se reporta y se sustituye por un aviso.
+
+## Callout
+
+Una nota destacada que admite Markdown:
+
+```mdx
+<Callout type="tip" title="Antes de empezar">
+Mantén configurado el catálogo de esquemas del editor: marca la mayoría de los errores antes de que hagas push.
+</Callout>
+```
+
+<Callout type="tip" title="Antes de empezar">
+Mantén configurado el catálogo de esquemas del editor: marca la mayoría de los errores antes de que hagas push.
+</Callout>
+
+`type` es `note` (el predeterminado), `info`, `tip`, `important`, `warning`, `caution` o `danger`. Un tipo desconocido se reporta y se renderiza como una nota.
+
+## Entities
+
+La tabla de un tipo del catálogo, construida a partir de sus entidades cuando se lee el sitio, así que nunca queda desactualizada:
+
+```mdx
+<Entities type="field-kinds" group="family" columns="id,value,takes" />
+```
+
+<Entities type="field-kinds" group="family" columns="id,value,takes" />
+
+- `type` es el nombre de la carpeta del tipo en `catalogo/`.
+- `columns` elige los campos, `id` incluido. Sin él, se usa el `vista.columnas` del tipo; sin eso, su etiqueta y todos sus campos.
+- `group` divide la tabla en un bloque por valor, en el orden de `valores` para un `enum`, con las entidades que no lo tienen al final.
+- Las filas se ordenan por etiqueta, y cada etiqueta enlaza a la página de la entidad o a su página de catálogo. Las referencias muestran la etiqueta de aquello a lo que apuntan, con enlace.
+- Un tipo, columna o atributo desconocido, y cada entidad que no cumple su tipo, se reportan en la página; el resto de la tabla se renderiza igualmente.
+
+## Diagram
+
+Un diagrama escrito en su propio fichero bajo `diagramas/`, mostrado donde una página lo necesite:
+
+```mdx
+<Diagram id="pipeline" />
+```
+
+El mismo diagrama puede estar en cualquier número de páginas: este sitio muestra `pipeline` en su página de inicio y en [Sincronización y problemas](../publishing/index.mdx). Cómo escribir uno está en [Diagramas](../diagrams/index.mdx).

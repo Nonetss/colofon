@@ -1,0 +1,59 @@
+---
+titulo: Markdown
+descripcion: Qué puede contener el cuerpo de una página, cómo se resuelven sus enlaces e imágenes, y qué rechaza la plataforma
+files: [page]
+orden: 2
+actualizado: 2026-10-15
+---
+
+## Qué acepta
+
+- **Markdown de GitHub:** tablas, listas de tareas, tachado, autoenlaces y notas al pie.
+- **Encabezados desde `##`:** el título es el `titulo` de la cabecera, así que un encabezado `#` en el cuerpo se reporta. Los encabezados `##` y `###` forman el índice "En esta página" de la página.
+- **Bloques de código:** conservan su lenguaje y tienen un botón de copiar.
+- **Tablas:** en el lector se ordenan por cualquier columna, cada una según lo que lleva (IP, fechas, tamaños, versiones, números o texto). Desde 2 filas tienen además una caja que filtra y acepta `columna:valor`, un filtro por columna, un menú de columnas, copiar en Markdown, CSV y un enlace a la vista; con más de 50 filas, páginas. Una tabla con la primera celda de la cabecera vacía es de clave/valor y se queda como está.
+- **Alertas:** una cita que empieza por `[!NOTE]`, `[!TIP]`, `[!IMPORTANT]`, `[!WARNING]` o `[!CAUTION]`.
+
+```mdx
+> [!WARNING]
+> Esto reinicia el router.
+```
+
+> [!WARNING]
+> Esto reinicia el router.
+
+- **Comentarios:** un comentario entre llaves y `/* */` se descarta sin problema.
+
+## Enlaces
+
+| Para enlazar a… | Escribe | Lleva a |
+| --- | --- | --- |
+| Otra página | Su ruta relativa con `.mdx`: `[DNS](../network/dns.mdx#zones)` | Esa página, conservando el ancla |
+| Una entidad | `[docker-01](catalogo:machines/docker-01)` | La página de la entidad, o su [página de catálogo](../catalog/reader.mdx) cuando no tiene |
+| Un tipo del catálogo | `[Machines](catalogo:machines)` | La página de catálogo del tipo |
+| Un sitio externo | La URL `https://` completa | Ese sitio, en una pestaña nueva |
+
+Un enlace a una página, tipo o entidad que no existe se reporta y se muestra como texto plano. Enlazar a una entidad también cuenta como citarla: su página lista la tuya.
+
+## Imágenes
+
+Una ruta relativa a un fichero `png`, `jpg`, `jpeg`, `gif`, `webp`, `avif` o `svg` bajo `docs/`, de hasta 10 MiB, normalmente en una carpeta `img/` junto a la página:
+
+```mdx
+![El panel de Komodo](img/panel.png)
+```
+
+El lector las abre ampliadas con zoom. Una imagen que falta, o un enlace a cualquier otro tipo de fichero, se reporta. Para una imagen de cómo se conectan las cosas, escribe mejor un [diagrama](../diagrams/index.mdx).
+
+## Qué rechaza
+
+| Escrito | Qué ocurre |
+| --- | --- |
+| `import` o `export` | Se reporta en su línea y se omite |
+| Una expresión entre llaves | Se reporta y se omite; el texto que la rodea se renderiza |
+| Un componente que la plataforma no tiene | Se reporta, y en su lugar se renderiza un aviso que lo nombra |
+| Un componente de la plataforma dentro de un párrafo | Se reporta: va en un bloque propio |
+| Un bloque delimitado con el lenguaje `diagram` | Se reporta: los diagramas van en `diagramas/` |
+| Una página que no se puede analizar | Se reporta con la línea del analizador; solo se muestra su cabecera |
+
+Cada problema nombra el fichero y la línea. Los administradores los ven sobre la página; el resto de lectores solo ve la página.
