@@ -61,10 +61,11 @@ function text(result: CallToolResult): string {
 }
 
 describe("serveMcp", () => {
-  test("serves exactly the four read-only tools", async () => {
+  test("serves exactly the five read-only tools", async () => {
     const client = await connect()
     const { tools } = await client.listTools()
     expect(tools.map((tool) => tool.name).sort()).toEqual([
+      "entity",
       "index",
       "read",
       "repositories",
@@ -80,6 +81,8 @@ describe("serveMcp", () => {
     const client = await connect()
     expect(client.getServerVersion()?.name).toBe("colofon")
     expect(client.getInstructions()).toContain("`search`")
+    expect(client.getInstructions()).toContain("`entity`")
+    expect(client.getInstructions()).toContain("`#section`")
   })
 
   test("a call reaches its tool with the request's client", async () => {
@@ -99,6 +102,16 @@ describe("serveMcp", () => {
     expect(result.isError).toBe(true)
     expect(text(result)).toContain("query")
     expect(searched).toEqual([])
+  })
+
+  test("entity needs its repository, type and id", async () => {
+    const client = await connect()
+    const result = await client.callTool({
+      name: "entity",
+      arguments: { repository: "casa", type: "servidor" },
+    })
+    expect(result.isError).toBe(true)
+    expect(text(result)).toContain("id")
   })
 
   test("keeps no sessions: a GET is not allowed", async () => {

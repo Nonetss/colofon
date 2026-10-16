@@ -5,10 +5,11 @@ import type { z } from "zod"
 import { withOrigin } from "#v1/docs/full-links"
 import type { DocsRepository } from "#v1/docs/llm-text"
 import { llmsIndex, repositoryLlmsIndex } from "#v1/docs/llm-text"
-import { pageMarkdown } from "#v1/docs/markdown"
+import { bodyMarkdown, pageMarkdown } from "#v1/docs/markdown"
 import type { docsOutput } from "#v1/docs/output"
 import {
   type DocsClient,
+  entityTool,
   indexTool,
   parseRoute,
   readTool,
@@ -98,6 +99,108 @@ const dns: Page = {
   styles: null,
 }
 
+type Node = NonNullable<Page["tree"]>["children"][number]
+
+function heading(tagName: "h2" | "h3", id: string, value: string): Node {
+  return {
+    type: "element",
+    tagName,
+    properties: { id },
+    children: [{ type: "text", value }],
+  }
+}
+
+function paragraph(value: string): Node {
+  return {
+    type: "element",
+    tagName: "p",
+    properties: {},
+    children: [{ type: "text", value }],
+  }
+}
+
+/** `red/dns` with sections: "Resolución inversa" (with "PTR"), "Cachés". */
+const sections: Page = {
+  ...dns,
+  tree: {
+    type: "root",
+    children: [
+      paragraph("Intro."),
+      heading("h2", "resolucion-inversa", "Resolución inversa"),
+      paragraph("Inversa."),
+      heading("h3", "ptr", "PTR"),
+      paragraph("Registros PTR."),
+      heading("h3", "zonas", "Zonas"),
+      paragraph("Zonas inversas."),
+      heading("h2", "caches", "Cachés"),
+      paragraph("Cachés."),
+      {
+        type: "element",
+        tagName: "div",
+        properties: {},
+        children: [heading("h3", "anidada", "Anidada")],
+      },
+    ],
+  },
+  headings: [
+    { depth: 2, id: "resolucion-inversa", text: "Resolución inversa" },
+    { depth: 3, id: "ptr", text: "PTR" },
+    { depth: 3, id: "zonas", text: "Zonas" },
+    { depth: 2, id: "caches", text: "Cachés" },
+    { depth: 3, id: "anidada", text: "Anidada" },
+  ],
+}
+
+/** The generated page of the entity `servidor/nas`. */
+const nas: Page = {
+  ...dns,
+  path: "catalog/servidor/nas",
+  href: "/casa/catalog/servidor/nas",
+  source: "generated",
+  header: { ...dns.header, title: "NAS", description: "Servidor" },
+  tree: {
+    type: "root",
+    children: [
+      heading("h2", "paginas-que-la-citan", "Páginas que la citan"),
+      {
+        type: "element",
+        tagName: "ul",
+        properties: {},
+        children: [
+          {
+            type: "element",
+            tagName: "li",
+            properties: {},
+            children: [
+              {
+                type: "element",
+                tagName: "a",
+                properties: { href: "/casa/copias" },
+                children: [{ type: "text", value: "Copias" }],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  breadcrumbs: [
+    { path: "catalog", href: "/casa/catalog", title: "Catálogo" },
+    {
+      path: "catalog/servidor",
+      href: "/casa/catalog/servidor",
+      title: "Servidores",
+    },
+  ],
+}
+
+/** The pages the fake reader has in `casa`, by path. */
+const casaPages = new Map<string, Page>([
+  ["red/dns", dns],
+  ["catalog/servidor", { ...dns, path: "catalog/servidor" }],
+  ["catalog/servidor/nas", nas],
+])
+
 const noResults: SearchOutput = { allRepositories: false, results: [] }
 
 type Calls = { page: unknown[]; search: unknown[] }
@@ -106,16 +209,19 @@ type Calls = { page: unknown[]; search: unknown[] }
 function fakeDocs({
   repositories = [casa, nuevo],
   search = noResults,
+  pages = casaPages,
 }: {
   repositories?: DocsRepository[]
   search?: SearchOutput
+  pages?: ReadonlyMap<string, Page>
 } = {}): { docs: DocsClient; calls: Calls } {
   const calls: Calls = { page: [], search: [] }
   const docs: DocsClient = {
     nav: async () => ({ repositories }),
     page: async (input) => {
       calls.page.push(input)
-      if (input.repository === "casa" && input.path === "red/dns") return dns
+      const page = pages.get(input.path ?? "")
+      if (input.repository === "casa" && page !== undefined) return page
       throw new ORPCError("NOT_FOUND")
     },
     search: async (input) => {
@@ -137,36 +243,54 @@ describe("parseRoute", () => {
     expect(parseRoute("/casa/red/dns")).toEqual({
       repository: "casa",
       path: "red/dns",
+      section: null,
     })
   })
 
   test("a repository alone is its home", () => {
-    expect(parseRoute("/casa")).toEqual({ repository: "casa", path: "" })
-    expect(parseRoute("casa/")).toEqual({ repository: "casa", path: "" })
+    const home = { repository: "casa", path: "", section: null }
+    expect(parseRoute("/casa")).toEqual(home)
+    expect(parseRoute("casa/")).toEqual(home)
   })
 
-  test("drops the section, the query, the trailing slash and /llm.txt", () => {
+  test("drops the query, the trailing slash and /llm.txt", () => {
     for (const route of [
-      "/casa/red/dns#resolucion-inversa",
       "/casa/red/dns?x=1",
       "/casa/red/dns/",
       "/casa/red/dns/llm.txt",
       " /casa/red/dns ",
+      "/casa/red/dns#",
     ])
-      expect(parseRoute(route)).toEqual({ repository: "casa", path: "red/dns" })
+      expect(parseRoute(route)).toEqual({
+        repository: "casa",
+        path: "red/dns",
+        section: null,
+      })
   })
 
-  test("takes the path of a full address", () => {
+  test("keeps the section of a search result", () => {
+    expect(parseRoute("/casa/red/dns#resolucion-inversa")).toEqual({
+      repository: "casa",
+      path: "red/dns",
+      section: "resolucion-inversa",
+    })
+    expect(parseRoute("/casa/red/dns?x=1#ptr")).toEqual({
+      repository: "casa",
+      path: "red/dns",
+      section: "ptr",
+    })
+  })
+
+  test("takes the path and section of a full address", () => {
     expect(
       parseRoute("https://docs.example.org/casa/red/dns/llm.txt#x")
-    ).toEqual({ repository: "casa", path: "red/dns" })
+    ).toEqual({ repository: "casa", path: "red/dns", section: "x" })
   })
 
-  test("decodes escaped characters", () => {
-    expect(parseRoute("https://docs.example.org/casa/m%C3%A1quinas")).toEqual({
-      repository: "casa",
-      path: "máquinas",
-    })
+  test("decodes escaped characters, in the path and the section", () => {
+    expect(
+      parseRoute("https://docs.example.org/casa/m%C3%A1quinas#cach%C3%A9s")
+    ).toEqual({ repository: "casa", path: "máquinas", section: "cachés" })
   })
 
   test("names no repository for the root or a broken escape", () => {
@@ -356,7 +480,7 @@ describe("readTool", () => {
     const result = await readTool({
       docs,
       origin,
-      input: { route: "/casa/red/dns#resolucion-inversa" },
+      input: { route: "/casa/red/dns" },
     })
     expect(calls.page).toEqual([{ repository: "casa", path: "red/dns" }])
     const expected = withOrigin(
@@ -369,6 +493,134 @@ describe("readTool", () => {
     )
     expect(text(result)).toBe(
       `Location: Casa / Red / DNS (https://docs.example.org/casa/red/dns)\n\n${expected}`
+    )
+    expect(text(result)).toContain("(https://docs.example.org/casa/red/vpn)")
+  })
+
+  test("with a section, is only that section and its subsections", async () => {
+    const { docs, calls } = fakeDocs({
+      pages: new Map([["red/dns", sections]]),
+    })
+    const result = await readTool({
+      docs,
+      origin,
+      input: { route: "/casa/red/dns#resolucion-inversa" },
+    })
+    expect(calls.page).toEqual([{ repository: "casa", path: "red/dns" }])
+    expect(text(result)).toBe(
+      [
+        "Location: Casa / Red / DNS / Resolución inversa (https://docs.example.org/casa/red/dns#resolucion-inversa)",
+        "",
+        "## Resolución inversa",
+        "",
+        "Inversa.",
+        "",
+        "### PTR",
+        "",
+        "Registros PTR.",
+        "",
+        "### Zonas",
+        "",
+        "Zonas inversas.",
+        "",
+      ].join("\n")
+    )
+  })
+
+  test("a level 3 section stops at the next heading of its level", async () => {
+    const { docs } = fakeDocs({ pages: new Map([["red/dns", sections]]) })
+    const result = await readTool({
+      docs,
+      origin,
+      input: { route: "/casa/red/dns#ptr" },
+    })
+    expect(text(result)).toContain("### PTR\n\nRegistros PTR.\n")
+    expect(text(result)).not.toContain("Zonas")
+    expect(text(result)).not.toContain("# DNS")
+  })
+
+  test("an unknown section is an error listing the page's sections", async () => {
+    const { docs } = fakeDocs({ pages: new Map([["red/dns", sections]]) })
+    const result = await readTool({
+      docs,
+      origin,
+      input: { route: "/casa/red/dns#no-existe" },
+    })
+    expect(result.isError).toBe(true)
+    expect(text(result)).toBe(
+      [
+        'The page /casa/red/dns has no section "#no-existe". Its sections:',
+        "- `#resolucion-inversa`: Resolución inversa",
+        "- `#ptr`: PTR",
+        "- `#zonas`: Zonas",
+        "- `#caches`: Cachés",
+        "- `#anidada`: Anidada",
+        "Read /casa/red/dns for the whole page.",
+      ].join("\n")
+    )
+  })
+
+  test("a section of a page without sections is an error too", async () => {
+    const { docs } = fakeDocs()
+    const result = await readTool({
+      docs,
+      origin,
+      input: { route: "/casa/red/dns#x" },
+    })
+    expect(result.isError).toBe(true)
+    expect(text(result)).toContain("Read /casa/red/dns for the whole page.")
+  })
+
+  test("a section nested in another element gives the whole page", async () => {
+    const { docs } = fakeDocs({ pages: new Map([["red/dns", sections]]) })
+    const nested = await readTool({
+      docs,
+      origin,
+      input: { route: "/casa/red/dns#anidada" },
+    })
+    const whole = await readTool({
+      docs,
+      origin,
+      input: { route: "/casa/red/dns" },
+    })
+    expect(nested.isError).toBeUndefined()
+    expect(text(nested)).toBe(text(whole))
+  })
+
+  test("a section's links are full addresses", async () => {
+    const linked: Page = {
+      ...sections,
+      tree: {
+        type: "root",
+        children: [
+          heading("h2", "vpn", "VPN"),
+          {
+            type: "element",
+            tagName: "p",
+            properties: {},
+            children: [
+              {
+                type: "element",
+                tagName: "a",
+                properties: { href: "/casa/red/vpn" },
+                children: [{ type: "text", value: "la VPN" }],
+              },
+            ],
+          },
+        ],
+      },
+      headings: [{ depth: 2, id: "vpn", text: "VPN" }],
+    }
+    const { docs } = fakeDocs({ pages: new Map([["red/dns", linked]]) })
+    const result = await readTool({
+      docs,
+      origin,
+      input: { route: "/casa/red/dns#vpn" },
+    })
+    const tree = linked.tree
+    if (tree === null) throw new Error("No tree")
+    expect(text(result)).toContain(
+      withOrigin(`${bodyMarkdown(tree)}\n`, origin)
     )
     expect(text(result)).toContain("(https://docs.example.org/casa/red/vpn)")
   })
@@ -409,5 +661,77 @@ describe("readTool", () => {
     await expect(
       readTool({ docs, origin, input: { route: "/casa/red/dns" } })
     ).rejects.toBeInstanceOf(ORPCError)
+  })
+})
+
+describe("entityTool", () => {
+  const input = { repository: "casa", type: "servidor", id: "nas" }
+
+  test("is its catalog page, as read returns it", async () => {
+    const { docs, calls } = fakeDocs()
+    const result = await entityTool({ docs, origin, input })
+    expect(calls.page).toEqual([
+      { repository: "casa", path: "catalog/servidor/nas" },
+    ])
+    const read = await readTool({
+      docs,
+      origin,
+      input: { route: "/casa/catalog/servidor/nas" },
+    })
+    expect(result.isError).toBeUndefined()
+    expect(text(result)).toBe(text(read))
+    expect(text(result)).toStartWith(
+      "Location: Casa / Catálogo / Servidores / NAS (https://docs.example.org/casa/catalog/servidor/nas)"
+    )
+    expect(text(result)).toContain("(https://docs.example.org/casa/copias)")
+  })
+
+  test("an unknown id points at its type's catalog page", async () => {
+    const { docs } = fakeDocs()
+    const result = await entityTool({
+      docs,
+      origin,
+      input: { ...input, id: "no-existe" },
+    })
+    expect(result.isError).toBe(true)
+    expect(text(result)).toBe(
+      'There is no entity "no-existe" of type "servidor" in "casa". Read /casa/catalog/servidor to list the entities of that type.'
+    )
+  })
+
+  test("an unknown type points at the catalog", async () => {
+    const { docs } = fakeDocs()
+    const result = await entityTool({
+      docs,
+      origin,
+      input: { ...input, type: "no-existe" },
+    })
+    expect(result.isError).toBe(true)
+    expect(text(result)).toBe(
+      'There is no catalog type "no-existe" in "casa". Read /casa/catalog to list the catalog types.'
+    )
+  })
+
+  test("an unknown repository or one without content says so", async () => {
+    const { docs } = fakeDocs()
+    for (const repository of ["no-existe", "nuevo"]) {
+      const result = await entityTool({
+        docs,
+        origin,
+        input: { ...input, repository },
+      })
+      expect(result.isError).toBe(true)
+      expect(text(result)).toContain(`"${repository}" does not exist`)
+    }
+  })
+
+  test("other failures are not hidden", async () => {
+    const { docs } = fakeDocs()
+    docs.page = async () => {
+      throw new ORPCError("INTERNAL_SERVER_ERROR")
+    }
+    await expect(entityTool({ docs, origin, input })).rejects.toBeInstanceOf(
+      ORPCError
+    )
   })
 })

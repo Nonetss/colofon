@@ -5,7 +5,11 @@ export {
   labelField,
   readCatalog,
 } from "#contract/catalog"
-export { entityPath, isCatalogPath } from "#contract/catalog-paths"
+export {
+  catalogTypePath,
+  entityPath,
+  isCatalogPath,
+} from "#contract/catalog-paths"
 export {
   type CatalogIndex,
   entitySchema,
@@ -14,6 +18,7 @@ export {
 export { iconName, LUCIDE_ICON_NAMES } from "#contract/icon-name"
 export { IMAGE_EXTENSIONS, isImageFile } from "#contract/images"
 export {
+  CATALOG_PATH,
   type ContentDeclarations,
   type ContentProblem,
   DOCS_DIR,

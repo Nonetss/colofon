@@ -59,7 +59,8 @@ function prepareRoot(node: RootContent): RootContent[] {
   return [node]
 }
 
-function body(tree: Root | null): string {
+/** The body alone as Markdown, without the title and description lines. */
+export function bodyMarkdown(tree: Root | null): string {
   if (tree === null) return ""
   const mdast = toMdast({
     type: "root",
@@ -74,6 +75,6 @@ function body(tree: Root | null): string {
 
 /** The page as Markdown, with reader routes (`/repo/page`) left relative. */
 export function pageMarkdown({ title, description, tree }: MarkdownSource) {
-  const parts = [`# ${title}`, description, body(tree)]
+  const parts = [`# ${title}`, description, bodyMarkdown(tree)]
   return `${parts.filter((part) => part !== "").join("\n\n")}\n`
 }

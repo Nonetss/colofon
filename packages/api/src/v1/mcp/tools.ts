@@ -1,5 +1,7 @@
 import type { CallToolResult } from "@modelcontextprotocol/server"
+import { CATALOG_PATH, catalogTypePath, entityPath } from "@nonete/content"
 import { ORPCError } from "@orpc/server"
+import type { Root } from "hast"
 import { z } from "zod"
 import type { AppRouterClient } from "#router"
 import { withOrigin } from "#v1/docs/full-links"
@@ -9,7 +11,8 @@ import {
   llmsIndex,
   repositoryLlmsIndex,
 } from "#v1/docs/llm-text"
-import { pageMarkdown } from "#v1/docs/markdown"
+import { bodyMarkdown, pageMarkdown } from "#v1/docs/markdown"
+import { sectionTree } from "#v1/mcp/section"
 
 // The MCP's tools, one function each. They read through the `v1.docs`
 // procedures as the caller (never the handlers or the content reader), so a
@@ -31,8 +34,15 @@ export type ToolScope = {
   origin: string
 }
 
-/** A reader route split into the repository and the page under it. */
-export type ParsedRoute = { repository: string; path: string }
+/**
+ * A reader route split into the repository, the page under it and the
+ * section it points at (its `#fragment`), if any.
+ */
+export type ParsedRoute = {
+  repository: string
+  path: string
+  section: string | null
+}
 
 /** What `repositories` returns as structured content. */
 export const repositoriesOutput = z.object({
@@ -112,22 +122,32 @@ function routePath(route: string): string {
   return route.split(/[?#]/, 1)[0] ?? ""
 }
 
+/** The decoded `#fragment` of `route`; null without one, or an empty one. */
+function routeSection(route: string): string | null {
+  const at = route.indexOf("#")
+  if (at === -1) return null
+  const section = decoded(route.slice(at + 1))
+  if (section === null || section === "") return null
+  return section
+}
+
 /**
- * The repository and page `route` names, in any form an agent has seen: a
- * reader route (`/casa/red/dns`), a search result's (`…#section`), an index
- * link (`https://…/casa/red/dns/llm.txt`), with or without a trailing slash
- * or query. Null when it names no repository.
+ * The repository, page and section `route` names, in any form an agent has
+ * seen: a reader route (`/casa/red/dns`), a search result's (`…#section`),
+ * an index link (`https://…/casa/red/dns/llm.txt`), with or without a
+ * trailing slash or query. Null when it names no repository.
  */
 export function parseRoute(route: string): ParsedRoute | null {
+  const trimmed = route.trim()
   const path = decoded(
-    routePath(route.trim())
+    routePath(trimmed)
       .replace(/\/llm\.txt$/, "")
       .replace(/\/+$/, "")
   )
   if (path === null) return null
   const [repository, ...rest] = path.split("/").filter((part) => part !== "")
   if (repository === undefined) return null
-  return { repository, path: rest.join("/") }
+  return { repository, path: rest.join("/"), section: routeSection(trimmed) }
 }
 
 function indexUrl(repository: DocsRepository, origin: string): string | null {
@@ -276,23 +296,81 @@ export async function searchTool({
 }
 
 type Page = Awaited<ReturnType<DocsClient["page"]>>
+type PageHeading = Page["headings"][number]
 
 /**
- * Where the page is, for an agent that arrived by a link: the repository,
- * the groups and sections above it and its title, and its address.
+ * Where the page (or one of its sections) is, for an agent that arrived by a
+ * link: the repository, the groups and sections above it, its title and the
+ * section's, and its address.
  */
-function locationLine(page: Page, origin: string): string {
+function locationLine(
+  page: Page,
+  origin: string,
+  section: PageHeading | null
+): string {
   const trail = [
     page.repository.name,
     ...page.breadcrumbs.map((crumb) => crumb.title),
     page.header.title,
-  ].join(" / ")
-  return `Location: ${trail} (${origin}${page.href})`
+  ]
+  if (section === null)
+    return `Location: ${trail.join(" / ")} (${origin}${page.href})`
+  const address = `${origin}${page.href}#${section.id}`
+  return `Location: ${[...trail, section.text].join(" / ")} (${address})`
+}
+
+/** The whole page: its `llm.txt` text under the location line. */
+function wholePage(page: Page, origin: string): string {
+  const markdown = pageMarkdown({
+    title: page.header.title,
+    description: page.header.description,
+    tree: page.tree,
+  })
+  return `${locationLine(page, origin, null)}\n\n${withOrigin(markdown, origin)}`
+}
+
+/** The section's own tree, or null when its heading isn't top-level. */
+function sectionOf(page: Page, heading: PageHeading): Root | null {
+  if (page.tree === null) return null
+  return sectionTree(page.tree, heading.id)
+}
+
+/** The sections a page has, for an agent that asked for one it hasn't. */
+function unknownSection(page: Page, section: string): string {
+  const whole = `Read ${page.href} for the whole page.`
+  if (page.headings.length === 0)
+    return `The page ${page.href} has no section "#${section}", nor any other. ${whole}`
+  const lines = page.headings.map(
+    (heading) => `- \`#${heading.id}\`: ${heading.text}`
+  )
+  return [
+    `The page ${page.href} has no section "#${section}". Its sections:`,
+    ...lines,
+    whole,
+  ].join("\n")
+}
+
+/**
+ * The page as a tool result: whole, or only the section `section` names
+ * (the whole page when its heading sits inside another element).
+ */
+function pageResult(
+  page: Page,
+  origin: string,
+  section: string | null
+): CallToolResult {
+  if (section === null) return textResult(wholePage(page, origin))
+  const heading = page.headings.find((entry) => entry.id === section)
+  if (heading === undefined) return errorResult(unknownSection(page, section))
+  const tree = sectionOf(page, heading)
+  if (tree === null) return textResult(wholePage(page, origin))
+  const markdown = withOrigin(`${bodyMarkdown(tree)}\n`, origin)
+  return textResult(`${locationLine(page, origin, heading)}\n\n${markdown}`)
 }
 
 /**
  * `read`: one page as Markdown, the text of its `llm.txt` route, under a line
- * saying where the page is.
+ * saying where the page is; with a `#section`, only that section.
  */
 export async function readTool({
   docs,
@@ -305,19 +383,71 @@ export async function readTool({
       `"${input.route}" is not a documentation route. Routes look like /<repository>/<page path>.`
     )
   try {
-    const page = await docs.page(route)
-    const markdown = pageMarkdown({
-      title: page.header.title,
-      description: page.header.description,
-      tree: page.tree,
+    const page = await docs.page({
+      repository: route.repository,
+      path: route.path,
     })
-    return textResult(
-      `${locationLine(page, origin)}\n\n${withOrigin(markdown, origin)}`
-    )
+    return pageResult(page, origin, route.section)
   } catch (error) {
     if (!isMissing(error)) throw error
     return errorResult(
       `There is no page at "${input.route}". Use search or index to find its route.`
     )
+  }
+}
+
+/** What `entity` takes: the repository, the catalog type and the id. */
+export type EntityInput = { repository: string; type: string; id: string }
+
+/** Whether `repository` has a page at `path`, as the caller reads it. */
+async function hasPage(
+  docs: DocsClient,
+  repository: string,
+  path: string
+): Promise<boolean> {
+  try {
+    await docs.page({ repository, path })
+    return true
+  } catch (error) {
+    if (!isMissing(error)) throw error
+    return false
+  }
+}
+
+/**
+ * Why the entity can't be read, with where to find the valid ones: the
+ * repository, the type's catalog page or the catalog's.
+ */
+async function missingEntity(
+  docs: DocsClient,
+  input: EntityInput
+): Promise<string> {
+  const missing = await missingRepository(docs, input.repository)
+  if (missing !== null) return missing
+  const typePath = catalogTypePath(input.type)
+  if (await hasPage(docs, input.repository, typePath))
+    return `There is no entity "${input.id}" of type "${input.type}" in "${input.repository}". Read /${input.repository}/${typePath} to list the entities of that type.`
+  return `There is no catalog type "${input.type}" in "${input.repository}". Read /${input.repository}/${CATALOG_PATH} to list the catalog types.`
+}
+
+/**
+ * `entity`: one catalog entity, as its generated catalog page reads in
+ * `read` (its fields, the pages that cite it, the entities that point at it
+ * and its diagrams).
+ */
+export async function entityTool({
+  docs,
+  origin,
+  input,
+}: ToolScope & { input: EntityInput }): Promise<CallToolResult> {
+  try {
+    const page = await docs.page({
+      repository: input.repository,
+      path: entityPath(input.type, input.id),
+    })
+    return textResult(wholePage(page, origin))
+  } catch (error) {
+    if (!isMissing(error)) throw error
+    return errorResult(await missingEntity(docs, input))
   }
 }

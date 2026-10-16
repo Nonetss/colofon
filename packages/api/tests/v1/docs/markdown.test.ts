@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test"
 import type { Element, Root } from "hast"
-import { pageMarkdown } from "#v1/docs/markdown"
+import { bodyMarkdown, pageMarkdown } from "#v1/docs/markdown"
 
 function el(
   tagName: string,
@@ -170,5 +170,22 @@ describe("pageMarkdown", () => {
     expect(markdown).toBe(
       "# Komodo\n\n**Cómo despliega**\n\n- Komodo → Periphery: deploy\n"
     )
+  })
+})
+
+describe("bodyMarkdown", () => {
+  test("writes only the body, without a title line", () => {
+    expect(
+      bodyMarkdown(
+        root(
+          el("h2", { id: "ptr" }, [text("PTR")]),
+          el("p", {}, [text("Registros inversos.")])
+        )
+      )
+    ).toBe("## PTR\n\nRegistros inversos.")
+  })
+
+  test("an absent body is empty", () => {
+    expect(bodyMarkdown(null)).toBe("")
   })
 })
