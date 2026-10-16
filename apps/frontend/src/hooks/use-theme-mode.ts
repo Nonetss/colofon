@@ -36,7 +36,7 @@ export function useThemeMode() {
       Math.max(y, window.innerHeight - y)
     )
 
-    // Gate the root-group `animation: none` / z-index rules in global.css
+    // Gate the root-group `animation: none` / z-index rules in styles/app/chrome.css
     // so they do not also fire on Astro ClientRouter navigations.
     const root = document.documentElement
     root.classList.add("theme-transitioning")

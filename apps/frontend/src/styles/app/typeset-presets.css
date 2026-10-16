@@ -1,0 +1,135 @@
+/* Patches for the vendored engine (`typeset.css`) — kept apart so re-downloading
+   typeset.css can't silently drop them. */
+@layer components {
+  /* Display math: KaTeX's mathml output is
+     `<span class="katex"><math display="block">`, and rehype-katex
+     splices that in place of remark-math's `.math-display` wrapper.
+     The span stays `inline`, so text-align on the <math> has no
+     full-width line box to center in — make the span the block, then
+     shrink-wrap the formula so margin:auto / text-align both work
+     (Chromium MathML ignores text-align on a stretched block math). */
+  .typeset :where(.katex:has(> math[display="block"])) {
+    display: block;
+    text-align: center;
+    overflow-x: auto;
+    overflow-y: hidden;
+    margin-block-start: calc(var(--typeset-flow) * 1.6);
+  }
+
+  .typeset :where(math[display="block"]) {
+    display: block math;
+    width: max-content;
+    max-width: 100%;
+    margin-inline: auto;
+    text-align: center;
+    font-size: 1.2em;
+    overflow: visible;
+  }
+
+  /* Upstream links use `color: inherit` + underline only. Every other
+     internal link in this app (AppLink) reads in the brand accent, so an
+     inherited-color link inside chat markdown is the one link in the
+     product that doesn't look clickable at a glance. */
+  .typeset :where(a) {
+    color: var(--color-primary);
+    font-weight: 500;
+    text-decoration-color: color-mix(
+      in oklch,
+      var(--color-primary) 40%,
+      transparent
+    );
+    text-underline-offset: 4px;
+    transition:
+      font-weight 0.15s ease,
+      text-decoration-color 0.15s ease;
+  }
+
+  .typeset :where(a):hover {
+    font-weight: 700;
+    text-decoration-color: var(--color-primary);
+  }
+}
+
+/* Typeset presets — project-specific, live here (not in typeset.css) so the
+   base engine can be re-downloaded/replaced wholesale without losing them.
+   This project has no separate display face / --font-heading: DESIGN.md
+   commits to exactly two faces (Space Grotesk for body+headings, Space
+   Mono for code), so both presets point --typeset-font-heading at
+   --font-sans instead of introducing a third typeface. */
+@layer components {
+  .typeset-docs {
+    --typeset-font-body: var(--font-sans);
+    --typeset-font-heading: var(--font-sans);
+    --typeset-font-mono: var(--font-mono);
+    --typeset-size: 15px;
+    --typeset-leading: 1.75;
+    --typeset-flow: 1.25em;
+  }
+
+  /* Chat bubbles are narrow and stream in token-by-token, so this preset
+     runs tighter than the docs default and caps code-block height so one
+     long block can't push the rest of the message off screen. */
+  .typeset-chat {
+    --typeset-font-body: var(--font-sans);
+    --typeset-font-heading: var(--font-sans);
+    --typeset-font-mono: var(--font-mono);
+    /* Matches the user bubble's text-sm (0.875rem) so both sides of the
+       conversation read at the same size. */
+    --typeset-size: 0.875rem;
+    --typeset-leading: 1.625;
+    --typeset-flow: 0.5em;
+  }
+
+  .typeset-chat :where(pre) {
+    max-height: 18rem;
+  }
+
+  /* Chat tables speak the same list language as the rest of the product:
+     rounded-xl + hairline + bg-card/40 (on the wrapper) and FieldLabel
+     micro-caps on the header. Compact padding and 0.85em body so the
+     block doesn't read as a full page list inside a bubble. The
+     container owns the outer edge, so drop the engine's table bottom
+     border and the flush first-column padding. */
+  .typeset-chat :where(table) {
+    font-size: 0.85em;
+    width: 100%;
+    border-block-end: 0;
+  }
+
+  .typeset-chat :where(thead th) {
+    color: var(--color-muted-foreground);
+    font-size: var(--font-size-label);
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 0.5rem 0.75rem;
+  }
+
+  .typeset-chat :where(:is(tbody, tfoot) :is(td, th)) {
+    padding: 0.4rem 0.75rem;
+  }
+
+  .typeset-chat :where(th:first-child, td:first-child) {
+    padding-inline-start: 0.75rem;
+  }
+
+  /* Upstream `.typeset-scroll table` is `width: max-content` so wide
+     tables always scroll. Chat tables should span the bubble, and only
+     scroll sideways below desktop (lg / 64rem) — phone and tablet.
+     On desktop, wrap headers so the table stays 100% without a bar. */
+  .typeset-chat :where(.typeset-scroll table) {
+    width: max(100%, max-content);
+    max-width: none;
+  }
+
+  @media (min-width: 64rem) {
+    .typeset-chat :where(.typeset-scroll table) {
+      width: 100%;
+      max-width: 100%;
+    }
+
+    .typeset-chat :where(thead th) {
+      white-space: normal;
+    }
+  }
+}

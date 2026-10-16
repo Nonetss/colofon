@@ -1,0 +1,120 @@
+/* The app's own Tailwind utilities (`min-h-main`, scrollbars, the bottom
+   fade of a scroller, the staggered `dash-*` entrances) and their keyframes. */
+@layer utilities {
+  /* Fills the space between navbar and footer without hardcoding their exact
+     heights: relies on the flex-col body + flex-1 content wrapper in Layout,
+     so the footer's real height is honored and no extra scroll leaks in. */
+  .min-h-main {
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+}
+
+/* Referenced by MessageScrollerViewport (apps/frontend/src/components/ui/
+   message-scroller.tsx) but never defined anywhere — without these the
+   viewport falls back to the platform's default (thick, always-reserved-
+   width) scrollbar, which reads as a scrollbar that's permanently "there"
+   even for short conversations. */
+@utility scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+  &::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+    background: transparent;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  &::-webkit-scrollbar-thumb {
+    background-color: var(--border);
+    border-radius: 9999px;
+  }
+  &::-webkit-scrollbar-thumb:hover {
+    background-color: var(--muted-foreground);
+  }
+}
+
+@utility scrollbar-none {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Fade effect at the bottom of a scrolling container, used in chat message
+   lists to give visual cue that there's more content below. Only shown when
+   @shadcn/react's message-scroller marks the element as actually scrollable
+   toward "end" (its data-scrollable attribute is a space-separated token
+   list, e.g. "start end") — otherwise it would permanently dim whatever text
+   happens to sit at the bottom of the viewport, even at the true end.
+
+   Apply this to a non-scrolling wrapper around the scroll container, never to
+   the scroll container itself: the ::after is absolutely positioned, and an
+   absolutely positioned box inside a scrolling element scrolls along with its
+   content rather than staying pinned, so the fade drifts up and cuts across
+   the middle of the content. */
+@utility scroll-fade-b {
+  position: relative;
+  &::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 2rem;
+    background: linear-gradient(to bottom, transparent, var(--background));
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s ease-out;
+  }
+  &[data-scrollable~="end"]::after {
+    opacity: 1;
+  }
+}
+
+@keyframes dash-enter {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes dash-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Staggered list/grid entrance: pass a per-item delay via the --dash-delay
+   custom property (e.g. `style={{ "--dash-delay": `${i * 45}ms` }}`). */
+@utility dash-enter {
+  animation: dash-enter 0.3s ease-out both;
+  animation-delay: var(--dash-delay, 0ms);
+}
+
+/* Pop-in for icons/badges nested inside a `dash-enter` container. */
+@utility dash-pop {
+  animation: dash-pop 0.25s ease-out both;
+  animation-delay: var(--dash-delay, 0ms);
+}
+
+/* Both utilities only use their keyframe to animate from a transient
+   from-state into the element's own default (opacity: 1, transform: none),
+   so disabling the animation outright lands exactly on that default with no
+   flash of the hidden/offset from-state. */
+@media (prefers-reduced-motion: reduce) {
+  .dash-enter,
+  .dash-pop {
+    animation: none;
+  }
+}

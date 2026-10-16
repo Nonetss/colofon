@@ -1,0 +1,93 @@
+/* The icon-only controls of a page body (copy code, enlarge a diagram,
+   `features/docs/page/model/render.ts`) and their `data-hint` bubble, drawn
+   without React in `Hint`'s look. */
+@layer components {
+  /* An icon-only control of the page body (copy code, enlarge a diagram). */
+  .typeset.doc :where(button[data-hint]) {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: calc(var(--radius) * 0.75);
+    color: var(--color-muted-foreground);
+    transition:
+      color 0.15s ease,
+      background-color 0.15s ease;
+  }
+
+  .typeset.doc :where(button[data-hint]):hover {
+    background-color: var(--color-accent);
+    color: var(--color-foreground);
+  }
+
+  .typeset.doc :where(button[data-hint]):focus-visible {
+    outline: 2px solid var(--color-ring);
+    outline-offset: 1px;
+    color: var(--color-foreground);
+  }
+
+  /* `data-hint`'s bubble: `Hint`'s look (the `tooltip` popup and its arrow)
+     for controls rendered without React, on the control's left (they sit on
+     the right edge of a code frame or a diagram, and the code frame clips
+     what leaves it), shown on hover after `Hint`'s delay, on keyboard focus, and
+     while a control reports an outcome (`data-copy-state`). */
+  .typeset.doc :where(button[data-hint])::after,
+  .typeset.doc :where(button[data-hint])::before {
+    position: absolute;
+    z-index: 50;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+  }
+
+  .typeset.doc :where(button[data-hint])::after {
+    content: attr(data-hint);
+    inset-block-start: 50%;
+    inset-inline-end: calc(100% + 0.5rem);
+    translate: 0 -50%;
+    border-radius: var(--radius-md);
+    background-color: var(--color-foreground);
+    padding: 0.375rem 0.75rem;
+    color: var(--color-background);
+    font-family: var(--font-sans);
+    font-size: 0.75rem;
+    font-weight: 400;
+    letter-spacing: normal;
+    line-height: 1rem;
+    text-transform: none;
+    white-space: nowrap;
+  }
+
+  .typeset.doc :where(button[data-hint])::before {
+    content: "";
+    inset-block-start: calc(50% - 4px);
+    inset-inline-end: calc(100% + 0.5rem - 4px);
+    width: 8px;
+    height: 8px;
+    rotate: 45deg;
+    background-color: var(--color-foreground);
+  }
+
+  .typeset.doc :where(button[data-hint]:hover)::after,
+  .typeset.doc :where(button[data-hint]:hover)::before {
+    opacity: 1;
+    transition-delay: 300ms;
+  }
+
+  .typeset.doc
+    :where(button[data-hint]:focus-visible, button[data-copy-state])::after,
+  .typeset.doc
+    :where(button[data-hint]:focus-visible, button[data-copy-state])::before {
+    opacity: 1;
+    transition-delay: 0ms;
+  }
+
+  @media (hover: none) {
+    .typeset.doc :where(button[data-hint]:not([data-copy-state]))::after,
+    .typeset.doc :where(button[data-hint]:not([data-copy-state]))::before {
+      display: none;
+    }
+  }
+}

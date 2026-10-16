@@ -24,7 +24,7 @@ type ChartProps<
 
 /**
  * A TanStack Charts chart in the app's theme. Palette (`--chart-1..6`) and
- * tooltip chrome come from the `.ts-chart-host` rule in `global.css`; axis
+ * tooltip chrome come from the `.ts-chart-host` rule in `styles/app/charts.css`; axis
  * text and gridlines inherit the muted text color and app font set here, so
  * a theme switch recolors the chart without rebuilding its definition.
  */

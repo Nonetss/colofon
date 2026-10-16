@@ -1,0 +1,181 @@
+/* A documentation page's body (`features/docs/page`). It is
+   `.typeset.typeset-docs` for the prose itself; these rules dress it like
+   the reference site (`doc-sjd`): brand links, tinted bold, the heading
+   scale, inline code, the page's icons and the notices the parser leaves
+   for what it could not render. Selectors start at `.typeset.doc` so they
+   beat the engine's `.typeset *` rules; every module of `styles/doc/`
+   follows the same rule. */
+@layer components {
+  .typeset.doc :where([id]) {
+    scroll-margin-block-start: calc(var(--navbar-height) + 1.5rem);
+  }
+
+  /* Body a step below the white of headings and bold in dark mode, so those
+     stand out by more than their weight. */
+  .dark .typeset.doc {
+    color: color-mix(
+      in oklch,
+      var(--color-foreground) 92%,
+      var(--color-muted-foreground)
+    );
+  }
+
+  /* Headings at the reference site's scale: darker than the body, with a
+     rule over every section but the first. */
+  .typeset.doc :where(h1, h2, h3, h4) {
+    color: var(--color-card-foreground);
+    font-weight: 600;
+    text-wrap: balance;
+  }
+
+  .typeset.doc :where(h2) {
+    border-block-start: 1px solid var(--color-border);
+    padding-block-start: 1.25rem;
+    font-size: 1.5em;
+    line-height: 1.333;
+    letter-spacing: -0.01em;
+  }
+
+  .typeset.doc > :where(h2):first-child {
+    border-block-start: 0;
+    padding-block-start: 0;
+  }
+
+  .typeset.doc :where(h3) {
+    font-size: 1.25em;
+    line-height: 1.4;
+    letter-spacing: -0.01em;
+  }
+
+  .typeset.doc :where(p, li) {
+    text-wrap: pretty;
+  }
+
+  /* Bold sits on a soft tint of the accent, so it shows at a glance without
+     shouting or looking like a link. */
+  .typeset.doc :where(strong, b) {
+    font-weight: 700;
+    color: var(--color-foreground);
+    background-color: color-mix(
+      in oklch,
+      var(--color-primary) 13%,
+      transparent
+    );
+    border-radius: 0.2em;
+    padding-inline: 0.15em;
+    box-decoration-break: clone;
+  }
+
+  .typeset.doc
+    :where(:is(a, h1, h2, h3, h4, .doc-alert) :is(strong, b), strong a) {
+    background-color: transparent;
+    padding-inline: 0;
+  }
+
+  /* Inline code as a small bordered chip, like the reference site. */
+  .typeset.doc :where(:not(pre) > code) {
+    border: 1px solid
+      color-mix(in oklch, var(--color-foreground) 14%, transparent);
+    border-radius: var(--radius-sm);
+    background-color: var(--color-muted);
+    padding: 0.1rem 0.35rem;
+    color: var(--color-card-foreground);
+    font-weight: 400;
+  }
+
+  .typeset.doc :where(kbd) {
+    font-family: var(--font-mono);
+    font-size: 0.8em;
+    font-weight: 400;
+  }
+
+  /* Links in the accent toned towards the text, with a thick underline that
+     moves away on hover (no weight change, so nothing reflows). */
+  .typeset.doc :where(a) {
+    color: color-mix(
+      in oklch,
+      var(--color-primary) 78%,
+      var(--color-foreground)
+    );
+    font-weight: 500;
+    text-decoration-color: color-mix(
+      in oklch,
+      var(--color-primary) 55%,
+      transparent
+    );
+    text-decoration-thickness: 2px;
+    text-underline-offset: 0.2em;
+    transition:
+      color 0.15s ease,
+      text-underline-offset 0.15s ease;
+  }
+
+  .typeset.doc :where(a):hover {
+    color: var(--color-primary);
+    font-weight: 500;
+    text-decoration-color: var(--color-primary);
+    text-underline-offset: 0.35em;
+  }
+
+  .typeset.doc :where(:is(h1, h2, h3, h4) a, a.doc-anchor) {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .typeset.doc :where(.doc-anchor) {
+    margin-inline-start: 0.4em;
+    color: var(--color-muted-foreground);
+    font-weight: 400;
+    text-decoration: none;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+  }
+
+  .typeset.doc :where(h2, h3, h4):hover :where(.doc-anchor),
+  .typeset.doc :where(.doc-anchor):focus-visible {
+    opacity: 1;
+  }
+
+  /* The page's server-rendered icons (`renderBlocks`' `icon()`), drawn from
+     the sprite `doc-body.astro` puts once on the page. */
+  .doc-icon-sprite {
+    position: absolute;
+    width: 0;
+    height: 0;
+    overflow: hidden;
+  }
+
+  .typeset.doc :where(.doc-icon) {
+    display: block;
+    width: 0.875rem;
+    height: 0.875rem;
+  }
+
+  .typeset.doc :where(.doc-entity-source) {
+    color: var(--color-muted-foreground);
+    font-size: 0.8125em;
+  }
+
+  .typeset.doc :where(div.doc-component-notice) {
+    margin-block-start: var(--typeset-flow);
+    border: 1px dashed var(--color-border);
+    border-radius: var(--radius);
+    padding: 0.75em 1em;
+  }
+
+  .typeset.doc :where(.doc-component-notice) {
+    color: var(--color-muted-foreground);
+    font-family: var(--font-mono);
+    font-size: 0.8125em;
+  }
+
+  .typeset.doc :where(.doc-broken-link) {
+    text-decoration: underline dotted var(--color-destructive);
+    text-underline-offset: 4px;
+  }
+
+  .typeset.doc :where(.doc-broken-image) {
+    color: var(--color-muted-foreground);
+    font-style: italic;
+  }
+}

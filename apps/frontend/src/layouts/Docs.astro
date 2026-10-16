@@ -17,7 +17,7 @@ interface Props {
 
 const { title, nav, storedScope, wide = false } = Astro.props
 // The page rises in a little as it fades; the old one goes at once, since a
-// scrolled page would jump to the top while fading (keyframes in global.css).
+// scrolled page would jump to the top while fading (keyframes in styles/app/chrome.css).
 const pageOld = { name: "page-leave", duration: "0s", fillMode: "both" }
 const pageNew = {
   name: "page-enter",

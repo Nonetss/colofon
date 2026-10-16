@@ -1,0 +1,683 @@
+/* A diagram on the page and in the lightbox, and the card it shows next to
+   the pointer. */
+@layer components {
+  /* A diagram: its caption, its drawing (an inline SVG drawn by
+     `packages/content/src/diagrams/svg.ts` in the look of the
+     reference site's scheme drawer, `lib.mjs`) and its text version. The
+     drawing's colours are these variables, so it follows the theme; its
+     font sizes match the measures of `diagrams/measure.ts`, which checks
+     what fits. It is never wider than drawn and shrinks to the column; a
+     drawing 640px or wider keeps 640px on narrow screens and scrolls
+     sideways instead. */
+  :where(.typeset.doc figure.doc-diagram, .doc-lightbox-drawing) {
+    --d-paper: var(--color-card);
+    --d-surface: var(--color-popover);
+    --d-ink: var(--color-card-foreground);
+    --d-muted: var(--color-muted-foreground);
+    --d-soft: color-mix(
+      in oklch,
+      var(--color-muted-foreground) 65%,
+      var(--color-card)
+    );
+    --d-rule: color-mix(
+      in oklch,
+      var(--color-muted-foreground) 40%,
+      var(--color-card)
+    );
+    --d-accent: var(--color-primary);
+    --d-accent-tint: color-mix(
+      in oklch,
+      var(--color-primary) 12%,
+      var(--color-card)
+    );
+    --d-store: color-mix(
+      in oklch,
+      var(--color-card-foreground) 6%,
+      var(--color-card)
+    );
+    --d-input: color-mix(
+      in oklch,
+      var(--color-muted-foreground) 14%,
+      var(--color-card)
+    );
+    --d-external: color-mix(
+      in oklch,
+      var(--color-card-foreground) 3%,
+      var(--color-card)
+    );
+    --d-down: #dc2626;
+    /* The ten hues of `lib.mjs` (HUES), lighter in the dark theme. */
+    --d-hue-rose: #e11d48;
+    --d-hue-blue: #2563eb;
+    --d-hue-cyan: #0891b2;
+    --d-hue-violet: #7c3aed;
+    --d-hue-green: #16a34a;
+    --d-hue-indigo: #4f46e5;
+    --d-hue-fuchsia: #c026d3;
+    --d-hue-slate: #475569;
+    --d-hue-teal: #0d9488;
+    --d-hue-lime: #65a30d;
+  }
+
+  .dark :where(.typeset.doc figure.doc-diagram, .doc-lightbox-drawing) {
+    --d-surface: color-mix(
+      in oklch,
+      var(--color-card-foreground) 7%,
+      var(--color-card)
+    );
+    --d-down: #f87171;
+    --d-hue-rose: #fb7185;
+    --d-hue-blue: #60a5fa;
+    --d-hue-cyan: #22d3ee;
+    --d-hue-violet: #a78bfa;
+    --d-hue-green: #4ade80;
+    --d-hue-indigo: #818cf8;
+    --d-hue-fuchsia: #e879f9;
+    --d-hue-slate: #94a3b8;
+    --d-hue-teal: #2dd4bf;
+    --d-hue-lime: #a3e635;
+  }
+
+  .typeset.doc :where(figure.doc-diagram) {
+    position: relative;
+    margin-block-start: var(--typeset-flow);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-xl);
+    background: var(--d-paper);
+    padding: 0.5rem;
+  }
+
+  .typeset.doc :where(figure.doc-diagram > figcaption) {
+    color: var(--color-muted-foreground);
+  }
+
+  .typeset.doc :where(figure.doc-diagram > ul, .doc-diagram-text > ul) {
+    margin-block-start: 0.5em;
+  }
+
+  .typeset.doc :where(.doc-diagram-canvas) {
+    overflow-x: auto;
+  }
+
+  .typeset.doc :where(.doc-diagram-svg) {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    margin-inline: auto;
+  }
+
+  /* Opens the diagram in the lightbox (`doc-lightbox.tsx`). The drawing
+     itself keeps the pointer for its boxes, arrows and links. */
+  .typeset.doc :where(.doc-diagram-expand) {
+    position: absolute;
+    inset-block-start: 0.5rem;
+    inset-inline-end: 0.5rem;
+    border: 1px solid var(--color-border);
+    background: var(--d-paper);
+    opacity: 0;
+    transition:
+      color 0.15s ease,
+      background-color 0.15s ease,
+      opacity 0.15s ease;
+  }
+
+  .typeset.doc :where(figure.doc-diagram:hover .doc-diagram-expand),
+  .typeset.doc :where(.doc-diagram-expand:focus-visible) {
+    opacity: 1;
+  }
+
+  @media (hover: none) {
+    .typeset.doc :where(.doc-diagram-expand) {
+      opacity: 1;
+    }
+  }
+
+  @media (width < 640px) {
+    .typeset.doc :where(.doc-diagram-svg-wide) {
+      min-width: 640px;
+    }
+  }
+
+  /* The paint of `lib.mjs`'s STYLE, HUE_STYLE and BADGE_STYLE. The
+     lightbox copies the SVG outside the page, so the same paint has to
+     match there too (`.doc-lightbox-drawing`). */
+  :is(.typeset.doc, .doc-lightbox-drawing) :where(.doc-diagram-svg) {
+    & :where(.doc-diagram-paper) {
+      fill: var(--d-paper);
+    }
+    & :where(.doc-diagram-node) {
+      stroke-width: 1;
+    }
+    & :where(.doc-diagram-focal) {
+      fill: var(--d-accent-tint);
+      stroke: var(--d-accent);
+    }
+    & :where(.doc-diagram-service) {
+      fill: var(--d-surface);
+      stroke: var(--d-ink);
+    }
+    & :where(.doc-diagram-store) {
+      fill: var(--d-store);
+      stroke: var(--d-muted);
+    }
+    & :where(.doc-diagram-input) {
+      fill: var(--d-input);
+      stroke: var(--d-soft);
+    }
+    & :where(.doc-diagram-external) {
+      fill: var(--d-external);
+      stroke: var(--d-rule);
+    }
+    & :where(.doc-diagram-optional) {
+      fill: var(--d-paper);
+      stroke: var(--d-rule);
+      stroke-dasharray: 4 3;
+    }
+    & :where(.doc-diagram-rim) {
+      fill: none;
+    }
+    & :where(.doc-diagram-zone) {
+      fill: none;
+      stroke: var(--d-rule);
+      stroke-dasharray: 4 4;
+    }
+    & :where(.doc-diagram-tagbox) {
+      fill: none;
+      stroke: var(--d-soft);
+      stroke-width: 0.8;
+    }
+    & :where(.doc-diagram-tagbox-focal) {
+      stroke: var(--d-accent);
+    }
+    & :where(.doc-diagram-tag) {
+      fill: var(--d-soft);
+      font: 7px var(--font-mono);
+      letter-spacing: 0.08em;
+    }
+    & :where(.doc-diagram-tag-focal) {
+      fill: var(--d-accent);
+    }
+    & :where(.doc-diagram-name, .doc-diagram-table-name) {
+      fill: var(--d-ink);
+      font: 600 12px var(--font-sans);
+    }
+    & :where(.doc-diagram-sub, .doc-diagram-note) {
+      fill: var(--d-muted);
+      font: 9px var(--font-mono);
+    }
+    & :where(.doc-diagram-label) {
+      fill: var(--d-muted);
+      font: 8px var(--font-mono);
+      letter-spacing: 0.06em;
+    }
+    & :where(.doc-diagram-label-accent) {
+      fill: var(--d-accent);
+    }
+    & :where(.doc-diagram-mask) {
+      fill: var(--d-paper);
+    }
+    & :where(.doc-diagram-edge) {
+      fill: none;
+      stroke: var(--d-muted);
+      stroke-width: 1.2;
+    }
+    & :where(.doc-diagram-edge-accent) {
+      stroke: var(--d-accent);
+    }
+    & :where(.doc-diagram-edge-dash) {
+      stroke: var(--d-soft);
+      stroke-dasharray: 4 3;
+    }
+    & :where(.doc-diagram-head) {
+      fill: var(--d-muted);
+    }
+    & :where(.doc-diagram-head-accent) {
+      fill: var(--d-accent);
+    }
+    & :where(.doc-diagram-head-dash) {
+      fill: var(--d-soft);
+    }
+    & :where(.doc-diagram-hit) {
+      fill: none;
+      stroke: transparent;
+      stroke-width: 12;
+      pointer-events: stroke;
+    }
+    & :where(.doc-diagram-hair) {
+      stroke: var(--d-rule);
+      stroke-width: 0.8;
+    }
+    & :where(.doc-diagram-legend) {
+      fill: var(--d-muted);
+      font: 8px var(--font-mono);
+      letter-spacing: 0.14em;
+    }
+    & :where(.doc-diagram-legend-item) {
+      fill: var(--d-ink);
+      font: 11px var(--font-sans);
+    }
+    & :where(.doc-diagram-key) {
+      fill: var(--d-soft);
+      font: 7px var(--font-mono);
+      letter-spacing: 0.06em;
+    }
+    & :where(.doc-diagram-key-pk) {
+      fill: var(--d-accent);
+    }
+    & :where(.doc-diagram-col) {
+      fill: var(--d-ink);
+      font: 9px var(--font-mono);
+    }
+    & :where(.doc-diagram-type) {
+      fill: var(--d-muted);
+      font: 8px var(--font-mono);
+    }
+    & :where(.doc-diagram-more) {
+      fill: var(--d-soft);
+      font: italic 8px var(--font-mono);
+    }
+    & :where(.doc-diagram-badge) {
+      cursor: help;
+    }
+    & :where(.doc-diagram-badge-box) {
+      fill: var(--d-store);
+      stroke: var(--d-soft);
+      stroke-width: 0.8;
+    }
+    & :where(.doc-diagram-badge-t) {
+      fill: var(--d-muted);
+      font: 700 7px var(--font-mono);
+      letter-spacing: 0.08em;
+    }
+    & :where(a.doc-diagram-link) {
+      cursor: pointer;
+      text-decoration: none;
+    }
+    & :where(.doc-diagram-link:is(:hover, :focus-visible) .doc-diagram-node) {
+      stroke: var(--d-accent);
+      stroke-width: 2;
+    }
+    & :where(.doc-diagram-link:hover .doc-diagram-name) {
+      fill: var(--d-accent);
+    }
+
+    & :where(.doc-diagram-head-hollow) {
+      fill: var(--d-paper);
+      stroke: var(--d-muted);
+      stroke-width: 1.2;
+    }
+    & :where(.doc-diagram-head-hollow.doc-diagram-head-accent) {
+      stroke: var(--d-accent);
+    }
+
+    /* The paint of the typed forms' shapes (`diagrams/model.ts`):
+       a fill, a line and a text role each, tinted by the shape's hue. */
+    & :where(.doc-diagram-tick) {
+      fill: var(--d-muted);
+      font: 8px var(--font-mono);
+    }
+    & :where(.doc-diagram-value) {
+      fill: var(--d-ink);
+      font: 9px var(--font-mono);
+    }
+    & :where(.doc-diagram-item) {
+      fill: var(--d-ink);
+      font: 11px var(--font-sans);
+    }
+    & :where(.doc-diagram-fill-none) {
+      fill: none;
+    }
+    & :where(.doc-diagram-fill-paper) {
+      fill: var(--d-paper);
+    }
+    & :where(.doc-diagram-fill-surface) {
+      fill: var(--d-surface);
+    }
+    & :where(.doc-diagram-fill-soft) {
+      fill: var(--d-store);
+    }
+    & :where(.doc-diagram-fill-muted) {
+      fill: var(--d-muted);
+    }
+    & :where(.doc-diagram-fill-ink) {
+      fill: var(--d-ink);
+    }
+    & :where(.doc-diagram-fill-accent) {
+      fill: var(--d-accent);
+    }
+    & :where(.doc-diagram-fill-accent-tint) {
+      fill: var(--d-accent-tint);
+    }
+    & :where(.doc-diagram-fill-hue) {
+      fill: var(--d-hue, var(--d-muted));
+    }
+    & :where(.doc-diagram-fill-hue-tint) {
+      fill: color-mix(
+        in oklch,
+        var(--d-hue, var(--d-muted)) 14%,
+        var(--d-paper)
+      );
+    }
+    & :where([class*="doc-diagram-line-"]) {
+      stroke-width: 1;
+    }
+    & :where(.doc-diagram-line-ink) {
+      stroke: var(--d-ink);
+    }
+    & :where(.doc-diagram-line-muted) {
+      stroke: var(--d-muted);
+    }
+    & :where(.doc-diagram-line-soft) {
+      stroke: var(--d-soft);
+    }
+    & :where(.doc-diagram-line-rule) {
+      stroke: var(--d-rule);
+      stroke-width: 0.8;
+    }
+    & :where(.doc-diagram-line-paper) {
+      stroke: var(--d-paper);
+      stroke-width: 2;
+    }
+    & :where(.doc-diagram-line-accent) {
+      stroke: var(--d-accent);
+    }
+    & :where(.doc-diagram-line-hue) {
+      stroke: var(--d-hue, var(--d-muted));
+    }
+    & :where(.doc-diagram-line-bold) {
+      stroke-width: 2;
+    }
+    & :where(.doc-diagram-line-dash) {
+      stroke-dasharray: 4 3;
+    }
+    & :where(.doc-diagram-text-ink) {
+      fill: var(--d-ink);
+    }
+    & :where(.doc-diagram-text-muted) {
+      fill: var(--d-muted);
+    }
+    & :where(.doc-diagram-text-soft) {
+      fill: var(--d-soft);
+    }
+    & :where(.doc-diagram-text-accent) {
+      fill: var(--d-accent);
+    }
+    & :where(.doc-diagram-text-hue) {
+      fill: var(--d-hue, var(--d-ink));
+    }
+    & :where(.doc-diagram-text-paper) {
+      fill: var(--d-paper);
+    }
+    & :where(.doc-diagram-text-bold) {
+      font-weight: 700;
+    }
+    & :where(.doc-diagram-mark, .doc-diagram-legend-entry) {
+      cursor: help;
+    }
+
+    /* A hand-drawn illustration (`diagrams/illustration.ts`): a shape takes
+       its role's colour, its own or its group's, as its fill, unless it says
+       fill="none", and as its stroke when it gives a stroke-width; with no
+       role it is ink. */
+    &:where(.doc-diagram-illustration) {
+      & :where(path, rect, circle, ellipse, polygon, polyline, line, text) {
+        fill: var(--d-ill, var(--d-ink));
+      }
+      & :where([stroke-width]) {
+        stroke: var(--d-ill, var(--d-ink));
+      }
+      & :where(text, tspan) {
+        font-family: var(--font-sans);
+      }
+      & :where(.doc-diagram-ill-ink) {
+        --d-ill: var(--d-ink);
+      }
+      & :where(.doc-diagram-ill-muted) {
+        --d-ill: var(--d-muted);
+      }
+      & :where(.doc-diagram-ill-soft) {
+        --d-ill: var(--d-soft);
+      }
+      & :where(.doc-diagram-ill-paper) {
+        --d-ill: var(--d-paper);
+      }
+      & :where(.doc-diagram-ill-accent) {
+        --d-ill: var(--d-accent);
+      }
+      & :where(.doc-diagram-ill-accent-soft) {
+        --d-ill: var(--d-accent-tint);
+      }
+      & :where(.doc-diagram-ill-hue) {
+        --d-ill: var(--d-hue);
+      }
+      & :where([fill="none"]) {
+        fill: none;
+      }
+      & :where([stroke="none"]) {
+        stroke: none;
+      }
+    }
+
+    /* A hue tints its zone, the tags of its boxes, the arrows that take it,
+       their labels and the badges that point at it. */
+    & :where(.doc-diagram-hue-rose) {
+      --d-hue: var(--d-hue-rose);
+    }
+    & :where(.doc-diagram-hue-blue) {
+      --d-hue: var(--d-hue-blue);
+    }
+    & :where(.doc-diagram-hue-cyan) {
+      --d-hue: var(--d-hue-cyan);
+    }
+    & :where(.doc-diagram-hue-violet) {
+      --d-hue: var(--d-hue-violet);
+    }
+    & :where(.doc-diagram-hue-green) {
+      --d-hue: var(--d-hue-green);
+    }
+    & :where(.doc-diagram-hue-indigo) {
+      --d-hue: var(--d-hue-indigo);
+    }
+    & :where(.doc-diagram-hue-fuchsia) {
+      --d-hue: var(--d-hue-fuchsia);
+    }
+    & :where(.doc-diagram-hue-slate) {
+      --d-hue: var(--d-hue-slate);
+    }
+    & :where(.doc-diagram-hue-teal) {
+      --d-hue: var(--d-hue-teal);
+    }
+    & :where(.doc-diagram-hue-lime) {
+      --d-hue: var(--d-hue-lime);
+    }
+    & :where(.doc-diagram-zone.doc-diagram-hued) {
+      fill: color-mix(in oklch, var(--d-hue) 4%, var(--d-paper));
+      stroke: color-mix(in oklch, var(--d-hue) 35%, var(--d-paper));
+      stroke-dasharray: none;
+    }
+    & :where(.doc-diagram-mask.doc-diagram-hued) {
+      fill: color-mix(in oklch, var(--d-hue) 4%, var(--d-paper));
+    }
+    & :where(.doc-diagram-legend.doc-diagram-hued) {
+      fill: var(--d-hue);
+      font-weight: 700;
+    }
+    &
+      :where(
+        .doc-diagram-hued .doc-diagram-tagbox:not(.doc-diagram-tagbox-focal)
+      ) {
+      stroke: var(--d-hue);
+    }
+    & :where(.doc-diagram-hued .doc-diagram-tag:not(.doc-diagram-tag-focal)) {
+      fill: var(--d-hue);
+    }
+    & :where(.doc-diagram-edge.doc-diagram-hued) {
+      stroke: color-mix(in oklch, var(--d-hue) 85%, var(--d-ink));
+    }
+    & :where(.doc-diagram-head.doc-diagram-hued) {
+      fill: color-mix(in oklch, var(--d-hue) 85%, var(--d-ink));
+    }
+    & :where(.doc-diagram-label.doc-diagram-hued) {
+      fill: var(--d-hue);
+    }
+    & :where(.doc-diagram-badge-box.doc-diagram-hued) {
+      fill: color-mix(in oklch, var(--d-hue) 14%, var(--d-surface));
+      stroke: color-mix(in oklch, var(--d-hue) 60%, var(--d-surface));
+    }
+    & :where(.doc-diagram-badge-t.doc-diagram-hued) {
+      fill: var(--d-hue);
+    }
+
+    /* Hovering a box, an arrow or a zone title (`diagram-highlights.ts`)
+       fades what it does not touch; the lit arrows run in their direction
+       and what falls with the box is marked. */
+    &
+      :where(
+        [data-node],
+        .doc-diagram-edge,
+        .doc-diagram-head,
+        .doc-diagram-edge-label,
+        .doc-diagram-badge,
+        .doc-diagram-zone
+      ) {
+      transition:
+        opacity 150ms ease,
+        stroke 150ms ease;
+    }
+    &:where(.doc-diagram-focus)
+      :where(
+        [data-node],
+        .doc-diagram-edge,
+        .doc-diagram-head,
+        .doc-diagram-edge-label,
+        .doc-diagram-badge
+      ):not(.doc-diagram-on) {
+      opacity: 0.2;
+    }
+    &:where(.doc-diagram-focus) :where(.doc-diagram-down .doc-diagram-node) {
+      stroke: var(--d-down);
+      stroke-width: 2;
+      stroke-dasharray: 5 3;
+    }
+    &:where(.doc-diagram-focus) :where(.doc-diagram-down .doc-diagram-name) {
+      fill: var(--d-down);
+    }
+    &:where(.doc-diagram-focus) :where(.doc-diagram-edge.doc-diagram-on) {
+      stroke-width: 2;
+    }
+    &:where(.doc-diagram-focus)
+      :where(.doc-diagram-edge.doc-diagram-on:not(.doc-diagram-edge-dash)) {
+      stroke-dasharray: 7 4;
+      animation: doc-diagram-flow 600ms linear infinite;
+    }
+    &:where(.doc-diagram-focus) :where(.doc-diagram-zone.doc-diagram-on) {
+      stroke: var(--d-accent);
+      stroke-dasharray: none;
+    }
+    & :where(.doc-diagram-zone-title[data-zone]) {
+      cursor: help;
+    }
+    & :where(.doc-diagram-zone-title[data-zone]:hover .doc-diagram-legend) {
+      fill: var(--d-accent);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    :is(.typeset.doc, .doc-lightbox-drawing) :where(.doc-diagram-svg) {
+      &
+        :where(
+          [data-node],
+          .doc-diagram-edge,
+          .doc-diagram-head,
+          .doc-diagram-edge-label,
+          .doc-diagram-badge,
+          .doc-diagram-zone
+        ) {
+        transition: none;
+      }
+      &:where(.doc-diagram-focus)
+        :where(.doc-diagram-edge.doc-diagram-on:not(.doc-diagram-edge-dash)) {
+        stroke-dasharray: none;
+        animation: none;
+      }
+    }
+  }
+
+  /* A drawn diagram shows only its drawing: its caption and its text
+     version stay for screen readers and the page's Markdown, off screen. */
+  .typeset.doc
+  :where(
+    figure.doc-diagram[data-drawn] > figcaption,
+    figure.doc-diagram[data-drawn] > .doc-diagram-text
+  ) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
+
+/* The card a diagram shows next to the pointer (`diagram-highlights.ts`):
+   what is under it and what it connects with. */
+.doc-diagram-tip {
+  position: fixed;
+  z-index: 60;
+  max-width: 22rem;
+  pointer-events: none;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-popover);
+  color: var(--color-popover-foreground);
+  padding: 0.625rem 0.75rem;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  box-shadow: 0 8px 24px -8px rgb(0 0 0 / 0.25);
+}
+
+.doc-diagram-tip[hidden] {
+  display: none;
+}
+
+.doc-diagram-tip-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.doc-diagram-tip-tag,
+.doc-diagram-tip-caption {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-muted-foreground);
+}
+
+.doc-diagram-tip p {
+  margin: 0.25rem 0 0;
+  color: var(--color-muted-foreground);
+}
+
+.doc-diagram-tip-caption {
+  margin-top: 0.5rem;
+  color: var(--color-primary);
+}
+
+.doc-diagram-tip ul {
+  margin: 0.125rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.doc-diagram-tip li {
+  padding-block: 0.0625rem;
+}
+
+@keyframes doc-diagram-flow {
+  to {
+    stroke-dashoffset: -11;
+  }
+}

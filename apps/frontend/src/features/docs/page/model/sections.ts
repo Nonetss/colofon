@@ -3,7 +3,7 @@
 // `##` heading. The reader dresses each one apart from the rest of the text:
 // an icon beside the heading, and a card for the two that must stand out.
 // To dress another one, add its heading here, its icon in the registry's
-// `docSections` group and, if it needs one, its look in `global.css`.
+// `docSections` group and, if it needs one, its look in `styles/doc/sections.css`.
 
 export type SectionKind =
   | "where"

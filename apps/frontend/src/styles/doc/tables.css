@@ -1,0 +1,262 @@
+/* Catalog tables (`<Entities>`) and the page's tables: a soft card that
+   scrolls sideways, key/value tables as fact rows, and the interactive
+   tables of `features/docs/tables` (`components/doc-tables.tsx` over
+   `model/table-dom.ts`): sortable headers and, on the long ones, a toolbar,
+   a filter per column, highlights and pages. The controls are the design
+   system's; this styles the server's table around them. */
+@layer components {
+  /* `<Entities>`: a catalog table, split into blocks with a micro-caps label
+     over each when it is grouped. */
+  .typeset.doc :where(.doc-entities) {
+    margin-block-start: var(--typeset-flow);
+  }
+
+  .typeset.doc :where(.doc-entities > .typeset-scroll) {
+    margin-block-start: 0;
+  }
+
+  .typeset.doc :where(.doc-entities-group) {
+    margin-block-start: 1.5em;
+    color: var(--color-muted-foreground);
+    font-size: var(--font-size-label);
+    font-weight: 500;
+    letter-spacing: var(--tracking-caps);
+    text-transform: uppercase;
+  }
+
+  .typeset.doc :where(.doc-entities-group:first-child) {
+    margin-block-start: 0;
+  }
+
+  .typeset.doc :where(.doc-entities-group + .typeset-scroll) {
+    margin-block-start: 0.5em;
+  }
+
+  .typeset.doc :where(.doc-entities-empty) {
+    color: var(--color-muted-foreground);
+  }
+
+  /* Tables sit in a soft card and scroll sideways inside it. */
+  .typeset.doc :where(.doc-table) {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-xl);
+    background-color: color-mix(in oklch, var(--color-card) 40%, transparent);
+  }
+
+  /* The table fits the reading column and its cells wrap, instead of the
+     typeset's max-content width that makes every long cell scroll
+     sideways. A word longer than its column breaks (`break-word` keeps
+     short words whole when the columns share the width); the frame only
+     scrolls when the columns' shortest widths don't fit. */
+  .typeset.doc :where(.doc-table) table {
+    width: 100%;
+    min-width: 100%;
+    border-block-end: 0;
+    font-size: 0.8125rem;
+  }
+
+  .typeset.doc :where(.doc-table tbody td) {
+    overflow-wrap: break-word;
+  }
+
+  .typeset.doc :where(.doc-table thead th) {
+    position: relative;
+    padding: 0.625rem 0.875rem;
+    background-color: var(--color-card);
+    color: var(--color-muted-foreground);
+    font-size: var(--font-size-label);
+    font-weight: 500;
+    letter-spacing: var(--tracking-caps);
+    text-transform: uppercase;
+  }
+
+  .typeset.doc :where(.doc-table :is(tbody, tfoot) :is(td, th)) {
+    padding: 0.625rem 0.875rem;
+  }
+
+  .typeset.doc :where(.doc-table tbody tr) {
+    transition: background-color 0.15s ease;
+  }
+
+  .typeset.doc :where(.doc-table tbody tr):hover {
+    background-color: color-mix(in oklch, var(--color-muted) 40%, transparent);
+  }
+
+  /* Key/value tables (`| | |` with an empty head) read as fact rows. */
+  .typeset.doc :where(.doc-table[data-table-kv] thead) {
+    display: none;
+  }
+
+  .typeset.doc :where(.doc-table[data-table-kv] tbody tr:first-child > *) {
+    border-block-start: 0;
+  }
+
+  .typeset.doc :where(.doc-table[data-table-kv] tbody td:first-child) {
+    width: 1%;
+    white-space: nowrap;
+    color: var(--color-muted-foreground);
+    font-size: var(--font-size-label);
+    font-weight: 500;
+    letter-spacing: var(--tracking-caps);
+    text-transform: uppercase;
+  }
+
+  .typeset.doc :where(.doc-table-sort) {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    min-width: 0;
+    margin: -0.125rem -0.25rem;
+    border-radius: var(--radius-md);
+    padding: 0.125rem 0.25rem;
+    font: inherit;
+    letter-spacing: inherit;
+    text-transform: inherit;
+    transition: color 0.15s ease;
+  }
+
+  .typeset.doc :where(.doc-table-sort):hover,
+  .typeset.doc
+    :where(th[aria-sort="ascending"], th[aria-sort="descending"])
+    :where(.doc-table-sort) {
+    color: var(--color-foreground);
+  }
+
+  .typeset.doc :where(.doc-table-sort):focus-visible {
+    outline: 2px solid var(--color-ring);
+    outline-offset: 1px;
+  }
+
+  /* An up/down chevron pair, shown on hover; the active direction alone. */
+  .typeset.doc :where(.doc-table-sort-icon) {
+    display: inline-block;
+    width: 0.5rem;
+    height: 0.75rem;
+    background-color: currentColor;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+    mask:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 12'%3E%3Cpath d='M1 4.5 4 1.5l3 3M1 7.5l3 3 3-3' fill='none' stroke='black' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")
+      center / contain no-repeat;
+  }
+
+  .typeset.doc :where(.doc-table-sort:hover .doc-table-sort-icon) {
+    opacity: 0.6;
+  }
+
+  .typeset.doc :where(th[aria-sort="ascending"]) :where(.doc-table-sort-icon),
+  .typeset.doc :where(th[aria-sort="descending"]) :where(.doc-table-sort-icon) {
+    opacity: 1;
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 12'%3E%3Cpath d='M1 4.5 4 1.5l3 3' fill='none' stroke='black' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    color: var(--color-primary);
+  }
+
+  .typeset.doc :where(th[aria-sort="descending"]) :where(.doc-table-sort-icon) {
+    transform: rotate(180deg);
+  }
+
+  /* With Shift, several columns sort at once: each shows its place. */
+  .typeset.doc :where(.doc-table-sort[data-sort-index])::after {
+    content: attr(data-sort-index);
+    color: var(--color-primary);
+    font-family: var(--font-mono);
+    font-size: var(--font-size-label);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* The header fills its cell: the sort button, then the filter on a full
+     table, right after the column's name. */
+  .typeset.doc :where(.doc-table-th) {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .typeset.doc :where(.doc-table-filter) {
+    flex: none;
+  }
+
+  .typeset.doc :where(.doc-table-filter:empty) {
+    display: none;
+  }
+
+  /* The drag handle sits on the header's trailing edge, over its padding,
+     and draws the divider between two columns. The last column has no
+     handle: its edge is the table's (`table-resize.ts`). */
+  .typeset.doc :where(.doc-table-resize) {
+    position: absolute;
+    inset-block: 0;
+    inset-inline-end: 0;
+    z-index: 1;
+    width: 0.75rem;
+    touch-action: none;
+    cursor: col-resize;
+    user-select: none;
+  }
+
+  .typeset.doc :where(.doc-table-resize)::after {
+    content: "";
+    position: absolute;
+    inset-block: 0.375rem;
+    inset-inline-end: 0;
+    width: 1px;
+    border-radius: 999px;
+    background-color: color-mix(
+      in oklch,
+      var(--color-muted-foreground) 40%,
+      transparent
+    );
+    transition:
+      width 0.15s ease,
+      background-color 0.15s ease;
+  }
+
+  .typeset.doc :where(.doc-table-resize:hover)::after,
+  .typeset.doc :where(.doc-table-resize:focus-visible)::after,
+  .typeset.doc :where(.doc-table-resize[data-resizing])::after {
+    width: 2px;
+    background-color: color-mix(
+      in oklch,
+      var(--color-primary) 70%,
+      transparent
+    );
+  }
+
+  .typeset.doc :where(.doc-table-resize:focus-visible) {
+    outline: none;
+  }
+
+  .typeset.doc :where(table[data-col-resize]) {
+    user-select: none;
+  }
+
+  /* The toolbar over the table and the pager under it, in one box that the
+     full-screen dialog takes. */
+  .typeset.doc :where(.doc-table-box) {
+    margin-block-start: var(--typeset-flow);
+  }
+
+  .typeset.doc :where(.doc-table-box > .doc-table) {
+    margin-block: 0.5rem;
+  }
+
+  .typeset.doc :where(.doc-table-tools:empty, .doc-table-foot:empty) {
+    display: none;
+  }
+
+  .typeset.doc :where(.doc-table mark[data-table-mark]) {
+    border-radius: 0.125rem;
+    background-color: color-mix(
+      in oklch,
+      var(--color-primary) 22%,
+      transparent
+    );
+    color: inherit;
+  }
+
+  .typeset.doc :where(.doc-table[data-empty] tbody) {
+    display: none;
+  }
+}

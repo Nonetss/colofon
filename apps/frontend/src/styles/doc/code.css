@@ -1,0 +1,69 @@
+/* Code blocks: a soft card with a bar over the code (its language and the
+   copy button). The tokens' colours are the `--th-*` palette of
+   `app/syntax.css`, shared with the rest of the app. */
+@layer components {
+  .typeset.doc :where(.doc-code) {
+    margin-block-start: var(--typeset-flow);
+    overflow: hidden;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-xl);
+    background-color: var(--color-card);
+  }
+
+  .typeset.doc :where(.doc-code > pre) {
+    margin-block-start: 0;
+    border-radius: 0;
+    background-color: transparent;
+    font-size: 0.8125rem;
+  }
+
+  .typeset.doc :where(.doc-code-bar) {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.375rem 0.5rem 0.375rem 1rem;
+    border-block-end: 1px solid var(--color-border);
+    color: var(--color-muted-foreground);
+    font-family: var(--font-mono);
+    font-size: var(--font-size-label);
+    letter-spacing: 0;
+    text-transform: lowercase;
+  }
+
+  .typeset.doc :where(.doc-code-copy) {
+    margin-inline-start: auto;
+    border-radius: var(--radius-md);
+    padding: 0.125rem 0.5rem;
+    font-family: var(--font-sans);
+    font-size: 0.75rem;
+    text-transform: none;
+    transition:
+      color 0.15s ease,
+      background-color 0.15s ease;
+  }
+
+  .typeset.doc :where(.doc-code-copy):hover,
+  .typeset.doc :where(.doc-code-copy):focus-visible {
+    background-color: var(--color-accent);
+  }
+
+  /* The copied state swaps the copy icon for a check (`page-scripts.ts`). */
+  .typeset.doc :where(.doc-code-copy > .doc-icon:last-child),
+  .typeset.doc
+    :where(.doc-code-copy[data-copy-state="done"] > .doc-icon:first-child) {
+    display: none;
+  }
+
+  .typeset.doc
+    :where(.doc-code-copy[data-copy-state="done"] > .doc-icon:last-child) {
+    display: block;
+  }
+
+  .typeset.doc :where(.doc-code-copy[data-copy-state="done"]) {
+    color: var(--color-primary);
+  }
+
+  .typeset.doc :where(.doc-code-copy[data-copy-state="failed"]) {
+    color: var(--color-destructive);
+  }
+}

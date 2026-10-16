@@ -1,0 +1,67 @@
+/* Syntax highlighting — token colours for @tanstack/highlight, which marks
+   tokens with `th-<kind>` classes and leaves every colour to the app. Shared
+   by the documentation reader's code blocks, JsonView and the git file
+   viewer. Its stock theme CSS is not used: the typeset engine already styles
+   `pre`, so only the tokens are coloured here. Unlisted kinds (operators,
+   punctuation) keep the text colour. */
+:root {
+  --th-keyword: oklch(0.491 0.27 292.581);
+  --th-function: oklch(0.514 0.222 16.935);
+  --th-property: var(--primary);
+  --th-type: oklch(0.511 0.096 186.391);
+  --th-string: oklch(0.508 0.118 165.612);
+  --th-number: oklch(0.5 0.134 242.749);
+  --th-literal: oklch(0.555 0.163 48.998);
+  --th-comment: var(--muted-foreground);
+}
+
+.dark {
+  --th-keyword: oklch(0.702 0.183 293.541);
+  --th-function: oklch(0.712 0.194 13.428);
+  --th-type: oklch(0.777 0.152 181.912);
+  --th-string: oklch(0.765 0.177 163.223);
+  --th-number: oklch(0.746 0.16 232.661);
+  --th-literal: oklch(0.828 0.189 84.429);
+}
+
+@layer components {
+  :where(.th-keyword, .th-command, .th-tag, .th-selector) {
+    color: var(--th-keyword);
+  }
+
+  :where(.th-function) {
+    color: var(--th-function);
+  }
+
+  :where(.th-property, .th-attr, .th-heading, .th-link, .th-variable) {
+    color: var(--th-property);
+  }
+
+  :where(.th-type) {
+    color: var(--th-type);
+  }
+
+  :where(.th-string, .th-inserted, .th-code-inline) {
+    color: var(--th-string);
+  }
+
+  :where(.th-number) {
+    color: var(--th-number);
+  }
+
+  :where(.th-literal) {
+    color: var(--th-literal);
+  }
+
+  :where(.th-deleted) {
+    color: var(--th-function);
+  }
+
+  :where(.th-comment, .th-meta) {
+    color: var(--th-comment);
+  }
+
+  :where(.th-comment) {
+    font-style: italic;
+  }
+}

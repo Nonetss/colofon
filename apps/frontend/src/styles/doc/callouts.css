@@ -1,0 +1,73 @@
+/* Callouts (`> [!NOTE]` and its kinds), one colour per kind as the
+   reference site's alerts, and plain quotes in the accent. */
+@layer components {
+  /* Callouts, one colour per kind, as the reference site's alerts. */
+  .typeset.doc :where(.doc-alert) {
+    --alert: var(--color-muted-foreground);
+    margin-block: 1.25rem;
+    border: 1px solid color-mix(in oklch, var(--alert) 45%, var(--color-border));
+    border-inline-start: 4px solid var(--alert);
+    border-radius: var(--radius-xl);
+    background-color: color-mix(
+      in oklch,
+      var(--alert) 12%,
+      var(--color-background)
+    );
+    padding: 0.875rem 1rem;
+  }
+
+  .typeset.doc :where(.doc-alert > :last-child) {
+    margin-block-end: 0;
+  }
+
+  /* The title opens the card: no flow margin above it. */
+  .typeset.doc :where(.doc-alert > :first-child) {
+    margin-block-start: 0;
+  }
+
+  .typeset.doc :where(.doc-alert-title) {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--alert);
+    font-size: 0.8125rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .typeset.doc :where(.doc-alert-note) {
+    --alert: oklch(0.6 0.13 250);
+  }
+
+  .typeset.doc :where(.doc-alert-tip) {
+    --alert: oklch(0.62 0.13 152);
+  }
+
+  .typeset.doc :where(.doc-alert-important) {
+    --alert: var(--chart-2);
+  }
+
+  .typeset.doc :where(.doc-alert-warning) {
+    --alert: oklch(0.7 0.14 75);
+  }
+
+  .typeset.doc :where(.doc-alert-caution) {
+    --alert: oklch(0.62 0.2 25);
+  }
+
+  .typeset.doc :where(blockquote:not(.doc-alert)) {
+    border: 1px solid
+      color-mix(in oklch, var(--color-primary) 20%, var(--color-border));
+    border-inline-start: 4px solid var(--color-primary);
+    border-radius: var(--radius-xl);
+    background-color: color-mix(
+      in oklch,
+      var(--color-primary) 6%,
+      var(--color-background)
+    );
+    padding: 0.25rem 1rem;
+    font-style: normal;
+    font-weight: 400;
+  }
+}

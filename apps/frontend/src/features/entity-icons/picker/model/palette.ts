@@ -12,7 +12,7 @@ type PaletteEntry = {
 
 /**
  * Exhaustive over the API's color keys: a key added on the server fails
- * type-checking here until it gets a token in `global.css` and an entry.
+ * type-checking here until it gets a token in `theme.css` and an entry.
  */
 export const ICON_PALETTE: Record<EntityIconColor, PaletteEntry> = {
   orange: {

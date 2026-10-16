@@ -26,7 +26,7 @@ function pageWantsScrollToTop() {
  * `window` and any `[data-app-scroller]` container.
  *
  * Mounted once from `Layout.astro` as a tight `position: fixed` box (see
- * `.scroll-to-top-root` in `global.css`) so it cannot stretch into a
+ * `.scroll-to-top-root` in `styles/app/chrome.css`) so it cannot stretch into a
  * full-width bar or participate in the body's flex column. Pages opt in
  * with `data-scroll-to-top` on the inset scroller.
  */

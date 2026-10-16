@@ -1,0 +1,87 @@
+/* The repeated sections of a page (`.doc-section`, split apart by
+   `features/docs/page/model/render.ts`): the heading beside a small icon.
+   Quiet ones keep the rule over them; "¿Dónde busco…?" (`where`) takes the
+   accent and "Trampas y decisiones" (`pitfalls`) the warning red, as cards. */
+@layer components {
+  .typeset.doc :where(.doc-section) {
+    --section: var(--color-muted-foreground);
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    column-gap: 0.625rem;
+    align-items: center;
+    margin-block-start: calc(var(--typeset-flow) * 1.6);
+    border-block-start: 1px solid var(--color-border);
+    padding-block-start: 1.25rem;
+  }
+
+  .typeset.doc > :where(.doc-section:first-child) {
+    margin-block-start: 0;
+    border-block-start: 0;
+    padding-block-start: 0;
+  }
+
+  .typeset.doc :where(.doc-section-badge) {
+    grid-column: 1;
+    grid-row: 1;
+    display: inline-flex;
+    color: var(--section);
+  }
+
+  .typeset.doc :where(.doc-section > h2) {
+    grid-column: 2;
+    grid-row: 1;
+    margin-block-start: 0;
+    border: 0;
+    padding: 0;
+  }
+
+  .typeset.doc :where(.doc-section > :not(.doc-section-badge, h2)) {
+    grid-column: 1 / -1;
+  }
+
+  .typeset.doc :where(.doc-section[data-kind="where"]) {
+    --section: var(--color-primary);
+    border: 1px solid
+      color-mix(in oklch, var(--section) 30%, var(--color-border));
+    border-radius: calc(var(--radius-xl) + 4px);
+    background-color: color-mix(
+      in oklch,
+      var(--section) 5%,
+      var(--color-background)
+    );
+    padding: 1.5rem;
+  }
+
+  .typeset.doc :where(.doc-section[data-kind="where"] .doc-table) {
+    background-color: var(--color-card);
+  }
+
+  .typeset.doc
+    :where(.doc-section[data-kind="where"] .doc-table tbody tr):hover {
+    background-color: transparent;
+  }
+
+  .typeset.doc :where(.doc-section[data-kind="pitfalls"]) {
+    --section: oklch(0.62 0.2 25);
+    border: 1px solid
+      color-mix(in oklch, var(--section) 30%, var(--color-border));
+    border-inline-start: 4px solid var(--section);
+    border-radius: var(--radius-xl);
+    background-color: color-mix(
+      in oklch,
+      var(--section) 7%,
+      var(--color-background)
+    );
+    padding: 1.25rem 1.375rem;
+  }
+
+  @media (max-width: 40rem) {
+    .typeset.doc
+      :where(
+        .doc-section[data-kind="where"],
+        .doc-section[data-kind="pitfalls"]
+      ) {
+      padding: 1rem;
+    }
+  }
+}

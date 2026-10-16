@@ -30,7 +30,7 @@ const jsonHighlighter = createHighlighter({ languages: [json] })
  *
  * Stringifies `value` with 2-space indent and colours it with TanStack
  * Highlight's JSON tokenizer, using the `--th-*` token palette in
- * `global.css`. Falls back to a plain
+ * `styles/app/syntax.css`. Falls back to a plain
  * `<pre>` when the value isn't JSON-serializable so the surface stays useful
  * for edge cases (circular refs, BigInt, …).
  */

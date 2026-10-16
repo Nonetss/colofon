@@ -1,0 +1,23 @@
+/* TanStack Charts (`components/ui/chart.tsx`) reads its categorical palette
+   and its tooltip chrome from these variables. Declared on the chart host,
+   not :root, so they resolve against the theme where the chart sits and the
+   `.dark` toggle recolors live charts without rebuilding a definition. The
+   tooltip mirrors `TooltipContent` (inverted foreground bubble). */
+@layer components {
+  .ts-chart-host {
+    --ts-chart-1: var(--chart-1);
+    --ts-chart-2: var(--chart-2);
+    --ts-chart-3: var(--chart-3);
+    --ts-chart-4: var(--chart-4);
+    --ts-chart-5: var(--chart-5);
+    --ts-chart-6: var(--chart-6);
+    --ts-chart-tooltip-background: var(--foreground);
+    --ts-chart-tooltip-color: var(--background);
+    --ts-chart-tooltip-border: 0 solid transparent;
+    --ts-chart-tooltip-border-radius: var(--radius-md);
+    --ts-chart-tooltip-shadow: var(--shadow-md);
+    --ts-chart-tooltip-padding: 0.375rem 0.75rem;
+    --ts-chart-tooltip-font:
+      400 var(--text-xs) / var(--text-xs--line-height) var(--font-sans);
+  }
+}

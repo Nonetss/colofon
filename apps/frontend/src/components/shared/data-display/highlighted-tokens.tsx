@@ -3,7 +3,7 @@ import type { ReactNode } from "react"
 
 /**
  * TanStack Highlight tokens as React spans, coloured by the `--th-*` palette
- * in `global.css`. Unclassed tokens stay plain text, so no highlighter HTML
+ * in `styles/app/syntax.css`. Unclassed tokens stay plain text, so no highlighter HTML
  * is ever injected. Goes inside the caller's `<pre>`.
  */
 export function HighlightedTokens({

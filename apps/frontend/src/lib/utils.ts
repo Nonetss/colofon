@@ -1,7 +1,7 @@
 import { createCn } from "cn/config"
 
 /**
- * The role-based type utilities from `global.css` (`text-label`,
+ * The role-based type utilities from `theme.css` (`text-label`,
  * `text-meta`, …). The class merger doesn't know them, and an unknown
  * `text-*` class is filed under text colour — so `text-label` next to
  * `text-muted-foreground` was silently dropped, losing the role's size.

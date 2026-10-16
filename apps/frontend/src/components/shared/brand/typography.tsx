@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils"
 /**
  * Each role carries its whole recipe (size, leading, weight, tracking,
  * case) on top of the `--font-size-*` / `--line-height-*` / `--tracking-*`
- * tokens in `global.css`, whose `text-<role>` utilities set only the size.
+ * tokens in `theme.css`, whose `text-<role>` utilities set only the size.
  */
 const textVariants = cva("", {
   variants: {

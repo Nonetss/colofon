@@ -1,0 +1,86 @@
+/* The app's chrome around every page: the back-to-top control, and the view
+   transitions of the theme toggle, the persisted navbar and sidebar and the
+   documentation page coming in. */
+
+/* Tight viewport box for the back-to-top control. Must beat
+   `body > astro-island { width: 100%; position: relative }` so the island
+   cannot stretch into a full-width strip covering the bottom of the page. */
+.scroll-to-top-root,
+.scroll-to-top-root astro-island {
+  position: fixed;
+  top: auto;
+  left: auto;
+  right: max(1rem, env(safe-area-inset-right, 0px));
+  bottom: calc(
+    1rem +
+    env(safe-area-inset-bottom, 0px) +
+    var(--list-action-bar-offset)
+  );
+  z-index: 40;
+  width: auto;
+  max-width: fit-content;
+  height: auto;
+  margin: 0;
+  padding: 0;
+  overflow: visible;
+  background: none;
+  pointer-events: none;
+}
+
+.scroll-to-top-root :is(button, [data-slot="scroll-to-top"]) {
+  pointer-events: auto;
+}
+
+@media (min-width: 768px) {
+  .scroll-to-top-root,
+  .scroll-to-top-root astro-island {
+    right: 1.5rem;
+    bottom: 1.5rem;
+  }
+}
+
+/* Theme toggle circular reveal (see use-theme-mode.ts). Gated on
+   `.theme-transitioning` so Astro ClientRouter navigations keep the default
+   root cross-fade and persist chrome (navbar/sidebar) stays visible. The
+   unscoped `z-index: 9999` on `::view-transition-new(root)` would otherwise
+   cover persist groups with the incoming snapshot (empty `client:only`
+   islands) and look like a full-page blink. */
+html.theme-transitioning::view-transition-old(root),
+html.theme-transitioning::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+html.theme-transitioning::view-transition-old(root) {
+  z-index: 1;
+}
+
+html.theme-transitioning::view-transition-new(root) {
+  z-index: 9999;
+}
+
+/* Persist chrome must not morph/fade during page navigation. */
+::view-transition-old(sidebar-chrome),
+::view-transition-new(sidebar-chrome),
+::view-transition-old(sidebar-header),
+::view-transition-new(sidebar-header),
+::view-transition-old(navbar-auth),
+::view-transition-new(navbar-auth),
+::view-transition-old(navbar-guest),
+::view-transition-new(navbar-guest) {
+  animation: none;
+}
+
+/* The documentation page coming in (`layouts/Docs.astro`). */
+@keyframes page-leave {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}

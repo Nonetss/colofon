@@ -1,0 +1,94 @@
+/* Base element styles: borders and focus rings, the thin transparent
+   scrollbars, the body's type, the chrome islands and the selection, plus
+   the touch hit area of icon-only buttons. */
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+  /* Avoid sticky-header horizontal jumps when Radix dialogs lock scroll
+     and temporarily remove the scrollbar. */
+  html {
+    scrollbar-gutter: stable;
+  }
+  /* Transparent track site-wide — Linux Chromium paints a solid grey
+     background on ::-webkit-scrollbar itself, not only on the track. */
+  *::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+    background: transparent;
+  }
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  *::-webkit-scrollbar-thumb {
+    background-color: var(--border);
+    border-radius: 9999px;
+  }
+  *::-webkit-scrollbar-thumb:hover {
+    background-color: var(--muted-foreground);
+  }
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    /* Pin prose defaults to DESIGN.md's body commit (0.875rem / 1.5) so any
+       unstyled element or cascade-from-body content reads at the intended
+       size and leading instead of the browser default (16px / ~1.15). */
+    font-size: var(--font-size-body);
+    line-height: var(--line-height-body);
+    position: relative;
+    isolation: isolate;
+    letter-spacing: var(--tracking-normal);
+  }
+  /* Layout chrome islands (navbar, toaster) mount as direct body children;
+     without block + full width the header shrink-wraps to max-w content.
+     The navbar is `fixed` (out of flow); z-40 keeps it above page scroll. */
+  body > astro-island {
+    display: block;
+    width: 100%;
+    position: relative;
+    z-index: 40;
+  }
+  ::selection {
+    background-color: var(--brand-orange);
+    color: var(--primary-foreground);
+  }
+}
+
+/* Icon-only buttons (icon-xs 24px, icon-sm 32px, icon 36px, icon-lg 40px —
+   see components/ui/button.tsx) stay visually dense on desktop by design
+   (quiet-editorial density, mouse-precise pointer), but all sit under the
+   44x44px touch target floor. Rather than growing every icon button
+   globally — which would blow up the calm density the system is built on —
+   expand only the *hit area* to 44x44, centered on the visible box, and
+   only under a coarse (touch) pointer. Fine-pointer users (trackpad, mouse)
+   see and get exactly the sizes DESIGN.md specifies.
+   Kept in `@layer base` so positioning utilities on the button itself
+   (`fixed`, `absolute`, `sticky`) still win: unlayered CSS beats every
+   Tailwind layer, and a bare `position: relative` here would pull floating
+   icon buttons (ScrollToTopButton, MessageScrollerButton) back into flow. */
+@layer base {
+  @media (pointer: coarse) {
+    /* data-size alone (not data-slot="button") — SidebarTrigger re-passes its
+       own data-slot="sidebar-trigger" through ...props, which wins over
+       Button's data-slot="button" default and would otherwise slip past a
+       data-slot-qualified selector. data-size is untouched in that case. */
+    [data-size="icon-xs"],
+    [data-size="icon-sm"],
+    [data-size="icon"],
+    [data-size="icon-lg"] {
+      position: relative;
+    }
+    [data-size="icon-xs"]::after,
+    [data-size="icon-sm"]::after,
+    [data-size="icon"]::after,
+    [data-size="icon-lg"]::after {
+      content: "";
+      position: absolute;
+      inset: 50%;
+      width: max(44px, 100%);
+      height: max(44px, 100%);
+      transform: translate(-50%, -50%);
+    }
+  }
+}
