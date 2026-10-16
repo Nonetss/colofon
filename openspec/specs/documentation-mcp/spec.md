@@ -1,7 +1,7 @@
 # documentation-mcp Specification
 
 ## Purpose
-Lets any AI agent use the documentation through the Model Context Protocol: an authenticated `/mcp` endpoint with read-only tools to list the repositories, read the `llms.txt` index, search, read a page (or one of its sections) as Markdown, look up a catalog entity by its type and id, and list and read the Agent Skills the caller can see. Each tool shows exactly what the reader shows the caller. When the server has secrets configured it also serves the `secrets` and `request` tools, specified by `secret-requests`.
+Lets any AI agent use the documentation through the Model Context Protocol: an authenticated `/mcp` endpoint with read-only tools to list the repositories, read the `llms.txt` index, search, read a page (or one of its sections) as Markdown, look up a catalog entity by its type and id, and list and read the Agent Skills the caller can see. Each tool shows exactly what the reader shows the caller. When the server has secrets configured it also serves the `secrets` and `request` tools, specified by `secret-requests`. To an admin it also serves `sync`, which fetches a content repository from its git remote at once.
 
 ## Requirements
 
@@ -14,19 +14,25 @@ The backend SHALL serve an MCP server at `/mcp` over the Streamable HTTP transpo
 - to look up a catalog entity with `entity`;
 - to list the skills with `skills` and fetch one with `skill`;
 - when the secrets feature is on, to list the user's secrets with `secrets` and to call a service's HTTP API with `request`, using placeholders the platform fills in, as the documentation describes that API;
+- when the caller is an admin, to sync a repository with `sync` after pushing to an external one, instead of waiting for the periodic sync;
 - that every link in the texts is a full address on the public origin.
 
 It SHALL declare only tools: no resources, prompts or subscriptions.
 
 #### Scenario: Listing the tools
 
-- **WHEN** an authenticated MCP client initializes against `/mcp` with the secrets feature on and lists the tools
+- **WHEN** an authenticated MCP client whose user is not an admin initializes against `/mcp` with the secrets feature on and lists the tools
 - **THEN** it SHALL receive exactly `repositories`, `index`, `search`, `read`, `entity`, `skills`, `skill`, `secrets` and `request`, each with a description and an input schema
 
 #### Scenario: Secrets feature off
 
-- **WHEN** `SECRETS_ENCRYPTION_KEY` is unset and an authenticated client lists the tools
+- **WHEN** `SECRETS_ENCRYPTION_KEY` is unset and an authenticated client whose user is not an admin lists the tools
 - **THEN** it SHALL receive exactly `repositories`, `index`, `search`, `read`, `entity`, `skills` and `skill`, and the instructions SHALL NOT mention secrets
+
+#### Scenario: Admin caller
+
+- **WHEN** an admin's client lists the tools
+- **THEN** it SHALL also receive `sync`, and the instructions SHALL mention it; a client whose user is not an admin SHALL NOT receive `sync`, and its instructions SHALL NOT mention it
 
 #### Scenario: No sessions
 
@@ -54,7 +60,7 @@ Every request to `/mcp` SHALL need an enabled API key in the `x-api-key` header 
 
 ### Requirement: Read-only tools
 
-Every tool except `request` SHALL be declared read-only and idempotent. No tool except `request` SHALL change any stored data, and `request` SHALL only add usage-log entries. A tool call with invalid arguments SHALL return a tool error result whose text names the invalid arguments, so the agent can correct the call. A tool call that names an unknown repository or page SHALL return a tool error result whose text says what was not found, instead of a protocol error. Every link and image to a reader route in a tool's text SHALL be a full address on the public origin.
+Every tool except `request` and `sync` SHALL be declared read-only and idempotent. No tool except `request` and `sync` SHALL change any stored data: `request` SHALL only add usage-log entries, and `sync` SHALL only update a repository's clone and its recorded sync outcome. A tool call with invalid arguments SHALL return a tool error result whose text names the invalid arguments, so the agent can correct the call. A tool call that names an unknown repository or page SHALL return a tool error result whose text says what was not found, instead of a protocol error. Every link and image to a reader route in a tool's text SHALL be a full address on the public origin.
 
 #### Scenario: Unknown page
 
@@ -69,7 +75,7 @@ Every tool except `request` SHALL be declared read-only and idempotent. No tool 
 #### Scenario: Annotations
 
 - **WHEN** a client lists the tools
-- **THEN** every tool but `request` SHALL be annotated read-only and idempotent, and `request` SHALL be annotated as not read-only, destructive and open-world
+- **THEN** every tool but `request` and `sync` SHALL be annotated read-only and idempotent, `request` SHALL be annotated as not read-only, destructive and open-world, and `sync` as not read-only, not destructive, idempotent and open-world
 
 ### Requirement: Repositories tool
 
@@ -200,3 +206,22 @@ The `skill` tool SHALL take a skill's published name and return that skill's `SK
 
 - **WHEN** the agent calls `skill` with `name: "no-existe"`
 - **THEN** the result SHALL be marked as an error, saying to call `skills`
+
+### Requirement: Sync tool
+
+The `sync` tool SHALL be served only to an admin. It SHALL take a repository's slug, fetch that repository from its git remote and check out its ref through the same procedure as the admin page's sync, as the caller, waiting until it is done, and SHALL return a text with the repository's name, slug and ref, the commit checked out, when the sync ran and the full address of the repository on the public origin. A slug that names no repository SHALL return a tool error result that says to call `repositories` to list them. A sync that fails SHALL return a tool error result with git's error, without credentials.
+
+#### Scenario: Syncing after a push
+
+- **WHEN** an admin's agent pushes to the external repository `casa` and calls `sync` with `repository: "casa"`
+- **THEN** the backend SHALL fetch `casa` at once and the text SHALL give the commit now checked out, which the reader then serves
+
+#### Scenario: Unknown repository
+
+- **WHEN** an admin's agent calls `sync` with `repository: "nada"`
+- **THEN** the result SHALL be marked as an error, saying to call `repositories`
+
+#### Scenario: Git failure
+
+- **WHEN** the remote of `casa` lacks its ref and an admin's agent calls `sync` with `repository: "casa"`
+- **THEN** the result SHALL be marked as an error with git's message, and no credential SHALL appear in it
