@@ -39,4 +39,4 @@
 
 ## 6. Validation
 
-- [ ] 6.1 From the repo root, run `bun run check-types`, Biome (`bunx biome check .`) and `bun run test`, and see all of them pass
+- [x] 6.1 From the repo root, run `bun run check-types`, Biome (`bunx biome check .`) and `bun run test`, and see all of them pass
