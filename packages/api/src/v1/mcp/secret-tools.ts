@@ -1,7 +1,6 @@
 import type { CallToolResult } from "@modelcontextprotocol/server"
 import { z } from "zod"
 import type { AppRouterClient } from "#router"
-import type { ToolScope } from "#v1/mcp/tools"
 import type { RequestResult } from "#v1/secret/request/execute"
 import type { RequestInput } from "#v1/secret/request/plan"
 import type { ResponseBody } from "#v1/secret/request/send"
@@ -21,10 +20,6 @@ export type SecretToolScope = {
   secrets: SecretsAccess
   origin: string
 }
-
-/** What the server is built with: the documentation tools' scope plus the
- *  caller's secrets, whose tools are listed only when secrets are on. */
-export type McpScope = ToolScope & { secrets: SecretsAccess }
 
 /** What `secrets` returns as structured content. */
 export const secretsOutput = z.object({

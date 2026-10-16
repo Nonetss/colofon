@@ -25,6 +25,9 @@ export const MCP_TOOL_NAMES = [
  */
 export const MCP_SECRET_TOOL_NAMES = ["secrets", "request"] as const
 
+/** The tools the server adds for an admin only. */
+export const MCP_ADMIN_TOOL_NAMES = ["sync"] as const
+
 /** The name every client lists the server under. */
 const SERVER_NAME = "colofon"
 

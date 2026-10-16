@@ -5,9 +5,15 @@ import {
 } from "@modelcontextprotocol/client"
 import type { CallToolResult } from "@modelcontextprotocol/server"
 import { resetEnv, testEnv } from "#tests/fixtures/env"
+import type { ContentClient } from "#v1/mcp/content-tools"
 import { serveMcp } from "#v1/mcp/handler"
-import type { McpScope, SecretsAccess } from "#v1/mcp/secret-tools"
-import { MCP_SECRET_TOOL_NAMES, MCP_TOOL_NAMES } from "#v1/mcp/setup"
+import type { SecretsAccess } from "#v1/mcp/secret-tools"
+import type { McpScope } from "#v1/mcp/server"
+import {
+  MCP_ADMIN_TOOL_NAMES,
+  MCP_SECRET_TOOL_NAMES,
+  MCP_TOOL_NAMES,
+} from "#v1/mcp/setup"
 import type { DocsClient, SkillsClient } from "#v1/mcp/tools"
 
 // The real handler and server, driven by the SDK's own client over a fetch
@@ -61,22 +67,49 @@ const secrets: SecretsAccess = {
   },
 }
 
-const scope: McpScope = { docs, skills, secrets, origin }
+const synced: unknown[] = []
 
-async function mcpFetch(
-  url: string | URL,
-  init?: RequestInit
-): Promise<Response> {
-  return serveMcp(new Request(url.toString(), init), scope)
+const content: ContentClient = {
+  syncRepository: async (input) => {
+    synced.push(input)
+    return {
+      id: "00000000-0000-4000-8000-000000000001",
+      slug: input.slug,
+      name: "Casa",
+      url: "https://github.com/nonete/casa.git",
+      hosted: false,
+      pushUrl: null,
+      ref: "main",
+      catalogUrl: `${origin}/api/v1/content/casa/catalog.json`,
+      lastSyncedAt: "2026-10-16T10:00:00.000Z",
+      lastCommit: "4f1c2a9",
+      lastSyncError: null,
+      createdAt: "2026-01-01T00:00:00.000Z",
+      updatedAt: "2026-10-16T10:00:00.000Z",
+    }
+  },
 }
+
+/** A user's scope; an admin's also carries the content client. */
+const scope: McpScope = { docs, skills, secrets, content: null, origin }
+const adminScope: McpScope = { ...scope, content }
+
+function fetchWith(
+  requestScope: McpScope
+): (url: string | URL, init?: RequestInit) => Promise<Response> {
+  return (url, init) =>
+    serveMcp(new Request(url.toString(), init), requestScope)
+}
+
+const mcpFetch = fetchWith(scope)
 
 const open: Client[] = []
 
-async function connect(): Promise<Client> {
+async function connect(requestScope: McpScope = scope): Promise<Client> {
   const client = new Client({ name: "test", version: "1.0.0" })
   await client.connect(
     new StreamableHTTPClientTransport(new URL(`${origin}/mcp`), {
-      fetch: mcpFetch,
+      fetch: fetchWith(requestScope),
     })
   )
   open.push(client)
@@ -89,6 +122,7 @@ afterEach(async () => {
   await Promise.all(open.splice(0).map((client) => client.close()))
   searched.length = 0
   requested.length = 0
+  synced.length = 0
 })
 
 /** Turns the secrets feature on for the rest of the test. */
@@ -175,6 +209,40 @@ describe("serveMcp", () => {
         body: { type: "DeployStack" },
       },
     ])
+  })
+
+  test("for an admin, adds sync (writes, idempotent, open-world) and mentions it", async () => {
+    const client = await connect(adminScope)
+    const { tools } = await client.listTools()
+
+    expect(tools.map((tool) => tool.name).sort()).toEqual(
+      [...MCP_TOOL_NAMES, ...MCP_ADMIN_TOOL_NAMES].sort()
+    )
+    expect(tools.find((tool) => tool.name === "sync")?.annotations).toEqual({
+      readOnlyHint: false,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: true,
+    })
+    expect(client.getInstructions()).toContain("`sync`")
+  })
+
+  test("for anyone else, the instructions don't mention sync", async () => {
+    const client = await connect()
+
+    expect(client.getInstructions()).not.toContain("`sync`")
+  })
+
+  test("sync reaches the admin's content client with the slug", async () => {
+    const client = await connect(adminScope)
+    const result = await client.callTool({
+      name: "sync",
+      arguments: { repository: "casa" },
+    })
+
+    expect(result.isError).toBeFalsy()
+    expect(text(result)).toContain("Synced Casa (casa) at main.")
+    expect(synced).toEqual([{ slug: "casa" }])
   })
 
   test("identifies itself and tells the agent where to start", async () => {

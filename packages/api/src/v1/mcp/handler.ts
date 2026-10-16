@@ -3,8 +3,7 @@ import {
   type McpHttpHandler,
   type McpRequestContext,
 } from "@modelcontextprotocol/server"
-import type { McpScope } from "#v1/mcp/secret-tools"
-import { createDocsMcpServer } from "#v1/mcp/server"
+import { createDocsMcpServer, type McpScope } from "#v1/mcp/server"
 
 // The `/mcp` endpoint's handler: one per process, serving each request with a
 // fresh server (stateless, the current protocol revision plus the 2025-era

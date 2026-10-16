@@ -1,6 +1,7 @@
 import { originValidationResponse } from "@modelcontextprotocol/server"
 import { createContext } from "@nonete/api/context"
 import { appRouter } from "@nonete/api/router"
+import type { ContentClient } from "@nonete/api/v1/mcp/content-tools"
 import { serveMcp } from "@nonete/api/v1/mcp/handler"
 import { executeRequest } from "@nonete/api/v1/secret/request/execute"
 import { env } from "@nonete/env/server"
@@ -33,6 +34,15 @@ function apiKeyIdOf(
   return session.id
 }
 
+/** The content client for `sync`, which only an admin's server lists. */
+function contentFor(
+  user: NonNullable<AuthVariables["user"]>,
+  content: ContentClient
+): ContentClient | null {
+  if (user.role !== "admin") return null
+  return content
+}
+
 const router = new Hono<{ Variables: AuthVariables }>()
 
 router.all("/mcp", async (c) => {
@@ -63,6 +73,8 @@ router.all("/mcp", async (c) => {
           input
         ),
     },
+    // Only an admin's server lists `sync`; the procedure checks it again.
+    content: contentFor(user, client.v1.content),
     origin: publicUrl.origin,
   })
 })

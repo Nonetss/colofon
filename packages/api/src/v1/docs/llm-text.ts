@@ -2,6 +2,7 @@ import type { z } from "zod"
 import type { DocsNavNode, docsOutput } from "#v1/docs/output"
 import {
   claudeCodeCommand,
+  MCP_ADMIN_TOOL_NAMES,
   MCP_SECRET_TOOL_NAMES,
   MCP_TOOL_NAMES,
   mcpUrl,
@@ -146,6 +147,9 @@ export function agentGuide(
   const secretTools = MCP_SECRET_TOOL_NAMES.map((name) => `\`${name}\``).join(
     " y "
   )
+  const adminTools = MCP_ADMIN_TOOL_NAMES.map((name) => `\`${name}\``).join(
+    ", "
+  )
   const lines = [
     "## Para agentes",
     "",
@@ -153,7 +157,7 @@ export function agentGuide(
     "",
     "Cada página tiene su texto en Markdown en `<página>/llm.txt`, con sus enlaces como direcciones completas.",
     "",
-    `El MCP de la documentación está en ${mcpUrl(origin)}, con la key en \`x-api-key\`. Sus herramientas: ${tools}; si el servidor tiene activados los secretos, también ${secretTools}, para llamar a las APIs de tus servicios con los secretos que guardes en ${origin}/me sin que el agente vea sus valores. En Claude Code:`,
+    `El MCP de la documentación está en ${mcpUrl(origin)}, con la key en \`x-api-key\`. Sus herramientas: ${tools}; si el servidor tiene activados los secretos, también ${secretTools}, para llamar a las APIs de tus servicios con los secretos que guardes en ${origin}/me sin que el agente vea sus valores; y a un administrador, ${adminTools}, para sincronizar un repositorio con su remoto al momento. En Claude Code:`,
     "",
     ...fenced(claudeCodeCommand(origin, KEY_PLACEHOLDER)),
     "",

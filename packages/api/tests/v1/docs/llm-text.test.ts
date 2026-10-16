@@ -10,6 +10,7 @@ import {
 } from "#v1/docs/llm-text"
 import {
   claudeCodeCommand,
+  MCP_ADMIN_TOOL_NAMES,
   MCP_SECRET_TOOL_NAMES,
   MCP_TOOL_NAMES,
 } from "#v1/mcp/setup"
@@ -171,6 +172,13 @@ describe("agentGuide", () => {
       expect(guide).toContain(`\`${name}\``)
     }
     expect(guide).toContain("si el servidor tiene activados los secretos")
+  })
+
+  test("names the admin tools as served only to an admin", () => {
+    for (const name of MCP_ADMIN_TOOL_NAMES) {
+      expect(guide).toContain(`\`${name}\``)
+    }
+    expect(guide).toContain("a un administrador")
   })
 
   test("gives the skills index, how to install one and only the platform's skills", () => {
