@@ -39,6 +39,7 @@ const adminIcons = {
 const entityIcons = {
   organization: Lucide.Building2,
   apiKey: Lucide.KeyRound,
+  secret: Lucide.Vault,
   contentRepository: Lucide.FolderGit2,
   gitBranch: Lucide.GitBranch,
   folder: Lucide.Folder,
@@ -82,6 +83,7 @@ const actionIcons = {
   pickIcon: Lucide.SmilePlus,
   reorder: Lucide.GripVertical,
   reset: Lucide.RotateCcw,
+  history: Lucide.History,
 } as const
 
 const controlIcons = {

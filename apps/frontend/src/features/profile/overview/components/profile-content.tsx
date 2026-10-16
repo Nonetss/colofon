@@ -14,6 +14,7 @@ import { ChangePasswordDialog } from "@/features/profile/overview/components/cha
 import { EditNameDialog } from "@/features/profile/overview/components/edit-name-dialog"
 import { ProfileAgentSkills } from "@/features/profile/overview/components/profile-agent-skills"
 import { ProfileApiKeys } from "@/features/profile/overview/components/profile-api-keys"
+import { ProfileSecrets } from "@/features/profile/overview/components/profile-secrets"
 import { authClient } from "@/lib/auth-client"
 import { formatDate } from "@/lib/format"
 import { userDisplayName } from "@/lib/user-display"
@@ -144,6 +145,8 @@ export function ProfileContent({ user: initialUser }: ProfilePageProps) {
       />
 
       <ProfileApiKeys />
+
+      <ProfileSecrets />
 
       <ProfileAgentSkills />
 
