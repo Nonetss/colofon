@@ -426,7 +426,138 @@ describe("docs.file", () => {
   })
 })
 
+describe("docs.search", () => {
+  const CASA: Record<string, string> = {
+    ...CONTENT_SITE,
+    "docs/red/index.mdx": "---\ntitulo: Red\ndescripcion: La red\n---\n",
+    "docs/red/dns.mdx": [
+      "---",
+      "titulo: DNS",
+      "descripcion: Nombres",
+      "---",
+      "",
+      "Servidor de la casa.",
+      "",
+      "## Resolución inversa",
+      "",
+      "La consulta inversa da el nombre de una IP.",
+    ].join("\n"),
+  }
+  const TRABAJO: Record<string, string> = {
+    ...CONTENT_SITE,
+    "docs/dns.mdx": "---\ntitulo: DNS de la oficina\ndescripcion: Zonas\n---\n",
+  }
+
+  function search(query: string, repository?: string, limit = 10) {
+    return docsInput.search.parse({ query, repository, limit })
+  }
+
+  async function bothRepositories() {
+    return setup([casa, trabajo], {
+      ...inClone(casa, CASA),
+      ...inClone(trabajo, TRABAJO),
+    })
+  }
+
+  test("a named repository is the only one searched", async () => {
+    const { handler } = await bothRepositories()
+    const answer = await handler.search({ input: search("dns", "casa") })
+    expect(answer.allRepositories).toBe(false)
+    expect(answer.results.map((result) => result.repository.slug)).toEqual([
+      "casa",
+    ])
+  })
+
+  test("without a repository, or with one that names none, every readable repository is searched together", async () => {
+    const { handler } = await bothRepositories()
+    for (const repository of [undefined, "nadie"]) {
+      const answer = await handler.search({ input: search("dns", repository) })
+      expect(answer.allRepositories).toBe(true)
+      const slugs = new Set(
+        answer.results.map((result) => result.repository.slug)
+      )
+      expect([...slugs].sort()).toEqual(["casa", "trabajo"])
+    }
+  })
+
+  test("a repository without content is skipped", async () => {
+    const { handler } = await setup([casa, trabajo], inClone(casa, CASA))
+    const answer = await handler.search({ input: search("dns") })
+    expect(answer.allRepositories).toBe(false)
+    expect(answer.results.map((result) => result.repository.slug)).toEqual([
+      "casa",
+    ])
+  })
+
+  test("a body match carries its excerpt and a route to its section", async () => {
+    const { handler } = await setup([casa], inClone(casa, CASA))
+    const [result] = (await handler.search({ input: search("consulta") }))
+      .results
+    expect(result).toEqual({
+      repository: { slug: "casa", name: "Casa" },
+      path: "red/dns",
+      href: "/casa/red/dns#resolución-inversa",
+      title: "DNS",
+      description: "Nombres",
+      trail: ["Red"],
+      excerpt: {
+        text: "La consulta inversa da el nombre de una IP.",
+        highlights: [{ start: 3, end: 11 }],
+      },
+      terms: ["consulta"],
+    })
+  })
+
+  test("a title match routes to the page with no excerpt", async () => {
+    const { handler } = await setup([casa], inClone(casa, CASA))
+    const [result] = (await handler.search({ input: search("dns") })).results
+    expect(result?.href).toBe("/casa/red/dns")
+    expect(result?.excerpt).toBeNull()
+  })
+
+  test("the home routes to the repository", async () => {
+    const { handler } = await setup([casa], inClone(casa, CASA))
+    const [result] = (await handler.search({ input: search("inicio") })).results
+    expect(result?.href).toBe("/casa")
+  })
+
+  test("results are cut to the limit, the most relevant first", async () => {
+    const { handler } = await bothRepositories()
+    const answer = await handler.search({ input: search("dns", undefined, 1) })
+    expect(answer.results).toHaveLength(1)
+    expect(answer.results[0]?.title).toBe("DNS")
+  })
+
+  test("a sync that changes a page is found by the next search", async () => {
+    const before = await createContentRemote(CASA)
+    const after = await createContentRemote({
+      ...CASA,
+      "docs/red/dns.mdx":
+        "---\ntitulo: DNS\ndescripcion: Nombres\n---\n\nAhora con pihole.\n",
+    })
+    cleanups.push(before.remove, after.remove)
+    const first = { ...casa, url: before.url }
+    const { reader, handler } = await setup([first], {})
+    await reader.sync(first)
+    expect((await handler.search({ input: search("pihole") })).results).toEqual(
+      []
+    )
+
+    await reader.sync({ ...casa, url: after.url })
+    const answer = await handler.search({ input: search("pihole") })
+    expect(answer.results.map((result) => result.title)).toEqual(["DNS"])
+  })
+})
+
 describe("docs input", () => {
+  test("a search needs two characters and caps the limit at 20", () => {
+    expect(docsInput.search.safeParse({ query: " d " }).success).toBe(false)
+    expect(
+      docsInput.search.safeParse({ query: "dns", limit: 21 }).success
+    ).toBe(false)
+    expect(docsInput.search.parse({ query: "dns" }).limit).toBe(10)
+  })
+
   test("a path that climbs out of docs/ is refused before the handler runs", () => {
     expect(
       docsInput.file.safeParse({

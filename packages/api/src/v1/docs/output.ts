@@ -216,4 +216,45 @@ export const docsOutput = {
       ),
   }),
   file: z.file().describe("The image file"),
+  search: z.object({
+    allRepositories: z
+      .boolean()
+      .describe(
+        "Whether more than one repository was searched, so results come from several"
+      ),
+    results: z.array(
+      z.object({
+        repository: z.object({ slug: z.string(), name: z.string() }),
+        path: z
+          .string()
+          .describe("Page path under docs/ without .mdx; empty for the home"),
+        href: z
+          .string()
+          .describe(
+            "Reader route of the page, at the heading of the section that holds the match when there is one"
+          ),
+        title: z.string(),
+        description: z.string(),
+        trail: z
+          .array(z.string())
+          .describe("Groups and sections above the page, outermost first"),
+        excerpt: z
+          .object({
+            text: z.string(),
+            highlights: z
+              .array(z.object({ start: z.number(), end: z.number() }))
+              .describe("Matched words, as offsets into `text`"),
+          })
+          .nullable()
+          .describe(
+            "The text around the match; null when every word is in the title, description, header fields or trail"
+          ),
+        terms: z
+          .array(z.string())
+          .describe(
+            "The query's words as typed, folded; the page holds every one"
+          ),
+      })
+    ),
+  }),
 }

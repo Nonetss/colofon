@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { searchLimit, searchQuery } from "#shared/search"
 
 const repository = z
   .string()
@@ -33,5 +34,15 @@ export const docsInput = {
     path: relativePath.describe(
       "Path of an image under docs/ (`red/img/zonas.svg`)"
     ),
+  }),
+  search: z.object({
+    query: searchQuery(),
+    repository: z
+      .string()
+      .optional()
+      .describe(
+        "Slug of the repository to search; every readable repository when missing or naming none"
+      ),
+    limit: searchLimit(10, 20),
   }),
 }

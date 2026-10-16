@@ -40,6 +40,20 @@ export const docsRouter = {
     .output(docsOutput.page)
     .handler(({ context, input }) => docsHandler.page({ context, input })),
 
+  search: protectedProcedure
+    .meta(
+      openapi({
+        summary: "Search the documentation pages",
+        description:
+          "Full-text search over the pages the navigation lists (home, pages, sections and catalog type pages; not entity pages) of one repository, or of every readable repository when `repository` is missing or names none. A page matches when it holds every word of the query, by prefix or, for words of five letters or more, with one typo. Results are ranked by where the words appear (title, then headings, then description, header fields and trail, then body); a match in a heading or the body comes with an excerpt and a route to its section.",
+        tags,
+        method: "GET",
+      })
+    )
+    .input(docsInput.search)
+    .output(docsOutput.search)
+    .handler(({ input }) => docsHandler.search({ input })),
+
   file: protectedProcedure
     .meta(
       openapi({

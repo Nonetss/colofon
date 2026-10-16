@@ -2,6 +2,8 @@ import { readFile as readBytes, realpath, stat } from "node:fs/promises"
 import path from "node:path"
 import {
   type Breadcrumb,
+  compareHits,
+  createSiteSearch,
   DOCS_DIR,
   entityPath,
   type FieldDefinition,
@@ -10,9 +12,12 @@ import {
   type NavEntry,
   type NavNode,
   type PageLink,
+  type SearchHit,
   type Site,
   type SitePage,
   type SiteRoutes,
+  type SiteSearch,
+  searchSite,
 } from "@nonete/content"
 import type { Element, ElementContent, Root } from "hast"
 import type { z } from "zod"
@@ -54,6 +59,9 @@ const FILE_NOT_FOUND = "Fichero no encontrado"
 
 type NavOutput = z.infer<typeof docsOutput.nav>
 type PageOutput = z.infer<typeof docsOutput.page>
+type SearchOutput = z.infer<typeof docsOutput.search>
+
+type RepositoryHit = { repository: StoredRepository; hit: SearchHit }
 
 export type DocsHandlerOptions = {
   reader: ContentReader
@@ -64,6 +72,28 @@ export function createDocsHandler({
   reader,
   repositories,
 }: DocsHandlerOptions) {
+  // One index per read of a repository's pages: a sync replaces the `Site`,
+  // so its index is built again on the next search and the old one is freed.
+  const searches = new WeakMap<Site, SiteSearch>()
+
+  function searchOf(site: Site): SiteSearch {
+    const cached = searches.get(site)
+    if (cached !== undefined) return cached
+    const built = createSiteSearch(site)
+    searches.set(site, built)
+    return built
+  }
+
+  async function readableSites() {
+    const readable: { repository: StoredRepository; site: Site }[] = []
+    for (const stored of await repositories.list()) {
+      const read = await reader.site(stored.slug)
+      if (read?.site !== undefined)
+        readable.push({ repository: read.repository, site: read.site })
+    }
+    return readable
+  }
+
   return {
     async nav(): Promise<NavOutput> {
       const stored = await repositories.list()
@@ -116,6 +146,28 @@ export function createDocsHandler({
         hasProblems: found.problems.length > 0,
         problems: problemsFor(context, found),
         styles: stylesOf(read.site),
+      }
+    },
+
+    async search({
+      input,
+    }: {
+      input: z.infer<typeof docsInput.search>
+    }): Promise<SearchOutput> {
+      const readable = await readableSites()
+      const scoped = readable.filter(
+        ({ repository }) => repository.slug === input.repository
+      )
+      const searched = scoped.length > 0 ? scoped : readable
+      const hits: RepositoryHit[] = []
+      for (const { repository, site } of searched) {
+        for (const hit of searchSite(searchOf(site), input.query, input.limit))
+          hits.push({ repository, hit })
+      }
+      hits.sort((a, b) => compareHits(a.hit, b.hit))
+      return {
+        allRepositories: searched.length > 1,
+        results: hits.slice(0, input.limit).map(searchResultOf),
       }
     },
 
@@ -172,6 +224,28 @@ async function navOf(
     home: entryOf(read.site.home, routes),
     nodes: read.site.nav.map((node) => navNodeOf(node, routes)),
   }
+}
+
+function searchResultOf({
+  repository,
+  hit,
+}: RepositoryHit): SearchOutput["results"][number] {
+  const route = readerRoutesOf(repository.slug).routeOf(hit.path)
+  return {
+    repository: { slug: repository.slug, name: repository.name },
+    path: hit.path,
+    href: withAnchor(route, hit.anchor),
+    title: hit.title,
+    description: hit.description,
+    trail: hit.trail,
+    excerpt: hit.excerpt,
+    terms: hit.terms,
+  }
+}
+
+function withAnchor(route: string, anchor: string | null): string {
+  if (anchor === null) return route
+  return `${route}#${anchor}`
 }
 
 function descriptionOf(value: string | undefined): string | null {
