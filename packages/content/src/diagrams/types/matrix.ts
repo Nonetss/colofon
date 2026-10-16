@@ -1,17 +1,17 @@
 import { z } from "zod"
-import { textWidth } from "#pages/diagram-measure"
-import { listOf, optional } from "#pages/diagram-read"
-import type { References } from "#pages/diagram-schema"
-import { checkBudget } from "#pages/diagram-types/budget"
-import { formSchema, itemList } from "#pages/diagram-types/form"
-import { type Item, itemFields } from "#pages/diagram-types/items"
-import { markIds, rectAt, textAt } from "#pages/diagram-types/layout/shapes"
+import { textWidth } from "#diagrams/measure"
+import { listOf, optional } from "#diagrams/report"
+import type { References } from "#diagrams/schema"
+import { checkBudget } from "#diagrams/types/kit/budget"
+import { formSchema, itemList } from "#diagrams/types/kit/form"
+import { type Item, itemFields } from "#diagrams/types/kit/items"
 import {
   emptyScene,
   type Scene,
   type Tools,
   type TypeModule,
-} from "#pages/diagram-types/scene"
+} from "#diagrams/types/kit/scene"
+import { markIds, rectAt, textAt } from "#diagrams/types/layout/shapes"
 
 // Matrix (diagram-design's `type-dp-security-matrix.md`): rows by columns —
 // components by roles, say — each cell holding one of a few ordered levels

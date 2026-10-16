@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test"
+import { typeNames } from "#diagrams/types/index"
 import {
   catalogWithNas,
   diagramOf,
@@ -6,7 +7,7 @@ import {
   problemsOf,
   readTyped,
   textOf,
-} from "#tests/pages/diagram-types/helpers"
+} from "#tests/diagrams/types/helpers"
 
 const FLOW = {
   type: "flowchart",
@@ -18,6 +19,41 @@ const FLOW = {
 }
 
 describe("typed diagram files", () => {
+  test("the types are listed by family: graphs, flows, concepts, charts, before/after", () => {
+    expect(typeNames()).toEqual([
+      "flowchart",
+      "state",
+      "tree",
+      "org-chart",
+      "dependency",
+      "sequence",
+      "timeline",
+      "gantt",
+      "swimlane",
+      "kanban",
+      "story-map",
+      "journey",
+      "quadrant",
+      "wardley",
+      "venn",
+      "pyramid",
+      "layers",
+      "loop",
+      "fishbone",
+      "matrix",
+      "bar",
+      "waterfall",
+      "line",
+      "scatter",
+      "heatmap",
+      "treemap",
+      "radar",
+      "polar",
+      "sankey",
+      "architecture-delta",
+    ])
+  })
+
   test("an unknown type is reported listing the types, and nothing is drawn", () => {
     const read = readTyped({ type: "mindmap" })
     expect(read.diagram).toBeNull()

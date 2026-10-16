@@ -1,7 +1,7 @@
 import { mkdir, readdir, rm } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import path from "node:path"
-import { CATALOG_DIR, DOCS_DIR } from "#load"
+import { CATALOG_DIR, DOCS_DIR } from "#contract/load"
 
 // Where the content comes from: git repositories, each kept in its own clone
 // folder under one clone root with the git CLI. Credentials only travel

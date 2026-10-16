@@ -1155,10 +1155,10 @@ html.theme-transitioning::view-transition-new(root) {
   }
 
   /* A diagram: its caption, its drawing (an inline SVG drawn by
-     `packages/content/src/pages/diagram-svg.ts` in the look of the
+     `packages/content/src/diagrams/svg.ts` in the look of the
      reference site's scheme drawer, `lib.mjs`) and its text version. The
      drawing's colours are these variables, so it follows the theme; its
-     font sizes match the measures of `diagram-measure.ts`, which checks
+     font sizes match the measures of `diagrams/measure.ts`, which checks
      what fits. It is never wider than drawn and shrinks to the column; a
      drawing 640px or wider keeps 640px on narrow screens and scrolls
      sideways instead. */
@@ -1463,7 +1463,7 @@ html.theme-transitioning::view-transition-new(root) {
       stroke: var(--d-accent);
     }
 
-    /* The paint of the typed forms' shapes (`diagram-types/scene.ts`):
+    /* The paint of the typed forms' shapes (`diagrams/model.ts`):
        a fill, a line and a text role each, tinted by the shape's hue. */
     & :where(.doc-diagram-tick) {
       fill: var(--d-muted);
@@ -1568,7 +1568,7 @@ html.theme-transitioning::view-transition-new(root) {
       cursor: help;
     }
 
-    /* A hand-drawn illustration (`diagram-illustration.ts`): a shape takes
+    /* A hand-drawn illustration (`diagrams/illustration.ts`): a shape takes
        its role's colour, its own or its group's, as its fill, unless it says
        fill="none", and as its stroke when it gives a stroke-width; with no
        role it is ink. */

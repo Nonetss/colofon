@@ -5,13 +5,13 @@ import {
   type CatalogType,
   type Entity,
   labelField,
-} from "#catalog"
+} from "#contract/catalog"
+import { entityPagePath } from "#contract/catalog-paths"
 import {
   type FieldDefinition,
   ID_COLUMN,
   type TypeDefinition,
-} from "#meta-schema"
-import { entityPath } from "#pages/catalog-paths"
+} from "#contract/meta-schema"
 
 // `<Entities type="…" columns="…" group="…" />`: a table of the valid
 // entities of one catalog type, built as hast so cells can hold links and
@@ -262,15 +262,6 @@ function cellOf(
   const field = shown.fields[column]
   if (field === undefined) return []
   return shownValue(entity.values[column], field, shown.context)
-}
-
-/**
- * Where an entity links: its page (the first `ficha` field set) or, when it
- * has none, its generated catalog page.
- */
-export function entityPagePath(entity: Entity): string {
-  if (entity.page !== null) return entity.page
-  return entityPath(entity.type, entity.id)
 }
 
 /** An entity's label, linked to its page or its catalog page. */

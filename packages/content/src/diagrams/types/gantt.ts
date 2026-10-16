@@ -1,9 +1,25 @@
 import { z } from "zod"
-import { optional, salvagedList } from "#pages/diagram-read"
-import type { References } from "#pages/diagram-schema"
-import { checkBudget } from "#pages/diagram-types/budget"
-import { formSchema, itemList } from "#pages/diagram-types/form"
-import { type Item, itemFields } from "#pages/diagram-types/items"
+import type { Graphic, LegendEntry, TextTree } from "#diagrams/model"
+import { optional, salvagedList } from "#diagrams/report"
+import type { References } from "#diagrams/schema"
+import { checkBudget } from "#diagrams/types/kit/budget"
+import { formSchema, itemList } from "#diagrams/types/kit/form"
+import { type Item, itemFields } from "#diagrams/types/kit/items"
+import {
+  emptyScene,
+  type Scene,
+  type Tools,
+  type TypeModule,
+} from "#diagrams/types/kit/scene"
+import {
+  DAY,
+  type DayOrMonth,
+  dateSchema,
+  dayTick,
+  formatDate,
+  monthTick,
+  parseDate,
+} from "#diagrams/types/kit/values"
 import {
   checkFits,
   lineShape,
@@ -13,26 +29,8 @@ import {
   textShape,
   withDatum,
   withLink,
-} from "#pages/diagram-types/layout/flow-draw"
-import { exactScale, timeTicks } from "#pages/diagram-types/layout/scale"
-import {
-  emptyScene,
-  type Graphic,
-  type LegendEntry,
-  type Scene,
-  type TextTree,
-  type Tools,
-  type TypeModule,
-} from "#pages/diagram-types/scene"
-import {
-  DAY,
-  type DayOrMonth,
-  dateSchema,
-  dayTick,
-  formatDate,
-  monthTick,
-  parseDate,
-} from "#pages/diagram-types/values"
+} from "#diagrams/types/layout/flow-draw"
+import { exactScale, timeTicks } from "#diagrams/types/layout/scale"
 
 // Gantt chart (diagram-design's `type-gantt.md`): tasks with a start and an
 // end, grouped into phases, as bars on a time axis that ticks weekly up to

@@ -1,46 +1,46 @@
 import { z } from "zod"
-import { fit } from "#pages/diagram-measure"
-import { salvagedList } from "#pages/diagram-read"
-import type { Hue, References } from "#pages/diagram-schema"
-import { checkBudget } from "#pages/diagram-types/budget"
-import { formSchema, itemList } from "#pages/diagram-types/form"
-import { type Item, itemBox, itemFields } from "#pages/diagram-types/items"
+import { fit } from "#diagrams/measure"
+import {
+  accentPaths,
+  type DiagramBox,
+  type DiagramEdge,
+  type DiagramZone,
+  type Graphic,
+  type LegendEntry,
+  type TextPart,
+} from "#diagrams/model"
+import { salvagedList } from "#diagrams/report"
+import type { Hue, References } from "#diagrams/schema"
+import { checkBudget } from "#diagrams/types/kit/budget"
+import { formSchema, itemList } from "#diagrams/types/kit/form"
+import { type Item, itemBox, itemFields } from "#diagrams/types/kit/items"
+import {
+  knownLinks,
+  linkEdge,
+  linkLine,
+  linkSchema,
+} from "#diagrams/types/kit/links"
+import {
+  emptyScene,
+  type Scene,
+  type Tools,
+  type TypeModule,
+} from "#diagrams/types/kit/scene"
 import {
   rectShape,
   roleWidth,
   textShape,
-} from "#pages/diagram-types/layout/flow-draw"
+} from "#diagrams/types/layout/flow-draw"
 import {
   type Cell,
   type Grid,
   type Lanes,
   measureGrid,
   type Route,
-} from "#pages/diagram-types/layout/grid-route"
-import { laneRoute } from "#pages/diagram-types/layout/lane-route"
-import { layered } from "#pages/diagram-types/layout/layered"
-import { rankNodes } from "#pages/diagram-types/layout/ranks"
-import {
-  knownLinks,
-  linkEdge,
-  linkLine,
-  linkSchema,
-} from "#pages/diagram-types/links"
-import {
-  emptyScene,
-  type Graphic,
-  type LegendEntry,
-  type Scene,
-  type TextPart,
-  type Tools,
-  type TypeModule,
-} from "#pages/diagram-types/scene"
-import {
-  accentPaths,
-  type DiagramBox,
-  type DiagramEdge,
-  type DiagramZone,
-} from "#pages/diagrams"
+} from "#diagrams/types/layout/grid-route"
+import { laneRoute } from "#diagrams/types/layout/lane-route"
+import { layered } from "#diagrams/types/layout/layered"
+import { rankNodes } from "#diagrams/types/layout/ranks"
 
 // Swimlane (diagram-design's `type-swimlane.md` and, as its `process`
 // variant, `type-process.md`): one horizontal band per actor, each step in

@@ -1,10 +1,17 @@
 import { z } from "zod"
-import { salvagedList } from "#pages/diagram-read"
-import type { References } from "#pages/diagram-schema"
-import { checkBudget } from "#pages/diagram-types/budget"
-import { formSchema, itemList } from "#pages/diagram-types/form"
-import { type Item, itemFields } from "#pages/diagram-types/items"
-import { type Box, placeLabels } from "#pages/diagram-types/layout/labels"
+import type { LegendEntry, TextPart } from "#diagrams/model"
+import { salvagedList } from "#diagrams/report"
+import type { References } from "#diagrams/schema"
+import { checkBudget } from "#diagrams/types/kit/budget"
+import { formSchema, itemList } from "#diagrams/types/kit/form"
+import { type Item, itemFields } from "#diagrams/types/kit/items"
+import {
+  emptyScene,
+  type Scene,
+  type Tools,
+  type TypeModule,
+} from "#diagrams/types/kit/scene"
+import { type Box, placeLabels } from "#diagrams/types/layout/labels"
 import {
   arrowheadAt,
   circleAt,
@@ -12,16 +19,8 @@ import {
   lineAt,
   markIds,
   textAt,
-} from "#pages/diagram-types/layout/shapes"
-import { percent } from "#pages/diagram-types/quadrant"
-import {
-  emptyScene,
-  type LegendEntry,
-  type Scene,
-  type TextPart,
-  type Tools,
-  type TypeModule,
-} from "#pages/diagram-types/scene"
+} from "#diagrams/types/layout/shapes"
+import { percent } from "#diagrams/types/quadrant"
 
 // Wardley map (diagram-design's `type-wardley.md`): the components of a
 // value chain placed by how visible they are to the user (top) and how

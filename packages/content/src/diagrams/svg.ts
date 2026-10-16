@@ -1,5 +1,18 @@
 import type { Element, ElementContent, Properties } from "hast"
-import { badgeWidth, tagWidth, textWidth } from "#pages/diagram-measure"
+import { badgeWidth, tagWidth, textWidth } from "#diagrams/measure"
+import {
+  type BoxShape,
+  type Diagram,
+  type DiagramBox,
+  type DiagramEdge,
+  type DiagramRow,
+  type DiagramZone,
+  type Graphic,
+  type LegendEntry,
+  type LegendSample,
+  type Point,
+  TEXT_ROLES,
+} from "#diagrams/model"
 import {
   type Anchor,
   EDGE_KINDS,
@@ -8,22 +21,7 @@ import {
   type Hue,
   NODE_KINDS,
   type NodeKind,
-} from "#pages/diagram-schema"
-import {
-  type Graphic,
-  type LegendEntry,
-  type LegendSample,
-  TEXT_ROLES,
-} from "#pages/diagram-types/scene"
-import type {
-  BoxShape,
-  Diagram,
-  DiagramBox,
-  DiagramEdge,
-  DiagramRow,
-  DiagramZone,
-  Point,
-} from "#pages/diagrams"
+} from "#diagrams/schema"
 
 // A diagram drawn as an inline SVG with the look of the reference site's
 // scheme drawer (`lib.mjs`): tagged boxes, right-angle arrows with a label

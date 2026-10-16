@@ -1,7 +1,8 @@
 import { describe, expect, test } from "bun:test"
 import { sanitize } from "hast-util-sanitize"
 import { toHtml } from "hast-util-to-html"
-import { diagramFigure, illustrationFile } from "#pages/diagrams"
+import { diagramFigure } from "#diagrams/figure"
+import { illustrationFile } from "#diagrams/read"
 import { SANITIZE_SCHEMA } from "#pages/to-hast"
 import { htmlOf, page, pageAt, siteOf } from "#tests/fixtures/site"
 

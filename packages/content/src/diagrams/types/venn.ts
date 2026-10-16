@@ -1,24 +1,23 @@
 import { z } from "zod"
-import { textWidth } from "#pages/diagram-measure"
-import { salvagedList } from "#pages/diagram-read"
-import type { Hue, References } from "#pages/diagram-schema"
-import { checkBudget } from "#pages/diagram-types/budget"
-import { formSchema, itemList } from "#pages/diagram-types/form"
-import { type Item, itemFields } from "#pages/diagram-types/items"
+import { textWidth } from "#diagrams/measure"
+import type { Graphic, Point } from "#diagrams/model"
+import { salvagedList } from "#diagrams/report"
+import type { Hue, References } from "#diagrams/schema"
+import { checkBudget } from "#diagrams/types/kit/budget"
+import { formSchema, itemList } from "#diagrams/types/kit/form"
+import { type Item, itemFields } from "#diagrams/types/kit/items"
+import {
+  emptyScene,
+  type Scene,
+  type Tools,
+  type TypeModule,
+} from "#diagrams/types/kit/scene"
 import {
   circleAt,
   itemDatum,
   markIds,
   textAt,
-} from "#pages/diagram-types/layout/shapes"
-import {
-  emptyScene,
-  type Graphic,
-  type Scene,
-  type Tools,
-  type TypeModule,
-} from "#pages/diagram-types/scene"
-import type { Point } from "#pages/diagrams"
+} from "#diagrams/types/layout/shapes"
 
 // Venn (diagram-design's `type-venn.md`): two or three overlapping circles
 // of equal size, each tinted faintly in its own hue so the tints compound

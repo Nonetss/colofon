@@ -1,27 +1,31 @@
 import { z } from "zod"
-import { fit } from "#pages/diagram-measure"
-import { salvagedList } from "#pages/diagram-read"
-import type { References } from "#pages/diagram-schema"
-import { checkBudget } from "#pages/diagram-types/budget"
-import { formSchema, itemList } from "#pages/diagram-types/form"
-import { itemBox, itemFields } from "#pages/diagram-types/items"
-import { layered } from "#pages/diagram-types/layout/layered"
+import { fit } from "#diagrams/measure"
+import {
+  accentPaths,
+  type DiagramBox,
+  type DiagramEdge,
+  type Graphic,
+  type LegendEntry,
+} from "#diagrams/model"
+import { salvagedList } from "#diagrams/report"
+import type { References } from "#diagrams/schema"
+import { checkBudget } from "#diagrams/types/kit/budget"
+import { formSchema, itemList } from "#diagrams/types/kit/form"
+import { itemBox, itemFields } from "#diagrams/types/kit/items"
 import {
   knownLinks,
   linkEdge,
   linkLine,
   linkSchema,
-} from "#pages/diagram-types/links"
+} from "#diagrams/types/kit/links"
 import {
   emptyScene,
-  type Graphic,
-  type LegendEntry,
   paint,
   type Scene,
   type Tools,
   type TypeModule,
-} from "#pages/diagram-types/scene"
-import { accentPaths, type DiagramBox, type DiagramEdge } from "#pages/diagrams"
+} from "#diagrams/types/kit/scene"
+import { layered } from "#diagrams/types/layout/layered"
 
 // State machine (diagram-design's `type-state.md`): states and the
 // transitions between them, laid out as a flowchart. States are rounded

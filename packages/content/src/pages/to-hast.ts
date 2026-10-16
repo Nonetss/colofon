@@ -2,12 +2,7 @@ import type { Element, Root as HastRoot } from "hast"
 import { defaultSchema, type Schema, sanitize } from "hast-util-sanitize"
 import type { Root } from "mdast"
 import { type Handler, toHast } from "mdast-util-to-hast"
-import {
-  NUMBER,
-  NUMBERS,
-  PATH_DATA,
-  TRANSFORM,
-} from "#pages/diagram-illustration"
+import { NUMBER, NUMBERS, PATH_DATA, TRANSFORM } from "#diagrams/illustration"
 import { componentMessage } from "#pages/transform"
 
 // Turns a transformed page tree into the HTML tree the reader renders. The
@@ -82,7 +77,7 @@ const OPACITY = /^(0|1|0?\.\d+)$/
 
 /**
  * What any shape may be painted with besides its class: an opacity, and in
- * a hand-drawn illustration (`diagram-illustration.ts`, same patterns) a
+ * a hand-drawn illustration (`diagrams/illustration.ts`, same patterns) a
  * transform, stroke details and `fill`/`stroke` set to `none`.
  */
 const PAINT = [

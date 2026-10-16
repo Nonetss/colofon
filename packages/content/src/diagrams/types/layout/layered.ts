@@ -1,16 +1,12 @@
+import type { Point } from "#diagrams/model"
 import {
   type Cell,
   type Lanes,
   measureGrid,
   type Route,
   routeLink,
-} from "#pages/diagram-types/layout/grid-route"
-import {
-  type Link,
-  orderRanks,
-  rankNodes,
-} from "#pages/diagram-types/layout/ranks"
-import type { Point } from "#pages/diagrams"
+} from "#diagrams/types/layout/grid-route"
+import { type Link, orderRanks, rankNodes } from "#diagrams/types/layout/ranks"
 
 // Boxes on a grid of rows and columns, with their links routed through the
 // gutters (flowchart, state machine, swimlane, dependency graph). A box's

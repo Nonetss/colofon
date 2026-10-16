@@ -1,6 +1,6 @@
 import type { Element, ElementContent, Properties } from "hast"
 import { fromHtml } from "hast-util-from-html"
-import { HUES } from "#pages/diagram-schema"
+import { HUES } from "#diagrams/schema"
 
 // A diagram drawn by hand: `diagramas/<id>.svg`, for the figures no typed
 // form lays out (an exploded axonometric, a floor plan). It is read through

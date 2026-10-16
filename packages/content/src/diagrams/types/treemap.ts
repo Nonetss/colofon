@@ -1,8 +1,9 @@
 import { z } from "zod"
-import { textWidth } from "#pages/diagram-measure"
-import { listOf, optional } from "#pages/diagram-read"
-import type { References } from "#pages/diagram-schema"
-import { checkBudget } from "#pages/diagram-types/budget"
+import { textWidth } from "#diagrams/measure"
+import type { Datum, Graphic, LegendEntry } from "#diagrams/model"
+import { listOf, optional } from "#diagrams/report"
+import type { References } from "#diagrams/schema"
+import { checkBudget } from "#diagrams/types/kit/budget"
 import {
   datumOf,
   label,
@@ -10,26 +11,23 @@ import {
   readFormat,
   round,
   shape,
-} from "#pages/diagram-types/chart-kit"
-import { formSchema, itemList } from "#pages/diagram-types/form"
-import { type Item, itemFields } from "#pages/diagram-types/items"
-import { type Rect, squarify } from "#pages/diagram-types/layout/squarify"
+} from "#diagrams/types/kit/chart-kit"
+import { formSchema, itemList } from "#diagrams/types/kit/form"
+import { type Item, itemFields } from "#diagrams/types/kit/items"
 import {
-  type Datum,
   emptyScene,
-  type Graphic,
-  type LegendEntry,
   type Scene,
   type Tools,
   type TypeModule,
-} from "#pages/diagram-types/scene"
+} from "#diagrams/types/kit/scene"
 import {
   formatFields,
   formatNumber,
   formatPercent,
   numberSchema,
   type ValueFormat,
-} from "#pages/diagram-types/values"
+} from "#diagrams/types/kit/values"
+import { type Rect, squarify } from "#diagrams/types/layout/squarify"
 
 // Treemap (diagram-design's `type-treemap.md`): part of a whole by area.
 // Squarified rectangles whose areas follow their values, biggest first,

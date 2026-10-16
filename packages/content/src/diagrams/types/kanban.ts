@@ -1,25 +1,23 @@
 import { z } from "zod"
-import { salvagedList } from "#pages/diagram-read"
-import type { References } from "#pages/diagram-schema"
-import { checkBudget } from "#pages/diagram-types/budget"
-import { formSchema, itemList } from "#pages/diagram-types/form"
-import { type Item, itemBox, itemFields } from "#pages/diagram-types/items"
+import type { Graphic, LegendEntry, TextPart } from "#diagrams/model"
+import { salvagedList } from "#diagrams/report"
+import type { References } from "#diagrams/schema"
+import { checkBudget } from "#diagrams/types/kit/budget"
+import { formSchema, itemList } from "#diagrams/types/kit/form"
+import { type Item, itemBox, itemFields } from "#diagrams/types/kit/items"
+import {
+  emptyScene,
+  type Scene,
+  type Tools,
+  type TypeModule,
+} from "#diagrams/types/kit/scene"
 import {
   checkFits,
   lineShape,
   rectShape,
   roleWidth,
   textShape,
-} from "#pages/diagram-types/layout/flow-draw"
-import {
-  emptyScene,
-  type Graphic,
-  type LegendEntry,
-  type Scene,
-  type TextPart,
-  type Tools,
-  type TypeModule,
-} from "#pages/diagram-types/scene"
+} from "#diagrams/types/layout/flow-draw"
 
 // Kanban (diagram-design's `type-kanban.md`): a snapshot of work in progress
 // by state. Columns side by side with their name and card count, the cards

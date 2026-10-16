@@ -1,9 +1,21 @@
 import { z } from "zod"
-import { textWidth } from "#pages/diagram-measure"
-import { optional, type Report, salvagedList } from "#pages/diagram-read"
-import type { Hue } from "#pages/diagram-schema"
-import { checkBudget } from "#pages/diagram-types/budget"
-import { formSchema } from "#pages/diagram-types/form"
+import { textWidth } from "#diagrams/measure"
+import type { Graphic, LegendEntry } from "#diagrams/model"
+import { optional, type Report, salvagedList } from "#diagrams/report"
+import type { Hue } from "#diagrams/schema"
+import { checkBudget } from "#diagrams/types/kit/budget"
+import { formSchema } from "#diagrams/types/kit/form"
+import {
+  emptyScene,
+  type Scene,
+  type Tools,
+  type TypeModule,
+} from "#diagrams/types/kit/scene"
+import {
+  formatFields,
+  formatNumber,
+  type ValueFormat,
+} from "#diagrams/types/kit/values"
 import {
   datum,
   label,
@@ -18,21 +30,8 @@ import {
   tickWidth,
   tinted,
   valueAxis,
-} from "#pages/diagram-types/layout/axes"
-import { linearScale, type Scale } from "#pages/diagram-types/layout/scale"
-import {
-  emptyScene,
-  type Graphic,
-  type LegendEntry,
-  type Scene,
-  type Tools,
-  type TypeModule,
-} from "#pages/diagram-types/scene"
-import {
-  formatFields,
-  formatNumber,
-  type ValueFormat,
-} from "#pages/diagram-types/values"
+} from "#diagrams/types/layout/axes"
+import { linearScale, type Scale } from "#diagrams/types/layout/scale"
 
 // Bar chart (diagram-design's `type-bar.md`): one or two series of values
 // over categories, the value axis from zero to a round number, one focal

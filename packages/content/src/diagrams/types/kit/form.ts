@@ -1,12 +1,12 @@
 import { z } from "zod"
-import { enumOf } from "#enum-of"
-import { salvaged, salvagedList } from "#pages/diagram-read"
+import { enumOf } from "#contract/enum-of"
+import { salvaged, salvagedList } from "#diagrams/report"
 import {
   type Item,
   type ItemWritten,
   readItem,
-} from "#pages/diagram-types/items"
-import type { Tools } from "#pages/diagram-types/scene"
+} from "#diagrams/types/kit/items"
+import type { Tools } from "#diagrams/types/kit/scene"
 
 // What every typed form's schema and reader share: the file's common keys,
 // and reading a list of items (each an item plus its form's own fields).

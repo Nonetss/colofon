@@ -1,29 +1,28 @@
 import { z } from "zod"
-import { textWidth } from "#pages/diagram-measure"
-import { listOf, optional } from "#pages/diagram-read"
-import { checkBudget } from "#pages/diagram-types/budget"
+import { textWidth } from "#diagrams/measure"
+import type { Graphic, LegendEntry } from "#diagrams/model"
+import { listOf, optional } from "#diagrams/report"
+import { checkBudget } from "#diagrams/types/kit/budget"
 import {
   datumOf,
   label,
   markIds,
   readFormat,
   shape,
-} from "#pages/diagram-types/chart-kit"
-import { formSchema } from "#pages/diagram-types/form"
+} from "#diagrams/types/kit/chart-kit"
+import { formSchema } from "#diagrams/types/kit/form"
 import {
   emptyScene,
-  type Graphic,
-  type LegendEntry,
   type Scene,
   type Tools,
   type TypeModule,
-} from "#pages/diagram-types/scene"
+} from "#diagrams/types/kit/scene"
 import {
   formatFields,
   formatNumber,
   numberSchema,
   type ValueFormat,
-} from "#pages/diagram-types/values"
+} from "#diagrams/types/kit/values"
 
 // Heatmap (diagram-design's `type-heatmap.md`): a grid of rows × columns,
 // each cell shaded by its value on one ink ramp from the smallest to the

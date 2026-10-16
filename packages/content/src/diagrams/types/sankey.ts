@@ -1,7 +1,8 @@
 import { z } from "zod"
-import { listOf, salvagedList } from "#pages/diagram-read"
-import type { References } from "#pages/diagram-schema"
-import { checkBudget } from "#pages/diagram-types/budget"
+import type { Graphic, LegendEntry } from "#diagrams/model"
+import { listOf, salvagedList } from "#diagrams/report"
+import type { References } from "#diagrams/schema"
+import { checkBudget } from "#diagrams/types/kit/budget"
 import {
   datumOf,
   label,
@@ -9,23 +10,21 @@ import {
   readFormat,
   round,
   shape,
-} from "#pages/diagram-types/chart-kit"
-import { formSchema, itemList } from "#pages/diagram-types/form"
-import { type Item, itemFields } from "#pages/diagram-types/items"
+} from "#diagrams/types/kit/chart-kit"
+import { formSchema, itemList } from "#diagrams/types/kit/form"
+import { type Item, itemFields } from "#diagrams/types/kit/items"
 import {
   emptyScene,
-  type Graphic,
-  type LegendEntry,
   type Scene,
   type Tools,
   type TypeModule,
-} from "#pages/diagram-types/scene"
+} from "#diagrams/types/kit/scene"
 import {
   formatFields,
   formatNumber,
   numberSchema,
   type ValueFormat,
-} from "#pages/diagram-types/values"
+} from "#diagrams/types/kit/values"
 
 // Sankey (diagram-design's `type-sankey.md`): where a quantity goes as it
 // splits and merges over two or three columns. Node bars and ribbons share

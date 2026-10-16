@@ -1,11 +1,11 @@
 import { describe, expect, test } from "bun:test"
-import type { Graphic } from "#pages/diagram-types/scene"
+import type { Graphic } from "#diagrams/model"
 import {
   cleanDiagramOf,
   htmlOf,
   problemsOf,
   textOf,
-} from "#tests/pages/diagram-types/helpers"
+} from "#tests/diagrams/types/helpers"
 
 const FUNNEL = {
   type: "pyramid",

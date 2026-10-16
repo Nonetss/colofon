@@ -1,13 +1,13 @@
 import { describe, expect, test } from "bun:test"
-import { RAMP } from "#pages/diagram-types/heatmap"
-import type { Diagram } from "#pages/diagrams"
+import type { Diagram } from "#diagrams/model"
+import { RAMP } from "#diagrams/types/heatmap"
 import {
   cleanDiagramOf,
   diagramOf,
   htmlOf,
   problemsOf,
   textOf,
-} from "#tests/pages/diagram-types/helpers"
+} from "#tests/diagrams/types/helpers"
 
 const ERRORS = {
   type: "heatmap",

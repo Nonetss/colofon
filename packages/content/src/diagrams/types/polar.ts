@@ -1,34 +1,34 @@
 import { z } from "zod"
-import { optional } from "#pages/diagram-read"
-import { checkBudget } from "#pages/diagram-types/budget"
+import type { Graphic } from "#diagrams/model"
+import { optional } from "#diagrams/report"
+import { checkBudget } from "#diagrams/types/kit/budget"
 import {
   datumOf,
   label,
   markIds,
   readFormat,
   shape,
-} from "#pages/diagram-types/chart-kit"
-import { formSchema } from "#pages/diagram-types/form"
+} from "#diagrams/types/kit/chart-kit"
+import { formSchema } from "#diagrams/types/kit/form"
+import {
+  emptyScene,
+  type Scene,
+  type Tools,
+  type TypeModule,
+} from "#diagrams/types/kit/scene"
+import {
+  formatFields,
+  formatNumber,
+  numberSchema,
+} from "#diagrams/types/kit/values"
 import {
   labelPoint,
   polarPoint,
   sideAnchor,
   spokeAngle,
   wedgePath,
-} from "#pages/diagram-types/layout/polar"
-import { niceDomain } from "#pages/diagram-types/layout/scale"
-import {
-  emptyScene,
-  type Graphic,
-  type Scene,
-  type Tools,
-  type TypeModule,
-} from "#pages/diagram-types/scene"
-import {
-  formatFields,
-  formatNumber,
-  numberSchema,
-} from "#pages/diagram-types/values"
+} from "#diagrams/types/layout/polar"
+import { niceDomain } from "#diagrams/types/layout/scale"
 
 // Polar chart (diagram-design's `type-polar.md`): one series over 4 to 8
 // categories whose clockwise order means something (hours, weekdays,

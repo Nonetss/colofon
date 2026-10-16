@@ -1,12 +1,7 @@
-import type { Anchor, Hue } from "#pages/diagram-schema"
-import type { Item } from "#pages/diagram-types/items"
-import {
-  type Datum,
-  type Graphic,
-  paint,
-  type TextRole,
-} from "#pages/diagram-types/scene"
-import type { Point } from "#pages/diagrams"
+import type { Datum, Graphic, Point, TextRole } from "#diagrams/model"
+import type { Anchor, Hue } from "#diagrams/schema"
+import type { Item } from "#diagrams/types/kit/items"
+import { paint } from "#diagrams/types/kit/scene"
 
 // Shorthands for the shapes the concept forms draw (quadrant, Venn, pyramid,
 // layers, loop, fishbone, matrix, Wardley map): each returns a plain

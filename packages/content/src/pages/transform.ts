@@ -14,18 +14,24 @@ import type { MdxJsxFlowElement, MdxJsxTextElement } from "mdast-util-mdx"
 import type {} from "mdast-util-to-hast"
 import { toString as textOf } from "mdast-util-to-string"
 import { SKIP, visit } from "unist-util-visit"
-import type { Catalog } from "#catalog"
-import { catalogTypePath, entityPath } from "#pages/catalog-paths"
-import { type DiagramFile, diagramFigure } from "#pages/diagrams"
-import { ENTITIES, entitiesTable, entityPagePath } from "#pages/entities"
-import type { PageHeading, PageProblem } from "#pages/types"
+import type { Catalog } from "#contract/catalog"
+import {
+  catalogTypePath,
+  entityPagePath,
+  entityPath,
+} from "#contract/catalog-paths"
+import type { PageProblem } from "#contract/problems"
+import { diagramFigure } from "#diagrams/figure"
+import type { DiagramFile } from "#diagrams/model"
+import { ENTITIES, entitiesTable } from "#pages/entities"
+import type { PageHeading } from "#pages/types"
 
 // Walks a page's syntax tree before it becomes HTML: reports what a page
 // cannot use, gives headings their ids, turns `[!KIND]` blockquotes into
 // alerts and points links and images at the reader's routes. The platform's
 // components are replaced here: `<Callout>` by an alert, `<Entities>` by its
 // catalog table (`entities.ts`) and `<Diagram>` by its figure
-// (`diagrams.ts`); a ```diagram block, which belongs in diagramas/, by a
+// (`diagrams/figure.ts`); a ```diagram block, which belongs in diagramas/, by a
 // notice. Other MDX nodes are left in place and `to-hast.ts` drops them or
 // renders them as notices.
 

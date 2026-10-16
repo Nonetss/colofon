@@ -1,11 +1,11 @@
 import { describe, expect, test } from "bun:test"
-import { CENTRE, RADIUS } from "#pages/diagram-types/radar"
+import { CENTRE, RADIUS } from "#diagrams/types/radar"
 import {
   cleanDiagramOf,
   diagramOf,
   problemsOf,
   textOf,
-} from "#tests/pages/diagram-types/helpers"
+} from "#tests/diagrams/types/helpers"
 
 const SPEC = {
   type: "radar",

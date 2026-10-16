@@ -5,7 +5,7 @@ import {
   diagramOf,
   problemsOf,
   textOf,
-} from "#tests/pages/diagram-types/helpers"
+} from "#tests/diagrams/types/helpers"
 
 const ACTORS = [
   { id: "web", name: "Navegador" },

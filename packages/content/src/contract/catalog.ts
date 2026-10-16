@@ -1,5 +1,5 @@
 import path from "node:path"
-import { entitySchema } from "#entity-schema"
+import { entitySchema } from "#contract/entity-schema"
 import {
   CATALOG_DIR,
   type ContentDeclarations,
@@ -8,8 +8,8 @@ import {
   parseYaml,
   readText,
   spanishErrors,
-} from "#load"
-import { ID_COLUMN, type TypeDefinition } from "#meta-schema"
+} from "#contract/load"
+import { ID_COLUMN, type TypeDefinition } from "#contract/meta-schema"
 
 // Reads every entity of a repository's catalog for the pages that show it
 // (`<Entities>`, `catalogo:` links). Each file is validated against its

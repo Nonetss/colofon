@@ -2,7 +2,9 @@ import { describe, expect, test } from "bun:test"
 import type { Element } from "hast"
 import { sanitize } from "hast-util-sanitize"
 import { toHtml } from "hast-util-to-html"
-import { type Diagram, diagramFigure, readDiagram } from "#pages/diagrams"
+import { diagramFigure } from "#diagrams/figure"
+import type { Diagram } from "#diagrams/model"
+import { readDiagram } from "#diagrams/read"
 import { SANITIZE_SCHEMA } from "#pages/to-hast"
 
 const NO_CONTENT = { catalog: new Map(), pages: new Set(["", "red"]) }

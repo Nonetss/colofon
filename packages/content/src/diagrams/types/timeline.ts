@@ -1,9 +1,24 @@
 import { z } from "zod"
-import { salvagedList } from "#pages/diagram-read"
-import { HUES, type Hue, type References } from "#pages/diagram-schema"
-import { checkBudget } from "#pages/diagram-types/budget"
-import { formSchema, itemList } from "#pages/diagram-types/form"
-import { type Item, itemFields } from "#pages/diagram-types/items"
+import type { Graphic, LegendEntry } from "#diagrams/model"
+import { salvagedList } from "#diagrams/report"
+import { HUES, type Hue, type References } from "#diagrams/schema"
+import { checkBudget } from "#diagrams/types/kit/budget"
+import { formSchema, itemList } from "#diagrams/types/kit/form"
+import { type Item, itemFields } from "#diagrams/types/kit/items"
+import {
+  emptyScene,
+  type Scene,
+  type Tools,
+  type TypeModule,
+} from "#diagrams/types/kit/scene"
+import {
+  type DayOrMonth,
+  dateSchema,
+  dayTick,
+  formatDate,
+  monthTick,
+  parseDate,
+} from "#diagrams/types/kit/values"
 import {
   lineShape,
   rectShape,
@@ -12,25 +27,9 @@ import {
   textShape,
   withDatum,
   withLink,
-} from "#pages/diagram-types/layout/flow-draw"
-import { type Box, overlaps } from "#pages/diagram-types/layout/labels"
-import { exactScale, timeTicks } from "#pages/diagram-types/layout/scale"
-import {
-  emptyScene,
-  type Graphic,
-  type LegendEntry,
-  type Scene,
-  type Tools,
-  type TypeModule,
-} from "#pages/diagram-types/scene"
-import {
-  type DayOrMonth,
-  dateSchema,
-  dayTick,
-  formatDate,
-  monthTick,
-  parseDate,
-} from "#pages/diagram-types/values"
+} from "#diagrams/types/layout/flow-draw"
+import { type Box, overlaps } from "#diagrams/types/layout/labels"
+import { exactScale, timeTicks } from "#diagrams/types/layout/scale"
 
 // Timeline (diagram-design's `type-timeline.md`): events as dots on one
 // horizontal axis, placed by their dates (honestly: unequal gaps stay

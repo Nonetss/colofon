@@ -1,5 +1,5 @@
-import type { Anchor } from "#pages/diagram-schema"
-import type { Point } from "#pages/diagrams"
+import type { Point } from "#diagrams/model"
+import type { Anchor } from "#diagrams/schema"
 
 // Angles and points around a centre for the radial charts (radar, polar):
 // the first spoke at twelve o'clock, the rest clockwise and evenly spaced.

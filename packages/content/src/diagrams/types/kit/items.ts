@@ -1,6 +1,8 @@
 import { z } from "zod"
-import type { Catalog, Entity } from "#catalog"
-import { type Report, subLines } from "#pages/diagram-read"
+import type { Catalog, Entity } from "#contract/catalog"
+import { entityPagePath } from "#contract/catalog-paths"
+import type { DiagramBox } from "#diagrams/model"
+import { type Report, subLines } from "#diagrams/report"
 import {
   entityRef,
   HUES,
@@ -9,10 +11,8 @@ import {
   type NodeKind,
   pageRef,
   type References,
-} from "#pages/diagram-schema"
-import type { Tools } from "#pages/diagram-types/scene"
-import type { DiagramBox } from "#pages/diagrams"
-import { entityPagePath } from "#pages/entities"
+} from "#diagrams/schema"
+import type { Tools } from "#diagrams/types/kit/scene"
 
 // The items of the typed forms (a step, a state, an actor, a task, a card…):
 // named, described, tinted and linked exactly as a drawn diagram's box is,

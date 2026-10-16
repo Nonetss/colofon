@@ -1,9 +1,10 @@
 import path from "node:path"
-import { CATALOG_DIR, CATALOG_PATH, DOCS_DIR, MENU_FILE } from "#load"
-import type { Menu, MenuEntry } from "#meta-schema"
-import { catalogTypePath } from "#pages/catalog-paths"
+import { catalogTypePath } from "#contract/catalog-paths"
+import { CATALOG_DIR, CATALOG_PATH, DOCS_DIR, MENU_FILE } from "#contract/load"
+import type { Menu, MenuEntry } from "#contract/meta-schema"
+import type { PageProblem } from "#contract/problems"
 import { pagePathOf } from "#pages/transform"
-import type { Page, PageProblem } from "#pages/types"
+import type { Page } from "#pages/types"
 
 // The navigation of a repository. Without `menu.yaml` it is the folders of
 // docs/ (each folder a section, or a page when it holds only its index,

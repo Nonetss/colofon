@@ -1,29 +1,29 @@
 import { z } from "zod"
-import { textWidth } from "#pages/diagram-measure"
-import type { Report } from "#pages/diagram-read"
-import { type Anchor, HUES, type Hue } from "#pages/diagram-schema"
-import type { Scale } from "#pages/diagram-types/layout/scale"
-import {
-  type Datum,
-  type Graphic,
-  type GraphicShape,
-  type Paint,
-  paint,
-  type TextRole,
-} from "#pages/diagram-types/scene"
+import { textWidth } from "#diagrams/measure"
+import type {
+  Datum,
+  Graphic,
+  GraphicShape,
+  Paint,
+  TextRole,
+} from "#diagrams/model"
+import type { Report } from "#diagrams/report"
+import { type Anchor, HUES, type Hue } from "#diagrams/schema"
+import { paint } from "#diagrams/types/kit/scene"
 import {
   formatDate,
   formatNumber,
   numberSchema,
   parseDate,
   type ValueFormat,
-} from "#pages/diagram-types/values"
+} from "#diagrams/types/kit/values"
+import type { Scale } from "#diagrams/types/layout/scale"
 
-// What the chart forms share (bar, waterfall, line, scatter and the forms
-// of `chart-more.ts`): series and their hues, data marks with the identity
-// the reader's card shows, and the value axis (faint gridlines on round
-// ticks, a baseline at zero and the tick labels), after diagram-design's
-// bar chart frame.
+// What the chart forms share (bar, waterfall, line, scatter, heatmap,
+// treemap, radar, polar and Sankey): series and their hues, data marks with
+// the identity the reader's card shows, and the value axis (faint gridlines
+// on round ticks, a baseline at zero and the tick labels), after
+// diagram-design's bar chart frame.
 
 /** The schema of a series: a name, one value per category, a hue. */
 export const seriesSchema = z.strictObject({

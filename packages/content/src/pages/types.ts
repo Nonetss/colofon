@@ -1,12 +1,5 @@
 import type { Root } from "hast"
-
-/** A problem in one page, with the line it is on when there is one. */
-export type PageProblem = {
-  /** Path relative to the content root (`docs/red/dns.mdx`). */
-  file: string
-  line: number | null
-  message: string
-}
+import type { PageProblem } from "#contract/problems"
 
 /** What every page's header gives, after validation. */
 export type PageHeader = {

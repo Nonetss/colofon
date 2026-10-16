@@ -11,14 +11,14 @@ import {
 } from "jsonc-parser/lib/esm/main.js"
 import { parse, YAMLParseError } from "yaml"
 import { type ZodType, z } from "zod"
-import type { CatalogIndex } from "#entity-schema"
+import type { CatalogIndex } from "#contract/entity-schema"
 import {
   createMetaSchemas,
   type FieldDefinition,
   type Menu,
   type SiteConfig,
   type TypeDefinition,
-} from "#meta-schema"
+} from "#contract/meta-schema"
 
 // Reads the declarations of a content repository: doc.config.yaml, the
 // optional menu.yaml, each catalog type and the ids and pages its fields can

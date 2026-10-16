@@ -1,10 +1,10 @@
 import { afterEach, describe, expect, test } from "bun:test"
+import { type ContentDeclarations, loadContent } from "#contract/load"
 import {
   type EditorSchema,
   editorSchemas,
   schemaCatalog,
-} from "#editor-schemas"
-import { type ContentDeclarations, loadContent } from "#load"
+} from "#editor/schemas"
 import {
   type ContentDir,
   createContentDir,

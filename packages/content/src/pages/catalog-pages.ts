@@ -6,9 +6,10 @@ import {
   type CatalogType,
   type Entity,
   entityFile,
-} from "#catalog"
-import { CATALOG_PATH } from "#load"
-import { catalogTypePath, entityPath } from "#pages/catalog-paths"
+} from "#contract/catalog"
+import { catalogTypePath, entityPath } from "#contract/catalog-paths"
+import { CATALOG_PATH } from "#contract/load"
+import type { PageProblem } from "#contract/problems"
 import {
   type EntitiesContext,
   entityName,
@@ -18,7 +19,7 @@ import {
 } from "#pages/entities"
 import type { ReverseRefs } from "#pages/references"
 import { SANITIZE_SCHEMA } from "#pages/to-hast"
-import type { Page, PageHeader, PageHeading, PageProblem } from "#pages/types"
+import type { Page, PageHeader, PageHeading } from "#pages/types"
 
 // The reader pages the platform makes for the catalog, with no MDX behind
 // them: `catalogo` (every type), `catalogo/<type>` (its table) and

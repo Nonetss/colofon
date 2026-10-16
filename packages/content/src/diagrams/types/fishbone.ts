@@ -1,26 +1,24 @@
 import { z } from "zod"
-import { fit, textWidth } from "#pages/diagram-measure"
-import { salvagedList } from "#pages/diagram-read"
-import { HUES, type References } from "#pages/diagram-schema"
-import { checkBudget } from "#pages/diagram-types/budget"
-import { formSchema, oneItem } from "#pages/diagram-types/form"
-import { itemBox, itemFields } from "#pages/diagram-types/items"
+import { fit, textWidth } from "#diagrams/measure"
+import type { Graphic, LegendEntry, TextTree } from "#diagrams/model"
+import { salvagedList } from "#diagrams/report"
+import { HUES, type References } from "#diagrams/schema"
+import { checkBudget } from "#diagrams/types/kit/budget"
+import { formSchema, oneItem } from "#diagrams/types/kit/form"
+import { itemBox, itemFields } from "#diagrams/types/kit/items"
+import {
+  emptyScene,
+  type Scene,
+  type Tools,
+  type TypeModule,
+} from "#diagrams/types/kit/scene"
 import {
   arrowheadAt,
   lineAt,
   markIds,
   rectAt,
   textAt,
-} from "#pages/diagram-types/layout/shapes"
-import {
-  emptyScene,
-  type Graphic,
-  type LegendEntry,
-  type Scene,
-  type TextTree,
-  type Tools,
-  type TypeModule,
-} from "#pages/diagram-types/scene"
+} from "#diagrams/types/layout/shapes"
 
 // Fishbone (diagram-design's `type-fishbone.md`): one observed effect at the
 // head on the right, a spine running into it, and a bone per category at

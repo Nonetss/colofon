@@ -1,10 +1,33 @@
-import { CHART_TYPES } from "#pages/diagram-types/chart"
-import { CHART_MORE_TYPES } from "#pages/diagram-types/chart-more"
-import { CONCEPT_TYPES } from "#pages/diagram-types/concept"
-import { DELTA_TYPES } from "#pages/diagram-types/delta"
-import { FLOW_TYPES } from "#pages/diagram-types/flow"
-import { GRAPH_TYPES } from "#pages/diagram-types/graph"
-import type { TypeModule } from "#pages/diagram-types/scene"
+import { architectureDelta } from "#diagrams/types/architecture-delta"
+import { bar } from "#diagrams/types/bar"
+import { dependency } from "#diagrams/types/dependency"
+import { fishbone } from "#diagrams/types/fishbone"
+import { flowchart } from "#diagrams/types/flowchart"
+import { gantt } from "#diagrams/types/gantt"
+import { heatmap } from "#diagrams/types/heatmap"
+import { journey } from "#diagrams/types/journey"
+import { kanban } from "#diagrams/types/kanban"
+import type { TypeModule } from "#diagrams/types/kit/scene"
+import { layers } from "#diagrams/types/layers"
+import { line } from "#diagrams/types/line"
+import { loop } from "#diagrams/types/loop"
+import { matrix } from "#diagrams/types/matrix"
+import { polar } from "#diagrams/types/polar"
+import { pyramid } from "#diagrams/types/pyramid"
+import { quadrant } from "#diagrams/types/quadrant"
+import { radar } from "#diagrams/types/radar"
+import { sankey } from "#diagrams/types/sankey"
+import { scatter } from "#diagrams/types/scatter"
+import { sequence } from "#diagrams/types/sequence"
+import { state } from "#diagrams/types/state"
+import { storyMap } from "#diagrams/types/story-map"
+import { swimlane } from "#diagrams/types/swimlane"
+import { timeline } from "#diagrams/types/timeline"
+import { orgChart, tree } from "#diagrams/types/tree"
+import { treemap } from "#diagrams/types/treemap"
+import { venn } from "#diagrams/types/venn"
+import { wardley } from "#diagrams/types/wardley"
+import { waterfall } from "#diagrams/types/waterfall"
 
 // The typed diagram forms (`content-diagram-types`), ported from the layout
 // grammars of diagram-design (https://github.com/cathrynlavery/diagram-design,
@@ -13,12 +36,43 @@ import type { TypeModule } from "#pages/diagram-types/scene"
 // reported as unknown.
 
 export const DIAGRAM_TYPES: readonly TypeModule[] = [
-  ...GRAPH_TYPES,
-  ...FLOW_TYPES,
-  ...CONCEPT_TYPES,
-  ...CHART_TYPES,
-  ...CHART_MORE_TYPES,
-  ...DELTA_TYPES,
+  // Graphs: flowchart, state machine, tree, org chart, dependency graph.
+  flowchart,
+  state,
+  tree,
+  orgChart,
+  dependency,
+  // Flows and time: sequence, timeline, Gantt, swimlane, kanban, story map,
+  // user journey.
+  sequence,
+  timeline,
+  gantt,
+  swimlane,
+  kanban,
+  storyMap,
+  journey,
+  // Concepts: quadrant, Wardley map, Venn, pyramid, layers, loop, fishbone,
+  // matrix.
+  quadrant,
+  wardley,
+  venn,
+  pyramid,
+  layers,
+  loop,
+  fishbone,
+  matrix,
+  // Charts: bars, waterfall, lines and dots, then areas, grids and flows.
+  bar,
+  waterfall,
+  line,
+  scatter,
+  heatmap,
+  treemap,
+  radar,
+  polar,
+  sankey,
+  // Before and after.
+  architectureDelta,
 ]
 
 /** The form named `name`, if there is one. */

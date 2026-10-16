@@ -1,20 +1,24 @@
 import { z } from "zod"
-import { fit } from "#pages/diagram-measure"
-import type { References } from "#pages/diagram-schema"
-import { checkBudget } from "#pages/diagram-types/budget"
-import { formSchema, itemList } from "#pages/diagram-types/form"
-import { type Item, itemBox, itemFields } from "#pages/diagram-types/items"
-import { type TreeNode, tidyTree } from "#pages/diagram-types/layout/tidy-tree"
+import { fit } from "#diagrams/measure"
+import type {
+  DiagramBox,
+  DiagramEdge,
+  LegendEntry,
+  Point,
+  TextPart,
+  TextTree,
+} from "#diagrams/model"
+import type { References } from "#diagrams/schema"
+import { checkBudget } from "#diagrams/types/kit/budget"
+import { formSchema, itemList } from "#diagrams/types/kit/form"
+import { type Item, itemBox, itemFields } from "#diagrams/types/kit/items"
 import {
   emptyScene,
-  type LegendEntry,
   type Scene,
-  type TextPart,
-  type TextTree,
   type Tools,
   type TypeModule,
-} from "#pages/diagram-types/scene"
-import type { DiagramBox, DiagramEdge, Point } from "#pages/diagrams"
+} from "#diagrams/types/kit/scene"
+import { type TreeNode, tidyTree } from "#diagrams/types/layout/tidy-tree"
 
 // Tree and org chart (diagram-design's `type-tree.md` and
 // `type-org-chart.md`): a hierarchy from one root, laid out as a tidy tree,

@@ -2,7 +2,7 @@ import { afterEach, describe, expect, test } from "bun:test"
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import path from "node:path"
-import { MAX_FILE_BYTES, readFile, readFolder } from "#browse"
+import { MAX_FILE_BYTES, readFile, readFolder } from "#git/browse"
 import { git } from "#tests/fixtures/git-remote"
 
 const cleanups: (() => Promise<void>)[] = []

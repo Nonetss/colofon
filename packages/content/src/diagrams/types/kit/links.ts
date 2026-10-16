@@ -1,9 +1,8 @@
 import { z } from "zod"
-import type { Report } from "#pages/diagram-read"
-import { EDGE_KINDS, type EdgeKind, type Head } from "#pages/diagram-schema"
-import type { Route } from "#pages/diagram-types/layout/grid-route"
-import type { TextPart } from "#pages/diagram-types/scene"
-import type { DiagramBox, DiagramEdge, Point } from "#pages/diagrams"
+import type { DiagramBox, DiagramEdge, Point, TextPart } from "#diagrams/model"
+import type { Report } from "#diagrams/report"
+import { EDGE_KINDS, type EdgeKind, type Head } from "#diagrams/schema"
+import type { Route } from "#diagrams/types/layout/grid-route"
 
 // The links of the graph-like forms (flowchart, state, swimlane,
 // dependency…): written as `{ from, to, label?, kind? }` between item ids,

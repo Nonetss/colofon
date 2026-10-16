@@ -1,5 +1,5 @@
-import type { Anchor } from "#pages/diagram-schema"
-import type { Point } from "#pages/diagrams"
+import type { Point } from "#diagrams/model"
+import type { Anchor } from "#diagrams/schema"
 
 // Right-angle routes between the boxes of a grid (flowchart, state,
 // swimlane, dependency): a link leaves its box on the side facing its target

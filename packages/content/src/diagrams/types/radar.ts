@@ -1,7 +1,8 @@
 import { z } from "zod"
-import { listOf, optional, positive } from "#pages/diagram-read"
-import { HUES } from "#pages/diagram-schema"
-import { checkBudget } from "#pages/diagram-types/budget"
+import type { Point } from "#diagrams/model"
+import { listOf, optional, positive } from "#diagrams/report"
+import { HUES } from "#diagrams/schema"
+import { checkBudget } from "#diagrams/types/kit/budget"
 import {
   datumOf,
   label,
@@ -9,27 +10,26 @@ import {
   readFormat,
   seriesHue,
   shape,
-} from "#pages/diagram-types/chart-kit"
-import { formSchema } from "#pages/diagram-types/form"
-import {
-  labelPoint,
-  polarPoint,
-  sideAnchor,
-  spokeAngle,
-} from "#pages/diagram-types/layout/polar"
+} from "#diagrams/types/kit/chart-kit"
+import { formSchema } from "#diagrams/types/kit/form"
 import {
   emptyScene,
   type Scene,
   type Tools,
   type TypeModule,
-} from "#pages/diagram-types/scene"
+} from "#diagrams/types/kit/scene"
 import {
   formatFields,
   formatNumber,
   numberSchema,
   type ValueFormat,
-} from "#pages/diagram-types/values"
-import type { Point } from "#pages/diagrams"
+} from "#diagrams/types/kit/values"
+import {
+  labelPoint,
+  polarPoint,
+  sideAnchor,
+  spokeAngle,
+} from "#diagrams/types/layout/polar"
 
 // Radar (diagram-design's `type-radar.md`): a few entities compared across
 // a few criteria on one scale from zero to `max`. Five rings, spokes from the

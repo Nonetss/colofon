@@ -1,31 +1,31 @@
 import { z } from "zod"
-import { textWidth } from "#pages/diagram-measure"
+import { drawnDiagram } from "#diagrams/drawn"
+import { textWidth } from "#diagrams/measure"
+import type {
+  Diagram,
+  DiagramBox,
+  DiagramEdge,
+  Graphic,
+  LegendEntry,
+  Point,
+  TextPart,
+} from "#diagrams/model"
 import {
   isRecord,
   type Report,
   salvagedList,
   unknownKeys,
-} from "#pages/diagram-read"
-import { diagramSchemas, type References } from "#pages/diagram-schema"
-import { checkBudget } from "#pages/diagram-types/budget"
-import { formSchema } from "#pages/diagram-types/form"
+} from "#diagrams/report"
+import { diagramSchemas, type References } from "#diagrams/schema"
+import { checkBudget } from "#diagrams/types/kit/budget"
+import { formSchema } from "#diagrams/types/kit/form"
 import {
   emptyScene,
-  type Graphic,
-  type LegendEntry,
   paint,
   type Scene,
-  type TextPart,
   type Tools,
   type TypeModule,
-} from "#pages/diagram-types/scene"
-import {
-  type Diagram,
-  type DiagramBox,
-  type DiagramEdge,
-  type Point,
-  readDiagram,
-} from "#pages/diagrams"
+} from "#diagrams/types/kit/scene"
 
 // Architecture delta (diagram-design's `type-architecture-delta.md`): two
 // snapshots of one system, "Antes" and "Después", each a drawn diagram read
@@ -137,26 +137,14 @@ function snapshotOf(
   const drawing: Record<string, unknown> = { title: key, desc: key }
   for (const name of SNAPSHOT_KEYS)
     if (value[name] !== undefined) drawing[name] = value[name]
-  const read = readDiagram(key, key, JSON.stringify(drawing), tools.context)
-  for (const problem of read.problems) reportUnder(problem.message, report)
-  if (read.diagram === null) return null
-  const { size } = read.diagram
+  const diagram = drawnDiagram(key, drawing, tools.context, report)
+  const { size } = diagram
   if (size === null) return null
-  return { ...read.diagram, size }
+  return { ...diagram, size }
 }
 
 /** A snapshot read as a drawn diagram, with its size. */
 type Snapshot = Diagram & { size: { width: number; height: number } }
-
-/** Re-reports a drawn-form message at its own field path under a snapshot. */
-function reportUnder(message: string, report: Report) {
-  const located = /^([A-Za-z0-9_$.]+): ([\s\S]*)$/.exec(message)
-  if (located === null) {
-    report("", message)
-    return
-  }
-  report(located[1] ?? "", located[2] ?? "")
-}
 
 function read(data: Record<string, unknown>, tools: Tools): Scene | null {
   const before = snapshotOf(data.before, "before", tools)

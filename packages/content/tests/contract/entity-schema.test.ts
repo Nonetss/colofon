@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test"
-import { type CatalogIndex, entitySchema } from "#entity-schema"
-import type { TypeDefinition } from "#meta-schema"
+import { type CatalogIndex, entitySchema } from "#contract/entity-schema"
+import type { TypeDefinition } from "#contract/meta-schema"
 
 const index: CatalogIndex = {
   entityIds: new Map([

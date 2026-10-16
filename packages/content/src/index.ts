@@ -1,19 +1,33 @@
 export {
-  BINARY_SNIFF_BYTES,
-  type FileResult,
-  type FolderEntry,
-  type FolderResult,
-  MAX_FILE_BYTES,
-  readFile,
-  readFolder,
-} from "#browse"
-export {
   type Catalog,
   type CatalogType,
   type Entity,
   labelField,
   readCatalog,
-} from "#catalog"
+} from "#contract/catalog"
+export { entityPath, isCatalogPath } from "#contract/catalog-paths"
+export {
+  type CatalogIndex,
+  entitySchema,
+  fieldSchema,
+} from "#contract/entity-schema"
+export { iconName, LUCIDE_ICON_NAMES } from "#contract/icon-name"
+export {
+  type ContentDeclarations,
+  type ContentProblem,
+  DOCS_DIR,
+  type LoadResult,
+  loadContent,
+} from "#contract/load"
+export {
+  CONTRACT_VERSIONS,
+  createMetaSchemas,
+  type FieldDefinition,
+  type SiteConfig,
+  type TypeDefinition,
+} from "#contract/meta-schema"
+export type { PageProblem } from "#contract/problems"
+export { isReservedSlug, RESERVED_SLUGS } from "#contract/reserved-slugs"
 export {
   CONFIG_SCHEMA,
   DIAGRAM_SCHEMA,
@@ -24,8 +38,16 @@ export {
   type SchemaCatalog,
   schemaCatalog,
   TYPE_SCHEMA,
-} from "#editor-schemas"
-export { type CatalogIndex, entitySchema, fieldSchema } from "#entity-schema"
+} from "#editor/schemas"
+export {
+  BINARY_SNIFF_BYTES,
+  type FileResult,
+  type FolderEntry,
+  type FolderResult,
+  MAX_FILE_BYTES,
+  readFile,
+  readFolder,
+} from "#git/browse"
 export {
   createGitHttpHandler,
   ensureBareRepo,
@@ -33,23 +55,21 @@ export {
   type GitHttpOptions,
   HOSTED_DIR,
   hostedFolder,
-} from "#hosting"
-export { iconName, LUCIDE_ICON_NAMES } from "#icon-name"
+} from "#git/hosting"
 export {
-  type ContentDeclarations,
-  type ContentProblem,
-  DOCS_DIR,
-  type LoadResult,
-  loadContent,
-} from "#load"
-export {
-  CONTRACT_VERSIONS,
-  createMetaSchemas,
-  type FieldDefinition,
-  type SiteConfig,
-  type TypeDefinition,
-} from "#meta-schema"
-export { entityPath, isCatalogPath } from "#pages/catalog-paths"
+  CLONE_DIR,
+  cloneFolder,
+  createRepoSync,
+  describeRepository,
+  listRemoteBranches,
+  pruneClones,
+  publicUrl,
+  type RemoteBranches,
+  type RepositorySource,
+  readEditDates,
+  redactCredentials,
+  type SyncResult,
+} from "#git/source"
 export { fieldLabel } from "#pages/entities"
 export { type HeaderSchema, headerSchema, readHeader } from "#pages/header"
 export {
@@ -64,24 +84,4 @@ export {
 } from "#pages/site"
 export { SANITIZE_SCHEMA } from "#pages/to-hast"
 export { IMAGE_EXTENSIONS, isImageFile } from "#pages/transform"
-export type {
-  Page,
-  PageHeader,
-  PageHeading,
-  PageProblem,
-} from "#pages/types"
-export { isReservedSlug, RESERVED_SLUGS } from "#reserved-slugs"
-export {
-  CLONE_DIR,
-  cloneFolder,
-  createRepoSync,
-  describeRepository,
-  listRemoteBranches,
-  pruneClones,
-  publicUrl,
-  type RemoteBranches,
-  type RepositorySource,
-  readEditDates,
-  redactCredentials,
-  type SyncResult,
-} from "#source"
+export type { Page, PageHeader, PageHeading } from "#pages/types"

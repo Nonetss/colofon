@@ -1,12 +1,12 @@
 import { describe, expect, test } from "bun:test"
-import { ribbonPath } from "#pages/diagram-types/sankey"
-import type { Diagram } from "#pages/diagrams"
+import type { Diagram } from "#diagrams/model"
+import { ribbonPath } from "#diagrams/types/sankey"
 import {
   cleanDiagramOf,
   diagramOf,
   problemsOf,
   textOf,
-} from "#tests/pages/diagram-types/helpers"
+} from "#tests/diagrams/types/helpers"
 
 const CI = {
   type: "sankey",

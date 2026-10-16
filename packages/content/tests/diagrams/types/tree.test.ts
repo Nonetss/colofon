@@ -6,7 +6,7 @@ import {
   problemsOf,
   readTyped,
   textOf,
-} from "#tests/pages/diagram-types/helpers"
+} from "#tests/diagrams/types/helpers"
 
 const TREE = {
   type: "tree",

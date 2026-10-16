@@ -1,19 +1,23 @@
 import { z } from "zod"
-import { fit } from "#pages/diagram-measure"
-import { optional } from "#pages/diagram-read"
-import type { References } from "#pages/diagram-schema"
-import { checkBudget } from "#pages/diagram-types/budget"
-import { formSchema, itemList, oneItem } from "#pages/diagram-types/form"
-import { type Item, itemBox, itemFields } from "#pages/diagram-types/items"
+import { fit } from "#diagrams/measure"
+import type {
+  DiagramBox,
+  DiagramEdge,
+  LegendEntry,
+  Point,
+  TextPart,
+} from "#diagrams/model"
+import { optional } from "#diagrams/report"
+import type { References } from "#diagrams/schema"
+import { checkBudget } from "#diagrams/types/kit/budget"
+import { formSchema, itemList, oneItem } from "#diagrams/types/kit/form"
+import { type Item, itemBox, itemFields } from "#diagrams/types/kit/items"
 import {
   emptyScene,
-  type LegendEntry,
   type Scene,
-  type TextPart,
   type Tools,
   type TypeModule,
-} from "#pages/diagram-types/scene"
-import type { DiagramBox, DiagramEdge, Point } from "#pages/diagrams"
+} from "#diagrams/types/kit/scene"
 
 // Loop (diagram-design's `type-loop.md`): steps spaced evenly on a ring,
 // clockwise from the top, each joined to the next by a curved arrow and the

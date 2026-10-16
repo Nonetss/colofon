@@ -1,5 +1,5 @@
 import { z } from "zod"
-import { LUCIDE_ICON_NAMES } from "#lucide-icons.generated"
+import { LUCIDE_ICON_NAMES } from "#contract/lucide-icons.generated"
 
 // Every `icono` of a content repository (page headers, `_tipo.yaml`,
 // `menu.yaml`, diagram nodes) names a Lucide icon the reader can draw. The

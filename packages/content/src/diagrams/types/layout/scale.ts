@@ -1,4 +1,4 @@
-import { DAY } from "#pages/diagram-types/values"
+import { DAY } from "#diagrams/types/kit/values"
 
 // Scales and their ticks for the chart forms: a value axis ends on a round
 // number (1, 2 or 5 × 10ⁿ steps, 4 to 6 ticks) and includes zero; a time

@@ -4,7 +4,7 @@ import {
   type LoadResult,
   loadContent,
   parseJson,
-} from "#load"
+} from "#contract/load"
 import {
   type ContentDir,
   createContentDir,

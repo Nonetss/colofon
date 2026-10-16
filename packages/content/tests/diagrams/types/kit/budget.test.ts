@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test"
-import { readDiagram } from "#pages/diagrams"
-import { diagramOf, problemsOf } from "#tests/pages/diagram-types/helpers"
+import { readDiagram } from "#diagrams/read"
+import { diagramOf, problemsOf } from "#tests/diagrams/types/helpers"
 
 function steps(count: number) {
   return Array.from({ length: count }, (_, index) => ({

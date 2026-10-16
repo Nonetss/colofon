@@ -1,31 +1,31 @@
 import { z } from "zod"
-import { fit } from "#pages/diagram-measure"
-import { salvagedList } from "#pages/diagram-read"
-import type { References } from "#pages/diagram-schema"
-import { checkBudget } from "#pages/diagram-types/budget"
-import { formSchema, itemList } from "#pages/diagram-types/form"
-import { type Item, itemBox, itemFields } from "#pages/diagram-types/items"
+import { fit } from "#diagrams/measure"
+import {
+  accentPaths,
+  type DiagramBox,
+  type DiagramEdge,
+  type LegendEntry,
+  type Point,
+  type TextPart,
+} from "#diagrams/model"
+import { salvagedList } from "#diagrams/report"
+import type { References } from "#diagrams/schema"
+import { checkBudget } from "#diagrams/types/kit/budget"
+import { formSchema, itemList } from "#diagrams/types/kit/form"
+import { type Item, itemBox, itemFields } from "#diagrams/types/kit/items"
+import {
+  emptyScene,
+  type Scene,
+  type Tools,
+  type TypeModule,
+} from "#diagrams/types/kit/scene"
 import {
   arrowEdge,
   lineShape,
   rectShape,
   roleWidth,
   textShape,
-} from "#pages/diagram-types/layout/flow-draw"
-import {
-  emptyScene,
-  type LegendEntry,
-  type Scene,
-  type TextPart,
-  type Tools,
-  type TypeModule,
-} from "#pages/diagram-types/scene"
-import {
-  accentPaths,
-  type DiagramBox,
-  type DiagramEdge,
-  type Point,
-} from "#pages/diagrams"
+} from "#diagrams/types/layout/flow-draw"
 
 // Sequence diagram (diagram-design's `type-sequence.md`): actors as headed
 // lifelines left to right, messages as arrows between them from top to

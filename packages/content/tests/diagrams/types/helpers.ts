@@ -1,9 +1,10 @@
 import { sanitize } from "hast-util-sanitize"
 import { toHtml } from "hast-util-to-html"
-import type { Catalog } from "#catalog"
-import { createMetaSchemas } from "#meta-schema"
-import type { Diagram, DiagramContext } from "#pages/diagrams"
-import { diagramFigure, readDiagram } from "#pages/diagrams"
+import type { Catalog } from "#contract/catalog"
+import { createMetaSchemas } from "#contract/meta-schema"
+import { diagramFigure } from "#diagrams/figure"
+import type { Diagram, DiagramContext } from "#diagrams/model"
+import { readDiagram } from "#diagrams/read"
 import { SANITIZE_SCHEMA } from "#pages/to-hast"
 
 // Reading and drawing a typed diagram in a test, without a content folder.

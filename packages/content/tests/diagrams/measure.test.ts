@@ -6,7 +6,7 @@ import {
   tableHeight,
   tagWidth,
   textWidth,
-} from "#pages/diagram-measure"
+} from "#diagrams/measure"
 
 describe("diagram text measures", () => {
   test("text is measured with lib.mjs's average advances", () => {

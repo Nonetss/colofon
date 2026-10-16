@@ -5,7 +5,7 @@ import {
   showFor,
 } from "@/features/docs/diagrams/model/diagram-highlights"
 
-// A drawing as `diagram-svg.ts` writes it: two boxes, the arrow between them
+// A drawing as `diagrams/svg.ts` writes it: two boxes, the arrow between them
 // (line, head, hit band, label) and a zone around the first box.
 const DRAWING = `
 <svg class="doc-diagram-svg" viewBox="0 0 400 200">

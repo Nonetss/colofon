@@ -1,7 +1,7 @@
 import { mkdir, stat } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import path from "node:path"
-import { spawnGit } from "#source"
+import { spawnGit } from "#git/source"
 
 // The platform as a git server: one bare repository per hosted content
 // repository, served over git's smart HTTP protocol by running git's own

@@ -1,9 +1,15 @@
 import { z } from "zod"
-import { textWidth } from "#pages/diagram-measure"
-import type { References } from "#pages/diagram-schema"
-import { checkBudget } from "#pages/diagram-types/budget"
-import { formSchema, itemList } from "#pages/diagram-types/form"
-import { itemFields } from "#pages/diagram-types/items"
+import { textWidth } from "#diagrams/measure"
+import type { References } from "#diagrams/schema"
+import { checkBudget } from "#diagrams/types/kit/budget"
+import { formSchema, itemList } from "#diagrams/types/kit/form"
+import { itemFields } from "#diagrams/types/kit/items"
+import {
+  emptyScene,
+  type Scene,
+  type Tools,
+  type TypeModule,
+} from "#diagrams/types/kit/scene"
 import {
   itemDatum,
   itemPaint,
@@ -11,13 +17,7 @@ import {
   markIds,
   rectAt,
   textAt,
-} from "#pages/diagram-types/layout/shapes"
-import {
-  emptyScene,
-  type Scene,
-  type Tools,
-  type TypeModule,
-} from "#pages/diagram-types/scene"
+} from "#diagrams/types/layout/shapes"
 
 // Layer stack (diagram-design's `type-layers.md`): full-width bands stacked
 // from top to bottom, each with its index on the left, its name, its notes

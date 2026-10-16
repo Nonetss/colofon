@@ -1,14 +1,17 @@
 import { z } from "zod"
-import { textWidth } from "#pages/diagram-measure"
-import type { References } from "#pages/diagram-schema"
-import { checkBudget } from "#pages/diagram-types/budget"
-import { formSchema, itemList } from "#pages/diagram-types/form"
-import { itemFields } from "#pages/diagram-types/items"
+import { textWidth } from "#diagrams/measure"
+import { TEXT_ROLES } from "#diagrams/model"
+import type { References } from "#diagrams/schema"
+import { checkBudget } from "#diagrams/types/kit/budget"
+import { formSchema, itemList } from "#diagrams/types/kit/form"
+import { itemFields } from "#diagrams/types/kit/items"
 import {
-  type Box,
-  placeLabels,
-  type Spot,
-} from "#pages/diagram-types/layout/labels"
+  emptyScene,
+  type Scene,
+  type Tools,
+  type TypeModule,
+} from "#diagrams/types/kit/scene"
+import { type Box, placeLabels, type Spot } from "#diagrams/types/layout/labels"
 import {
   arrowheadAt,
   circleAt,
@@ -17,14 +20,7 @@ import {
   markIds,
   rectAt,
   textAt,
-} from "#pages/diagram-types/layout/shapes"
-import {
-  emptyScene,
-  type Scene,
-  TEXT_ROLES,
-  type Tools,
-  type TypeModule,
-} from "#pages/diagram-types/scene"
+} from "#diagrams/types/layout/shapes"
 
 // Quadrant (diagram-design's `type-quadrant.md`): a 2×2 frame, an axis cross
 // through its centre with one word at each tip, the four quadrants named in

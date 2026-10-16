@@ -1,10 +1,11 @@
 import { isNode, parseDocument } from "yaml"
 import { type ZodType, z } from "zod"
-import { type CatalogIndex, objectShape } from "#entity-schema"
-import { iconName } from "#icon-name"
-import { yamlErrorReason } from "#load"
-import type { SiteConfig } from "#meta-schema"
-import type { PageHeader, PageProblem } from "#pages/types"
+import { type CatalogIndex, objectShape } from "#contract/entity-schema"
+import { iconName } from "#contract/icon-name"
+import { yamlErrorReason } from "#contract/load"
+import type { SiteConfig } from "#contract/meta-schema"
+import type { PageProblem } from "#contract/problems"
+import type { PageHeader } from "#pages/types"
 
 // The header of a page: its YAML front matter, checked against the fields
 // every page has plus the site's own `cabecera`. A broken header never hides

@@ -1,9 +1,22 @@
 import { z } from "zod"
-import { textWidth } from "#pages/diagram-measure"
-import { optional, type Report, salvagedList } from "#pages/diagram-read"
-import type { Hue } from "#pages/diagram-schema"
-import { checkBudget } from "#pages/diagram-types/budget"
-import { formSchema } from "#pages/diagram-types/form"
+import { textWidth } from "#diagrams/measure"
+import type { Graphic, Paint } from "#diagrams/model"
+import { optional, type Report, salvagedList } from "#diagrams/report"
+import type { Hue } from "#diagrams/schema"
+import { checkBudget } from "#diagrams/types/kit/budget"
+import { formSchema } from "#diagrams/types/kit/form"
+import {
+  emptyScene,
+  type Scene,
+  type Tools,
+  type TypeModule,
+} from "#diagrams/types/kit/scene"
+import {
+  formatFields,
+  formatNumber,
+  numberSchema,
+  type ValueFormat,
+} from "#diagrams/types/kit/values"
 import {
   datum,
   label,
@@ -16,27 +29,9 @@ import {
   tickText,
   tickWidth,
   tinted,
-} from "#pages/diagram-types/layout/axes"
-import {
-  placeLabels,
-  type Spot,
-  textBox,
-} from "#pages/diagram-types/layout/labels"
-import { linearScale, type Scale } from "#pages/diagram-types/layout/scale"
-import {
-  emptyScene,
-  type Graphic,
-  type Paint,
-  type Scene,
-  type Tools,
-  type TypeModule,
-} from "#pages/diagram-types/scene"
-import {
-  formatFields,
-  formatNumber,
-  numberSchema,
-  type ValueFormat,
-} from "#pages/diagram-types/values"
+} from "#diagrams/types/layout/axes"
+import { placeLabels, type Spot, textBox } from "#diagrams/types/layout/labels"
+import { linearScale, type Scale } from "#diagrams/types/layout/scale"
 
 // Scatter (diagram-design's `type-scatter.md`): points on two round axes,
 // coloured by group, only the focal points and the named ones labelled, and

@@ -4,7 +4,7 @@ import {
   formatNumber,
   formatPercent,
   parseDate,
-} from "#pages/diagram-types/values"
+} from "#diagrams/types/kit/values"
 
 describe("formatNumber", () => {
   test("uses Spanish separators, its decimals and its unit", () => {

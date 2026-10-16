@@ -1,13 +1,13 @@
 import { describe, expect, test } from "bun:test"
 import { readdir, readFile } from "node:fs/promises"
 import path from "node:path"
-import { isReservedSlug, RESERVED_SLUGS } from "#reserved-slugs"
+import { isReservedSlug, RESERVED_SLUGS } from "#contract/reserved-slugs"
 
 // Reads the frontend's routes and the gateway's config from the repository,
 // so adding a top-level page or a backend path without reserving it fails
 // here instead of silently hiding a content repository.
 
-const REPO = path.resolve(import.meta.dir, "../../..")
+const REPO = path.resolve(import.meta.dir, "../../../..")
 
 /** A name that could also be a slug: lowercase, digits and hyphens. */
 const SLUG_LIKE = /^[a-z0-9]+(-[a-z0-9]+)*$/

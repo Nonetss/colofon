@@ -1,19 +1,15 @@
 import { describe, expect, test } from "bun:test"
-import {
-  overlaps,
-  placeLabels,
-  textBox,
-} from "#pages/diagram-types/layout/labels"
-import { layered } from "#pages/diagram-types/layout/layered"
-import { orderRanks, rankNodes } from "#pages/diagram-types/layout/ranks"
+import type { Point } from "#diagrams/model"
+import { overlaps, placeLabels, textBox } from "#diagrams/types/layout/labels"
+import { layered } from "#diagrams/types/layout/layered"
+import { orderRanks, rankNodes } from "#diagrams/types/layout/ranks"
 import {
   linearScale,
   niceDomain,
   timeTicks,
-} from "#pages/diagram-types/layout/scale"
-import { squarify } from "#pages/diagram-types/layout/squarify"
-import { tidyTree } from "#pages/diagram-types/layout/tidy-tree"
-import type { Point } from "#pages/diagrams"
+} from "#diagrams/types/layout/scale"
+import { squarify } from "#diagrams/types/layout/squarify"
+import { tidyTree } from "#diagrams/types/layout/tidy-tree"
 
 describe("rankNodes", () => {
   test("each node's rank is its longest distance from a source", () => {

@@ -2,22 +2,20 @@ import type { Dirent } from "node:fs"
 import { readdir, readFile } from "node:fs/promises"
 import path from "node:path"
 import type { Element } from "hast"
-import type { Catalog } from "#catalog"
-import type { CatalogIndex } from "#entity-schema"
-import { DOCS_DIR, isReservedDocsPath } from "#load"
-import type { Menu, SiteConfig } from "#meta-schema"
+import type { Catalog } from "#contract/catalog"
+import { entityPath, isCatalogPath } from "#contract/catalog-paths"
+import type { CatalogIndex } from "#contract/entity-schema"
+import { DOCS_DIR, isReservedDocsPath } from "#contract/load"
+import type { Menu, SiteConfig } from "#contract/meta-schema"
+import type { PageProblem } from "#contract/problems"
+import { diagramFigure } from "#diagrams/figure"
+import type { DiagramFile } from "#diagrams/model"
+import { diagramsByEntity, readDiagrams } from "#diagrams/read"
 import {
   type CatalogBodyContext,
   catalogPages,
   withCatalogBody,
 } from "#pages/catalog-pages"
-import { entityPath, isCatalogPath } from "#pages/catalog-paths"
-import {
-  type DiagramFile,
-  diagramFigure,
-  diagramsByEntity,
-  readDiagrams,
-} from "#pages/diagrams"
 import { type HeaderSchema, headerSchema, readHeader } from "#pages/header"
 import {
   folderNav,
@@ -36,7 +34,7 @@ import { type ParsedPage, parsePage } from "#pages/parse"
 import { refsIn, reverseRefs } from "#pages/references"
 import { pageToHast } from "#pages/to-hast"
 import { pagePathOf, transformPage } from "#pages/transform"
-import type { Page, PageHeader, PageProblem } from "#pages/types"
+import type { Page, PageHeader } from "#pages/types"
 
 // Reads every page of a repository's docs/, adds the generated catalog pages
 // and arranges them: the home (docs/index.mdx), then the navigation (the

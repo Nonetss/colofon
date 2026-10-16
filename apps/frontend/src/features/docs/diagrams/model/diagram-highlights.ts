@@ -1,5 +1,5 @@
-// The interactive diagrams of a documentation page (`diagram-svg.ts` in
-// `packages/content` draws them). Hovering or focusing a box, an arrow (its
+// The interactive diagrams of a documentation page (`diagrams/svg.ts`
+// in `packages/content` draws them). Hovering or focusing a box, an arrow (its
 // wide invisible twin), a badge or a zone title lights up what it touches and
 // fades the rest (`diagram-graph.ts` works out what), and a card next to the
 // pointer says what it is. On a touch screen the first tap does that and the

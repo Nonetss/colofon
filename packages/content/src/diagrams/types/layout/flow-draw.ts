@@ -1,15 +1,16 @@
-import { textWidth } from "#pages/diagram-measure"
-import type { Report } from "#pages/diagram-read"
-import type { Anchor, EdgeKind, Head } from "#pages/diagram-schema"
+import { textWidth } from "#diagrams/measure"
 import {
   type Datum,
+  type DiagramEdge,
   type Graphic,
   type GraphicShape,
-  paint,
+  type Point,
   TEXT_ROLES,
   type TextRole,
-} from "#pages/diagram-types/scene"
-import type { DiagramEdge, Point } from "#pages/diagrams"
+} from "#diagrams/model"
+import type { Report } from "#diagrams/report"
+import type { Anchor, EdgeKind, Head } from "#diagrams/schema"
+import { paint } from "#diagrams/types/kit/scene"
 
 // Small drawing helpers the time and flow forms share (sequence, timeline,
 // Gantt, swimlane, kanban, story map, journey): shapes painted by classes,

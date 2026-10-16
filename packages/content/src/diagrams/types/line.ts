@@ -1,8 +1,20 @@
 import { z } from "zod"
-import { textWidth } from "#pages/diagram-measure"
-import { optional, type Report, salvagedList } from "#pages/diagram-read"
-import { checkBudget } from "#pages/diagram-types/budget"
-import { formSchema } from "#pages/diagram-types/form"
+import { textWidth } from "#diagrams/measure"
+import type { Graphic, LegendEntry, Paint, TextBlock } from "#diagrams/model"
+import { optional, type Report, salvagedList } from "#diagrams/report"
+import { checkBudget } from "#diagrams/types/kit/budget"
+import { formSchema } from "#diagrams/types/kit/form"
+import {
+  emptyScene,
+  type Scene,
+  type Tools,
+  type TypeModule,
+} from "#diagrams/types/kit/scene"
+import {
+  formatFields,
+  formatNumber,
+  type ValueFormat,
+} from "#diagrams/types/kit/values"
 import {
   datum,
   label,
@@ -18,24 +30,9 @@ import {
   tinted,
   valueAxis,
   xLabel,
-} from "#pages/diagram-types/layout/axes"
-import { placeLabels } from "#pages/diagram-types/layout/labels"
-import { exactScale, linearScale } from "#pages/diagram-types/layout/scale"
-import {
-  emptyScene,
-  type Graphic,
-  type LegendEntry,
-  type Paint,
-  type Scene,
-  type TextBlock,
-  type Tools,
-  type TypeModule,
-} from "#pages/diagram-types/scene"
-import {
-  formatFields,
-  formatNumber,
-  type ValueFormat,
-} from "#pages/diagram-types/values"
+} from "#diagrams/types/layout/axes"
+import { placeLabels } from "#diagrams/types/layout/labels"
+import { exactScale, linearScale } from "#diagrams/types/layout/scale"
 
 // Line charts (diagram-design's `type-line.md`): series over an ordered x
 // (labels or dates) on one value axis, each named at its last point.

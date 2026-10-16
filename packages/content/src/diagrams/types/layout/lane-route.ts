@@ -1,10 +1,10 @@
+import type { Point } from "#diagrams/model"
 import type {
   Cell,
   Grid,
   Lanes,
   Route,
-} from "#pages/diagram-types/layout/grid-route"
-import type { Point } from "#pages/diagrams"
+} from "#diagrams/types/layout/grid-route"
 
 // Routes of a swimlane, where time runs left to right and a handoff crosses
 // from one band to another: a link to a later column leaves its step's side,

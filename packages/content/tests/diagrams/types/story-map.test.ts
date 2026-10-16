@@ -3,7 +3,7 @@ import {
   cleanDiagramOf,
   problemsOf,
   textOf,
-} from "#tests/pages/diagram-types/helpers"
+} from "#tests/diagrams/types/helpers"
 
 const MAP = {
   type: "story-map",

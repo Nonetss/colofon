@@ -1,6 +1,6 @@
-import { textWidth } from "#pages/diagram-measure"
-import type { Anchor } from "#pages/diagram-schema"
-import { TEXT_ROLES, type TextRole } from "#pages/diagram-types/scene"
+import { textWidth } from "#diagrams/measure"
+import { TEXT_ROLES, type TextRole } from "#diagrams/model"
+import type { Anchor } from "#diagrams/schema"
 
 // Labels that must not overlap (timeline, quadrant, scatter): each label
 // tries its candidate positions in order and takes the first that overlaps

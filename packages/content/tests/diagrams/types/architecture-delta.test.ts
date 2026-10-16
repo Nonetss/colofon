@@ -5,7 +5,7 @@ import {
   htmlOf,
   problemsOf,
   textOf,
-} from "#tests/pages/diagram-types/helpers"
+} from "#tests/diagrams/types/helpers"
 
 function box(id: string, x: number, y: number, extra = {}) {
   return { id, name: id, x, y, w: 100, h: 48, ...extra }

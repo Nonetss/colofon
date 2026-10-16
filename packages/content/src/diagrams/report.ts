@@ -1,8 +1,8 @@
 import type { z } from "zod"
-import { spanishErrors } from "#load"
+import { spanishErrors } from "#contract/load"
 
-// The pieces every diagram reader shares (`diagrams.ts` and each typed form
-// under `diagram-types/`): a report that prefixes the field path, and checks
+// The pieces every diagram reader shares (`drawn.ts`, `read.ts` and each typed
+// form under `types/`): a report that prefixes the field path, and checks
 // that report every problem and keep what is valid, so one bad part never
 // hides the rest.
 

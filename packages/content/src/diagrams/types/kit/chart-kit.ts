@@ -1,18 +1,13 @@
 import { z } from "zod"
-import { optional, type Report } from "#pages/diagram-read"
-import type { Anchor, Hue } from "#pages/diagram-schema"
-import {
-  type Datum,
-  type Graphic,
-  type GraphicShape,
-  paint,
-  type TextRole,
-} from "#pages/diagram-types/scene"
+import type { Datum, Graphic, GraphicShape, TextRole } from "#diagrams/model"
+import { optional, type Report } from "#diagrams/report"
+import type { Anchor, Hue } from "#diagrams/schema"
+import { paint } from "#diagrams/types/kit/scene"
 import {
   formatFields,
   formatOf,
   type ValueFormat,
-} from "#pages/diagram-types/values"
+} from "#diagrams/types/kit/values"
 
 // Small pieces the area, grid and flow charts share (heatmap, treemap,
 // radar, polar, Sankey): data marks with an id each, texts, and the hues a

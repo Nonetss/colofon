@@ -8,7 +8,7 @@ import {
   ensureBareRepo,
   HOSTED_DIR,
   hostedFolder,
-} from "#hosting"
+} from "#git/hosting"
 import { git } from "#tests/fixtures/git-remote"
 
 const cleanups: (() => Promise<void>)[] = []

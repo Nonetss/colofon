@@ -1,11 +1,11 @@
 import { z } from "zod"
-import { enumOf } from "#enum-of"
+import { enumOf } from "#contract/enum-of"
 
 // The shape of a diagram file, `diagramas/<id>.json`, in the format of the
 // reference site's scheme drawer (`lib.mjs`): the content gives every
 // position. The same pieces check each part of a file while it is read
-// (`diagrams.ts`, so one bad box never hides the rest) and make the editor's
-// JSON Schema (`editor-schemas.ts`).
+// (`drawn.ts`, so one bad box never hides the rest) and make the editor's
+// JSON Schema (`editor/schemas.ts`).
 
 /** The id of a box or zone: lowercase letters, digits and single hyphens. */
 export const ID_PATTERN = /^[a-z0-9]+(-[a-z0-9]+)*$/

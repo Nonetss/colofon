@@ -6,7 +6,7 @@ import {
   htmlOf,
   problemsOf,
   textOf,
-} from "#tests/pages/diagram-types/helpers"
+} from "#tests/diagrams/types/helpers"
 
 const SHARED = {
   type: "dependency",

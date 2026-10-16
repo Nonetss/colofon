@@ -1,12 +1,12 @@
 import { describe, expect, test } from "bun:test"
-import type { Graphic } from "#pages/diagram-types/scene"
+import type { Graphic } from "#diagrams/model"
 import {
   cleanDiagramOf,
   diagramOf,
   htmlOf,
   problemsOf,
   textOf,
-} from "#tests/pages/diagram-types/helpers"
+} from "#tests/diagrams/types/helpers"
 
 /** The texts among `graphics`, in order. */
 function textsOf(graphics: readonly Graphic[]): string[] {

@@ -1,11 +1,11 @@
 import { describe, expect, test } from "bun:test"
-import type { Diagram } from "#pages/diagrams"
+import type { Diagram } from "#diagrams/model"
 import {
   cleanDiagramOf,
   diagramOf,
   problemsOf,
   textOf,
-} from "#tests/pages/diagram-types/helpers"
+} from "#tests/diagrams/types/helpers"
 
 /** The rectangles of the data marks, by their label. */
 function areas(diagram: Diagram): Map<string, number> {

@@ -14,7 +14,7 @@ import {
   readEditDates,
   redactCredentials,
   type SyncResult,
-} from "#source"
+} from "#git/source"
 import {
   createGitRemote,
   type GitRemote,

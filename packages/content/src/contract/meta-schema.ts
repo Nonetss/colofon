@@ -1,6 +1,6 @@
 import { z } from "zod"
-import { enumOf } from "#enum-of"
-import { iconName } from "#icon-name"
+import { enumOf } from "#contract/enum-of"
+import { iconName } from "#contract/icon-name"
 
 // The meta-schema: what a content repository may declare. The platform
 // knows nothing about the domain (machines, fruits…); it only fixes the

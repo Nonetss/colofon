@@ -1,4 +1,4 @@
-import type { Report } from "#pages/diagram-read"
+import type { Report } from "#diagrams/report"
 
 // The complexity budgets of diagram-design's types: a diagram that holds
 // more than its type's limits is reported, once per limit, and still drawn

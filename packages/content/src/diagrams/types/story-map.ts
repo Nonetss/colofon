@@ -1,24 +1,22 @@
 import { z } from "zod"
-import type { References } from "#pages/diagram-schema"
-import { checkBudget } from "#pages/diagram-types/budget"
-import { formSchema, itemList } from "#pages/diagram-types/form"
-import { type Item, itemBox, itemFields } from "#pages/diagram-types/items"
+import type { Graphic, LegendEntry, TextTree } from "#diagrams/model"
+import type { References } from "#diagrams/schema"
+import { checkBudget } from "#diagrams/types/kit/budget"
+import { formSchema, itemList } from "#diagrams/types/kit/form"
+import { type Item, itemBox, itemFields } from "#diagrams/types/kit/items"
+import {
+  emptyScene,
+  type Scene,
+  type Tools,
+  type TypeModule,
+} from "#diagrams/types/kit/scene"
 import {
   checkFits,
   lineShape,
   maskedText,
   rectShape,
   textShape,
-} from "#pages/diagram-types/layout/flow-draw"
-import {
-  emptyScene,
-  type Graphic,
-  type LegendEntry,
-  type Scene,
-  type TextTree,
-  type Tools,
-  type TypeModule,
-} from "#pages/diagram-types/scene"
+} from "#diagrams/types/layout/flow-draw"
 
 // User story map (diagram-design's `type-story-map.md`, after Jeff Patton):
 // the backbone of activities left to right, and under it one band per

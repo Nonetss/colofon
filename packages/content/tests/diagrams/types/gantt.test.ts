@@ -1,11 +1,11 @@
 import { describe, expect, test } from "bun:test"
-import type { Diagram } from "#pages/diagrams"
+import type { Diagram } from "#diagrams/model"
 import {
   cleanDiagramOf,
   diagramOf,
   problemsOf,
   textOf,
-} from "#tests/pages/diagram-types/helpers"
+} from "#tests/diagrams/types/helpers"
 
 const PLAN = {
   type: "gantt",
