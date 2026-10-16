@@ -37,10 +37,14 @@ que el MCP porque el MCP tiene que respetarlos.
 
 ### 5. Servir las skills
 
-- [ ] `/skills/index.json` y `/skills/<nombre>/SKILL.md`.
-- [ ] Anunciarlas desde `llms.txt`.
-- [ ] Dos conjuntos: las de la plataforma y las de `skills/` de cada
-      repositorio de contenido, filtradas por permisos.
+- [x] `/.well-known/agent-skills/index.json` y
+      `/.well-known/agent-skills/<nombre>/SKILL.md` (borrador Agent Skills
+      discovery, `serve-agent-skills`).
+- [x] Anunciarlas desde `llms.txt`, que sin key es la guía para agentes.
+- [x] Dos conjuntos: las de la plataforma (`packages/api/skills/`) y las de
+      `skills/` de cada repositorio de contenido, como `<slug>-<nombre>`.
+      Siguen la misma regla de acceso que el lector, así que el filtro por
+      permisos llega con el punto 2.
 
 ### 6. MCP para agentes
 
@@ -50,7 +54,7 @@ que el MCP porque el MCP tiene que respetarlos.
 - [x] `repositories`, `index`, `search` y `read` (`add-docs-mcp`).
 - [x] `entity(repository, type, id)`: una entidad con sus relaciones y
       las fichas que la citan (`add-mcp-section-and-entity`).
-- [ ] `skills()` / `skill(name)` (depende del punto 5).
+- [x] `skills()` / `skill(name)` (`serve-agent-skills`).
 - [x] `read` de una sola sección: con `#ancla`, devolver solo esa sección
       (y sus subsecciones) en vez de la página entera.
 - [ ] Más adelante: escritura desde el MCP en los repositorios alojados en la
