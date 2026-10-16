@@ -67,6 +67,7 @@ export function useSurfaceSearchRecords({
           section: heading,
           trail: recordTrail(trail, entry),
           keywords: [surface.label, ...(entry.keywords ?? [])],
+          excerpt: entry.excerpt,
         },
       ]
     })

@@ -3,6 +3,7 @@ import {
   adminSidebarLinks,
   getCurrentSearchHref,
   getSearchableSurfaces,
+  pageHrefOf,
   siteNavItems,
 } from "@/lib/site-nav"
 
@@ -34,6 +35,33 @@ describe("surface search", () => {
   test("marks the most specific href as current", () => {
     const groups = getSearchableSurfaces(true)
     expect(getCurrentSearchHref("/admin/users", groups)).toBe("/admin/users")
+  })
+
+  test("a result at a section of the current page marks that page", () => {
+    const icon = () => null
+    const groups = [
+      {
+        label: "Documentación",
+        items: [
+          {
+            href: "/casa/red/dns#resolución-inversa",
+            label: "DNS",
+            description: "Nombres",
+            icon,
+            section: "Documentación",
+          },
+        ],
+      },
+    ]
+    const current = getCurrentSearchHref("/casa/red/dns", groups)
+    expect(current).toBe("/casa/red/dns")
+  })
+})
+
+describe("pageHrefOf", () => {
+  test("drops the fragment and keeps an href without one", () => {
+    expect(pageHrefOf("/casa/red/dns#zonas")).toBe("/casa/red/dns")
+    expect(pageHrefOf("/casa/red/dns")).toBe("/casa/red/dns")
   })
 })
 

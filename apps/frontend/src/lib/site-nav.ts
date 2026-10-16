@@ -105,6 +105,14 @@ export interface SiteNavSearchItem {
   trail?: string[]
   /** Extra terms matched like its own text (e.g. a record's surface label). */
   keywords?: string[]
+  /** Text around where a full-text search matched, shown instead of the description. */
+  excerpt?: SiteNavSearchExcerpt
+}
+
+/** A stretch of text with the matched words, as offsets into `text`. */
+export interface SiteNavSearchExcerpt {
+  text: string
+  highlights: { start: number; end: number }[]
 }
 
 export interface SiteNavSearchGroup {
@@ -171,7 +179,9 @@ export function getSearchableSurfaces(isAdmin: boolean): SiteNavSearchGroup[] {
 
 /**
  * The most specific searchable href that matches `pathname`, so the search
- * marks `/admin/users` — not also `/admin` — as current.
+ * marks `/admin/users` — not also `/admin` — as current. Hrefs are compared
+ * without their `#fragment` (`pageHrefOf`), so a result at a section of the
+ * current page is current too.
  */
 export function getCurrentSearchHref(
   pathname: string,
@@ -179,8 +189,15 @@ export function getCurrentSearchHref(
 ) {
   return getCurrentNavHref(
     pathname,
-    groups.flatMap((group) => group.items.map((item) => item.href))
+    groups.flatMap((group) => group.items.map((item) => pageHrefOf(item.href)))
   )
+}
+
+/** `href` without its `#fragment`: the page it opens. */
+export function pageHrefOf(href: string): string {
+  const hash = href.indexOf("#")
+  if (hash === -1) return href
+  return href.slice(0, hash)
 }
 
 export interface AdminSidebarLink {

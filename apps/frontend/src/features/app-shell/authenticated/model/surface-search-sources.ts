@@ -3,12 +3,8 @@ import {
   type QueryKey,
   type UseQueryOptions,
 } from "@tanstack/react-query"
-import {
-  flattenPages,
-  inScope,
-  readScopeCookie,
-  resolveScope,
-} from "@/features/docs/shared"
+import { docSearchEntries } from "@/features/app-shell/authenticated/model/doc-search-entries"
+import { readScopeCookie } from "@/features/docs/shared"
 import {
   type AppSurface,
   appSurfaceList,
@@ -17,6 +13,7 @@ import {
 } from "@/lib/app-surfaces"
 import { foldText } from "@/lib/fold-text"
 import { orpc } from "@/lib/orpc"
+import type { SiteNavSearchExcerpt } from "@/lib/site-nav"
 
 /** One record behind a dynamic surface, as the navbar search lists it. */
 export interface SurfaceSearchEntry {
@@ -36,6 +33,8 @@ export interface SurfaceSearchEntry {
    * endpoint matched but the label doesn't show (an address, a code).
    */
   keywords?: string[]
+  /** Where a full-text search matched, shown instead of the description. */
+  excerpt?: SiteNavSearchExcerpt
 }
 
 type SearchQueryOptions<TData, TError, TQueryKey extends QueryKey> = (options: {
@@ -83,6 +82,8 @@ interface SurfaceSearchSourceShape {
 
 /** Records a server-searched source lists, `searchLimit()`'s default. */
 const SEARCH_RECORD_LIMIT = 5
+/** Documentation pages the search lists: ranked results, so a few more. */
+const DOC_SEARCH_LIMIT = 10
 /** Shortest text a server-searched source is asked for, as `searchQuery()`. */
 const MIN_SERVER_SEARCH_LENGTH = 2
 
@@ -90,7 +91,7 @@ const MIN_SERVER_SEARCH_LENGTH = 2
  * A source that loads the entity's whole list. `select` is type-checked
  * against the procedure's output.
  */
-function defineSearchSource<TData, TError, TQueryKey extends QueryKey>(
+export function defineSearchSource<TData, TError, TQueryKey extends QueryKey>(
   heading: string,
   queryOptions: SearchQueryOptions<TData, TError, TQueryKey>
 ): SurfaceSearchSource<TData, TError, TQueryKey> {
@@ -115,14 +116,17 @@ export function defineServerSearchSource<
  * is open and the text is long enough, keeping the last answer on screen
  * while the next one loads but not once the text no longer searches.
  */
-export function serverSearchQuery({
-  enabled,
-  search,
-}: {
-  enabled: boolean
-  search: string
-}) {
-  const input = { query: search, limit: SEARCH_RECORD_LIMIT }
+export function serverSearchQuery(
+  {
+    enabled,
+    search,
+  }: {
+    enabled: boolean
+    search: string
+  },
+  limit = SEARCH_RECORD_LIMIT
+) {
+  const input = { query: search, limit }
   const searchable = enabled && search.length >= MIN_SERVER_SEARCH_LENGTH
   if (!searchable) {
     return { input, enabled: false, placeholderData: undefined }
@@ -163,28 +167,16 @@ function browserScopeCookie(): string | undefined {
 }
 
 export const surfaceSearchSources = {
-  // The sidebar's own query, so the pages are listed without a request.
-  "doc-pages": defineSearchSource("Documentación", ({ enabled }) =>
-    orpc.v1.docs.nav.queryOptions({
-      enabled,
-      select: ({ repositories }) => {
-        const scope = resolveScope(
-          browserScopeCookie(),
-          repositories.map((repository) => repository.slug)
-        )
-        const shown = repositories.filter((repository) =>
-          inScope(scope, repository.slug)
-        )
-        return flattenPages(shown, scope.kind === "all").map((page) => ({
-          params: {},
-          href: page.href,
-          trail: page.trail,
-          label: page.label,
-          description: page.description,
-        }))
-      },
+  // Full text over the pages of the reader's scope (the server reads every
+  // repository when the cookie names none).
+  "doc-pages": defineServerSearchSource("Documentación", (options) => {
+    const query = serverSearchQuery(options, DOC_SEARCH_LIMIT)
+    return orpc.v1.docs.search.queryOptions({
+      ...query,
+      input: { ...query.input, repository: browserScopeCookie() },
+      select: docSearchEntries,
     })
-  ),
+  }),
 } satisfies Record<SurfaceSearchSourceId, SurfaceSearchSourceShape>
 
 export interface SearchSourceSurface {

@@ -19,13 +19,18 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty"
 import { Kbd } from "@/components/ui/kbd"
+import { SurfaceSearchExcerpt } from "@/features/app-shell/authenticated/components/surface-search-excerpt"
 import { SurfaceSearchFooter } from "@/features/app-shell/authenticated/components/surface-search-footer"
 import { SurfaceSearchLabel } from "@/features/app-shell/authenticated/components/surface-search-label"
 import { useSurfaceSearchRecords } from "@/features/app-shell/authenticated/hooks/use-surface-search-records"
 import { foldText } from "@/lib/fold-text"
 import { getIcon } from "@/lib/icon-registry"
 import { navigate } from "@/lib/navigate"
-import { getCurrentSearchHref, type SiteNavSearchItem } from "@/lib/site-nav"
+import {
+  getCurrentSearchHref,
+  pageHrefOf,
+  type SiteNavSearchItem,
+} from "@/lib/site-nav"
 
 export interface SurfaceSearchDialogProps {
   open: boolean
@@ -48,6 +53,12 @@ function groupHeading(label: string) {
   )
 }
 
+/** A result's excerpt when the search matched its text, else its description. */
+function descriptionOf(item: SiteNavSearchItem) {
+  if (item.excerpt === undefined) return item.description
+  return <SurfaceSearchExcerpt excerpt={item.excerpt} />
+}
+
 /**
  * Every word of the query must be a substring of one of the item's folded
  * keywords (label, description, section, trail, extra keywords), so
@@ -66,9 +77,10 @@ function matchSurface(_value: string, search: string, keywords?: string[]) {
 /**
  * Command palette for the documentation, opened from the navbar or with
  * ⌘K / Ctrl+K. Owns the shortcut listener so the navbar mounts exactly one
- * per page. It lists the pages of the content repositories (titles, sections
- * and descriptions from the navigation) and nothing else: not the home, the
- * profile or the admin screens. Pages appear once the user types.
+ * per page. It lists the pages of the content repositories, found by their
+ * text and ranked by the documentation search, and nothing else: not the
+ * home, the profile or the admin screens. Pages appear once the user types;
+ * a match in a page's body shows its excerpt in place of the description.
  */
 export function SurfaceSearchDialog({
   open,
@@ -109,7 +121,7 @@ export function SurfaceSearchDialog({
   }
 
   function renderItem(item: SiteNavSearchItem, value: string) {
-    const current = item.href === currentHref
+    const current = pageHrefOf(item.href) === currentHref
     return (
       <CommandItem
         key={value}
@@ -132,7 +144,7 @@ export function SurfaceSearchDialog({
         </span>
         <MenuItemText
           label={<SurfaceSearchLabel label={item.label} trail={item.trail} />}
-          description={item.description}
+          description={descriptionOf(item)}
         />
         {current ? (
           <>
