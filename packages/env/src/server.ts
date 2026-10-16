@@ -8,6 +8,12 @@ import { z } from "zod"
 // their variables from compose; already-set variables are never overridden.
 config({ path: resolve(process.cwd(), "../../.env"), quiet: true })
 
+/** Whether `value` is the standard Base64 of exactly 32 bytes. */
+function isBase64Key(value: string): boolean {
+  if (!/^[A-Za-z0-9+/]{43}=$/.test(value)) return false
+  return Buffer.from(value, "base64").length === 32
+}
+
 export const env = createEnv({
   server: {
     // Database
@@ -35,6 +41,13 @@ export const env = createEnv({
     OIDC_CLIENT_ID: z.string().min(1).optional(),
     OIDC_CLIENT_SECRET: z.string().min(1).optional(),
     OIDC_DISCOVERY_URL: z.url().optional(),
+    // User secrets (the MCP's `request` tool). The Base64 of 32 random bytes,
+    // the AES-256-GCM key their values are encrypted with; the feature is off
+    // while it is unset.
+    SECRETS_ENCRYPTION_KEY: z
+      .string()
+      .refine(isBase64Key, "Must be the Base64 of exactly 32 bytes")
+      .optional(),
   },
   runtimeEnv: process.env,
   skipValidation: !!process.env.SKIP_ENV_VALIDATION,

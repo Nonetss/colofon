@@ -222,7 +222,8 @@ fi
 log "Generating secrets with openssl..."
 POSTGRES_PASSWORD=$(gen_password)
 BETTER_AUTH_SECRET=$(gen_secret)
-ok "Secrets generated (POSTGRES_PASSWORD, BETTER_AUTH_SECRET)"
+SECRETS_ENCRYPTION_KEY=$(openssl rand -base64 32 | tr -d '\n')
+ok "Secrets generated (POSTGRES_PASSWORD, BETTER_AUTH_SECRET, SECRETS_ENCRYPTION_KEY)"
 
 # ── Write .env ───────────────────────────────────────────────────────────────
 # umask 077 so the file is created 600: creating it with the default umask
@@ -251,6 +252,10 @@ POSTGRES_PASSWORD=$(env_quote "$POSTGRES_PASSWORD")
 DATABASE_URL=$(env_quote "postgresql://postgres:$POSTGRES_PASSWORD@db:5432/colofon")
 
 BETTER_AUTH_SECRET=$(env_quote "$BETTER_AUTH_SECRET")
+
+# Encrypts the users' secrets (the MCP's \`request\` tool). Losing or changing
+# it makes every stored secret unreadable.
+SECRETS_ENCRYPTION_KEY=$(env_quote "$SECRETS_ENCRYPTION_KEY")
 
 # ── Seed admin ───────────────────────────────────────────────────────────────
 # Created on first backend boot (idempotent by email). Leave blank to skip.
