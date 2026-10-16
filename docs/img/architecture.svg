@@ -6,7 +6,7 @@
   role="img"
   aria-labelledby="architecture-title architecture-desc"
 >
-  <title id="architecture-title">stack architecture</title>
+  <title id="architecture-title">doc architecture</title>
   <desc id="architecture-desc">
     The browser only talks to the Caddy gateway, which sends the API paths to
     the backend and everything else to the frontend; the frontend looks up

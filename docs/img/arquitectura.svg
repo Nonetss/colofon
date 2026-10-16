@@ -6,7 +6,7 @@
   role="img"
   aria-labelledby="arquitectura-title arquitectura-desc"
 >
-  <title id="arquitectura-title">Arquitectura de stack</title>
+  <title id="arquitectura-title">Arquitectura de doc</title>
   <desc id="arquitectura-desc">
     El navegador solo habla con el gateway Caddy, que envía las rutas de la API
     al backend y el resto al frontend; el backend usa PostgreSQL.

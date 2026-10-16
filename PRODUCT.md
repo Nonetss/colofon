@@ -8,15 +8,15 @@ web
 
 ## Users
 
-stack es la plantilla personal del usuario, reconstruida sobre la base del `stack` original. Por ahora el único visitante es el propio usuario operando su scaffold: leyendo la documentación de sus repositorios de contenido en el lector, gestionando usuarios / API keys / repositorios de contenido desde `/admin`, y leyendo logs y docs. Cuando el producto tenga usuarios externos, este fichero se actualiza para describirlos.
+doc es la plataforma de documentación del usuario, construida sobre su plantilla `stack` original. Por ahora el único visitante es el propio usuario operando su scaffold: leyendo la documentación de sus repositorios de contenido en el lector, gestionando usuarios / API keys / repositorios de contenido desde `/admin`, y leyendo logs y docs. Cuando el producto tenga usuarios externos, este fichero se actualiza para describirlos.
 
 ## Product Purpose
 
-stack arranca con todo ya cableado (Astro + Hono/oRPC + Better Auth + Drizzle/Postgres + OpenSpec + Docker) para que el trabajo de producto empiece con auth, RPC tipado, cron scheduling, comentarios y documentación de capacidades ya resueltos. Comparte paquetes (`@nonete/*`), convenciones y sistema visual con el `stack` original, de modo que el código se pueda mover entre ambos repos sin reescribirlo.
+doc arranca con todo ya cableado (Astro + Hono/oRPC + Better Auth + Drizzle/Postgres + OpenSpec + Docker) para que el trabajo de producto empiece con auth, RPC tipado, cron scheduling, comentarios y documentación de capacidades ya resueltos. Comparte paquetes (`@nonete/*`), convenciones y sistema visual con el `stack` original, de modo que el código se pueda mover entre ambos repos sin reescribirlo.
 
 ## Operating Context
 
-stack se opera como **consola técnica** corriendo en local o en un servidor propio vía Docker Compose. Quien la usa vive en la CLI (`bun run dev`, `bun run dev:local`, `bun run db:generate`, `bun run docker:up`, `openspec validate --strict`) y en el navegador en `localhost:4321` (dev) o en el puerto del gateway (producción). Los artefactos vivos son: páginas Astro en `apps/frontend/src/pages` (inicio "Todos", las páginas de documentación `/<slug>/…`, admin, login, me, signup, 404), la documentación de capacidades en `openspec/specs/` y la guía de estilo visual en `DESIGN.md` (raíz). `BETTER_AUTH_SECRET` y el admin inicial se generan con `scripts/setup-dev.sh`.
+doc se opera como **consola técnica** corriendo en local o en un servidor propio vía Docker Compose. Quien la usa vive en la CLI (`bun run dev`, `bun run dev:local`, `bun run db:generate`, `bun run docker:up`, `openspec validate --strict`) y en el navegador en `localhost:4321` (dev) o en el puerto del gateway (producción). Los artefactos vivos son: páginas Astro en `apps/frontend/src/pages` (inicio "Todos", las páginas de documentación `/<slug>/…`, admin, login, me, signup, 404), la documentación de capacidades en `openspec/specs/` y la guía de estilo visual en `DESIGN.md` (raíz). `BETTER_AUTH_SECRET` y el admin inicial se generan con `scripts/setup-dev.sh`.
 
 ## Capabilities and Constraints
 
@@ -35,7 +35,7 @@ Capacidades confirmadas (todas con spec en `openspec/specs/`):
 
 Restricciones técnicas: Bun 1.4.2 (`bunfig.toml` con `linker = "isolated"`), versiones fijadas en el `workspaces.catalog` raíz, Biome 2.5.15, `apps/backend` construido con `tsdown`, scripts de Drizzle solo en `packages/db`, migraciones aplicadas por el backend al arrancar, un único `.env` en la raíz, `BETTER_AUTH_SECRET` de al menos 32 caracteres.
 
-Logo propio: tres capas apiladas y desplazadas en escalera, las dos de abajo en tinta (`foreground`) y la de arriba en terracota (`apps/frontend/src/assets/logo.svg`, del que salen `logo.png`/`logo.webp`, el `apple-touch-icon` y los iconos de `public/pwa/`, estos sobre fondo `#262624`); la UI lo dibuja en línea con `AppLogo` para que la tinta siga el tema. Ya no es el del `stack` original. Producto sin decidir (no inventar): dominio y nombre público; mientras tanto se usa "Stack".
+Logo propio: tres capas apiladas y desplazadas en escalera, las dos de abajo en tinta (`foreground`) y la de arriba en terracota (`apps/frontend/src/assets/logo.svg`, del que salen `logo.png`/`logo.webp`, el `apple-touch-icon` y los iconos de `public/pwa/`, estos sobre fondo `#262624`); la UI lo dibuja en línea con `AppLogo` para que la tinta siga el tema. Ya no es el del `stack` original. Producto sin decidir (no inventar): dominio y nombre público; mientras tanto se usa "doc".
 
 ## Brand Commitments
 

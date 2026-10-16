@@ -1,5 +1,5 @@
 ---
-name: stack
+name: doc
 description: A quiet-editorial technical console on monochrome paper with one warm accent.
 colors:
   primary: "oklch(0.6724 0.1308 38.7559)"
@@ -183,13 +183,13 @@ components:
     rounded: "{rounded.full}"
 ---
 
-# Design System: stack
+# Design System: doc
 
 ## Overview
 
 **Creative North Star: "El Espacio de Trabajo Sereno."**
 
-stack is a quiet-editorial technical console. Every page reads like a watchmaker's catalogue page or a typeset datasheet: a single primary hero, a facts strip or a ruled table, and a state column — never a wall of cards. The personality is **typography-first, monochrome-by-default, one-accent-by-policy**: hierarchy comes from size, weight, tracking, and tabular numerals, not from a rainbow of semantic colors. The single warm accent (Brand Terracotta) marks where you are, what to do and what is alive: the hero icon, the primary CTA, the "alive" state dot, the active navigation item and an active filter. Everything else is the foreground/muted-foreground/border vocabulary of a printed page.
+doc is a quiet-editorial technical console. Every page reads like a watchmaker's catalogue page or a typeset datasheet: a single primary hero, a facts strip or a ruled table, and a state column — never a wall of cards. The personality is **typography-first, monochrome-by-default, one-accent-by-policy**: hierarchy comes from size, weight, tracking, and tabular numerals, not from a rainbow of semantic colors. The single warm accent (Brand Terracotta) marks where you are, what to do and what is alive: the hero icon, the primary CTA, the "alive" state dot, the active navigation item and an active filter. Everything else is the foreground/muted-foreground/border vocabulary of a printed page.
 
 Density is calm rather than compact. Containers are flat by default (no shadows, no glows); depth comes from hairlines (`border-y`, `divide-y`, table row rules) and one `rounded-xl border bg-card/40` box per data block — the table's scroll box, a navigation tile, a state block. Motion is short and useful: a 0.3s staggered entrance (`dash-enter`, ~40ms per item), a 0.25s pop (`dash-pop`) for nested icons, and 200ms slides for floating chrome. The product lives in a wide rhythm — `PageShell` and `Detail.astro` default to 80% of the viewport from `lg`, full width below — always headed by `PageHero`, with in-page grids and tables sized by container queries so columns follow the space beside the sidebar. Anti-references: "shadcn by default with badge primary + badge outline + icon box primary/15", and any surface that uses cards where a ruled table or list would do.
 
