@@ -59,7 +59,7 @@ const scope = scopeNow(store, stored)
 const title = `${page.header.title} · ${page.repository.name}`
 ---
 
-<Docs title={title} nav={nav} storedScope={scope}>
+<Docs title={title} nav={nav} storedScope={scope} styles={page.styles}>
   <link
     slot="head"
     rel="alternate"

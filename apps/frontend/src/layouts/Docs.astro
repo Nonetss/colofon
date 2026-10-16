@@ -13,9 +13,11 @@ interface Props {
   storedScope: string | undefined
   /** Pages with their own wide layout (the "Todos" home) drop the TOC column. */
   wide?: boolean
+  /** The page's repository stylesheet (`v1.docs.page`'s `styles`), if any. */
+  styles?: string | null
 }
 
-const { title, nav, storedScope, wide = false } = Astro.props
+const { title, nav, storedScope, wide = false, styles = null } = Astro.props
 // The page rises in a little as it fades; the old one goes at once, since a
 // scrolled page would jump to the top while fading (keyframes in styles/app/chrome.css).
 const pageOld = { name: "page-leave", duration: "0s", fillMode: "both" }
@@ -76,6 +78,13 @@ const pageAnimation = {
   <div transition:persist="docs-lightbox">
     <DocLightbox client:only="react" />
   </div>
+  <!--
+    The repository's own styles (`content-styles`), already cleaned by the
+    backend. Unlayered and after the platform's stylesheet in <head>, so they
+    win where both meet, the theme tokens included; inside the swapped body,
+    so they leave with the page when the reader goes to another repository.
+  -->
+  {styles !== null && <style is:inline set:html={styles} />}
   <script>
   import { onDocsPageLoad } from "@/features/docs/page/model/page-scripts"
 
