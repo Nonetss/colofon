@@ -16,4 +16,11 @@ export default defineConfig({
   deps: {
     alwaysBundle: () => true,
   },
+  // css-tree's ESM entry loads its JSON data at runtime through
+  // createRequire(import.meta.url), which the bundle can't follow, so the
+  // image would crash with "Cannot find module '../data/patch.json'". Its
+  // prebuilt browser bundle has the data inlined and the same exports.
+  alias: {
+    "css-tree": "css-tree/dist/csstree.esm",
+  },
 })
