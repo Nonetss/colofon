@@ -7,7 +7,7 @@
 # compose (compose.prod.yml).
 #
 # Usage:
-#   curl -fsSL https://raw.githubusercontent.com/Nonetss/doc/main/scripts/bootstrap.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/Nonetss/colofon/main/scripts/bootstrap.sh | bash
 #
 # Requirements: docker, openssl, curl.
 #
@@ -26,7 +26,7 @@ ENV_FILE="$TARGET_DIR/.env"
 # Branch or tag used to download compose.prod.yml. Override: PB_REF=v0.1.0 ...
 # This only pins compose.prod.yml: the images it references stay on `:main`.
 PB_REF="${PB_REF:-main}"
-RAW_REPO="https://raw.githubusercontent.com/Nonetss/doc"
+RAW_REPO="https://raw.githubusercontent.com/Nonetss/colofon"
 
 # ── Output helpers ───────────────────────────────────────────────────────────
 if [[ -t 1 ]]; then
@@ -190,7 +190,7 @@ has_single_quote "$ADMIN_NAME" && { err "Name cannot contain a single quote (')"
 
 ADMIN_EMAIL=""
 until is_email "$ADMIN_EMAIL"; do
-  ADMIN_EMAIL=$(prompt "Admin email" "admin@doc.local")
+  ADMIN_EMAIL=$(prompt "Admin email" "admin@colofon.local")
   is_email "$ADMIN_EMAIL" || err "Invalid email, try again"
 done
 
@@ -248,7 +248,7 @@ POSTGRES_PASSWORD=$(env_quote "$POSTGRES_PASSWORD")
 # Written with resolved values rather than referencing POSTGRES_PASSWORD. For
 # an external DB (RDS, Cloud SQL, …) replace this line and remove the db
 # service from compose.prod.yml.
-DATABASE_URL=$(env_quote "postgresql://postgres:$POSTGRES_PASSWORD@db:5432/doc")
+DATABASE_URL=$(env_quote "postgresql://postgres:$POSTGRES_PASSWORD@db:5432/colofon")
 
 BETTER_AUTH_SECRET=$(env_quote "$BETTER_AUTH_SECRET")
 

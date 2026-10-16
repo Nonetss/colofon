@@ -64,7 +64,7 @@ fi
 BETTER_AUTH_SECRET="$(openssl rand -base64 48 | tr -d '\n')"
 # Must be a valid address for zod's z.email() in packages/env: "admin@localhost"
 # has no TLD and fails validation, which crashes the backend on boot.
-ADMIN_EMAIL="admin@doc.local"
+ADMIN_EMAIL="admin@colofon.local"
 ADMIN_NAME="Admin"
 ADMIN_PASSWORD="$(openssl rand -base64 24 | tr -d '\n')"
 

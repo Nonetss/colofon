@@ -17,7 +17,7 @@
 # The database is the stack's own `db` (data in the db_data volume): the
 # backend's DATABASE_URL is overridden to reach it, whatever .env says. The
 # backend applies the committed migrations and seeds the admin on boot.
-name: doc-dev
+name: colofon-dev
 
 x-node-ignore: &node-ignore
   - node_modules/
@@ -31,11 +31,11 @@ x-db: &db
   environment:
     POSTGRES_USER: postgres
     POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-    POSTGRES_DB: doc
+    POSTGRES_DB: colofon
   volumes:
     - db_data:/var/lib/postgresql/data
   healthcheck:
-    test: [ "CMD-SHELL", "pg_isready -U postgres -d doc" ]
+    test: [ "CMD-SHELL", "pg_isready -U postgres -d colofon" ]
     interval: 10s
     timeout: 5s
     retries: 5
@@ -103,7 +103,7 @@ services:
       - path: .env
         required: false
     environment:
-      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:-postgres}@db:5432/doc
+      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:-postgres}@db:5432/colofon
     volumes:
       # One clone per content repository (stored in the database), kept
       # across container recreations.
@@ -190,7 +190,7 @@ services:
   # DATABASE_URL override). The backend waits for it to be healthy.
   db:
     <<: *db
-    container_name: doc-dev-db
+    container_name: colofon-dev-db
     expose:
       - "5432"
 
@@ -200,7 +200,7 @@ services:
   # `bun run dev` never starts it; it shares db_data, so run one or the other.
   db-native:
     <<: *db
-    container_name: doc-dev-db-native
+    container_name: colofon-dev-db-native
     profiles:
       - native
     ports:
