@@ -1,9 +1,13 @@
-# doc
+# Colofon
 
 > What this project is for, the decisions behind it and what comes next (documentation site, diagrams, skills, MCP and the secrets broker): [VISION.md](VISION.md), in Spanish.
 
 **A platform to document systems** (work infrastructure, a homelab or
 anything else) that serves **people** and **AI agents** alike.
+
+The name comes from the *colofón*, the last page of a book with the printing
+details: it is part of every book and nobody ever reads it, like most
+documentation.
 
 The idea comes from documenting the infrastructure at work: with its
 `llms.txt`, an agent read the documentation, understood where everything was
@@ -293,7 +297,7 @@ tracing or observability UI.
 ## Project Structure
 
 ```txt
-doc/
+colofon/
 ├── apps/
 │   ├── frontend/       # Astro app (TypeScript, Bun)
 │   ├── backend/        # Hono + oRPC API, cron scheduler and git server (TypeScript, Bun)
@@ -332,7 +336,7 @@ development (see [Database](#database)).
 
 ```bash
 git clone https://github.com/Nonetss/colofon.git
-cd doc
+cd colofon
 bun install
 bun run setup:dev   # writes the root .env with real secrets and the admin seed
 bun run dev         # Docker dev stack at https://localhost:4321
