@@ -2,9 +2,7 @@
 
 ## Purpose
 Defines how a page of a content repository (`docs/**/*.mdx`) is read without executing anything: its header, the MDX it may use, the render tree the platform builds from it, how links and images resolve, how pages form the navigation, and how problems in a page are reported.
-
 ## Requirements
-
 ### Requirement: Page header
 
 A page SHALL start with a YAML front matter block holding its header. `titulo` and `descripcion` SHALL be required text; `icono` (a Lucide icon name, `content-contract` "Icon names"), `orden` (a number) and `actualizado` (a `YYYY-MM-DD` date) SHALL be optional; and the fields the site declares in `cabecera` of `doc.config.yaml` SHALL be accepted and validated with their field kinds, including `ref` and `ficha` values against the catalog and the pages. Any other header key SHALL be reported. A page whose header is missing or invalid SHALL still be listed and rendered, with its file name as title, and its problems reported. Where `menu.yaml` gives the page a title or an icon, that SHALL be shown instead of the header's (`content-menu`).
@@ -50,7 +48,7 @@ A page read from an `.mdx` file SHALL carry, as `editado`, the last commit date 
 
 ### Requirement: Accepted MDX
 
-A page body SHALL be read as MDX with GitHub-flavoured Markdown (tables, task lists, strikethrough, autolinks and footnotes) and SHALL NOT be executed. `import` and `export` statements and `{…}` expressions SHALL be refused, each reported with its line, and left out of the render tree; an expression that holds only a comment (`{/* … */}`) SHALL be dropped without a problem. The platform provides three components, `<Callout>`, `<Entities>` (see "Entities component") and `<Diagram>` (`content-diagrams`). `<Callout>`, written as a block (on its own lines, or alone on one line), SHALL render as an alert holding its Markdown, of the kind its `type` names (`note` by default; `info` a note titled "Información", `tip`, `important`, `warning`, `caution`, and `danger` a caution titled "Peligro"), titled by its `title` when given and by its kind otherwise. An unknown `type`, an attribute other than `type` and `title`, or an attribute value in braces SHALL be reported with its line while the alert still renders, and a `<Callout>` inside a paragraph's text SHALL be reported as needing its own block and rendered as a notice. Every other JSX element SHALL be reported as a component the platform does not provide, with its name and line, and SHALL be rendered as a visible notice naming it in place of the element. A fenced code block whose language is `diagram` SHALL be reported with its line as a diagram that belongs in `diagramas/` and is shown with `<Diagram id="…" />`, and SHALL render as a notice saying so. A page that cannot be parsed SHALL be reported with the parser's line and message, and SHALL have no body.
+A page body SHALL be read as MDX with GitHub-flavoured Markdown (tables, task lists, strikethrough, autolinks and footnotes) and SHALL NOT be executed. `import` and `export` statements and `{…}` expressions SHALL be refused, each reported with its line, and left out of the render tree; an expression that holds only a comment (`{/* … */}`) SHALL be dropped without a problem. The platform provides three components, `<Callout>`, `<Entities>` (see "Entities component") and `<Diagram>` (`content-diagrams`). `<Callout>`, written as a block (on its own lines, or alone on one line), SHALL render as an alert holding its Markdown, of the kind its `type` names (`note` by default; `info` a note titled "Información", `tip`, `important`, `warning`, `caution`, and `danger` a caution titled "Peligro"), titled by its `title` when given and by its kind otherwise. An unknown `type`, an attribute other than `type` and `title`, or an attribute value in braces SHALL be reported with its line while the alert still renders, and a `<Callout>` inside a paragraph's text SHALL be reported as needing its own block and rendered as a notice. Every other JSX element SHALL be reported as a component the platform does not provide, with its name and line, and SHALL be rendered as a visible notice naming it in place of the element. A fenced code block whose language is `diagram` SHALL be reported with its line as a diagram that belongs in `diagrams/` and is shown with `<Diagram id="…" />`, and SHALL render as a notice saying so. A page that cannot be parsed SHALL be reported with the parser's line and message, and SHALL have no body.
 
 #### Scenario: Import refused
 
@@ -85,7 +83,7 @@ A page body SHALL be read as MDX with GitHub-flavoured Markdown (tables, task li
 #### Scenario: Inline diagram block
 
 - **WHEN** a page holds a fenced block opened with ` ```diagram `
-- **THEN** the page SHALL be reported on that line saying diagrams go in `diagramas/` and are shown with `<Diagram id="…" />`, and a notice SHALL render in place of the block
+- **THEN** the page SHALL be reported on that line saying diagrams go in `diagrams/` and are shown with `<Diagram id="…" />`, and a notice SHALL render in place of the block
 
 #### Scenario: Syntax error
 
@@ -115,7 +113,7 @@ An attribute other than `type`, `columns` and `group`, an attribute value in bra
 #### Scenario: Entity linked to its page
 
 - **WHEN** the service `komodo` has `page: containers/komodo` in repository `casa`, and the service `adguard` has no `page`
-- **THEN** "Komodo" SHALL link to `/casa/containers/komodo` and "AdGuard" SHALL link to `/casa/catalogo/services/adguard`
+- **THEN** "Komodo" SHALL link to `/casa/containers/komodo` and "AdGuard" SHALL link to `/casa/catalog/services/adguard`
 
 #### Scenario: Unknown column
 
@@ -129,8 +127,8 @@ An attribute other than `type`, `columns` and `group`, an attribute value in bra
 
 #### Scenario: Invalid entity
 
-- **WHEN** `catalogo/machines/nas.yaml` lacks the required field `ip` and a page holds `<Entities type="machines" />`
-- **THEN** the page SHALL be reported naming `catalogo/machines/nas.yaml` and the missing field, and the table SHALL hold every other machine
+- **WHEN** `catalog/machines/nas.yaml` lacks the required field `ip` and a page holds `<Entities type="machines" />`
+- **THEN** the page SHALL be reported naming `catalog/machines/nas.yaml` and the missing field, and the table SHALL hold every other machine
 
 #### Scenario: Labelled column
 
@@ -158,7 +156,7 @@ The platform SHALL turn each page body into an HTML tree that holds only element
 
 ### Requirement: Links and images
 
-A relative link to another page (`.mdx`, with or without an anchor) SHALL be rewritten to that page's reader route in the same repository, keeping the anchor; a link to a page that does not exist SHALL be reported and rendered as plain text. A `catalogo:<type>/<id>` link SHALL point to the reader route of that entity's page (the value of the first `ficha` field its type declares) and, when the entity has no page, to its generated catalog page; a `catalogo:<type>` link SHALL point to the type's generated page; a link to a type or entity that does not exist SHALL be reported and rendered as plain text. A relative image under `docs/` with a `png`, `jpg`, `jpeg`, `gif`, `webp`, `avif` or `svg` extension SHALL be rewritten to the repository's file URL; a missing image, or a relative link or image to any other file or outside `docs/`, SHALL be reported. Absolute `http`/`https` links SHALL be kept.
+A relative link to another page (`.mdx`, with or without an anchor) SHALL be rewritten to that page's reader route in the same repository, keeping the anchor; a link to a page that does not exist SHALL be reported and rendered as plain text. A `catalog:<type>/<id>` link SHALL point to the reader route of that entity's page (the value of the first `ficha` field its type declares) and, when the entity has no page, to its generated catalog page; a `catalog:<type>` link SHALL point to the type's generated page; a link to a type or entity that does not exist SHALL be reported and rendered as plain text. A relative image under `docs/` with a `png`, `jpg`, `jpeg`, `gif`, `webp`, `avif` or `svg` extension SHALL be rewritten to the repository's file URL; a missing image, or a relative link or image to any other file or outside `docs/`, SHALL be reported. Absolute `http`/`https` links SHALL be kept.
 
 #### Scenario: Link to another page
 
@@ -172,18 +170,18 @@ A relative link to another page (`.mdx`, with or without an anchor) SHALL be rew
 
 #### Scenario: Link to an entity
 
-- **WHEN** a page of repository `casa` links `[Komodo](catalogo:services/komodo)` and `komodo` has `page: containers/komodo`, and links `[docker-01](catalogo:machines/docker-01)` and `docker-01` has no page
-- **THEN** "Komodo" SHALL link to `/casa/containers/komodo`, "docker-01" SHALL link to `/casa/catalogo/machines/docker-01`, and no problem SHALL be reported
+- **WHEN** a page of repository `casa` links `[Komodo](catalog:services/komodo)` and `komodo` has `page: containers/komodo`, and links `[docker-01](catalog:machines/docker-01)` and `docker-01` has no page
+- **THEN** "Komodo" SHALL link to `/casa/containers/komodo`, "docker-01" SHALL link to `/casa/catalog/machines/docker-01`, and no problem SHALL be reported
 
 #### Scenario: Link to a type
 
-- **WHEN** a page of repository `casa` links `[Stacks](catalogo:stacks)`
-- **THEN** "Stacks" SHALL link to `/casa/catalogo/stacks`
+- **WHEN** a page of repository `casa` links `[Stacks](catalog:stacks)`
+- **THEN** "Stacks" SHALL link to `/casa/catalog/stacks`
 
 #### Scenario: Link to a missing entity
 
-- **WHEN** a page links `[viejo](catalogo:machines/old-01)` and `machines` has no `old-01`
-- **THEN** the page SHALL be reported naming `catalogo:machines/old-01` and "viejo" SHALL render without a link
+- **WHEN** a page links `[viejo](catalog:machines/old-01)` and `machines` has no `old-01`
+- **THEN** the page SHALL be reported naming `catalog:machines/old-01` and "viejo" SHALL render without a link
 
 #### Scenario: Image in the repository
 
@@ -227,3 +225,4 @@ Every problem in a page SHALL be reported, not only the first, with the page's p
 
 - **WHEN** a page has no `descripcion` and links to a missing page
 - **THEN** both problems SHALL be reported for that page, and every other page SHALL render normally
+

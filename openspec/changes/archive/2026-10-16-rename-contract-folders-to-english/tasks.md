@@ -28,7 +28,7 @@
 ## 5. Platform docs for agents and specs
 
 - [x] 5.1 Update `AGENTS.md`, `README.md` and the `stack` references (`references/workspaces.md`, `references/frontend/navigation-and-layouts.md`) that name the content folders
-- [ ] 5.2 After syncing the delta specs, update the Purpose paragraphs of `content-diagrams` and `content-styles`, which still name `diagramas/` and `estilos/`
+- [x] 5.2 After syncing the delta specs, update the Purpose paragraphs of `content-diagrams` and `content-styles`, which still name `diagramas/` and `estilos/`
 
 ## 6. Validation
 

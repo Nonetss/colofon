@@ -2,9 +2,7 @@
 
 ## Purpose
 Defines how signed-in users read the content repositories on the web: the reader procedures of the API, the reader routes, the documentation layout with its sidebar, repository selector and table of contents, and the states shown when there is no content or a page has problems.
-
 ## Requirements
-
 ### Requirement: Reader procedures
 
 The backend SHALL expose, under `v1.docs` and to every signed-in user, procedures to:
@@ -41,7 +39,7 @@ All three SHALL be `GET` procedures. An unknown repository, a page that does not
 
 #### Scenario: Page of a repository with styles
 
-- **WHEN** a user reads a page of a repository that holds `estilos/tema.css`
+- **WHEN** a user reads a page of a repository that holds `styles/theme.css`
 - **THEN** the answer SHALL carry the repository's cleaned stylesheet, the same for every page of that repository
 
 ### Requirement: Reader content follows the clone
@@ -117,12 +115,12 @@ The sidebar SHALL list, for the current scope, an "Inicio" link to the scope's h
 
 #### Scenario: Groups of the menu
 
-- **WHEN** the repository `casa` has a `menu.yaml` with the groups "Red" (`icono: network`) and "Datos" (listing `catalogo`)
+- **WHEN** the repository `casa` has a `menu.yaml` with the groups "Red" (`icono: network`) and "Datos" (listing `catalog`)
 - **THEN** the sidebar SHALL show the heading "Red" with its icon and entries, then the heading "Datos" with the section "Catálogo" holding one link per catalog type
 
 #### Scenario: Entity page
 
-- **WHEN** the group "Datos" lists `catalogo` titled "Referencia" and the user opens `/prueba/catalogo/field-kinds/booleano`
+- **WHEN** the group "Datos" lists `catalog` titled "Referencia" and the user opens `/prueba/catalog/field-kinds/booleano`
 - **THEN** the section "Referencia" SHALL be expanded and its page "Tipos de campo" SHALL be marked as current
 
 #### Scenario: Folder with only an index
@@ -251,8 +249,8 @@ The navbar search SHALL list the pages of the current scope (every repository in
 
 #### Scenario: Finding a catalog type
 
-- **WHEN** the scope is "Casa", the menu shows `catalogo` in the group "Datos" and the user types "machines"
-- **THEN** the page "Machines" SHALL appear as "Datos › Catálogo › Machines", and selecting it SHALL open `/casa/catalogo/machines`
+- **WHEN** the scope is "Casa", the menu shows `catalog` in the group "Datos" and the user types "machines"
+- **THEN** the page "Machines" SHALL appear as "Datos › Catálogo › Machines", and selecting it SHALL open `/casa/catalog/machines`
 
 #### Scenario: Finding a page by its body
 
@@ -358,7 +356,7 @@ When a page's answer carries a stylesheet, the reader SHALL apply it to that pag
 
 #### Scenario: A repository with its own primary colour
 
-- **WHEN** a repository's `estilos/tema.css` sets `--primary` on `:root` and on `.dark`, and a user opens one of its pages
+- **WHEN** a repository's `styles/theme.css` sets `--primary` on `:root` and on `.dark`, and a user opens one of its pages
 - **THEN** the page's links, accents and tokens built on `--primary` SHALL take the repository's colour in both themes
 
 #### Scenario: Leaving for another repository
@@ -370,3 +368,4 @@ When a page's answer carries a stylesheet, the reader SHALL apply it to that pag
 
 - **WHEN** the user opens `/admin` after reading a repository with styles
 - **THEN** no style of that repository SHALL apply
+

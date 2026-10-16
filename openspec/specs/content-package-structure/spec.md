@@ -3,9 +3,7 @@
 ## Purpose
 
 Defines how `packages/content` is laid out: one folder per area under `src/`, a one-way dependency direction between areas with no import cycles, the diagram model shared by every diagram module, a single registry of typed diagram forms, a stable public barrel, and tests mirroring `src/`, all enforced by a structure test.
-
 ## Requirements
-
 ### Requirement: One folder per area
 
 `packages/content/src/` SHALL hold only the public barrel `index.ts` and one folder per area:
@@ -14,7 +12,7 @@ Defines how `packages/content` is laid out: one folder per area under `src/`, a 
 - `git/`: clones of content repositories, the git server of hosted repositories, and reading a bare repository's folders and files.
 - `editor/`: the editor JSON Schemas and their catalog.
 - `diagrams/`: reading, checking, laying out and drawing diagram files, with the typed forms under `diagrams/types/`.
-- `styles/`: the style modules of a repository's `estilos/`: their names and order, reading them and cleaning them into one stylesheet.
+- `styles/`: the style modules of a repository's `styles/`: their names and order, reading them and cleaning them into one stylesheet.
 - `pages/`: the MDX page pipeline, the navigation, the generated catalog pages and the entity tables.
 
 A module SHALL live in the folder of the area it belongs to, and its file name SHALL NOT repeat the folder's name as a prefix.
@@ -112,3 +110,4 @@ A test of a module at `src/<area>/<path>.ts` SHALL live at `tests/<area>/<path>.
 
 - **WHEN** the typed form tests share a helper that reads a typed file
 - **THEN** it SHALL live in `tests/diagrams/types/helpers.ts` and be imported as `#tests/diagrams/types/helpers`
+

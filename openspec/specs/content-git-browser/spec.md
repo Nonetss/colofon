@@ -2,9 +2,7 @@
 
 ## Purpose
 Lets admins look inside the content repositories the platform hosts, on any branch, from the admin panel: walk their folders and read their files without cloning them.
-
 ## Requirements
-
 ### Requirement: Folders of a hosted repository
 
 The backend SHALL expose to admins, under the `v1.content` procedures, a read-only `GET` procedure that lists the entries of one folder of a hosted repository on one of its branches. It SHALL take the repository's `slug`, a `branch` name and a `path` relative to the repository root, empty for the root. Each entry SHALL carry its name, its path from the root, its kind (`folder`, `file` or `submodule`) and, for a file, its size in bytes. Entries SHALL be ordered folders first, then by name. A `path` that is absolute, ends in `/`, has an empty, `.` or `..` segment, or is longer than 1024 characters SHALL fail input validation.
@@ -13,8 +11,8 @@ It SHALL answer `NOT_FOUND` for an unknown slug, for a repository that is not ho
 
 #### Scenario: Root of a branch
 
-- **WHEN** an admin lists the root of `main` of the hosted repository `manual`, which holds `doc.config.yaml`, `docs/` and `catalogo/`
-- **THEN** the backend SHALL answer `catalogo` and `docs` as folders, then `doc.config.yaml` as a file with its size
+- **WHEN** an admin lists the root of `main` of the hosted repository `manual`, which holds `doc.config.yaml`, `docs/` and `catalog/`
+- **THEN** the backend SHALL answer `catalog` and `docs` as folders, then `doc.config.yaml` as a file with its size
 
 #### Scenario: Nested folder
 
@@ -128,3 +126,4 @@ Non-admin users SHALL NOT reach the screen. All of its copy SHALL be in Spanish.
 
 - **WHEN** an admin opens `/admin/git/no-existe`
 - **THEN** the screen SHALL say there is no such hosted repository and link back to `/admin/git`
+

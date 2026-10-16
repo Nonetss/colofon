@@ -2,12 +2,10 @@
 
 ## Purpose
 Lets a content repository declare its sidebar in one YAML file, grouping pages, sections and catalog pages independently of the folders that store them, with typed icons and the YAML taking precedence over page headers.
-
 ## Requirements
-
 ### Requirement: Menu file
 
-A content repository MAY hold a `menu.yaml` file at its root. It SHALL declare `secciones`, a non-empty list of groups. Each group SHALL declare `titulo` (required text), `icono` (optional, a Lucide icon name), `descripcion` (optional text) and `paginas`, a non-empty list of entries. An entry SHALL be either a path written as text, or an object with `ruta` (the path, required), `titulo` (optional text) and `icono` (optional, a Lucide icon name). A path SHALL name a page, a section folder under `docs/`, the catalog (`catalogo`) or a catalog type (`catalogo/<type>`). Any other key, a missing required key or an icon that is not a Lucide icon name SHALL make the file invalid, reported per file with the field path.
+A content repository MAY hold a `menu.yaml` file at its root. It SHALL declare `secciones`, a non-empty list of groups. Each group SHALL declare `titulo` (required text), `icono` (optional, a Lucide icon name), `descripcion` (optional text) and `paginas`, a non-empty list of entries. An entry SHALL be either a path written as text, or an object with `ruta` (the path, required), `titulo` (optional text) and `icono` (optional, a Lucide icon name). A path SHALL name a page, a section folder under `docs/`, the catalog (`catalog`) or a catalog type (`catalog/<type>`). Any other key, a missing required key or an icon that is not a Lucide icon name SHALL make the file invalid, reported per file with the field path.
 
 #### Scenario: A valid menu
 
@@ -40,7 +38,7 @@ An entry whose path names no page, section folder, catalog or catalog type, an e
 
 ### Requirement: Navigation from the menu
 
-When the repository has a valid `menu.yaml`, its navigation SHALL be one group per entry of `secciones`, in that order, each titled, described and iconed by the group. A group's children SHALL be its entries in the order written: a page entry SHALL be a page; a section folder entry SHALL be that section with its whole subtree, ordered inside as the folder navigation orders it, except a folder whose only page is its `index.mdx`, which SHALL be a page (`content-pages`, "Navigation tree"); `catalogo` SHALL be the catalog section holding one page per catalog type; `catalogo/<type>` SHALL be that type's page. Groups SHALL NOT be routes. The reading order (previous and next page) SHALL follow the menu, depth first, and SHALL skip the catalog's pages. A page's breadcrumbs SHALL be its group (as text, without a link) followed by the sections above it inside its entry.
+When the repository has a valid `menu.yaml`, its navigation SHALL be one group per entry of `secciones`, in that order, each titled, described and iconed by the group. A group's children SHALL be its entries in the order written: a page entry SHALL be a page; a section folder entry SHALL be that section with its whole subtree, ordered inside as the folder navigation orders it, except a folder whose only page is its `index.mdx`, which SHALL be a page (`content-pages`, "Navigation tree"); `catalog` SHALL be the catalog section holding one page per catalog type; `catalog/<type>` SHALL be that type's page. Groups SHALL NOT be routes. The reading order (previous and next page) SHALL follow the menu, depth first, and SHALL skip the catalog's pages. A page's breadcrumbs SHALL be its group (as text, without a link) followed by the sections above it inside its entry.
 
 #### Scenario: A folder shown in another group
 
@@ -93,3 +91,4 @@ What `menu.yaml` says about an entry SHALL be what every view shows for it: an e
 
 - **WHEN** `menu.yaml` lists `network` without `icono` and `docs/network/index.mdx` says `icono: network`
 - **THEN** the section SHALL show the `network` icon and no problem SHALL be reported
+

@@ -1,13 +1,11 @@
 # content-diagrams Specification
 
 ## Purpose
-Lets a content repository write diagrams as JSON files under `diagramas/`, in the reference site's scheme format with every box, arrow and zone placed by the content, validated against its catalog and pages, drawn and made interactive by the reader and shown in any page with a component, so a diagram is written once and reused.
-
+Lets a content repository write diagrams as JSON files under `diagrams/, in the reference site's scheme format with every box, arrow and zone placed by the content, validated against its catalog and pages, drawn and made interactive by the reader and shown in any page with a component, so a diagram is written once and reused.
 ## Requirements
-
 ### Requirement: Diagram files
 
-A content repository MAY hold a `diagramas/` folder with one file per diagram, named `<id>.json` or `<id>.svg`, where the id is made of lowercase letters, digits and single hyphens. A `.yaml` or `.yml` file there SHALL be reported as a diagram that is now written as `<id>.json`, a badly named file SHALL be reported, and an id with both a `.json` and a `.svg` file SHALL be reported on the `.svg` file, the `.json` one being the diagram. A `.svg` file is an **illustration** (see "SVG illustrations"). A diagram `.json` file SHALL be a JSON object in one of three forms:
+A content repository MAY hold a `diagrams/` folder with one file per diagram, named `<id>.json` or `<id>.svg`, where the id is made of lowercase letters, digits and single hyphens. A `.yaml` or `.yml` file there SHALL be reported as a diagram that is now written as `<id>.json`, a badly named file SHALL be reported, and an id with both a `.json` and a `.svg` file SHALL be reported on the `.svg` file, the `.json` one being the diagram. A `.svg` file is an **illustration** (see "SVG illustrations"). A diagram `.json` file SHALL be a JSON object in one of three forms:
 - a **drawn diagram**, with no `type`, declaring `title` (required text), `desc` (required text: what the diagram shows, used as its text alternative), `width` and `height` (required positive numbers: the drawing area, the legend going under it), `nodes` (required, at least one), `edges`, `zones` and `notes` (optional lists);
 - a **chain**, with no `type`, declaring `title`, `desc`, `items` (required, at least one node without position) and optionally `links` (one label or `null` per gap between items), `accent` and `dash` (indexes of the gaps whose arrow is of that kind), `y` (40 by default) and `h` (72 by default); the platform SHALL lay its items in one row from left to right, each as wide as its longest line, and SHALL size the drawing to them;
 - a **typed diagram**, declaring `type` (one of the types of `content-diagram-types`), `title`, `desc` and the keys of that type, laid out by the platform as that capability describes. An unknown `type` SHALL be reported listing the known ones, and no diagram SHALL render for that file.
@@ -16,38 +14,38 @@ The drawn diagram and the chain MAY declare `kindNames` (legend wording per node
 
 #### Scenario: A valid diagram
 
-- **WHEN** `diagramas/komodo.json` declares `title`, `desc`, `width: 600`, `height: 200`, the nodes `komodo` and `periphery` with their positions and an edge from `komodo` to `periphery` labelled `DEPLOY`
+- **WHEN** `diagrams/komodo.json` declares `title`, `desc`, `width: 600`, `height: 200`, the nodes `komodo` and `periphery` with their positions and an edge from `komodo` to `periphery` labelled `DEPLOY`
 - **THEN** the diagram `komodo` SHALL be valid
 
 #### Scenario: A valid chain
 
-- **WHEN** `diagramas/backup.json` declares `title`, `desc`, three `items` and `links: ["SNAPSHOT", null]`
+- **WHEN** `diagrams/backup.json` declares `title`, `desc`, three `items` and `links: ["SNAPSHOT", null]`
 - **THEN** the diagram SHALL be valid and SHALL render the three boxes in a row joined by two arrows, the first labelled `SNAPSHOT`
 
 #### Scenario: A valid typed diagram
 
-- **WHEN** `diagramas/login.json` declares `type: "sequence"`, `title`, `desc`, two actors and three messages
+- **WHEN** `diagrams/login.json` declares `type: "sequence"`, `title`, `desc`, two actors and three messages
 - **THEN** the diagram `login` SHALL be valid and SHALL render as a sequence diagram
 
 #### Scenario: Unknown type
 
-- **WHEN** `diagramas/mapa.json` declares `type: "mindmap"`
+- **WHEN** `diagrams/mapa.json` declares `type: "mindmap"`
 - **THEN** it SHALL be reported on `type` naming `mindmap` and listing the known types, and pages showing `mapa` SHALL show a notice
 
 #### Scenario: Same id twice
 
-- **WHEN** both `diagramas/planta.json` and `diagramas/planta.svg` exist
-- **THEN** `diagramas/planta.svg` SHALL be reported as repeating the id `planta`, and `<Diagram id="planta" />` SHALL render the JSON diagram
+- **WHEN** both `diagrams/planta.json` and `diagrams/planta.svg` exist
+- **THEN** `diagrams/planta.svg` SHALL be reported as repeating the id `planta`, and `<Diagram id="planta" />` SHALL render the JSON diagram
 
 #### Scenario: Missing description
 
-- **WHEN** `diagramas/red.json` has no `desc`
-- **THEN** it SHALL be reported on `diagramas/red.json` saying `desc` is required
+- **WHEN** `diagrams/red.json` has no `desc`
+- **THEN** it SHALL be reported on `diagrams/red.json` saying `desc` is required
 
 #### Scenario: Old YAML diagram
 
-- **WHEN** `diagramas/pipeline.yaml` exists
-- **THEN** it SHALL be reported saying diagrams are now written as `diagramas/pipeline.json`, and no diagram `pipeline` SHALL exist unless that JSON file does
+- **WHEN** `diagrams/pipeline.yaml` exists
+- **THEN** it SHALL be reported saying diagrams are now written as `diagrams/pipeline.json`, and no diagram `pipeline` SHALL exist unless that JSON file does
 
 ### Requirement: Nodes, connections and zones
 
@@ -129,7 +127,7 @@ Every problem SHALL be reported on the diagram's file with the field path, and t
 
 ### Requirement: Diagram component
 
-`<Diagram id="…" />`, written as a block, SHALL render the diagram `diagramas/<id>.json`, or the illustration `diagramas/<id>.svg` when there is no JSON file, in the page. A missing `id`, an id with no diagram file, an attribute other than `id` or an attribute value in braces SHALL be reported with the component's line, and a missing diagram SHALL render a notice in its place. A `<Diagram>` inside a paragraph's text SHALL be reported as needing its own block and rendered as a notice. The same diagram MAY be shown in any number of pages.
+`<Diagram id="…" />`, written as a block, SHALL render the diagram `diagrams/<id>.json`, or the illustration `diagrams/<id>.svg` when there is no JSON file, in the page. A missing `id`, an id with no diagram file, an attribute other than `id` or an attribute value in braces SHALL be reported with the component's line, and a missing diagram SHALL render a notice in its place. A `<Diagram>` inside a paragraph's text SHALL be reported as needing its own block and rendered as a notice. The same diagram MAY be shown in any number of pages.
 
 #### Scenario: Shown in two pages
 
@@ -138,12 +136,12 @@ Every problem SHALL be reported on the diagram's file with the field path, and t
 
 #### Scenario: Illustration
 
-- **WHEN** a page holds `<Diagram id="despiece" />` and only `diagramas/despiece.svg` exists
+- **WHEN** a page holds `<Diagram id="despiece" />` and only `diagrams/despiece.svg` exists
 - **THEN** the page SHALL show that illustration
 
 #### Scenario: Unknown diagram
 
-- **WHEN** a page holds `<Diagram id="mapa" />` and there is no `diagramas/mapa.json` nor `diagramas/mapa.svg`
+- **WHEN** a page holds `<Diagram id="mapa" />` and there is no `diagrams/mapa.json` nor `diagrams/mapa.svg`
 - **THEN** the page SHALL be reported on that line naming `mapa`, and a notice SHALL render where the diagram would be
 
 ### Requirement: How a diagram renders
@@ -190,7 +188,7 @@ A box or typed item with `entity` or `page` SHALL link to its page. Every drawin
 #### Scenario: Entity node in the drawing
 
 - **WHEN** a diagram's box is `entity: "services/komodo"` and the entity has no `page`
-- **THEN** the box SHALL link to the generated page `catalogo/services/komodo`
+- **THEN** the box SHALL link to the generated page `catalog/services/komodo`
 
 #### Scenario: Markdown without the drawing
 
@@ -203,8 +201,8 @@ Diagram files SHALL be read when the pages are, from the same checkout, and thei
 
 #### Scenario: One broken diagram
 
-- **WHEN** `diagramas/red.json` holds a JSON syntax error and `diagramas/komodo.json` is valid
-- **THEN** `diagramas/red.json` SHALL be reported with its line and column, pages showing `komodo` SHALL render it, and pages showing `red` SHALL show a notice
+- **WHEN** `diagrams/red.json` holds a JSON syntax error and `diagrams/komodo.json` is valid
+- **THEN** `diagrams/red.json` SHALL be reported with its line and column, pages showing `komodo` SHALL render it, and pages showing `red` SHALL show a notice
 
 ### Requirement: Measured problems
 
@@ -260,11 +258,11 @@ Leaving, losing focus or pressing Escape SHALL clear it. On a touch screen the f
 
 ### Requirement: SVG illustrations
 
-A `diagramas/<id>.svg` file SHALL be an illustration: a drawing written by hand (for an exploded axonometric, an axonometric plan or any figure no typed form lays out). Its root `<svg>` SHALL declare `viewBox` and SHALL hold a `<title>` and a `<desc>`, which SHALL be its title and description; either one missing SHALL be reported and the illustration SHALL NOT render. The platform SHALL keep only `svg`, `g`, `path`, `rect`, `circle`, `ellipse`, `line`, `polyline`, `polygon`, `text`, `tspan`, `title` and `desc`, with their geometry attributes, `transform`, `opacity`, `fill-opacity`, `stroke-opacity`, `stroke-width`, `stroke-dasharray`, `stroke-linecap`, `stroke-linejoin`, `text-anchor`, `font-size` and `font-weight`, `fill` and `stroke` only with the value `none`, and `class` only with the role classes `ink`, `muted`, `soft`, `paper`, `accent`, `accent-soft` and the ten hue names, which the platform SHALL map to its theme tokens. Every other element, attribute, class or value SHALL be removed and reported once per kind with how many times it appeared, and the rest SHALL render. An unparsable file SHALL be reported and SHALL NOT render.
+A `diagrams/<id>.svg` file SHALL be an illustration: a drawing written by hand (for an exploded axonometric, an axonometric plan or any figure no typed form lays out). Its root `<svg>` SHALL declare `viewBox` and SHALL hold a `<title>` and a `<desc>`, which SHALL be its title and description; either one missing SHALL be reported and the illustration SHALL NOT render. The platform SHALL keep only `svg`, `g`, `path`, `rect`, `circle`, `ellipse`, `line`, `polyline`, `polygon`, `text`, `tspan`, `title` and `desc`, with their geometry attributes, `transform`, `opacity`, `fill-opacity`, `stroke-opacity`, `stroke-width`, `stroke-dasharray`, `stroke-linecap`, `stroke-linejoin`, `text-anchor`, `font-size` and `font-weight`, `fill` and `stroke` only with the value `none`, and `class` only with the role classes `ink`, `muted`, `soft`, `paper`, `accent`, `accent-soft` and the ten hue names, which the platform SHALL map to its theme tokens. Every other element, attribute, class or value SHALL be removed and reported once per kind with how many times it appeared, and the rest SHALL render. An unparsable file SHALL be reported and SHALL NOT render.
 
 #### Scenario: Valid illustration
 
-- **WHEN** `diagramas/despiece.svg` has a `viewBox`, a `<title>`, a `<desc>`, and paths with `class="ink"` and `class="accent"`
+- **WHEN** `diagrams/despiece.svg` has a `viewBox`, a `<title>`, a `<desc>`, and paths with `class="ink"` and `class="accent"`
 - **THEN** it SHALL render with those paths in the theme's ink and accent colours, in light and dark
 
 #### Scenario: Hex colours
@@ -281,3 +279,4 @@ A `diagramas/<id>.svg` file SHALL be an illustration: a drawing written by hand 
 
 - **WHEN** an illustration has a `<title>` but no `<desc>`
 - **THEN** it SHALL be reported saying `<desc>` is required, and pages showing it SHALL show a notice
+

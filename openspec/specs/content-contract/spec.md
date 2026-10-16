@@ -3,12 +3,10 @@
 ## Purpose
 
 Defines what a content repository may declare (site configuration, catalog types, entities and the pages they point at) and how the platform reads and reports problems in it, independently of any domain.
-
 ## Requirements
-
 ### Requirement: Content repository layout
 
-A content repository SHALL be a folder holding `doc.config.yaml`, a `docs/` folder with the pages as `.mdx` files, a `catalogo/` folder with one subfolder per catalog type and, optionally, `menu.yaml` (the navigation, `content-menu`), a `diagramas/` folder (the diagrams, `content-diagrams`), an `estilos/` folder (the repository's style modules, `content-styles`) and `skills/`. Each type subfolder SHALL hold its declaration `_tipo.yaml` and one `.yaml` file per entity. Files whose name starts with `_` inside a type folder SHALL NOT be entities. `docs/catalogo/` SHALL be reserved for the generated catalog pages (`content-catalog-pages`). The platform SHALL NOT require any type, field or page name: every name below `docs/`, `catalogo/` and `diagramas/` is chosen by the content. The file names under `estilos/` SHALL be the platform's module names.
+A content repository SHALL be a folder holding `doc.config.yaml`, a `docs/` folder with the pages as `.mdx` files, a `catalog/` folder with one subfolder per catalog type and, optionally, `menu.yaml` (the navigation, `content-menu`), a `diagrams/` folder (the diagrams, `content-diagrams`), a `styles/` folder (the repository's style modules, `content-styles`) and `skills/`. Each type subfolder SHALL hold its declaration `_type.yaml` and one `.yaml` file per entity. Files whose name starts with `_` inside a type folder SHALL NOT be entities. `docs/catalog/` SHALL be reserved for the generated catalog pages (`content-catalog-pages`). The platform SHALL NOT require any type, field or page name: every name below `docs/`, `catalog/` and `diagrams/` is chosen by the content. The file names under `styles/` SHALL be the platform's module names.
 
 #### Scenario: A domain the platform does not know
 
@@ -17,7 +15,7 @@ A content repository SHALL be a folder holding `doc.config.yaml`, a `docs/` fold
 
 #### Scenario: Optional files left out
 
-- **WHEN** a content repository has no `menu.yaml`, no `diagramas/` and no `estilos/`
+- **WHEN** a content repository has no `menu.yaml`, no `diagrams/` and no `styles/`
 - **THEN** its declarations SHALL be valid and no problem SHALL be reported for the missing files
 
 ### Requirement: Site configuration
@@ -36,11 +34,11 @@ A content repository SHALL be a folder holding `doc.config.yaml`, a `docs/` fold
 
 ### Requirement: Catalog type declarations
 
-A catalog type's id SHALL be its folder name, made of lowercase letters, digits and single hyphens. Its `_tipo.yaml` SHALL declare `nombre` and `plural` (required text), `icono` (a Lucide icon name), `descripcion`, `etiqueta` (the field shown as the entity's name) and `vista.columnas` (the columns of the type's list) as optional, and `campos` with at least one field. Field names SHALL be lowercase letters, digits and underscores, starting with a letter. `campos` SHALL NOT declare `fuente` or `actualizado`. `etiqueta` SHALL name a declared field; each column SHALL name a declared field, `id`, `fuente` or `actualizado`. Any other key SHALL be refused.
+A catalog type's id SHALL be its folder name, made of lowercase letters, digits and single hyphens. Its `_type.yaml` SHALL declare `nombre` and `plural` (required text), `icono` (a Lucide icon name), `descripcion`, `etiqueta` (the field shown as the entity's name) and `vista.columnas` (the columns of the type's list) as optional, and `campos` with at least one field. Field names SHALL be lowercase letters, digits and underscores, starting with a letter. `campos` SHALL NOT declare `fuente` or `actualizado`. `etiqueta` SHALL name a declared field; each column SHALL name a declared field, `id`, `fuente` or `actualizado`. Any other key SHALL be refused.
 
 #### Scenario: Label that is not a field
 
-- **WHEN** a `_tipo.yaml` sets `etiqueta: hostname` and declares no `hostname` field
+- **WHEN** a `_type.yaml` sets `etiqueta: hostname` and declares no `hostname` field
 - **THEN** the platform SHALL report the problem on `etiqueta`
 
 #### Scenario: Badly named type folder
@@ -50,7 +48,7 @@ A catalog type's id SHALL be its folder name, made of lowercase letters, digits 
 
 #### Scenario: Unknown icon
 
-- **WHEN** a `_tipo.yaml` sets `icono: servr`
+- **WHEN** a `_type.yaml` sets `icono: servr`
 - **THEN** the platform SHALL report on `icono` that it is not a Lucide icon name
 
 ### Requirement: Field kinds
@@ -59,12 +57,12 @@ A field SHALL declare its `tipo` as one of: `texto`, `numero`, `entero`, `boolea
 
 #### Scenario: Reference to a missing type
 
-- **WHEN** a `_tipo.yaml` declares a field `centro: { tipo: lista, de: { tipo: ref, a: centros } }` and the catalog has no `centros` type
-- **THEN** the platform SHALL report, on that `_tipo.yaml`, that `centros` is not a catalog type, naming the field path and the types that exist
+- **WHEN** a `_type.yaml` declares a field `centro: { tipo: lista, de: { tipo: ref, a: centros } }` and the catalog has no `centros` type
+- **THEN** the platform SHALL report, on that `_type.yaml`, that `centros` is not a catalog type, naming the field path and the types that exist
 
 #### Scenario: Field with a label
 
-- **WHEN** a `_tipo.yaml` declares `family: { tipo: texto, etiqueta: Familia }`
+- **WHEN** a `_type.yaml` declares `family: { tipo: texto, etiqueta: Familia }`
 - **THEN** the declaration SHALL be valid and the field's name SHALL stay `family`
 
 #### Scenario: Empty label
@@ -97,7 +95,7 @@ A page's path SHALL be its file path under `docs/` without `.mdx`, using `/` as 
 
 ### Requirement: Problems are reported per file
 
-Reading a content repository SHALL report every problem it finds, not only the first, each with the file path relative to the content root and a message in Spanish that names the field path when there is one. A YAML syntax error SHALL give its line and column, and an unquoted text containing `": "` SHALL be reported as needing quotes. A missing `doc.config.yaml` or `_tipo.yaml` SHALL be reported as missing. A type whose `_tipo.yaml` is broken SHALL still count as existing, so references to it are not reported again.
+Reading a content repository SHALL report every problem it finds, not only the first, each with the file path relative to the content root and a message in Spanish that names the field path when there is one. A YAML syntax error SHALL give its line and column, and an unquoted text containing `": "` SHALL be reported as needing quotes. A missing `doc.config.yaml` or `_type.yaml` SHALL be reported as missing. A type whose `_type.yaml` is broken SHALL still count as existing, so references to it are not reported again.
 
 #### Scenario: Unquoted colon
 
@@ -106,19 +104,39 @@ Reading a content repository SHALL report every problem it finds, not only the f
 
 #### Scenario: Broken type does not cascade
 
-- **WHEN** `catalogo/ubicaciones/_tipo.yaml` is missing and `catalogo/maquinas/_tipo.yaml` declares a reference to `ubicaciones`
-- **THEN** the platform SHALL report only the missing `_tipo.yaml`
+- **WHEN** `catalog/ubicaciones/_type.yaml` is missing and `catalog/maquinas/_type.yaml` declares a reference to `ubicaciones`
+- **THEN** the platform SHALL report only the missing `_type.yaml`
 
 ### Requirement: Icon names
 
-Every `icono` the contract accepts (in `_tipo.yaml`, `menu.yaml` and page headers; diagram boxes take no icon) SHALL be the name of an icon of the Lucide version the web draws, in lowercase kebab-case as Lucide names it (`server`, `map-pin`). The platform SHALL hold that list of names, matching the Lucide version the web uses, and SHALL report any other value as not being a Lucide icon name.
+Every `icono` the contract accepts (in `_type.yaml`, `menu.yaml` and page headers; diagram boxes take no icon) SHALL be the name of an icon of the Lucide version the web draws, in lowercase kebab-case as Lucide names it (`server`, `map-pin`). The platform SHALL hold that list of names, matching the Lucide version the web uses, and SHALL report any other value as not being a Lucide icon name.
 
 #### Scenario: Valid icon
 
-- **WHEN** a `_tipo.yaml` sets `icono: map-pin`
+- **WHEN** a `_type.yaml` sets `icono: map-pin`
 - **THEN** the declaration SHALL be valid
 
 #### Scenario: A name Lucide does not have
 
-- **WHEN** a `_tipo.yaml` sets `icono: cohete`
+- **WHEN** a `_type.yaml` sets `icono: cohete`
 - **THEN** the platform SHALL report on `icono` that it is not a Lucide icon name
+
+### Requirement: Former Spanish names are reported
+
+The platform SHALL read the content folders and files only by their English names. A repository that still holds a former Spanish name SHALL have it reported as a site problem naming the English name it moved to, and SHALL NOT have it read: a root folder `catalogo/` (now `catalog/`), `diagramas/` (now `diagrams/`) or `estilos/` (now `styles/`), and a `_tipo.yaml` inside a catalog type folder (now `_type.yaml`). A style module under `styles/` with a former Spanish name (`tema.css`…) SHALL be reported as any other file that is not a style module.
+
+#### Scenario: A repository with the old catalog folder
+
+- **WHEN** a repository holds `catalogo/machines/_tipo.yaml` and no `catalog/`
+- **THEN** `catalogo/` SHALL be reported saying the catalog now lives in `catalog/`, and the repository SHALL have no catalog types
+
+#### Scenario: A type folder with the old declaration file
+
+- **WHEN** `catalog/machines/` holds `_tipo.yaml` and no `_type.yaml`
+- **THEN** `catalog/machines/_tipo.yaml` SHALL be reported saying the declaration is now `_type.yaml`, and the missing `_type.yaml` SHALL be reported as for any type without one
+
+#### Scenario: Old diagrams and styles folders
+
+- **WHEN** a repository holds `diagramas/red.json` and `estilos/tema.css`
+- **THEN** `diagramas/` and `estilos/` SHALL each be reported naming `diagrams/` and `styles/`, no diagram `red` SHALL exist, and the repository SHALL have no stylesheet
+
