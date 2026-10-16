@@ -22,9 +22,10 @@ publica. Aquí no se compila ni se ejecuta nada.
 - Las skills viven en `.agents/skills/<name>/`; `.claude/skills/<name>` es un
   enlace simbólico a ellas (`../../.agents/skills/<name>`). Una skill nueva va
   en `.agents/skills/` y recibe el mismo enlace simbólico. Los commands siguen
-  la misma regla: viven en `.agents/commands/<name>.md` y
-  `.claude/commands/<name>.md` enlaza a ellos
-  (`../../.agents/commands/<name>.md`).
+  la misma regla: viven en `.agents/commands/doc/<name>.md`, se invocan como
+  `/doc:<name>`, y `.claude/commands/doc` enlaza a la carpeta
+  (`../../.agents/commands/doc`). Un command nuevo va en esa carpeta y no
+  necesita enlace propio.
 - El detalle de una convención nueva va en la skill de la carpeta a la que
   afecta; lo que afecta al repositorio entero (los ficheros de la raíz, el
   menú, las rondas de preguntas), en una referencia de `documentation`. Una
@@ -47,7 +48,13 @@ publica. Aquí no se compila ni se ejecuta nada.
 | `skills/<name>/SKILL.md` | Skills que la plataforma **sirve a otros agentes** para trabajar con este sitio |
 | `.agents/skills/documentation/` | La skill para **ti**, el agente que escribe aquí: el repositorio entero |
 | `.agents/skills/<carpeta>/` | Una skill por carpeta de contenido (`docs`, `catalogo`, `diagramas`, `skills`): cómo se escribe lo que va en ella |
-| `.agents/commands/questions.md` | `/questions`: rondas de preguntas para terminar de documentar una sección |
+| `.agents/commands/doc/questions.md` | `/doc:questions`: rondas de preguntas para terminar de documentar una sección |
+| `.agents/commands/doc/pending.md` | `/doc:pending`: lo que queda por resolver o revisar en el sitio, por sección |
+| `.agents/commands/doc/check.md` | `/doc:check`: comprueba que el contenido valida y lista los problemas, sin editar |
+| `.agents/commands/doc/review.md` | `/doc:review`: revisa una página, entidad o diagrama contra las convenciones, sin editar |
+| `.agents/commands/doc/sync-platform.md` | `/doc:sync-platform`: compara el catálogo y la guía con el contrato actual de la plataforma |
+| `.agents/commands/doc/new-page.md` | `/doc:new-page`: escribe una página nueva con su cabecera y su entrada en el menú |
+| `.agents/commands/doc/diagram.md` | `/doc:diagram`: elige la forma de un diagrama, lo escribe en `diagramas/` y lo comprueba |
 | `.vscode/settings.json` | El catálogo de esquemas de la plataforma, para el autocompletado en el editor |
 
 Detalles y convenciones: la skill `documentation` y la de cada carpeta.

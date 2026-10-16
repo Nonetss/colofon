@@ -65,9 +65,9 @@ su página «Primeros pasos».
 `AGENTS.md` (importado por `CLAUDE.md`) y las skills de `.agents/skills/` le
 indican a un agente cómo está organizado este repositorio y cómo se escribe lo
 de cada carpeta: `documentation` para el repositorio entero y una skill por
-carpeta (`docs`, `catalogo`, `diagramas`, `skills`). `/questions <section>` ejecuta una ronda de preguntas para
+carpeta (`docs`, `catalogo`, `diagramas`, `skills`). `/doc:questions <section>` ejecuta una ronda de preguntas para
 terminar una sección: el agente escribe las preguntas en `questions.md`,
-alguien las responde y, al ejecutar `/questions` de nuevo, pasa las respuestas
+alguien las responde y, al ejecutar `/doc:questions` de nuevo, pasa las respuestas
 a las páginas.
 
 ## La única regla

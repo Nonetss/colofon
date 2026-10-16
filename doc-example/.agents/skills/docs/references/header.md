@@ -52,7 +52,7 @@ Declared in `doc.config.yaml` under `cabecera` (`documentation` skill,
 | `files` | `lista` of `ref` to `files` | The files of a content repository the page explains (`[menu]`, `[page, doc-config]`) |
 | `components` | `lista` of `ref` to `components` | The page components it explains (`[callout, entities, diagram]`) |
 | `diagram_types` | `lista` of `ref` to `diagram-types` | The diagram types it explains (`[flowchart, state]`) |
-| `open_questions` | `lista` of `texto` | What is still unknown; a question round answers them (`/questions`) |
+| `open_questions` | `lista` of `texto` | What is still unknown; a question round answers them (`/doc:questions`) |
 
 - The `ref` fields are **why they exist**: each id is checked against the
   catalog, the header shows the entities as links, and each entity's page

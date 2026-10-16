@@ -34,7 +34,12 @@ skills/
 ├── catalogo/            # its catalog,
 ├── diagramas/           # its diagrams
 └── skills/              # and its served skills
-.claude/commands/questions.md # /questions, the question rounds
+.agents/commands/doc/     # the /doc:<name> commands (linked from .claude/commands/doc)
+├── questions.md         # question rounds
+├── pending.md           # what is still open or stale
+├── check.md, review.md  # what the platform would report; how well a file follows the conventions
+├── sync-platform.md     # the guide against the platform's contract
+└── new-page.md, diagram.md # write a page, draw a diagram
 .vscode/settings.json    # the platform's schema catalog for the editor
 AGENTS.md, CLAUDE.md, README.md
 ```

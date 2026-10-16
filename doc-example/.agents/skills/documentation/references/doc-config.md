@@ -50,7 +50,7 @@ cabecera:
     tipo: lista
     de: { tipo: texto }
     opcional: true
-    descripcion: Preguntas aún abiertas; una ronda de preguntas las responde (/questions)
+    descripcion: Preguntas aún abiertas; una ronda de preguntas las responde (/doc:questions)
 ```
 
 | Field | Kind | Used by |

@@ -6,9 +6,9 @@ questions, whoever knows the topic answers them roughly, and the writer moves
 the answers into the pages. It closes a section in one sitting instead of open
 question by open question.
 
-With Claude Code, **`/questions <section>`** (for example `/questions publishing`)
-writes the questions. Once they are answered, **`/questions`** again moves the
-answers into the pages.
+With Claude Code, **`/doc:questions <section>`** (for example
+`/doc:questions publishing`) writes the questions. Once they are answered,
+**`/doc:questions`** again moves the answers into the pages.
 
 ## How it works
 
@@ -82,5 +82,5 @@ Also:
 - `open_questions` is a header field this site declares in `doc.config.yaml`
   (`doc-config.md`); how pages fill it: `docs` skill, `references/header.md`.
 - Closing the round means validating what you touched: `validation.md`.
-- `/questions` is `.agents/commands/questions.md` (symlinked from
-  `.claude/commands/`); it defers to this file.
+- `/doc:questions` is `.agents/commands/doc/questions.md` (the folder is
+  symlinked from `.claude/commands/doc`); it defers to this file.

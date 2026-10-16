@@ -1,6 +1,6 @@
 ---
 name: documentation
-description: Map and conventions of this content repository as a whole, the "Escribir documentación" guide of the doc platform, which documents the content contract and uses every part of it. A decision guide for what goes where and which folder skill to load (docs, catalogo, diagramas, skills), the root files doc.config.yaml and menu.yaml, contract names vs this site's names, the rules that always apply, how content is validated (editor schemas, the platform's sync and reports) and question rounds (/questions). Use before any change, to check where something belongs, before touching doc.config.yaml or menu.yaml, when the platform reports a problem, and before a question round.
+description: Map and conventions of this content repository as a whole, the "Escribir documentación" guide of the doc platform, which documents the content contract and uses every part of it. A decision guide for what goes where and which folder skill to load (docs, catalogo, diagramas, skills), the root files doc.config.yaml and menu.yaml, contract names vs this site's names, the rules that always apply, how content is validated (editor schemas, the platform's sync and reports) and question rounds (/doc:questions). Use before any change, to check where something belongs, before touching doc.config.yaml or menu.yaml, when the platform reports a problem, and before a question round.
 ---
 
 # Documentation
@@ -66,7 +66,7 @@ folders loads several.
 | `doc.config.yaml`: its keys, `cabecera` fields and their kinds, `plataforma` | [doc-config.md](references/doc-config.md) |
 | Which names are the contract's and which are this site's | [contract-names.md](references/contract-names.md) |
 | The editor's schemas, the platform's sync, where problems show, final checks | [validation.md](references/validation.md) |
-| Running a question round (`/questions`) | [question-rounds.md](references/question-rounds.md) |
+| Running a question round (`/doc:questions`) | [question-rounds.md](references/question-rounds.md) |
 
 ## 4. Always true
 
