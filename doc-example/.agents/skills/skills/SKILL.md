@@ -1,6 +1,6 @@
 ---
 name: skills
-description: The skills/ folder of this content repository, the skills the doc platform serves to other agents working on any content repository (not the ones for you, which live in .agents/skills/). A guide to what this site serves (doc-writing), the served-skill format (Agent Skills front matter, thin, what it may and may not say), why each rule of doc-writing is there, and keeping it current with the guide and the platform. Use before writing or changing a served skill, and when a rule a served skill states changes on the platform or in the guide.
+description: The skills/ folder of this content repository, the skills the doc platform serves to other agents working on any content repository (not the ones for you, which live in .agents/skills/). A guide to what this site serves (guide), the served-skill format (Agent Skills front matter, thin, what it may and may not say, how the platform validates and publishes it), and keeping it current with the guide and the platform. Use before writing or changing a served skill, and when a rule a served skill states changes on the platform or in the guide.
 ---
 
 # Served skills (`skills/`)
@@ -13,7 +13,11 @@ in the guide, `docs/publishing/agents.mdx`. This site serves one:
 
 | Skill | For |
 | --- | --- |
-| `skills/doc-writing/SKILL.md` | Any agent writing or fixing a content repository of the platform |
+| `skills/guide/SKILL.md` | Any agent that needs to know where this guide explains a part of the contract |
+
+How to write a content repository in general is not this site's skill any
+more: the platform serves `doc-writing` (and `colofon`, how to use a site)
+to every agent itself.
 
 ## 1. Philosophy
 
@@ -32,7 +36,6 @@ in the guide, `docs/publishing/agents.mdx`. This site serves one:
 | Task | Read |
 | --- | --- |
 | The format: front matter, folder, what a served skill may and may not say | [served-skill-format.md](references/served-skill-format.md) |
-| What `doc-writing` says, why each rule is there, when to change it | [doc-writing.md](references/doc-writing.md) |
 
 ## 3. Always true
 
@@ -58,7 +61,7 @@ in the guide, `docs/publishing/agents.mdx`. This site serves one:
 | Rules about this guide's own conventions (menu groups, `files:` headers) | Those are for **you** (`.agents/skills/`), not for agents on other sites |
 | A description that says what it is, not when to use it | Agents load skills by their description; they never load this one |
 | Asking the person for a password or token | Served skills never handle secrets; say where they live |
-| A second served skill for a topic `doc-writing` covers | Two snapshots to keep in step |
+| A served skill for what the platform's `doc-writing` or `colofon` already cover | Two snapshots to keep in step |
 
 ## 5. Before finishing
 

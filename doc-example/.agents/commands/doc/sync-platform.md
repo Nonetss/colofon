@@ -27,7 +27,7 @@ check facts; never edit it.
 3. For each difference, find what else the reference says must change: the
    page that explains it, the headers that cite it, a diagram type's family
    section, `<type>-<topic>` example and `diagrams` reference, and
-   `skills/doc-writing/SKILL.md` when a rule it states changed.
+   `skills/guide/SKILL.md` when something it points at moved.
 4. Reply with one table per type: what the platform has that the guide
    lacks, what the guide has that the platform dropped, and what differs,
    each with the files it would touch. Do not edit anything in this phase.

@@ -20,7 +20,7 @@ no se compila ni se ejecuta nada.
 | `docs/` | Las páginas de la guía, en MDX. Cada carpeta es una sección con su `index.mdx` |
 | `catalog/<type>/` | El propio contrato como datos: los `files` de un repositorio, los `field-kinds`, los `header-fields`, los `components` de página y los `diagram-types`. Las tablas de referencia de la guía se construyen a partir de él |
 | `diagrams/` | Los diagramas de la guía, mostrados con `<Diagram id="…" />`: los dibujados a mano, un ejemplo de cada tipo que la plataforma coloca sola y una ilustración en SVG |
-| `skills/doc-writing/SKILL.md` | Una skill que la plataforma sirve a otros agentes que escriben documentación |
+| `skills/guide/SKILL.md` | Una skill que la plataforma sirve a otros agentes: dónde explica esta guía cada parte del contrato |
 | `AGENTS.md`, `.agents/`, `.claude/` | Instrucciones para el agente de IA que escribe en este repositorio |
 | `.vscode/settings.json` | Autocompletado y validación de todos los ficheros YAML, a partir de la plataforma |
 

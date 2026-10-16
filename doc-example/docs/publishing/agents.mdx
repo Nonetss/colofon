@@ -3,7 +3,7 @@ titulo: Agentes
 descripcion: Cómo un agente de IA lee la documentación publicada, y las skills que un sitio sirve a los agentes
 files: [served-skill]
 orden: 2
-actualizado: 2026-10-15
+actualizado: 2026-10-16
 ---
 
 ## El Markdown de cada página
@@ -15,7 +15,7 @@ Cada página, incluidas las del catálogo, tiene su texto en Markdown en su dire
 | `/llms.txt` | Todos los repositorios, con cada página enlazada a su `llm.txt` y con su descripción |
 | El slug del repositorio seguido de `/llms.txt` | Lo mismo, para un solo repositorio |
 
-Las páginas se etiquetan con su grupo y sus secciones ("Escritura / Páginas / La cabecera"). Requieren las mismas credenciales que el lector: una sesión, o una clave de API en la cabecera `x-api-key`. Cada usuario crea sus claves en `/me`, donde obtiene las instrucciones listas para pegar en su IA.
+Las páginas se etiquetan con su grupo y sus secciones ("Escritura / Páginas / La cabecera"). Requieren las mismas credenciales que el lector: una sesión, o una clave de API en la cabecera `x-api-key`. `/llms.txt` es la excepción: sin credenciales responde con la guía para agentes (cómo conseguir la clave, conectar el MCP e instalar las skills de la plataforma), y con ellas añade los repositorios. Cada usuario crea sus claves en `/me`, donde obtiene las instrucciones listas para pegar en su IA.
 
 ## Skills servidas
 
@@ -23,7 +23,29 @@ Las páginas se etiquetan con su grupo y sus secciones ("Escritura / Páginas / 
 
 - **Delgadas:** dicen cómo trabajar y dónde mirar, nunca qué hay. Una skill descargada es una instantánea que se queda obsoleta; la documentación se lee en vivo.
 - **Apuntan a páginas** en lugar de copiar procedimientos.
-- **Solo lo específico del sitio:** lo que comparten todos los sitios, lo explica la propia plataforma.
+- **Solo lo específico del sitio:** lo que comparten todos los sitios, lo explican las skills de la propia plataforma (`colofon`, cómo usar el sitio, y `doc-writing`, cómo escribir un repositorio de contenido).
 - **Ningún secreto,** y tampoco pedírselo a una persona.
 
-Este sitio sirve `doc-writing`: consulta `skills/doc-writing/SKILL.md`. Las skills del agente que escribe en el repositorio son otras, y la plataforma no las lee: [Agentes que escriben](writing-agents.mdx).
+### Cómo se escriben
+
+| Regla | Qué pasa si no se cumple |
+| --- | --- |
+| Una carpeta por skill, con un único `SKILL.md`; el nombre de la carpeta son minúsculas, cifras y guiones sueltos | La skill no se sirve y su problema sale en la portada |
+| `name` es el nombre de la carpeta | Igual |
+| `description` dice cuándo usarla, en 1024 caracteres como mucho | Igual |
+| Los demás ficheros de la carpeta | Se ignoran |
+
+Las demás skills del repositorio se siguen sirviendo aunque una falle.
+
+### Cómo llegan a los agentes
+
+La plataforma publica cada skill como el slug del repositorio seguido de su nombre: la skill `guide` de este repositorio, con el slug `doc-example`, es `doc-example-guide`, y el `name` de su front matter cambia a ese nombre al servirla. Así dos proyectos pueden tener cada uno su `deploy`.
+
+| Dirección | Qué es |
+| --- | --- |
+| `/.well-known/agent-skills/index.json` | El índice de las skills que ve quien lo pide, en el formato Agent Skills discovery: nombre, descripción, dirección y digest SHA-256 de cada una |
+| `/.well-known/agent-skills/<nombre>/SKILL.md` | Una skill |
+
+Sin credenciales, el índice solo lista las skills de la plataforma; con una clave de API, también las de cada repositorio que el usuario puede leer. `/llms.txt` explica a un agente cómo instalarlas, y el MCP las ofrece con `skills` y `skill`.
+
+Este sitio sirve `guide`: consulta `skills/guide/SKILL.md`. Las skills del agente que escribe en el repositorio son otras, y la plataforma no las lee: [Agentes que escriben](writing-agents.mdx).

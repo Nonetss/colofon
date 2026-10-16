@@ -29,7 +29,7 @@ diagrams/
 styles/
 └── theme.css             # this site's theme: the accent, in both themes
 skills/
-└── doc-writing/SKILL.md # served to other agents
+└── guide/SKILL.md       # served to other agents
 .agents/skills/          # for you, the agent writing here (linked from .claude/skills/)
 ├── documentation/       # the repository as a whole: this skill
 ├── docs/                # one skill per folder: how this site writes its pages,
@@ -57,7 +57,7 @@ AGENTS.md, CLAUDE.md, README.md
 | A new page or folder the sidebar must show | An entry in `menu.yaml` | `references/menu.md` |
 | A new field every page header may carry | `cabecera` in `doc.config.yaml` | `references/doc-config.md` |
 | Another colour, font or look for a piece of this site's pages | A theme variable or a module in `styles/` | `styles` |
-| How another agent should work with any content repository | `skills/doc-writing/SKILL.md` | `skills` |
+| How another agent should use this guide | `skills/guide/SKILL.md` | `skills` |
 | A convention for **you**, the agent writing here | The folder's skill in `.agents/skills/`; repository-wide, a reference here | — |
 | An image a page shows | `docs/<topic>/img/` next to the page | `docs` |
 | Unanswered questions for a round | `questions.md` at the root, temporarily | `references/question-rounds.md` |

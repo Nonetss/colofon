@@ -8,12 +8,14 @@ not required).
 
 ```
 skills/
-└── doc-writing/
+└── guide/
     └── SKILL.md
 ```
 
 - One folder per skill under `skills/`; the folder name is the skill's
-  `name`: lowercase, digits and hyphens, like every name here.
+  `name`: lowercase letters, digits and single hyphens, up to 64 characters.
+  The platform checks it on every sync: a skill whose folder name, `name`
+  or `description` breaks the rules is reported on the home and not served.
 - This site keeps each served skill to its one `SKILL.md`: it is read whole
   and stays thin, so it has nothing to route to.
 - It follows the **Agent Skills** format: YAML front matter, then the
@@ -21,23 +23,23 @@ skills/
 
 ```markdown
 ---
-name: doc-writing
-description: How to write or change a documentation content repository for the doc platform (pages, menu.yaml, catalog types and entities, diagrams). Use it before creating or editing any file of a content repository, or when a page, entity or diagram is reported as invalid.
+name: guide
+description: How to use the "Escribir documentación" guide of the doc platform, … Use it when you are writing or reviewing a content repository and need to know where in the guide a part of the contract is explained, or when the guide and a repository disagree.
 ---
 
-# Writing documentation for the doc platform
+# The "Escribir documentación" guide
 
-This skill says how to work, not what the contract holds. …
+This guide documents the content contract and uses every feature it explains, … Read it live: this copy only says where to look.
 ```
 
 | Key | What it is |
 | --- | --- |
 | `name` | Required. The folder name. |
-| `description` | Required. What it covers in one clause, then **when to use it** ("Use it before…, or when…"): agents decide to load it from this line alone. |
+| `description` | Required, up to 1024 characters. What it covers in one clause, then **when to use it** ("Use it before…, or when…"): agents decide to load it from this line alone. |
 
 ## What it may say
 
-| May say | Example in `doc-writing` |
+| May say | Example (from the platform's `doc-writing`) |
 | --- | --- |
 | Where to read the live contract | "Read the guide's index (`/llms.txt`)…, every page has its Markdown at its address followed by `/llm.txt`" |
 | Which of the site's own files decide what exists | "Look at the repository's own `doc.config.yaml`, `menu.yaml` and `catalog/*/_type.yaml` first" |
@@ -57,13 +59,15 @@ This skill says how to work, not what the contract holds. …
 
 ## How agents get it
 
-Per the guide, the platform serves `skills/<name>/SKILL.md` to agents, next
-to the pages' `llm.txt` and the `/llms.txt` indexes, which need the same
-credentials as the reader (a session or an `x-api-key` key created in
-`/me`). A copy an agent keeps is a snapshot: that is why the skill points at
-the live guide.
+The platform publishes each skill as the repository's slug followed by its
+name (`guide` here is `doc-example-guide`), with the front matter's `name`
+rewritten to match, under `/.well-known/agent-skills/<name>/SKILL.md`. The
+index at `/.well-known/agent-skills/index.json` lists it, with its digest, to
+anyone with a key who can read this repository; `/llms.txt` and the MCP
+(`skills`, `skill`) point at it. A copy an agent keeps is a snapshot: that is
+why the skill points at the live guide.
 
 ## Length
 
-`doc-writing` is 27 lines (long ones). Keep a served skill under a screen or two:
+`guide` is under 15 lines, and the platform's `doc-writing` 27 (long ones). Keep a served skill under a screen or two:
 if it grows, something in it belongs on a page.

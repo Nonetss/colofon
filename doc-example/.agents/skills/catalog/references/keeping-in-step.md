@@ -25,7 +25,7 @@ Read the code to check a fact; never edit it from here.
 | Changes one (a new attribute, a new enum value, a new budget) | Update the entity's fields and `actualizado` | Update the page's example, keys table and "what gets reported" |
 | Removes one | Delete the entity | Remove it from the page and from every header that cites it |
 | Adds a property every entity of a type should show | A new field in `_type.yaml` (`opcional: true` until filled), then fill every entity | Add the column to the `<Entities>` that need it |
-| Changes a rule a served skill states | — | `skills/doc-writing/SKILL.md` in the same change (`skills` skill) |
+| Changes a rule a served skill states | — | `skills/guide/SKILL.md` in the same change (`skills` skill); a rule of the platform's own `doc-writing` changes in the platform's repository |
 
 ## Checking a type against the platform
 
