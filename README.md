@@ -3,11 +3,55 @@
 > What this project is for, the decisions behind it and what comes next (documentation site, diagrams, skills, MCP and the secrets broker): [VISION.md](VISION.md), in Spanish.
 
 **A platform to document systems** (work infrastructure, a homelab or
-anything else) that serves **people** and **AI agents** alike. The platform
-knows nothing about the domain: the documentation lives in separate **content
-repositories** (MDX pages plus a YAML catalog whose types and fields the
-content declares), and the platform reads, validates and serves them. Secrets
-are meant never to reach an AI.
+anything else) that serves **people** and **AI agents** alike.
+
+The idea comes from documenting the infrastructure at work: with its
+`llms.txt`, an agent read the documentation, understood where everything was
+and how the team works, and set up Duplicati backups on its own. It worked,
+but the structure was improvised (every data catalog grew by hand, with its
+own shape and a page made to measure) and the agent had to be given the
+Duplicati password. This project aims for the same result with a defined
+structure and **without the AI ever seeing a secret**.
+
+### Principles
+
+- **The platform knows nothing about the domain.** The data types (machines,
+  services, fruits, suppliers…) and their fields are declared by the content.
+  The same platform works for a company's infrastructure or for a greengrocer.
+- **Platform and content live in separate repositories.** The logic is updated
+  without touching the documentation and vice versa, and whoever writes works
+  in a repository with no code. Between them there is a versioned contract
+  (`plataforma: "1"` in `doc.config.yaml`).
+- **Content is text in git.** MDX pages, YAML data and JSON diagrams; git is
+  the source of truth, with its history, diffs and review.
+- **The backend reads the content live.** Changing the documentation doesn't
+  rebuild the site: the backend syncs the repository and serves it. The site,
+  the editor and (later) the MCP read the same copy.
+- **MDX executes no code.** Only Markdown and the platform's components, with
+  no `import`, `export` or expressions: the server that reads the content is
+  the same one that will hold the secrets.
+- **Secrets never leave the vault.** Not in the chat, not in a file the AI can
+  read, not in the responses it gets.
+
+### Where it stands
+
+| Piece | What it is | State |
+| --- | --- | --- |
+| Content repository | MDX pages, a YAML catalog with schemas, diagrams and skills, in its own repo | ✅ Contract and validation |
+| Catalog with schemas | Data types declared by the content, validated with Spanish errors | ✅ |
+| Editor autocompletion | A schema catalog per repository served by the backend | ✅ |
+| Repositories on the platform | External or hosted on the platform, synced and managed at `/admin/content` | ✅ |
+| Documentation site | Rendered pages, `menu.yaml`, catalog pages, interactive tables, `llms.txt` | 🟡 Missing full-text search (the navbar finds pages by title, description and section) |
+| Diagrams | JSON files laid out by the content, drawn as SVG on the server, interactive | ✅ Diagrams derived from the catalog still to come |
+| Skills | Agent instructions served by the site | ⏳ |
+| Knowledge MCP | Search, read and query the catalog from any agent | ⏳ |
+| Secrets vault and broker | The AI calls APIs without seeing the credentials | ⏳ |
+| Importers | The catalog filled from the APIs, without going through the model | ⏳ |
+
+The design of each piece, including the ones still to build, is in
+[VISION.md](VISION.md).
+
+### The stack
 
 It is a Turborepo monorepo with an Astro frontend and a Hono/oRPC backend
 (TypeScript, Bun) behind a Caddy gateway, on PostgreSQL. It was started from
@@ -50,8 +94,20 @@ in Spanish.
   stored in the database and managed at `/admin/content`
 - **Documentation reader**: every signed-in user reads the repositories'
   pages at `/<slug>/<path>`, rendered on the server from the MDX without
-  executing anything, with a sidebar of sections and pages, a repository
-  select ("Todos" or one repository) and an "En esta página" table of contents
+  executing anything, with a sidebar of sections and pages (from the folders
+  or `menu.yaml`), a repository select ("Todos" or one repository), an "En
+  esta página" table of contents and sortable, filterable tables; pages can
+  use `<Callout>`, `<Entities>` and `<Diagram>`
+- **Catalog pages**: generated without any MDX at `/<slug>/catalogo`, one
+  table per type and one page per entity with its fields, the pages that cite
+  it, the entities pointing at it and the diagrams it appears in
+- **Diagrams**: `diagramas/<id>.json` files where the content places every
+  box, arrow and zone (or a self-laid chain), drawn as SVG on the server in
+  light and dark, with hover highlighting, paths, "what falls with it" and a
+  card per box; boxes can be catalog entities
+- **For AI agents**: every page also as Markdown at `<page>/llm.txt`, and the
+  `/llms.txt` and `/<slug>/llms.txt` indexes ([llmstxt.org](https://llmstxt.org)),
+  read with the user's own API key in `x-api-key`
 - **Git hosting**: a content repository can live on the platform itself, at
   `/git/<slug>.git`, with a read-only browser at `/admin/git`
 - **Editor autocompletion**: a JSON schema catalog per repository at
@@ -67,9 +123,10 @@ in Spanish.
 - **Biome**: linting and formatting
 - **OpenSpec** (`openspec/`): spec-driven documentation of every capability
 
-Still to come (see [VISION.md](VISION.md)): the reader's platform components,
-per-type pages, full-text search and `llms.txt`, diagrams, skills for agents,
-the knowledge MCP, the secrets vault and broker, and importers.
+Still to come (see [VISION.md](VISION.md)): full-text search, diagrams
+derived from the catalog, skills served to agents, the knowledge MCP, the
+secrets vault and broker (generic HTTP connections whose secrets are written
+once and never read back), and importers.
 
 ## What's in the app
 
@@ -80,6 +137,8 @@ Every page except login and signup requires a session.
 | `/` | The "Todos" home: every content repository with its description and top-level sections; redirects to `/<slug>` when the selected scope is one repository or there is only one |
 | `/<slug>` | A repository's home (its `docs/index.mdx`) |
 | `/<slug>/<path>` | A documentation page, with breadcrumbs, previous/next and its table of contents; admins also see the page's problems |
+| `/<slug>/catalogo`, `/<slug>/catalogo/<type>`, `/<slug>/catalogo/<type>/<id>` | The generated catalog pages: every type, a type's table and an entity's page |
+| `/llms.txt`, `/<slug>/llms.txt`, `<page>/llm.txt` | The indexes and the Markdown of every page, for AI agents (session or API key) |
 | `/login`, `/signup` | Sign in and create an account (email/password, plus OIDC when configured) |
 | `/me` | The signed-in user's account: name, email, role, changing the name and password, and their own API keys (to hand to an AI that reads `/llms.txt`) |
 | `/admin/users`, `/admin/api-keys` | Admin only: users, and the admin's own API keys as a table |
@@ -105,7 +164,7 @@ documentacion/
 │   └── maquinas/
 │       ├── _tipo.yaml     # the type's schema
 │       └── nas.yaml       # one entity per file; the file name is its id
-├── diagramas/             # optional: one YAML per diagram, shown with <Diagram id="…" />
+├── diagramas/             # optional: one JSON per diagram, shown with <Diagram id="…" />
 └── skills/                # this site's own agent skills
 ```
 
