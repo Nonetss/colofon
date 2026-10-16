@@ -170,13 +170,15 @@ result is listed, including the "Recientes" group.
 
 A search source SHALL obtain its records through an endpoint of its own record
 entity: its list endpoint when the entity is listed in full, its search endpoint
-when the entity is listed in pages. A full-list source keeps the behavior of
+when the entity is listed in pages or its records are found by more than their
+labels. A full-list source keeps the behavior of
 "Searchable records of dynamic surfaces": it loads the list once while the
-dialog is open and the dialog matches it locally. A source whose entity is
-listed in pages (a server-searched source) SHALL instead ask its entity's search
-endpoint for the records matching the user's text, with the same API
-permissions as the pages that list those records, and SHALL list at most a fixed
-number of records per source in the order the endpoint returns them.
+dialog is open and the dialog matches it locally. A server-searched source SHALL
+instead ask its entity's search endpoint for the records matching the user's
+text, with the same API permissions as the pages that list those records, and
+SHALL list at most a fixed number of records per source in the order the
+endpoint returns them. The documentation pages source SHALL be server-searched
+(`documentation-reader`).
 
 A server-searched source SHALL be queried with the text the user settled on,
 about 150 ms after the last keystroke, not once per keystroke. The words of the
@@ -188,24 +190,25 @@ then it SHALL list no records. While the next answer loads, the records of the
 previous answer SHALL stay listed.
 
 A record SHALL be able to carry extra match terms besides its label and
-description (for example an address the server matched on), and the dialog
+description (for example an address the server matched on, or the query words a
+full-text search found in a record's body or with a typo), and the dialog
 SHALL match the query against them too, so a record the endpoint returned is not
 filtered out because its match is not visible in its label. The rules of
 "Searchable records of dynamic surfaces" on the dialog being open, empty
 queries, `adminOnly` surfaces, loading or failing sources and recent pages SHALL
 apply to server-searched sources as well.
 
-#### Scenario: Full-list sources are unchanged
-
-- **WHEN** the user types in the search dialog
-- **THEN** the documentation pages source SHALL keep listing the navigation it
-  already loaded and SHALL make no request per typed text
-
 #### Scenario: A paginated source asks its own search endpoint
 
 - **WHEN** a source is declared as server-searched and the user types "lectura"
 - **THEN** the records listed for that source SHALL be the ones its entity's
   search endpoint returns for "lectura", not a page of its list endpoint
+
+#### Scenario: Documentation pages are server-searched
+
+- **WHEN** the user types "inversa" in the search dialog
+- **THEN** the documentation pages source SHALL list what `v1.docs.search`
+  returns for "inversa", in that order
 
 #### Scenario: Server search waits for the user to pause
 
@@ -239,6 +242,12 @@ apply to server-searched sources as well.
   typed text, and the address is one of the record's extra match terms but not
   its label or description
 - **THEN** that record SHALL be listed
+
+#### Scenario: A typo matched by the server is kept
+
+- **WHEN** the user types "confguracion" and the documentation search returns a
+  page that says "configuración"
+- **THEN** that page SHALL be listed
 
 #### Scenario: Previous answer stays while the next loads
 
@@ -463,17 +472,20 @@ The surface search SHALL include records of dynamic surfaces. A surface whose pa
 application-surface registry. The source SHALL enumerate the records the
 signed-in user can open on that surface, using the same API permissions as the
 pages that list them. Each record SHALL become a search result whose path is the
-surface's path with its dynamic segments filled from that record, and whose
-label and description come from the record. The documentation page surface SHALL
-list the pages of the current documentation scope (`documentation-reader`).
+surface's path with its dynamic segments filled from that record, or the route
+the record gives, and whose label and description come from the record. The
+documentation page surface SHALL list the pages of the current documentation
+scope (`documentation-reader`).
 Record results SHALL be shown only while the query is non-empty, SHALL be
-matched case- and accent-insensitively against the record's label, description
-and group label, and against the labels of its surface and of the concrete-path
-surfaces its route sits under, and SHALL appear in a group of their own per
-source with a Spanish heading. Each record result SHALL show the icon of its
-surface, and its label SHALL be preceded by its trail: the labels of the
-concrete-path surfaces its route sits under, or the trail the record itself
-gives ("Red › DNS").
+matched case- and accent-insensitively against the record's label, description,
+group label and extra match terms, and against the labels of its surface and of
+the concrete-path surfaces its route sits under, and SHALL appear in a group of
+their own per source with a Spanish heading. Each record result SHALL show the
+icon of its surface, and its label SHALL be preceded by its trail: the labels of
+the concrete-path surfaces its route sits under, or the trail the record itself
+gives ("Red › DNS"). A record SHALL be able to carry an excerpt with ranges of
+matched words; the result SHALL then show the excerpt in place of the
+description, with those words highlighted.
 A source declared on an `adminOnly` surface SHALL NOT be queried for users
 without the `admin` role. Records SHALL be loaded only while the search dialog
 is open, unless the source reads a query the page already holds. While they
@@ -486,6 +498,13 @@ searchable. Opening a record page SHALL NOT add it to the "Recientes" group.
 - **THEN** a result reading "Red › DNS" SHALL appear in the documentation
   group, and selecting it SHALL close the dialog and navigate to
   `/casa/red/dns`
+
+#### Scenario: Excerpt replaces the description
+
+- **WHEN** a documentation result carries an excerpt for the typed word
+  "inversa"
+- **THEN** the result SHALL show that excerpt under its label with "inversa"
+  highlighted, and SHALL NOT show the page's description
 
 #### Scenario: Empty query shows no records
 
