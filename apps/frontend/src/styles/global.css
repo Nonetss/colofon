@@ -1569,14 +1569,15 @@ html.theme-transitioning::view-transition-new(root) {
     }
 
     /* A hand-drawn illustration (`diagram-illustration.ts`): a shape takes
-       its role's colour as its fill, unless it says fill="none", and as its
-       stroke when it gives a stroke-width; with no role it is ink. */
+       its role's colour, its own or its group's, as its fill, unless it says
+       fill="none", and as its stroke when it gives a stroke-width; with no
+       role it is ink. */
     &:where(.doc-diagram-illustration) {
       & :where(path, rect, circle, ellipse, polygon, polyline, line, text) {
-        fill: var(--d-ink);
+        fill: var(--d-ill, var(--d-ink));
       }
       & :where([stroke-width]) {
-        stroke: var(--d-ink);
+        stroke: var(--d-ill, var(--d-ink));
       }
       & :where(text, tspan) {
         font-family: var(--font-sans);
@@ -1601,12 +1602,6 @@ html.theme-transitioning::view-transition-new(root) {
       }
       & :where(.doc-diagram-ill-hue) {
         --d-ill: var(--d-hue);
-      }
-      & :where([class*="doc-diagram-ill-"]:not([fill="none"])) {
-        fill: var(--d-ill);
-      }
-      & :where([class*="doc-diagram-ill-"][stroke-width]:not([stroke="none"])) {
-        stroke: var(--d-ill);
       }
       & :where([fill="none"]) {
         fill: none;

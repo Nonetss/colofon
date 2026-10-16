@@ -44,14 +44,14 @@ Un color escrito (`fill="#eb6c36"`) no seguiría el tema claro u oscuro del lect
 | `accent-soft` | Un tono suave del acento, para rellenar lo destacado. |
 | `rose`, `blue`, `cyan`, `violet`, `green`, `indigo`, `fuchsia`, `slate`, `teal`, `lime` | Los diez tonos de los diagramas. |
 
-La clase pinta el relleno de la forma, salvo que diga `fill="none"`, y su trazo cuando la forma lleva `stroke-width`, salvo que diga `stroke="none"`. Una forma sin clase es de color tinta. Para un relleno de un color y un borde de otro, dibuja la forma dos veces: una rellena y otra con `fill="none"`, como en el ejemplo.
+La clase pinta el relleno de la forma, salvo que diga `fill="none"`, y su trazo cuando la forma lleva `stroke-width`, salvo que diga `stroke="none"`. Una forma sin clase toma la de su grupo (`<g class="muted">` pinta todo lo que contiene) y, sin ninguna, es de color tinta. Para un relleno de un color y un borde de otro, dibuja la forma dos veces: una rellena y otra con `fill="none"`, como en el ejemplo.
 
 ## Lo que se conserva
 
 - **Elementos:** `svg`, `g`, `path`, `rect`, `circle`, `ellipse`, `line`, `polyline`, `polygon`, `text`, `tspan`, `title` y `desc`.
 - **Atributos:** la geometría de cada uno (`x`, `y`, `width`, `height`, `rx`, `ry`, `cx`, `cy`, `r`, `x1`… `y2`, `points`, `d`, `dx`, `dy`), `transform`, `opacity`, `fill-opacity`, `stroke-opacity`, `stroke-width`, `stroke-dasharray`, `stroke-linecap`, `stroke-linejoin`, `text-anchor`, `font-size` y `font-weight`; `fill` y `stroke` solo con `none`; y las clases de la tabla.
 
-Todo lo demás se quita: scripts, estilos, enlaces, imágenes, `use`, `defs`, degradados, colores escritos y cualquier otro atributo o clase. Se reporta una vez por cada cosa distinta, con cuántas veces aparecía ("Se ha quitado `fill="#eb6c36"` 14 veces"), y el resto se dibuja. El `xmlns`, el `version` y el `width` y `height` del `<svg>` se ignoran sin avisar: el tamaño lo pone el lector.
+Todo lo demás se quita: scripts, estilos, enlaces, imágenes, `use`, `defs`, degradados, colores escritos y cualquier otro atributo o clase. Se reporta una vez por cada cosa distinta, con cuántas veces aparecía ("Se ha quitado fill="#eb6c36" 14 veces: los colores van con las clases…"), y el resto se dibuja. El `xmlns`, el `version` y el `width` y `height` del `<svg>` se ignoran sin avisar: el tamaño lo pone el lector.
 
 ## Lo que no tiene
 
