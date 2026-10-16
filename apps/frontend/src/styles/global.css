@@ -2138,8 +2138,8 @@ html.theme-transitioning::view-transition-new(root) {
     font-variant-numeric: tabular-nums;
   }
 
-  /* The header fills its cell: the sort button stays at the start and the
-     filter, on a full table, at the end. */
+  /* The header fills its cell: the sort button, then the filter on a full
+     table, right after the column's name. */
   .typeset.doc :where(.doc-table-th) {
     display: flex;
     align-items: center;
@@ -2150,18 +2150,15 @@ html.theme-transitioning::view-transition-new(root) {
 
   .typeset.doc :where(.doc-table-filter) {
     flex: none;
-    margin-inline-start: auto;
   }
 
   .typeset.doc :where(.doc-table-filter:empty) {
     display: none;
   }
 
-  /* The drag handle sits on the header's trailing edge, over its padding.
-     The line is always there between two columns and only on hover at the
-     table's own edge. */
-  /* The divider between two columns. The last column has no handle: its
-     edge is the table's (`table-resize.ts`). */
+  /* The drag handle sits on the header's trailing edge, over its padding,
+     and draws the divider between two columns. The last column has no
+     handle: its edge is the table's (`table-resize.ts`). */
   .typeset.doc :where(.doc-table-resize) {
     position: absolute;
     inset-block: 0;

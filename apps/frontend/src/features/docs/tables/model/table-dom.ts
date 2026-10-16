@@ -17,8 +17,8 @@ import { foldText } from "@/lib/fold-text"
 // The server's table, made ready for the island and kept in step with its
 // view. The rows stay the server's `tr` elements: the island only moves,
 // hides and marks them. Every header's content moves into a sort button,
-// and a full table gets a slot per header for its filter, at the end of the
-// header. Every header gets a resize handle on its trailing edge. Containers
+// and a full table gets a slot per header for its filter, right after the
+// button. Every header gets a resize handle on its trailing edge. Containers
 // before and after the frame hold the toolbar and the pager, all inside one
 // box that the full-screen dialog can take.
 
