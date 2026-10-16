@@ -94,8 +94,8 @@ tipos de campo, la cabecera común de página (`titulo`, `descripcion`, `icono`,
 la validación. Todo lo demás (ids de tipo, nombres de campo, valores, carpetas,
 prosa) es propio de este sitio y se escribe en español; los ids de tipo, los
 nombres de campo, los valores y las carpetas que ya existen están en inglés y
-no se renombran, y la prosa va en español. La tabla completa está en la skill,
-`references/layout.md`.
+no se renombran, y la prosa va en español. La tabla completa está en la skill
+`documentation`, `references/contract-names.md`.
 
 ### Declara antes de usar
 
