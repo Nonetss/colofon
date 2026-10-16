@@ -9,6 +9,7 @@ import {
 // Turns a page tree from the API (already sanitized by the backend) into the
 // HTML the reader shows. Only presentation is added here: frames around code
 // and tables, TanStack Highlight spans inside fenced blocks, the copy button,
+// the button that enlarges a drawn diagram,
 // anchors on headings, zoomable lazy images, new tabs for links that leave
 // the site, and the known sections (`sections.ts`) split apart so the page
 // can dress them.
@@ -71,6 +72,35 @@ function highlightCode(pre: Element): Element {
   }
 }
 
+/**
+ * An icon of the page's sprite (`doc-body.astro` draws each one once), so the
+ * server's HTML carries the registry's Lucide icons without React.
+ */
+function icon(name: string): Element {
+  return element(
+    "svg",
+    { className: ["doc-icon"], ariaHidden: "true", focusable: "false" },
+    [element("use", { href: `#doc-icon-${name}` }, [])]
+  )
+}
+
+/**
+ * An icon-only control of the page: its `aria-label` names it, and `data-hint`
+ * is the bubble CSS shows on hover and focus (`Hint`'s look, without React).
+ */
+function iconButton(
+  properties: Element["properties"],
+  label: string,
+  hint: string,
+  icons: ElementContent[]
+): Element {
+  return element(
+    "button",
+    { type: "button", ariaLabel: label, dataHint: hint, ...properties },
+    icons
+  )
+}
+
 function codeFrame(pre: Element): Element {
   const language = languageOf(pre)
   const label: ElementContent[] = []
@@ -81,10 +111,11 @@ function codeFrame(pre: Element): Element {
   return element("div", { className: ["doc-code"] }, [
     element("div", { className: ["doc-code-bar"], dataMdSkip: true }, [
       ...label,
-      element(
-        "button",
-        { type: "button", className: ["doc-code-copy"], dataCopy: true },
-        [text("Copiar")]
+      iconButton(
+        { className: ["doc-code-copy"], dataCopy: true },
+        "Copiar código",
+        "Copiar",
+        [icon("copy"), icon("check")]
       ),
     ]),
     highlightCode(pre),
@@ -130,6 +161,34 @@ function tableFrame(table: Element): Element {
   )
 }
 
+/** A drawn diagram (`<figure class="doc-diagram" data-drawn>`). */
+function isDrawnDiagram(node: Element): boolean {
+  if (node.tagName !== "figure") return false
+  if (node.properties.dataDrawn === undefined) return false
+  const classes = node.properties.className
+  return Array.isArray(classes) && classes.includes("doc-diagram")
+}
+
+/** A drawn diagram with the button that opens it in the lightbox. */
+function diagramFrame(figure: Element): Element {
+  return {
+    ...figure,
+    children: [
+      ...figure.children.map(decorate),
+      iconButton(
+        {
+          className: ["doc-diagram-expand"],
+          dataDiagramExpand: true,
+          dataMdSkip: true,
+        },
+        "Ampliar diagrama",
+        "Ampliar",
+        [icon("expand")]
+      ),
+    ],
+  }
+}
+
 function isExternal(href: unknown): boolean {
   return typeof href === "string" && /^https?:\/\//i.test(href)
 }
@@ -160,6 +219,7 @@ function decorate(node: ElementContent): ElementContent {
   if (node.tagName === "table")
     return tableFrame({ ...node, children: node.children.map(decorate) })
   if (ANCHORED_HEADINGS.has(node.tagName)) return withAnchor(node)
+  if (isDrawnDiagram(node)) return diagramFrame(node)
   if (node.tagName === "img")
     return {
       ...node,

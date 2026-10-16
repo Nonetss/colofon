@@ -42,7 +42,7 @@ describe("renderBlocks", () => {
       )
     )
     expect(html).toBe(
-      '<div class="doc-code"><div class="doc-code-bar" data-md-skip><span class="doc-code-language">yaml</span><button type="button" class="doc-code-copy" data-copy>Copiar</button></div><pre><code class="language-yaml"><span class="th-token th-property">a</span>: <span class="th-token th-string">1</span>\n</code></pre></div>'
+      '<div class="doc-code"><div class="doc-code-bar" data-md-skip><span class="doc-code-language">yaml</span><button type="button" aria-label="Copiar código" data-hint="Copiar" class="doc-code-copy" data-copy><svg class="doc-icon" aria-hidden="true" focusable="false"><use href="#doc-icon-copy"></use></svg><svg class="doc-icon" aria-hidden="true" focusable="false"><use href="#doc-icon-check"></use></svg></button></div><pre><code class="language-yaml"><span class="th-token th-property">a</span>: <span class="th-token th-string">1</span>\n</code></pre></div>'
     )
   })
 
@@ -64,6 +64,20 @@ describe("renderBlocks", () => {
     const html = renderPage(root(el("pre", {}, [el("code", {}, [])])))
     expect(html).toContain("data-copy")
     expect(html).not.toContain("doc-code-language")
+  })
+
+  test("a drawn diagram gets the button that enlarges it", () => {
+    const figure = el("figure", { className: ["doc-diagram"], dataDrawn: "" }, [
+      el("div", { className: ["doc-diagram-canvas"] }),
+    ])
+    expect(renderPage(root(figure))).toBe(
+      '<figure class="doc-diagram" data-drawn=""><div class="doc-diagram-canvas"></div><button type="button" aria-label="Ampliar diagrama" data-hint="Ampliar" class="doc-diagram-expand" data-diagram-expand data-md-skip><svg class="doc-icon" aria-hidden="true" focusable="false"><use href="#doc-icon-expand"></use></svg></button></figure>'
+    )
+  })
+
+  test("a diagram that is not drawn has no enlarge button", () => {
+    const figure = el("figure", { className: ["doc-diagram"] }, [p("Texto")])
+    expect(renderPage(root(figure))).not.toContain("data-diagram-expand")
   })
 
   test("tables scroll inside a frame", () => {

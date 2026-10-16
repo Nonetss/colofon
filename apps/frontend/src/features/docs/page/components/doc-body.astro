@@ -12,6 +12,12 @@ interface Props {
 const { page } = Astro.props
 const blocks = page.tree === null ? [] : renderBlocks(page.tree)
 const unreadable = page.source === "file" && page.tree === null
+// The icons `renderBlocks` points at (`#doc-icon-<name>`), drawn once.
+const sprite = [
+  { name: "copy", Icon: getIcon("actions", "copy") },
+  { name: "check", Icon: getIcon("controls", "check") },
+  { name: "expand", Icon: getIcon("views", "fullscreen") },
+]
 const notice =
   "mt-6 flex flex-col gap-2 rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3"
 ---
@@ -42,6 +48,13 @@ const notice =
 ) : (
   blocks.length > 0 && (
     <div class="typeset typeset-docs doc mt-6">
+      <svg class="doc-icon-sprite" aria-hidden="true">
+        {sprite.map(({ name, Icon }) => (
+          <symbol id={`doc-icon-${name}`} viewBox="0 0 24 24">
+            <Icon />
+          </symbol>
+        ))}
+      </svg>
       {blocks.map((block) => {
         if (block.kind === null) return <Fragment set:html={block.html} />
         const Icon = getIcon("docSections", block.kind)

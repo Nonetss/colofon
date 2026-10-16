@@ -15,19 +15,29 @@ function codeOf(button: Element): string {
   return pre.innerText
 }
 
+const COPY_HINT = "Copiar"
+
+/**
+ * The copy button of a code frame is an icon: the outcome shows in its hint,
+ * kept open meanwhile, and a check replaces the icon once copied
+ * (`data-copy-state`).
+ */
 function setupCopyButtons() {
   document.addEventListener("click", async (event) => {
     if (!(event.target instanceof Element)) return
     const button = event.target.closest("[data-copy]")
-    if (button === null) return
+    if (!(button instanceof HTMLElement)) return
     try {
       await navigator.clipboard.writeText(codeOf(button))
-      button.textContent = "Copiado"
+      button.dataset.copyState = "done"
+      button.dataset.hint = "Copiado"
     } catch {
-      button.textContent = "No se pudo copiar"
+      button.dataset.copyState = "failed"
+      button.dataset.hint = "No se pudo copiar"
     }
     setTimeout(() => {
-      button.textContent = "Copiar"
+      delete button.dataset.copyState
+      button.dataset.hint = COPY_HINT
     }, COPIED_MS)
   })
 }

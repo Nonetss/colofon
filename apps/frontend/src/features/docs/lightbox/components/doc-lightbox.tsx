@@ -26,7 +26,7 @@ const ZoomOutIcon = getIcon("views", "zoomOut")
 /** The pictures of a page that open enlarged (not those inside a link). */
 const ZOOMABLE = ".doc img[data-zoomable]:not(a img)"
 /** A diagram's drawing opens enlarged too, unless the press is on a node link. */
-const DIAGRAM_CANVAS = ".doc .doc-diagram-canvas"
+const DIAGRAM_EXPAND = ".doc [data-diagram-expand]"
 /** Share of the screen an enlarged drawing fits in, and its largest scale. */
 const DRAWING_FIT = { width: 0.94, height: 0.86, scale: 2 }
 const STEP = 1.5
@@ -47,13 +47,12 @@ function zoomableOf(target: EventTarget | null): HTMLImageElement | null {
   return null
 }
 
-/** The diagram drawing a press lands on, unless it is on a node's link. */
+/** The drawing of the diagram whose "Ampliar" button a click lands on. */
 function drawingOf(target: EventTarget | null): SVGSVGElement | null {
   if (!(target instanceof Element)) return null
-  if (target.closest("a") !== null) return null
-  const canvas = target.closest(DIAGRAM_CANVAS)
-  if (canvas === null) return null
-  const svg = canvas.querySelector("svg")
+  const button = target.closest(DIAGRAM_EXPAND)
+  if (button === null) return null
+  const svg = button.closest("figure")?.querySelector(".doc-diagram-canvas svg")
   if (svg instanceof SVGSVGElement) return svg
   return null
 }
@@ -104,8 +103,8 @@ function screenCentre(): Point {
 
 /**
  * The documentation's image viewer, mounted once by `Docs.astro` and kept
- * across navigations. A click (or Enter) on a picture of the page, or a click
- * on a diagram's drawing off its links, opens it enlarged; the wheel, a
+ * across navigations. A click (or Enter) on a picture of the page, or on a
+ * diagram's "Ampliar" button, opens it enlarged; the wheel, a
  * pinch, a double click or the buttons zoom, dragging moves it, and a click
  * off it, the close button or Esc close it.
  */
@@ -159,6 +158,8 @@ export function DocLightbox() {
 
   useEffect(() => {
     markZoomable()
+    // Following a link of an enlarged diagram leaves the page it came from.
+    const close = () => dialogRef.current?.close()
     const onClick = (event: globalThis.MouseEvent) => {
       const image = zoomableOf(event.target)
       if (image !== null) {
@@ -180,10 +181,12 @@ export function DocLightbox() {
     document.addEventListener("click", onClick)
     document.addEventListener("keydown", onKeyDown)
     document.addEventListener("astro:page-load", markZoomable)
+    document.addEventListener("astro:before-swap", close)
     return () => {
       document.removeEventListener("click", onClick)
       document.removeEventListener("keydown", onKeyDown)
       document.removeEventListener("astro:page-load", markZoomable)
+      document.removeEventListener("astro:before-swap", close)
     }
   }, [open, show])
 
@@ -202,8 +205,9 @@ export function DocLightbox() {
     return () => stage.removeEventListener("wheel", onWheel)
   }, [zoomTo])
 
+  // The stage only captures the pointer once a press becomes a drag, so a
+  // plain click or hover still reaches a diagram's boxes, arrows and links.
   const onPointerDown = (event: PointerEvent<HTMLDivElement>) => {
-    event.currentTarget.setPointerCapture(event.pointerId)
     pointers.current.set(event.pointerId, {
       x: event.clientX,
       y: event.clientY,
@@ -239,6 +243,11 @@ export function DocLightbox() {
     const dx = now.x - last.x
     const dy = now.y - last.y
     travel.current += Math.abs(dx) + Math.abs(dy)
+    if (
+      travel.current >= CLICK_SLOP &&
+      !event.currentTarget.hasPointerCapture(event.pointerId)
+    )
+      event.currentTarget.setPointerCapture(event.pointerId)
     if (viewRef.current.scale > MIN_SCALE)
       setView({
         ...viewRef.current,
