@@ -12,8 +12,8 @@
     "test": "bun test --only-failures"
   },
   "dependencies": {
-    "@astrojs/node": "11.1.7",
-    "@astrojs/react": "7.0.1",
+    "@astrojs/node": "11.1.8",
+    "@astrojs/react": "7.1.0",
     "@base-ui/react": "^1.9.0",
     "@better-auth/api-key": "catalog:",
     "@fontsource-variable/space-grotesk": "catalog:",
