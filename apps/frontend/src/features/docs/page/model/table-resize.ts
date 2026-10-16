@@ -73,7 +73,7 @@ export function columnLayout(
 }
 
 function hiddenOf(headers: readonly HTMLTableCellElement[]): boolean[] {
-  return headers.map((header) => header.hidden)
+  return headers.map((header) => header.hidden !== false)
 }
 
 function measuredWidths(headers: readonly HTMLTableCellElement[]): number[] {

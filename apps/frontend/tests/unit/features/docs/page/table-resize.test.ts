@@ -142,7 +142,7 @@ describe("column resize on the table", () => {
     ).toEqual(["220px", "0px", "180px"])
     expect(dom.table.style.width).toBe("400px")
     expect(
-      role.querySelector(".doc-table-resize")?.dataset.edge
+      role.querySelector<HTMLElement>(".doc-table-resize")?.dataset.edge
     ).toBeUndefined()
   })
 })
