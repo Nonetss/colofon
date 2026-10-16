@@ -1,7 +1,7 @@
 {
-  "name": "doc",
-  "short_name": "doc",
-  "description": "doc",
+  "name": "colofon",
+  "short_name": "colofon",
+  "description": "colofon",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
