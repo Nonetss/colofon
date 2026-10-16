@@ -1,7 +1,7 @@
 # documentation-mcp Specification
 
 ## Purpose
-Lets any AI agent use the documentation through the Model Context Protocol: an authenticated `/mcp` endpoint with read-only tools to list the repositories, read the `llms.txt` index, search, read a page (or one of its sections) as Markdown, look up a catalog entity by its type and id, and list and read the Agent Skills the caller can see. Each tool shows exactly what the reader shows the caller.
+Lets any AI agent use the documentation through the Model Context Protocol: an authenticated `/mcp` endpoint with read-only tools to list the repositories, read the `llms.txt` index, search, read a page (or one of its sections) as Markdown, look up a catalog entity by its type and id, and list and read the Agent Skills the caller can see. Each tool shows exactly what the reader shows the caller. When the server has secrets configured it also serves the `secrets` and `request` tools, specified by `secret-requests`.
 
 ## Requirements
 
@@ -13,14 +13,20 @@ The backend SHALL serve an MCP server at `/mcp` over the Streamable HTTP transpo
 - to read pages with `read` (one section when the route has a `#section` fragment);
 - to look up a catalog entity with `entity`;
 - to list the skills with `skills` and fetch one with `skill`;
+- when the secrets feature is on, to list the user's secrets with `secrets` and to call a service's HTTP API with `request`, using placeholders the platform fills in, as the documentation describes that API;
 - that every link in the texts is a full address on the public origin.
 
 It SHALL declare only tools: no resources, prompts or subscriptions.
 
 #### Scenario: Listing the tools
 
-- **WHEN** an authenticated MCP client initializes against `/mcp` and lists the tools
-- **THEN** it SHALL receive exactly `repositories`, `index`, `search`, `read`, `entity`, `skills` and `skill`, each with a description and an input schema
+- **WHEN** an authenticated MCP client initializes against `/mcp` with the secrets feature on and lists the tools
+- **THEN** it SHALL receive exactly `repositories`, `index`, `search`, `read`, `entity`, `skills`, `skill`, `secrets` and `request`, each with a description and an input schema
+
+#### Scenario: Secrets feature off
+
+- **WHEN** `SECRETS_ENCRYPTION_KEY` is unset and an authenticated client lists the tools
+- **THEN** it SHALL receive exactly `repositories`, `index`, `search`, `read`, `entity`, `skills` and `skill`, and the instructions SHALL NOT mention secrets
 
 #### Scenario: No sessions
 
@@ -48,7 +54,7 @@ Every request to `/mcp` SHALL need an enabled API key in the `x-api-key` header 
 
 ### Requirement: Read-only tools
 
-Every tool SHALL be declared read-only and idempotent, and SHALL NOT change any stored data. A tool call with invalid arguments SHALL return a tool error result whose text names the invalid arguments, so the agent can correct the call. A tool call that names an unknown repository or page SHALL return a tool error result whose text says what was not found, instead of a protocol error. Every link and image to a reader route in a tool's text SHALL be a full address on the public origin.
+Every tool except `request` SHALL be declared read-only and idempotent. No tool except `request` SHALL change any stored data, and `request` SHALL only add usage-log entries. A tool call with invalid arguments SHALL return a tool error result whose text names the invalid arguments, so the agent can correct the call. A tool call that names an unknown repository or page SHALL return a tool error result whose text says what was not found, instead of a protocol error. Every link and image to a reader route in a tool's text SHALL be a full address on the public origin.
 
 #### Scenario: Unknown page
 
@@ -59,6 +65,11 @@ Every tool SHALL be declared read-only and idempotent, and SHALL NOT change any 
 
 - **WHEN** the agent calls `search` without `query`
 - **THEN** the result SHALL be marked as an error, with a text naming `query` as invalid
+
+#### Scenario: Annotations
+
+- **WHEN** a client lists the tools
+- **THEN** every tool but `request` SHALL be annotated read-only and idempotent, and `request` SHALL be annotated as not read-only, destructive and open-world
 
 ### Requirement: Repositories tool
 

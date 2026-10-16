@@ -3,7 +3,7 @@
 - [x] 1.1 Add the optional `SECRETS_ENCRYPTION_KEY` to `packages/env/src/server.ts` (Base64 decoding to exactly 32 bytes, otherwise validation fails) and verify with `check-types` and a malformed value failing at startup
 - [x] 1.2 Document `SECRETS_ENCRYPTION_KEY` in `.env.example` (optional, what it turns on, that losing it loses the secrets, `openssl rand -base64 32`), generate it in `scripts/setup-dev.sh` and `scripts/bootstrap.sh`, update the stack skill's `references/env.md`, and verify that `setup-dev.sh --force` on a scratch copy writes a valid key
 - [x] 1.3 With the user's go-ahead, add the `secret` and `secret_usage` tables to `packages/db/src/schema/secret/` (design §1), export them from the schema index, and verify with `check-types`
-- [ ] 1.4 Hand off to the user to generate and apply the migration (`bun run db:generate` + migrate). The agent doesn't run it. Verify by the user confirming the tables exist
+- [x] 1.4 Hand off to the user to generate and apply the migration (`bun run db:generate` + migrate). The agent doesn't run it. Verify by the user confirming the tables exist
 
 ## 2. Encryption and shared pieces (packages/api)
 
@@ -42,4 +42,4 @@
 
 - [x] 7.1 Run `bun run check-types`, Biome and `bun run test`, all green
 - [x] 7.2 Run `openspec validate add-mcp-secrets --strict` and verify it passes
-- [ ] 7.3 Hand off to the user for an end-to-end check: create a secret on `/me`, call `secrets` and a `request` against a real service from an MCP client, and see the call in the usage log
+- [x] 7.3 Hand off to the user for an end-to-end check: create a secret on `/me`, call `secrets` and a `request` against a real service from an MCP client, and see the call in the usage log
