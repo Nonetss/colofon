@@ -55,6 +55,24 @@ que el MCP porque el MCP tiene que respetarlos.
   - [ ] `skills()` / `skill(nombre)`.
   - [ ] `repositorios()`.
 
+### 7. Documentación en una subcarpeta del repositorio
+
+Que cualquier proyecto pueda llevar su documentación en una carpeta propia
+(por ejemplo `docs/`) y colofon la renderice sin tener un repositorio aparte
+solo para ella.
+
+- [ ] Campo `path` en `contentRepository` (subcarpeta, vacío = raíz).
+      Requiere migración.
+- [ ] Que el loader de `packages/content` trate esa carpeta como la raíz del
+      contrato (`catalog/`, `_type.yaml`, `diagrams/`, `styles/`,
+      `menu.yaml`) e ignore el resto del repositorio.
+- [ ] Campo en el formulario de `/admin/content` al dar de alta o editar un
+      repositorio.
+- [ ] Sincronizar solo cuando cambie algo dentro de esa carpeta (comparar el
+      árbol de la subcarpeta en vez del commit), para no reconstruir con cada
+      commit de código.
+- Mirar si compensa un sparse checkout para no clonar el proyecto entero.
+
 ## Resto de `VISION.md`
 
 - [ ] Tablas de `<Entities>` interactivas como islas (ordenar y filtrar).
