@@ -9,9 +9,7 @@ export {
   type DocsNavGroup,
   type DocsNavLink,
   type DocsNavNode,
-  type DocsPageEntry,
   type DocsRepository,
-  flattenPages,
   pagesMeta,
   sectionsAbove,
 } from "@/features/docs/shared/model/nav"

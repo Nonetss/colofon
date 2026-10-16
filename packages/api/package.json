@@ -35,6 +35,9 @@
     "@types/hast": "catalog:",
     "dotenv": "catalog:",
     "drizzle-orm": "catalog:",
+    "hast-util-to-mdast": "^10.1.2",
+    "mdast-util-gfm": "catalog:",
+    "mdast-util-to-markdown": "^2.2.0",
     "pino": "catalog:",
     "zod": "catalog:"
   },

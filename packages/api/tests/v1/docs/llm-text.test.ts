@@ -1,9 +1,10 @@
 import { describe, expect, test } from "bun:test"
 import {
+  type DocsRepository,
+  flattenPages,
   llmsIndex,
   repositoryLlmsIndex,
-} from "@/features/docs/llm-text/model/llms"
-import type { DocsRepository } from "@/features/docs/shared/model/nav"
+} from "#v1/docs/llm-text"
 
 const origin = "https://docs.example.org"
 
@@ -68,6 +69,53 @@ const nuevo: DocsRepository = {
 function sections(text: string): string[] {
   return text.split("\n").filter((line) => line.startsWith("## "))
 }
+
+describe("flattenPages", () => {
+  test("lists the home and every page depth first with the sections above it", () => {
+    expect(
+      flattenPages([casa], false).map((page) => [page.href, page.trail])
+    ).toEqual([
+      ["/casa", []],
+      ["/casa/red", []],
+      ["/casa/red/dns", ["Red"]],
+      ["/casa/red/vpn", ["Red"]],
+      ["/casa/red/vpn/wg", ["Red", "VPN"]],
+    ])
+  })
+
+  test("with the repository, every trail starts with its name", () => {
+    const [, red] = flattenPages([casa], true)
+    expect(red?.trail).toEqual(["Casa"])
+  })
+
+  test("a repository without content lists nothing", () => {
+    expect(flattenPages([nuevo], true)).toEqual([])
+  })
+
+  test("a menu group starts the trails of its pages and is not listed", () => {
+    const grouped: DocsRepository = {
+      ...casa,
+      nodes: [
+        {
+          kind: "group",
+          title: "Infraestructura",
+          description: "",
+          icon: null,
+          children: casa.nodes,
+        },
+      ],
+    }
+    expect(
+      flattenPages([grouped], false).map((page) => [page.href, page.trail])
+    ).toEqual([
+      ["/casa", []],
+      ["/casa/red", ["Infraestructura"]],
+      ["/casa/red/dns", ["Infraestructura", "Red"]],
+      ["/casa/red/vpn", ["Infraestructura", "Red"]],
+      ["/casa/red/vpn/wg", ["Infraestructura", "Red", "VPN"]],
+    ])
+  })
+})
 
 describe("llmsIndex", () => {
   test("opens with the heading, the summary and how to read the pages", () => {

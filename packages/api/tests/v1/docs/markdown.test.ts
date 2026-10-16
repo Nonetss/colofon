@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test"
 import type { Element, Root } from "hast"
-import { pageMarkdown } from "@/features/docs/page/model/markdown"
+import { pageMarkdown } from "#v1/docs/markdown"
 
 function el(
   tagName: string,

@@ -2,8 +2,8 @@
 // session: the router swaps pages in, so everything listens on the document
 // and rereads the page on `astro:page-load`.
 
+import { withOrigin } from "@nonete/api/v1/docs/full-links"
 import { setupDiagramHighlights } from "@/features/docs/diagrams"
-import { withOrigin } from "@/features/docs/page/model/full-links"
 
 const COPIED_MS = 1500
 

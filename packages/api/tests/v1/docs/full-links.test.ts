@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test"
-import { withOrigin } from "@/features/docs/page/model/full-links"
+import { withOrigin } from "#v1/docs/full-links"
 
 const origin = "https://docs.example.org"
 

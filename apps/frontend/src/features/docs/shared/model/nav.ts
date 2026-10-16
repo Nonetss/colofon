@@ -13,68 +13,6 @@ export type DocsNavGroup = Extract<DocsNavNode, { kind: "group" }>
 /** A page or section: a node with a route. */
 export type DocsNavLink = Exclude<DocsNavNode, { kind: "group" }>
 
-/** A page as the navbar search lists it. */
-export type DocsPageEntry = {
-  href: string
-  label: string
-  description: string
-  /** The repository (in "Todos"), the group and the sections above the page. */
-  trail: string[]
-}
-
-/**
- * Every page of `repositories`, home included, depth first. `withRepository`
- * starts each trail with the repository's name, for the "Todos" scope.
- */
-export function flattenPages(
-  repositories: readonly DocsRepository[],
-  withRepository: boolean
-): DocsPageEntry[] {
-  const entries: DocsPageEntry[] = []
-  for (const repository of repositories) {
-    const base = repositoryTrail(repository, withRepository)
-    if (repository.home !== null) {
-      entries.push({
-        href: repository.home.href,
-        label: repository.home.title,
-        description: repository.home.description,
-        trail: base,
-      })
-    }
-    collect(repository.nodes, base, entries)
-  }
-  return entries
-}
-
-function repositoryTrail(
-  repository: DocsRepository,
-  withRepository: boolean
-): string[] {
-  if (!withRepository) return []
-  return [repository.name]
-}
-
-function collect(
-  nodes: readonly DocsNavNode[],
-  trail: string[],
-  entries: DocsPageEntry[]
-) {
-  for (const node of nodes) {
-    if (node.kind === "group") {
-      collect(node.children, [...trail, node.title], entries)
-      continue
-    }
-    entries.push({
-      href: node.href,
-      label: node.title,
-      description: node.description,
-      trail,
-    })
-    if (node.kind === "section")
-      collect(node.children, [...trail, node.title], entries)
-  }
-}
-
 /**
  * The href of the entry the sidebar marks for `pathname`: the page itself
  * when the navigation lists it, otherwise the deepest listed page above it

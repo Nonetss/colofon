@@ -1,7 +1,7 @@
 export {
   llmsIndex,
   repositoryLlmsIndex,
-} from "@/features/docs/llm-text/model/llms"
+} from "@nonete/api/v1/docs/llm-text"
 export {
   textNotFound,
   textResponse,

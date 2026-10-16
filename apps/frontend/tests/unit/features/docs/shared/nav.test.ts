@@ -3,7 +3,6 @@ import {
   cardBlocks,
   currentHref,
   type DocsRepository,
-  flattenPages,
   pagesMeta,
   sectionsAbove,
 } from "@/features/docs/shared/model/nav"
@@ -40,31 +39,6 @@ const casa: DocsRepository = {
     },
   ],
 }
-
-describe("flattenPages", () => {
-  test("lists the home and every page depth first with the sections above it", () => {
-    expect(
-      flattenPages([casa], false).map((page) => [page.href, page.trail])
-    ).toEqual([
-      ["/casa", []],
-      ["/casa/red", []],
-      ["/casa/red/dns", ["Red"]],
-      ["/casa/red/vpn", ["Red"]],
-      ["/casa/red/vpn/wg", ["Red", "VPN"]],
-    ])
-  })
-
-  test("in Todos every trail starts with the repository's name", () => {
-    const [, red] = flattenPages([casa], true)
-    expect(red?.trail).toEqual(["Casa"])
-  })
-
-  test("a repository without content lists nothing", () => {
-    expect(
-      flattenPages([{ ...casa, home: null, nodes: [], available: false }], true)
-    ).toEqual([])
-  })
-})
 
 describe("sectionsAbove", () => {
   test("names the sections that hold a page, outermost first", () => {
@@ -182,20 +156,6 @@ const withMenu: DocsRepository = {
 }
 
 describe("navigation with menu groups", () => {
-  test("search trails start with the group, and groups are not records", () => {
-    expect(
-      flattenPages([withMenu], false).map((page) => [page.href, page.trail])
-    ).toEqual([
-      ["/casa", []],
-      ["/casa/red", ["Infraestructura"]],
-      ["/casa/red/dns", ["Infraestructura", "Red"]],
-      ["/casa/red/vpn", ["Infraestructura", "Red"]],
-      ["/casa/red/vpn/wg", ["Infraestructura", "Red", "VPN"]],
-      ["/casa/catalog", ["Datos"]],
-      ["/casa/catalog/machines", ["Datos", "Catálogo"]],
-    ])
-  })
-
   test("the sections above a page are found through its group", () => {
     expect(sectionsAbove(withMenu.nodes, "/casa/red/vpn/wg")).toEqual([
       "/casa/red",
