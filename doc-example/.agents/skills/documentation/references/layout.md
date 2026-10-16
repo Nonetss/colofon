@@ -15,10 +15,13 @@ catalogo/
 ├── files/               # the files of a content repository
 ├── field-kinds/         # the kinds of a field
 ├── header-fields/       # the fields every page header has
-└── components/          # the page components
+├── components/          # the page components
+└── diagram-types/       # the diagram types the platform lays out
 diagramas/
 ├── pipeline.json        # from a push to the published site
-└── repository.json      # what a repository holds
+├── repository.json      # what a repository holds
+├── <type>-<topic>.json  # one working example of each diagram type and variant
+└── repository-exploded.svg # the illustration example
 skills/
 └── doc-writing/SKILL.md # served to other agents
 ```

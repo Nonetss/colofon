@@ -36,7 +36,7 @@ this repository                         platform
   is in `docs/repository/index.mdx`). Everything else is this site's own, in
   English: type ids, field names, enum values, folders, file names and prose.
 - **The catalog describes the contract:** `files` (the files of a content
-  repository), `field-kinds`, `header-fields` and `components`. A page that
+  repository), `field-kinds`, `header-fields`, `components` and `diagram-types`. A page that
   lists them uses `<Entities>`, never a hand-written table.
 - **When the platform changes, this guide changes with it.** A page that
   describes something the platform no longer does is a bug.

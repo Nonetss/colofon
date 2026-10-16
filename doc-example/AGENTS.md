@@ -35,7 +35,8 @@ publica. Aquí no se compila ni se ejecuta nada.
 | `docs/` | Las páginas de la guía (`.mdx`). Cada carpeta es una sección con su `index.mdx` |
 | `catalogo/<type>/_tipo.yaml` | La declaración de un tipo de datos (los de este sitio describen el propio contrato) |
 | `catalogo/<type>/<id>.yaml` | Una entidad: el nombre del fichero es su id |
-| `diagramas/<id>.json` | Un diagrama, con sus cajas, flechas y zonas colocadas a mano, mostrado en las páginas con `<Diagram id="…" />` |
+| `diagramas/<id>.json` | Un diagrama, dibujado a mano o de un tipo (`type`) que la plataforma coloca sola, mostrado en las páginas con `<Diagram id="…" />` |
+| `diagramas/<id>.svg` | Una ilustración dibujada a mano en SVG, filtrada y pintada con los colores del tema |
 | `skills/<name>/SKILL.md` | Skills que la plataforma **sirve a otros agentes** para trabajar con este sitio |
 | `.agents/skills/documentation/` | La skill para **ti**, el agente que escribe aquí |
 | `.claude/commands/questions.md` | `/questions`: rondas de preguntas para terminar de documentar una sección |

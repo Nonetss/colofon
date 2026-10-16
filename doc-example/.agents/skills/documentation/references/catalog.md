@@ -16,6 +16,7 @@ reference tables are data, not hand-written tables:
 | `field-kinds` | Field kind (`texto`, `ref`, `lista`…); the id is the kind | the id |
 | `header-fields` | Field every page header has (`titulo`…); `kind` points at `field-kinds` | the id |
 | `components` | Page component (`<Callout>`…), with its attributes as a list of objects | `tag` |
+| `diagram-types` | Diagram type the platform lays out from data; the id is its `type` value, `family` an `enum` | `name` |
 
 Each type shows a different part of the contract working: `files` has an
 `enum` and a `ficha`, `header-fields` a `ref`, `components` a `lista` of
@@ -23,8 +24,8 @@ Each type shows a different part of the contract working: `files` has an
 
 ## When the platform changes
 
-- A new file, field kind, header field or component of the contract is a new
-  entity, and its page in `docs/` explains it.
+- A new file, field kind, header field, component or diagram type of the
+  contract is a new entity, and its page in `docs/` explains it.
 - `page` (a `ficha`) points at the page that explains the entity; keep it
   right when pages move.
 - `fuente: manual` and `actualizado` (the date it was checked against the

@@ -18,7 +18,7 @@ This skill says how to work, not what the contract holds. The contract is explai
 - **Pages have no code:** Markdown and the platform's components (`Callout`, `Entities`, `Diagram`) only. No `import`, `export` or expressions between braces.
 - **YAML wins over MDX:** a title or icon `menu.yaml` gives an entry is the one shown everywhere. Put the icons of the pages the menu shows in the menu, not in their headers.
 - **Every `icono` is a Lucide icon name.**
-- **One entity per file**, one diagram per JSON file under `diagramas/`, with every box, arrow and zone placed by hand (the guide's Diagrams page has the keys).
+- **One entity per file**, one diagram per file under `diagramas/`: a JSON drawn by hand (every box, arrow and zone placed), a JSON with a `type` the platform lays out from data (flowchart, sequence, gantt, bar, sankey…), or a hand-drawn `.svg` illustration. The guide's Diagrams section has the keys of each, and its type table says which fits.
 - **Never write a secret:** write where it lives and which account to use.
 
 ## After writing
