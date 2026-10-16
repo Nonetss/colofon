@@ -2160,6 +2160,8 @@ html.theme-transitioning::view-transition-new(root) {
   /* The drag handle sits on the header's trailing edge, over its padding.
      The line is always there between two columns and only on hover at the
      table's own edge. */
+  /* The divider between two columns. The last column has no handle: its
+     edge is the table's (`table-resize.ts`). */
   .typeset.doc :where(.doc-table-resize) {
     position: absolute;
     inset-block: 0;
@@ -2178,18 +2180,14 @@ html.theme-transitioning::view-transition-new(root) {
     inset-inline-end: 0;
     width: 1px;
     border-radius: 999px;
-    background-color: transparent;
-    transition:
-      width 0.15s ease,
-      background-color 0.15s ease;
-  }
-
-  .typeset.doc :where(.doc-table-resize[data-edge])::after {
     background-color: color-mix(
       in oklch,
       var(--color-muted-foreground) 40%,
       transparent
     );
+    transition:
+      width 0.15s ease,
+      background-color 0.15s ease;
   }
 
   .typeset.doc :where(.doc-table-resize:hover)::after,

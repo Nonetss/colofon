@@ -1,8 +1,8 @@
 // Column widths of a documentation table. Until the reader drags a header
 // edge the columns share the reading column; after that, each column has a
 // pixel width. Dragging an edge gives the space to the next visible column,
-// so the table keeps its width; the last column's edge changes the table,
-// which then scrolls sideways when it no longer fits.
+// so the table keeps its width. The last visible column has no handle: its
+// edge is the table's, and there is no column to trade space with.
 
 /** The narrowest a column can be dragged. */
 export const MIN_COLUMN_WIDTH = 96
@@ -24,8 +24,9 @@ function nextVisible(hidden: readonly boolean[], index: number): number {
 
 /**
  * Widths after moving column `index` by `delta` pixels. The next visible
- * column gives or takes that space; the last visible column moves alone.
- * Neither column goes under `MIN_COLUMN_WIDTH`.
+ * column gives or takes that space, and neither goes under
+ * `MIN_COLUMN_WIDTH`. The last visible column has no neighbor, so nothing
+ * moves.
  */
 export function widthsAfterResize(
   widths: readonly number[],
@@ -37,10 +38,7 @@ export function widthsAfterResize(
   if (current === undefined) return [...widths]
   const next = [...widths]
   const neighbor = nextVisible(hidden, index)
-  if (neighbor === -1) {
-    next[index] = clampColumnWidth(current + delta)
-    return next
-  }
+  if (neighbor === -1) return next
   const other = widths[neighbor]
   if (other === undefined) return next
   const grown = clampColumnWidth(current + delta)
@@ -101,9 +99,9 @@ function ensureCols(
   return cols
 }
 
-/** The resting divider sits on every edge but the table's own: the last
- *  visible column's handle only shows its line while hovered or dragged. */
-function markResizeEdges(headers: readonly HTMLTableCellElement[]): void {
+/** Every visible column has a handle but the last one, whose edge is the
+ *  table's: hiding or showing columns moves which one that is. */
+function markResizeHandles(headers: readonly HTMLTableCellElement[]): void {
   let last = -1
   for (let index = 0; index < headers.length; index++) {
     const header = headers[index]
@@ -114,8 +112,7 @@ function markResizeEdges(headers: readonly HTMLTableCellElement[]): void {
     if (header === undefined) continue
     const handle = header.querySelector(".doc-table-resize")
     if (!(handle instanceof HTMLElement)) continue
-    if (index === last) delete handle.dataset.edge
-    else handle.dataset.edge = ""
+    handle.hidden = index >= last
   }
 }
 
@@ -129,7 +126,7 @@ export function applyColumnWidths(
   headers: readonly HTMLTableCellElement[],
   widths: readonly number[] | null
 ): void {
-  markResizeEdges(headers)
+  markResizeHandles(headers)
   if (widths === null) {
     table.querySelector(":scope > colgroup")?.remove()
     table.style.tableLayout = ""
@@ -201,7 +198,7 @@ export function syncColumnWidths(
 ): void {
   const widths = widthsOf.get(table)
   if (widths === undefined) {
-    markResizeEdges(headers)
+    markResizeHandles(headers)
     return
   }
   applyColumnWidths(table, headers, widths)
@@ -228,7 +225,7 @@ export function bindColumnResize(
     if (!(handle instanceof HTMLElement)) return
     bindHandle(table, headers, header, handle, index)
   })
-  markResizeEdges(headers)
+  markResizeHandles(headers)
 }
 
 function bindHandle(

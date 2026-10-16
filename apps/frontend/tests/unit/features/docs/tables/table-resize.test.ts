@@ -49,9 +49,9 @@ describe("widthsAfterResize", () => {
     ])
   })
 
-  test("the last column moves on its own", () => {
+  test("the last column has no neighbor, so nothing moves", () => {
     expect(widthsAfterResize([200, 200], [false, false], 1, 40)).toEqual([
-      200, 240,
+      200, 200,
     ])
   })
 
@@ -141,8 +141,24 @@ describe("column resize on the table", () => {
       [...dom.table.querySelectorAll("col")].map((col) => col.style.width)
     ).toEqual(["220px", "0px", "180px"])
     expect(dom.table.style.width).toBe("400px")
-    expect(
-      role.querySelector<HTMLElement>(".doc-table-resize")?.dataset.edge
-    ).toBeUndefined()
+  })
+
+  test("only the last visible column has no handle", () => {
+    const [dom] = prepareTables(page())
+    if (dom === undefined) throw new Error("No table")
+    const [name, ip, role] = dom.headers
+    if (name === undefined || ip === undefined || role === undefined) {
+      throw new Error("No header")
+    }
+    const hiddenHandles = () =>
+      dom.headers.map(
+        (header) =>
+          header.querySelector<HTMLElement>(".doc-table-resize")?.hidden
+      )
+    expect(hiddenHandles()).toEqual([false, false, true])
+
+    role.hidden = true
+    applyColumnWidths(dom.table, dom.headers, null)
+    expect(hiddenHandles()).toEqual([false, true, true])
   })
 })
