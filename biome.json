@@ -11,6 +11,7 @@
       "**",
       "!!**/modern-screenshot.umd.js",
       "!**/*.md",
+      "!doc-example",
       "!!**/*.generated.json"
     ]
   },

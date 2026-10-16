@@ -96,5 +96,3 @@ temp
 !.github/workflows/
 
 .impeccable/critique/*
-
-doc-test/*

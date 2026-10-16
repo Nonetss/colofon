@@ -25,6 +25,9 @@
 .content
 .hosted
 
+# The sample content repository (a git subtree), never part of an image
+doc-example
+
 Dockerfile
 **/Dockerfile
 compose.yml
