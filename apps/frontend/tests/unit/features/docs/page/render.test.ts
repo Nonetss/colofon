@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test"
 import type { Element, Root } from "hast"
-import { isStale } from "@/features/docs/page/model/dates"
+import { headerDate, isStale } from "@/features/docs/page/model/dates"
 import { renderBlocks } from "@/features/docs/page/model/render"
 
 function el(
@@ -180,5 +180,31 @@ describe("isStale", () => {
 
   test("a date that can't be read is not marked", () => {
     expect(isStale("ayer", now)).toBe(false)
+  })
+})
+
+describe("headerDate", () => {
+  const now = new Date("2026-10-15T12:00:00")
+
+  test("actualizado wins over the edit date", () => {
+    expect(headerDate("2026-09-01", "2026-10-14", now)?.label).toStartWith(
+      "Datos del "
+    )
+  })
+
+  test("a stale actualizado is marked for review with the accent", () => {
+    const date = headerDate("2026-01-10", "2026-10-14", now)
+    expect(date?.label).toStartWith("Revisar · datos del ")
+    expect(date?.tone).toBe("primary")
+  })
+
+  test("an old edit date alone is shown as an edit, muted and never marked", () => {
+    const date = headerDate(null, "2025-11-03", now)
+    expect(date?.label).toStartWith("Editado el ")
+    expect(date?.tone).toBe("muted")
+  })
+
+  test("without either date there is none", () => {
+    expect(headerDate(null, null, now)).toBeNull()
   })
 })
