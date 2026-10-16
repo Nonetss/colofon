@@ -281,6 +281,44 @@ describe("docs.page", () => {
   })
 })
 
+describe("docs.page styles", () => {
+  test("every page of a repository with estilos/ carries its cleaned stylesheet", async () => {
+    const { handler } = await setup(
+      [casa],
+      inClone(casa, {
+        ...SITE,
+        "estilos/tema.css": ":root { --primary: red }",
+        "estilos/pagina.css":
+          "@import 'x.css';\n.a { background: url(../docs/red/img/zonas.svg) }",
+      })
+    )
+    const expected =
+      ":root{--primary:red}\n.a{background:url(/api/v1/docs/casa/files/red/img/zonas.svg)}"
+    const dns = await handler.page({
+      context: userContext(),
+      input: { repository: "casa", path: "red/dns" },
+    })
+    const home = await handler.page({
+      context: adminContext(),
+      input: { repository: "casa", path: "" },
+    })
+    expect(dns.styles).toBe(expected)
+    expect(home.styles).toBe(expected)
+    expect(home.problems.map((problem) => problem.file)).toContain(
+      "estilos/pagina.css"
+    )
+  })
+
+  test("a repository without estilos/ gives null styles", async () => {
+    const { handler } = await setup([casa], inClone(casa, SITE))
+    const page = await handler.page({
+      context: userContext(),
+      input: { repository: "casa", path: "red/dns" },
+    })
+    expect(page.styles).toBeNull()
+  })
+})
+
 describe("docs with menu.yaml and the catalog", () => {
   const MENU =
     "secciones:\n  - titulo: Infra\n    icono: network\n    paginas: [red, catalogo]\n"

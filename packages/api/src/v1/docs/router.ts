@@ -31,7 +31,7 @@ export const docsRouter = {
       openapi({
         summary: "Read a documentation page",
         description:
-          "One page of a content repository by its path (empty for the home): its header, the sanitized HTML tree of its body, headings, breadcrumbs, previous and next pages and, for a section, its pages. Problems are listed only for admins. NOT_FOUND for an unknown repository, one without content, or a page that doesn't exist.",
+          "One page of a content repository by its path (empty for the home): its header, the sanitized HTML tree of its body, headings, breadcrumbs, previous and next pages, for a section its pages, and the repository's cleaned stylesheet (`styles`, from its estilos/ modules, or null). Problems are listed only for admins. NOT_FOUND for an unknown repository, one without content, or a page that doesn't exist.",
         tags,
         method: "GET",
       })

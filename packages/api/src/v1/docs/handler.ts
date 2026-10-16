@@ -115,6 +115,7 @@ export function createDocsHandler({
         children: found.children.map((node) => navNodeOf(node, routes)),
         hasProblems: found.problems.length > 0,
         problems: problemsFor(context, found),
+        styles: stylesOf(read.site),
       }
     },
 
@@ -217,6 +218,12 @@ function withHref(link: PageLink, routes: SiteRoutes) {
 function linkOrNull(link: PageLink | null, routes: SiteRoutes) {
   if (link === null) return null
   return withHref(link, routes)
+}
+
+/** The repository's stylesheet, `null` when its `estilos/` gives none. */
+function stylesOf(site: Site): string | null {
+  if (site.styles === "") return null
+  return site.styles
 }
 
 function problemsFor(context: Context, found: SitePage) {

@@ -208,6 +208,12 @@ export const docsOutput = {
     problems: z
       .array(problem)
       .describe("The page's problems; only admins get them, others get []"),
+    styles: z
+      .string()
+      .nullable()
+      .describe(
+        "The repository's cleaned stylesheet from its estilos/ modules, the same for every page of the repository, applied over the platform's styles; null when it has none"
+      ),
   }),
   file: z.file().describe("The image file"),
 }
