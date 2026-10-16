@@ -47,7 +47,8 @@ const notice =
   </p>
 ) : (
   blocks.length > 0 && (
-    <div class="typeset typeset-docs doc mt-6">
+    <>
+      {/* Outside the typeset, so its `:first-child` rules see the first block. */}
       <svg class="doc-icon-sprite" aria-hidden="true">
         {sprite.map(({ name, Icon }) => (
           <symbol id={`doc-icon-${name}`} viewBox="0 0 24 24">
@@ -55,19 +56,21 @@ const notice =
           </symbol>
         ))}
       </svg>
-      {blocks.map((block) => {
-        if (block.kind === null) return <Fragment set:html={block.html} />
-        const Icon = getIcon("docSections", block.kind)
-        return (
-          <section class="doc-section" data-kind={block.kind}>
-            <span class="doc-section-badge" aria-hidden="true">
-              <Icon className="size-4.5" />
-            </span>
-            <Fragment set:html={block.html} />
-          </section>
-        )
-      })}
-      <DocTables client:only="react" />
-    </div>
+      <div class="typeset typeset-docs doc mt-6">
+        {blocks.map((block) => {
+          if (block.kind === null) return <Fragment set:html={block.html} />
+          const Icon = getIcon("docSections", block.kind)
+          return (
+            <section class="doc-section" data-kind={block.kind}>
+              <span class="doc-section-badge" aria-hidden="true">
+                <Icon className="size-4.5" />
+              </span>
+              <Fragment set:html={block.html} />
+            </section>
+          )
+        })}
+        <DocTables client:only="react" />
+      </div>
+    </>
   )
 )}
