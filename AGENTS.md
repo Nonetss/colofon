@@ -7,6 +7,7 @@ Monorepo `doc`: Astro + Hono + oRPC + Better Auth + Drizzle/PostgreSQL on Bun, C
 - Agent instructions are `AGENTS.md` plus the `stack` skill (`.agents/skills/stack/`, see "Project skill"). `CLAUDE.md` just imports this file (`@AGENTS.md`) so every agent reads identical text — never add instruction text to `CLAUDE.md`.
 - This file holds only what applies to **every** task: the base philosophy, the project map, the hard rules and the pointer to `stack`. Convention detail lives in the `stack` skill's references.
 - Any change that alters a convention updates the file that states it (this one or the `stack` reference that owns it) in the same change. Adding, removing or renaming a workspace updates `references/workspaces.md`.
+- Don't update the human documentation in `docs/` (`docs/human/`, `docs/diagrams/`, `docs/img/`) as part of a change, and don't add tasks for it to OpenSpec changes. Touch it only when the user asks for it.
 - New convention detail goes into a reference under `.agents/skills/stack/references/` plus a row in `stack/SKILL.md`'s routing tables, not into a new skill. The skill is symlinked from `.claude/skills/stack`.
 - Don't hand-copy enumerations whose source of truth lives elsewhere (env vars, OpenSpec capabilities). Name the source and state the rule instead.
 - Every cited path must exist, here and in the skill.
