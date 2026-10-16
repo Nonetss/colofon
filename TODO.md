@@ -48,10 +48,10 @@ que el MCP porque el MCP tiene que respetarlos.
       Las herramientas leen con los procedimientos de `v1.docs` como el
       dueño de la key, así que heredarán los permisos del punto 2.
 - [x] `repositories`, `index`, `search` y `read` (`add-docs-mcp`).
-- [ ] `entity(type, id)`: una entidad con sus relaciones y las fichas que
-      la citan.
+- [x] `entity(repository, type, id)`: una entidad con sus relaciones y
+      las fichas que la citan (`add-mcp-section-and-entity`).
 - [ ] `skills()` / `skill(name)` (depende del punto 5).
-- [ ] `read` de una sola sección: con `#ancla`, devolver solo esa sección
+- [x] `read` de una sola sección: con `#ancla`, devolver solo esa sección
       (y sus subsecciones) en vez de la página entera.
 - [ ] Más adelante: escritura desde el MCP en los repositorios alojados en la
       plataforma, para que el agente cree y edite páginas con un commit en
