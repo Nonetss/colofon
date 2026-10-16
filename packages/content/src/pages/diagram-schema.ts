@@ -10,6 +10,11 @@ import { enumOf } from "#enum-of"
 /** The id of a box or zone: lowercase letters, digits and single hyphens. */
 export const ID_PATTERN = /^[a-z0-9]+(-[a-z0-9]+)*$/
 
+/** The schema of an id: what other parts of the diagram name it by. */
+export const idSchema = z.string().regex(ID_PATTERN, {
+  error: "Un id va en minúsculas, sin acentos y con guiones (red-de-casa)",
+})
+
 /** Kinds of box, from most to least important, as the legend lists them. */
 export const NODE_KINDS = [
   "focal",
@@ -20,11 +25,23 @@ export const NODE_KINDS = [
   "optional",
 ] as const
 
-export const SHAPES = ["pill", "cylinder"] as const
+export const SHAPES = [
+  "pill",
+  "cylinder",
+  "diamond",
+  "circle",
+  "rounded",
+] as const
 
 export const EDGE_KINDS = ["default", "accent", "dash"] as const
 
 export const ANCHORS = ["middle", "start", "end"] as const
+
+/** How an arrow runs between its points. */
+export const ROUTES = ["orthogonal", "curve"] as const
+
+/** What an arrow ends in. */
+export const HEADS = ["arrow", "triangle", "diamond", "open-diamond"] as const
 
 /** The colours a box, zone or arrow can take. */
 export const HUES = [
@@ -44,6 +61,8 @@ export type NodeKind = (typeof NODE_KINDS)[number]
 export type Shape = (typeof SHAPES)[number]
 export type EdgeKind = (typeof EDGE_KINDS)[number]
 export type Anchor = (typeof ANCHORS)[number]
+export type Route = (typeof ROUTES)[number]
+export type Head = (typeof HEADS)[number]
 export type Hue = (typeof HUES)[number]
 
 /** The keys every diagram accepts, whichever its form. */
@@ -84,25 +103,23 @@ const point = z
   .tuple([z.number(), z.number()])
   .meta({ description: "[x, y] en píxeles del dibujo" })
 
-const id = z.string().regex(ID_PATTERN, {
-  error: "Un id va en minúsculas, sin acentos y con guiones (red-de-casa)",
-})
+const id = idSchema
 
-const row = z.strictObject({
+export const rowSchema = z.strictObject({
   key: text.optional().meta({ description: "Una marca corta: PK, FK, UQ…" }),
   name: text.meta({ description: "El nombre de la columna" }),
   type: text.optional().meta({ description: "Su tipo, a la derecha" }),
 })
 
 /** What a reference to the catalog or to a page accepts. */
-type References = {
+export type References = {
   /** Every `<type>/<id>` of the catalog, for the editor. */
   entityKeys?: readonly string[]
   /** Every page path of the repository, for the editor. */
   pagePaths?: readonly string[]
 }
 
-function entityRef(entityKeys: readonly string[] | undefined) {
+export function entityRef(entityKeys: readonly string[] | undefined) {
   if (entityKeys === undefined)
     return z.string().regex(/^[a-z0-9-]+\/[a-z0-9-]+$/, {
       error: "Es <tipo>/<id> de una entidad del catálogo (machines/nas)",
@@ -110,7 +127,7 @@ function entityRef(entityKeys: readonly string[] | undefined) {
   return enumOf(entityKeys, "No hay ninguna entidad en catalogo/")
 }
 
-function pageRef(pagePaths: readonly string[] | undefined) {
+export function pageRef(pagePaths: readonly string[] | undefined) {
   if (pagePaths === undefined) return z.string()
   return enumOf(pagePaths, "No hay ninguna página en docs/")
 }
@@ -141,7 +158,7 @@ export function diagramSchemas(references: References = {}) {
       }),
     shape: z.enum(SHAPES).optional().meta({
       description:
-        "pill: de dónde llega la gente; cylinder: dónde acaban los datos",
+        "pill: de dónde llega la gente; cylinder: dónde acaban los datos; diamond: una decisión; circle: un inicio, un fin o un estado; rounded: un estado",
     }),
     hue: z.enum(HUES).optional().meta({
       description: "Su color; sin él, el de su zona",
@@ -169,11 +186,15 @@ export function diagramSchemas(references: References = {}) {
     page: pageRef(references.pagePaths).optional().meta({
       description: "La página del repositorio a la que enlaza",
     }),
-    rows: z.array(row).optional().meta({
+    rows: z.array(rowSchema).optional().meta({
       description: "Una tabla: sus columnas, con key, name y type",
     }),
     more: text.optional().meta({
       description: 'Línea final de una tabla ("+ 8 columnas más")',
+    }),
+    ops: z.array(rowSchema).optional().meta({
+      description:
+        "Una segunda lista de filas bajo una raya, como las operaciones de una clase UML",
     }),
   }
   const box = z.strictObject({
@@ -195,7 +216,11 @@ export function diagramSchemas(references: References = {}) {
   const edge = z.strictObject({
     points: z.array(point).min(2).optional().meta({
       description:
-        "Los puntos por los que pasa, en tramos horizontales o verticales",
+        "Los puntos por los que pasa, en tramos horizontales o verticales (o libres con route: curve)",
+    }),
+    route: z.enum(ROUTES).optional().meta({
+      description:
+        "orthogonal (por defecto): tramos rectos; curve: una curva suave por sus puntos",
     }),
     from: z
       .string()
@@ -220,6 +245,10 @@ export function diagramSchemas(references: References = {}) {
     hue: z.enum(HUES).optional(),
     info: text.optional(),
     noHead: z.boolean().optional().meta({ description: "true: sin punta" }),
+    head: z.enum(HEADS).optional().meta({
+      description:
+        "arrow (por defecto); triangle: herencia; diamond: composición; open-diamond: agregación",
+    }),
     badge: text.optional().meta({
       description: "Sin línea: una insignia con este texto en la caja from",
     }),
@@ -251,6 +280,7 @@ export function diagramSchemas(references: References = {}) {
   const indexes = z.array(z.number().int().nonnegative())
   const common = {
     $schema: z.string().optional(),
+    type: z.never().optional(),
     title: text.meta({ description: "El título del diagrama" }),
     desc: text.meta({
       description: "Qué muestra, en una o dos frases: es su texto alternativo",
@@ -305,6 +335,8 @@ export function diagramSchemas(references: References = {}) {
     shapes,
     indexes,
     chainLinks: z.array(z.union([text, z.null()])),
+    drawn,
+    chain,
     file: z.union([drawn, chain]),
   }
 }

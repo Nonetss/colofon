@@ -11,13 +11,16 @@ import {
 } from "#load"
 import { createMetaSchemas } from "#meta-schema"
 import { catalogTypePath } from "#pages/catalog-paths"
-import { diagramSchemas } from "#pages/diagram-schema"
+import { diagramSchemas, type References } from "#pages/diagram-schema"
+import { DIAGRAM_TYPES } from "#pages/diagram-types/index"
 
 // JSON Schemas for the editor: the YAML language server (Red Hat's YAML
 // extension) completes, validates and documents a file once a schema is
 // associated with it. The meta-schema covers doc.config.yaml, menu.yaml
 // (with the paths an entry can name) and each _tipo.yaml; diagrams (JSON)
-// get one schema with the entities and pages a box can link to; each catalog type gets its own
+// get one schema, every form of them (drawn, chain and each typed form by
+// its `type`), with the entities and pages a box or item can link to; each
+// catalog type gets its own
 // schema, generated from its _tipo.yaml, with the ids its `ref` fields can
 // take. Every `icono` lists the Lucide names. The editor finds them
 // through a catalog in SchemaStore's format (`schemaCatalog`), set once as
@@ -53,7 +56,7 @@ export function editorSchemas(
     typeIds,
     menuPaths: menuPathsOf(declarations),
   })
-  const diagram = diagramSchemas({
+  const diagram = diagramFileSchema({
     entityKeys: entityKeysOf(declarations),
     pagePaths: pagePathsOf(declarations),
   })
@@ -77,7 +80,7 @@ export function editorSchemas(
       title: "Diagrama",
       description: `Cada diagrama de ${DIAGRAMS_DIR}/`,
       patterns: [`${DIAGRAMS_DIR}/*.json`],
-      schema: toJsonSchema(diagram.file, "Diagrama"),
+      schema: toJsonSchema(diagram, "Diagrama"),
     },
     {
       name: TYPE_SCHEMA,
@@ -109,6 +112,19 @@ function menuPathsOf(declarations: ContentDeclarations): string[] {
   return [
     ...new Set([...folderPaths, ...pagePaths, CATALOG_PATH, ...typePaths]),
   ].sort()
+}
+
+/**
+ * A diagram file in any of its forms: drawn or chain (no `type`), or one of
+ * the typed forms, each told apart by its `type`.
+ */
+function diagramFileSchema(references: References): z.ZodType {
+  const { drawn, chain } = diagramSchemas(references)
+  return z.union([
+    drawn,
+    chain,
+    ...DIAGRAM_TYPES.map((form) => form.schema(references)),
+  ])
 }
 
 /** Every page path of the repository, for a diagram box's `page`. */

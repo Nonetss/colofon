@@ -4,8 +4,9 @@ import path from "node:path"
 import type { Element, ElementContent } from "hast"
 import type { z } from "zod"
 import type { Catalog, Entity } from "#catalog"
-import { DIAGRAMS_DIR, parseJson, spanishErrors } from "#load"
+import { DIAGRAMS_DIR, parseJson } from "#load"
 import { entityPath } from "#pages/catalog-paths"
+import { readIllustration } from "#pages/diagram-illustration"
 import {
   badgeWidth,
   chainGap,
@@ -15,19 +16,49 @@ import {
   textWidth,
 } from "#pages/diagram-measure"
 import {
+  isRecord,
+  joinPath,
+  listOf,
+  numberOr,
+  optional,
+  optionalText,
+  positive,
+  type Report,
+  requiredText,
+  salvaged,
+  subLines,
+  unknownKeys,
+  withPath,
+} from "#pages/diagram-read"
+import {
   type Anchor,
   CHAIN_KEYS,
   COMMON_KEYS,
   DRAWN_KEYS,
   diagramSchemas,
   type EdgeKind,
+  type Head,
   type Hue,
   ID_PATTERN,
   type NodeKind,
+  type Route,
   type Shape,
 } from "#pages/diagram-schema"
 import { diagramSvg } from "#pages/diagram-svg"
-import { entityPagePath } from "#pages/entities"
+import { checkAccents } from "#pages/diagram-types/budget"
+import { FORM_KEYS } from "#pages/diagram-types/form"
+import { typeModule, typeNames } from "#pages/diagram-types/index"
+import { entityOf, linkOf } from "#pages/diagram-types/items"
+import { selfLoop } from "#pages/diagram-types/links"
+import type {
+  Graphic,
+  LegendEntry,
+  Scene,
+  TextBlock,
+  TextPart,
+  TextTree,
+  Tools,
+} from "#pages/diagram-types/scene"
 import type { PageProblem } from "#pages/types"
 
 // The diagrams of a repository: one `diagramas/<id>.json` each, shown in any
@@ -38,7 +69,8 @@ import type { PageProblem } from "#pages/types"
 // valid, so one bad box or arrow never hides the rest. It also measures the
 // text as `lib.mjs` did and reports what does not fit. Then it draws the
 // diagram as an SVG (`diagram-svg.ts`), keeping its zones and connections as
-// text for screen readers and `llm.txt`.
+// text for screen readers and `llm.txt`. A file with `type` is one of the
+// typed forms (`diagram-types/`), which the platform lays out from data.
 
 export type DiagramRow = {
   key: string | null
@@ -58,7 +90,7 @@ export type DiagramBox = {
   name: string
   sub: string[]
   /** Its own shape, or the one `shapes` gives its kind. */
-  shape: Shape | null
+  shape: BoxShape | null
   /** Its own hue, or its zone's. */
   hue: Hue | null
   zone: string | null
@@ -71,8 +103,13 @@ export type DiagramBox = {
   link: string | null
   /** A table's columns, `null` for a plain box. */
   rows: DiagramRow[] | null
+  /** A table's second section (a UML class's operations), `null` without. */
+  ops: DiagramRow[] | null
   more: string | null
 }
+
+/** A box's outline: a drawn diagram's shapes, plus a flowchart's `io`. */
+export type BoxShape = Shape | "parallelogram"
 
 export type Point = readonly [number, number]
 
@@ -92,6 +129,10 @@ export type DiagramEdge = {
   hue: Hue | null
   info: string | null
   noHead: boolean
+  /** What the line ends in, unless `noHead`. */
+  head: Head
+  /** Right angles with rounded corners, or a smooth curve. */
+  route: Route
   badge: string | null
 }
 
@@ -122,6 +163,19 @@ export type Diagram = {
   badgeName: string | null
   /** The shape of each kind of box, for its legend sample. */
   shapes: Partial<Record<NodeKind, Shape>>
+  /** The typed form it is (`content-diagram-types`), `null` drawn. */
+  type: string | null
+  /** A typed form's shapes under and over its boxes. */
+  under: Graphic[]
+  over: Graphic[]
+  /** A typed form's own legend; `null`: the kinds the diagram uses. */
+  legend: LegendEntry[] | null
+  /** A typed form's text version; `null`: its zones and connections. */
+  text: TextBlock[] | null
+  /** The catalog entities its boxes and items stand for. */
+  entities: Entity[]
+  /** A hand-drawn `.svg` diagram's drawing, `null` for any other. */
+  illustration: { viewBox: string; children: ElementContent[] } | null
 }
 
 /** A diagram file read: what could be kept of it, and what went wrong. */
@@ -142,14 +196,19 @@ export type DiagramContext = {
 }
 
 const EXTENSION = ".json"
+const ILLUSTRATION = ".svg"
 
-/** Every diagram of the repository at `root`, by id, in id order. */
+/**
+ * Every diagram of the repository at `root`, by id, in id order: its JSON
+ * file, or else its hand-drawn `.svg`.
+ */
 export async function readDiagrams(
   root: string,
   context: DiagramContext
 ): Promise<{ diagrams: Map<string, DiagramFile>; problems: PageProblem[] }> {
   const diagrams = new Map<string, DiagramFile>()
   const problems: PageProblem[] = []
+  const illustrations: { id: string; file: string; text: string }[] = []
   for (const entry of await listDir(path.join(root, DIAGRAMS_DIR))) {
     if (!entry.isFile()) continue
     const file = `${DIAGRAMS_DIR}/${entry.name}`
@@ -163,8 +222,9 @@ export async function readDiagrams(
       })
       continue
     }
-    if (!entry.name.endsWith(EXTENSION)) continue
-    const id = entry.name.slice(0, -EXTENSION.length)
+    const extension = extensionOf(entry.name)
+    if (extension === null) continue
+    const id = entry.name.slice(0, -extension.length)
     if (!ID_PATTERN.test(id)) {
       problems.push({
         file,
@@ -175,14 +235,74 @@ export async function readDiagrams(
       continue
     }
     const text = await readFile(path.join(root, file), "utf8")
+    if (extension === ILLUSTRATION) {
+      illustrations.push({ id, file, text })
+      continue
+    }
     const read = readDiagram(id, file, text, context)
+    diagrams.set(id, read)
+    problems.push(...read.problems)
+  }
+  for (const { id, file, text } of illustrations) {
+    if (diagrams.has(id)) {
+      problems.push({
+        file,
+        line: null,
+        message: `${DIAGRAMS_DIR}/${id}${EXTENSION} ya es el diagrama ${id}: este fichero no se usa`,
+      })
+      continue
+    }
+    const read = illustrationFile(id, file, text)
     diagrams.set(id, read)
     problems.push(...read.problems)
   }
   return { diagrams, problems }
 }
 
-type Report = (at: string, message: string) => void
+function extensionOf(name: string): string | null {
+  if (name.endsWith(EXTENSION)) return EXTENSION
+  if (name.endsWith(ILLUSTRATION)) return ILLUSTRATION
+  return null
+}
+
+/** Reads a hand-drawn `.svg` diagram. */
+export function illustrationFile(
+  id: string,
+  file: string,
+  text: string
+): DiagramFile {
+  const problems: PageProblem[] = []
+  const read = readIllustration(text, (message) =>
+    problems.push({ file, line: null, message })
+  )
+  if (read === null) return { id, file, diagram: null, problems }
+  return {
+    id,
+    file,
+    diagram: {
+      id,
+      title: read.title,
+      description: read.description,
+      size: { width: read.width, height: read.height },
+      nodes: [],
+      edges: [],
+      zones: [],
+      notes: [],
+      kindNames: {},
+      edgeNames: {},
+      badgeName: null,
+      shapes: {},
+      type: null,
+      under: [],
+      over: [],
+      legend: [],
+      text: [],
+      entities: [],
+      illustration: { viewBox: read.viewBox, children: read.children },
+    },
+    problems,
+  }
+}
 
 const schemas = diagramSchemas()
 
@@ -205,17 +325,18 @@ export function readDiagram(
     report("", "Un diagrama es un objeto con title, desc y nodes (o items)")
     return { id, file, diagram: null, problems }
   }
+  if (data.type !== undefined)
+    return {
+      id,
+      file,
+      diagram: typedDiagram(id, data, context, report),
+      problems,
+    }
 
   const chain = "items" in data
   const formKeys: readonly string[] = chain ? CHAIN_KEYS : DRAWN_KEYS
   const keys: readonly string[] = [...COMMON_KEYS, ...formKeys]
-  for (const key of Object.keys(data)) {
-    if (!keys.includes(key))
-      report(
-        "",
-        `\`${key}\` no es una clave de un diagrama (${keys.join(", ")})`
-      )
-  }
+  unknownKeys(data, keys, "un diagrama", report)
   const title = requiredText(data.title, "title", report, id)
   const description = requiredText(data.desc, "desc", report, "")
   const kindNames = optional(
@@ -249,6 +370,10 @@ export function readDiagram(
   )
   const edges = edgesOf(drawing.edges, nodes, drawing.zones, colorEdges, report)
   measure(nodes, edges, report)
+  checkAccents(accentsOf(nodes, edges), report)
+  const entities: Entity[] = []
+  for (const { box } of nodes)
+    if (box.entity !== null) entities.push(box.entity)
   return {
     id,
     file,
@@ -265,8 +390,141 @@ export function readDiagram(
       edgeNames: edgeNames ?? {},
       badgeName,
       shapes: kindShapes,
+      type: null,
+      under: [],
+      over: [],
+      legend: null,
+      text: null,
+      entities,
+      illustration: null,
     },
     problems,
+  }
+}
+
+/**
+ * How many things of a drawn diagram carry the accent: each focal box, and
+ * each main path, a run of accent arrows joined end to end counting once.
+ */
+function accentsOf(
+  boxes: readonly ReadBox[],
+  edges: readonly DiagramEdge[]
+): number {
+  const focal = boxes.filter(({ box }) => box.kind === "focal").length
+  return focal + accentPaths(edges.filter((edge) => edge.kind === "accent"))
+}
+
+/** How many runs the accent arrows make, joined through shared boxes. */
+export function accentPaths(edges: readonly DiagramEdge[]): number {
+  const parent = new Map<string, string>()
+  const find = (id: string): string => {
+    const up = parent.get(id)
+    if (up === undefined || up === id) return id
+    const root = find(up)
+    parent.set(id, root)
+    return root
+  }
+  let loose = 0
+  for (const edge of edges) {
+    const ends = [edge.from, edge.to].filter((end) => end !== null)
+    if (ends.length === 0) {
+      loose += 1
+      continue
+    }
+    for (const end of ends) if (!parent.has(end)) parent.set(end, end)
+    const [first, second] = ends
+    if (first !== undefined && second !== undefined)
+      parent.set(find(second), find(first))
+  }
+  const roots = new Set([...parent.keys()].map(find))
+  return roots.size + loose
+}
+
+/**
+ * A typed diagram: its form checks its keys and lays it out. An unknown
+ * `type` or `variant` is reported; nothing is drawn for an unknown type.
+ */
+function typedDiagram(
+  id: string,
+  data: Record<string, unknown>,
+  context: DiagramContext,
+  report: Report
+): Diagram | null {
+  const name = data.type
+  const form = typeof name === "string" ? typeModule(name) : undefined
+  if (form === undefined) {
+    report(
+      "type",
+      `\`${String(name)}\` no es ningún tipo de diagrama (${typeNames().join(", ")})`
+    )
+    return null
+  }
+  unknownKeys(
+    data,
+    [...FORM_KEYS, ...form.keys],
+    form.label.toLowerCase(),
+    report
+  )
+  const title = requiredText(data.title, "title", report, id)
+  const description = requiredText(data.desc, "desc", report, "")
+  const variant = variantOf(data.variant, form.variants, report)
+  const tools: Tools = { report, context, ids: new Set(), entities: [] }
+  const scene = form.read(data, tools, variant)
+  if (scene === null) return null
+  checkAccents(scene.accents, report)
+  return sceneDiagram(id, title, description, form.name, scene, tools)
+}
+
+function variantOf(
+  value: unknown,
+  variants: readonly string[],
+  report: Report
+): string | null {
+  if (value === undefined) return null
+  if (typeof value === "string" && variants.includes(value)) return value
+  if (variants.length === 0) {
+    report("variant", "Este tipo de diagrama no tiene variantes")
+    return null
+  }
+  report(
+    "variant",
+    `\`${String(value)}\` no es ninguna variante de este tipo (${variants.join(", ")})`
+  )
+  return null
+}
+
+function sceneDiagram(
+  id: string,
+  title: string,
+  description: string,
+  type: string,
+  scene: Scene,
+  tools: Tools
+): Diagram {
+  const entities = [...tools.entities]
+  for (const node of scene.nodes)
+    if (node.entity !== null && !entities.includes(node.entity))
+      entities.push(node.entity)
+  return {
+    id,
+    title,
+    description,
+    size: scene.size,
+    nodes: scene.nodes,
+    edges: scene.edges,
+    zones: scene.zones,
+    notes: scene.notes,
+    kindNames: {},
+    edgeNames: {},
+    badgeName: null,
+    shapes: {},
+    type,
+    under: scene.under,
+    over: scene.over,
+    legend: scene.legend,
+    text: scene.text,
+    entities,
+    illustration: null,
   }
 }
 
@@ -466,6 +724,11 @@ function boxesOf(
     const zone = zoneOf(box.zone, zoneHues, `${at}.zone`, report)
     const kind = box.kind ?? "service"
     const rows = rowsOf(box.rows)
+    let ops = rowsOf(box.ops)
+    if (ops !== null && rows === null) {
+      report(`${at}.ops`, "ops va bajo las filas de una tabla: lleva rows")
+      ops = null
+    }
     return {
       at,
       box: {
@@ -473,7 +736,7 @@ function boxesOf(
         x: box.x,
         y: box.y,
         w: box.w,
-        h: heightOf(box.h, rows, box.more),
+        h: heightOf(box.h, rows, ops, box.more),
         kind,
         tag: box.tag ?? null,
         name: boxName(box.name, entity, id, at, report),
@@ -487,6 +750,7 @@ function boxesOf(
         entity,
         link,
         rows,
+        ops,
         more: box.more ?? null,
       },
     }
@@ -499,40 +763,6 @@ function boxesOf(
     box.needs = known
   }
   return boxes
-}
-
-function entityOf(
-  written: string | undefined,
-  catalog: Catalog,
-  at: string,
-  report: Report
-): Entity | null {
-  if (written === undefined) return null
-  const [typeId = "", entityId = ""] = written.split("/")
-  const entity = catalog.get(typeId)?.entities.get(entityId)
-  if (entity === undefined) {
-    report(at, `\`${written}\` no es ninguna entidad del catálogo`)
-    return null
-  }
-  return entity
-}
-
-function linkOf(
-  box: WrittenBox,
-  entity: Entity | null,
-  pages: ReadonlySet<string>,
-  at: string,
-  report: Report
-): string | null {
-  if (box.entity !== undefined && box.page !== undefined)
-    report(at, "Lleva `entity` o `page`, no los dos")
-  if (entity !== null) return entityPagePath(entity)
-  if (box.entity !== undefined || box.page === undefined) return null
-  if (!pages.has(box.page)) {
-    report(`${at}.page`, `\`${box.page}\` no es ninguna página de docs/`)
-    return null
-  }
-  return box.page
 }
 
 function zoneOf(
@@ -566,11 +796,17 @@ function boxName(
 function heightOf(
   h: number | undefined,
   rows: DiagramRow[] | null,
+  ops: DiagramRow[] | null,
   more: string | undefined
 ): number {
   if (h !== undefined) return h
   if (rows === null) return 0
-  return tableHeight(rows.length, more !== undefined)
+  return tableHeight(rows.length, more !== undefined, opsCount(ops))
+}
+
+function opsCount(ops: readonly DiagramRow[] | null): number {
+  if (ops === null) return 0
+  return ops.length
 }
 
 function rowsOf(written: WrittenBox["rows"]): DiagramRow[] | null {
@@ -637,6 +873,7 @@ function edgesOf(
     }
     const kind = edge.kind ?? "default"
     const hue = edgeHue(kind, edge.hue, colorEdges, from, byId)
+    const route = edge.route ?? "orthogonal"
     const base = {
       index,
       from,
@@ -647,6 +884,8 @@ function edgesOf(
       hue,
       info: edge.info ?? null,
       noHead: edge.noHead === true,
+      head: edge.head ?? "arrow",
+      route,
     }
     if (edge.badge !== undefined) {
       if (edge.points !== undefined)
@@ -670,11 +909,25 @@ function edgesOf(
       })
       continue
     }
+    const loopBox = selfLoopBox(edge, from, to, byId)
+    if (loopBox !== null) {
+      const loop = selfLoop(loopBox)
+      edges.push({
+        ...base,
+        route: "orthogonal",
+        points: loop.points,
+        label: edge.label ?? null,
+        at: loop.at,
+        anchor: "start",
+        badge: null,
+      })
+      continue
+    }
     if (edge.points === undefined) {
       reportAt("points", "Falta: una flecha lleva points, o badge")
       continue
     }
-    const diagonal = diagonalOf(edge.points)
+    const diagonal = route === "curve" ? null : diagonalOf(edge.points)
     if (diagonal !== null) {
       reportAt("points", `tramo en diagonal ${diagonal}`)
       continue
@@ -693,6 +946,17 @@ function edgesOf(
     })
   }
   return edges
+}
+
+/** The box an arrow loops on: same `from` and `to`, and no `points`. */
+function selfLoopBox(
+  edge: WrittenEdge,
+  from: string | null,
+  to: string | null,
+  boxes: ReadonlyMap<string, DiagramBox>
+): DiagramBox | null {
+  if (edge.points !== undefined || from === null || from !== to) return null
+  return boxes.get(from) ?? null
 }
 
 function knownEnd(
@@ -779,7 +1043,7 @@ function measureTable(
   const tag = box.tag === null ? 0 : tagWidth(box.tag) + 8
   if (textWidth(box.name, 12, "sans") + tag > box.w - 24)
     report(at, `"${box.name}" no cabe en ${box.w}px`)
-  for (const row of rows) {
+  for (const row of [...rows, ...(box.ops ?? [])]) {
     const width =
       40 +
       textWidth(row.name, 9, "mono") +
@@ -788,158 +1052,6 @@ function measureTable(
     if (width > box.w - 20)
       report(at, `la columna "${row.name}" no cabe en ${box.w}px`)
   }
-}
-
-// ── Reading helpers ─────────────────────────────────────────────────────
-
-function withPath(at: string, message: string): string {
-  if (at === "") return message
-  return `${at}: ${message}`
-}
-
-function joinPath(at: string, field: string): string {
-  if (at === "") return field
-  if (field === "") return at
-  return `${at}.${field}`
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value)
-}
-
-function requiredText(
-  value: unknown,
-  key: string,
-  report: Report,
-  fallback: string
-): string {
-  if (typeof value === "string" && value.trim() !== "") return value
-  if (value === undefined) report(key, "Falta: es obligatorio")
-  else report(key, "Es un texto")
-  return fallback
-}
-
-function optionalText(
-  value: unknown,
-  key: string,
-  report: Report
-): string | null {
-  if (value === undefined) return null
-  if (typeof value === "string" && value.trim() !== "") return value
-  report(key, "Es un texto")
-  return null
-}
-
-function positive(value: unknown, key: string, report: Report): number | null {
-  if (typeof value === "number" && value > 0) return value
-  if (value === undefined) report(key, "Falta: es obligatorio")
-  else report(key, "Es un número mayor que 0")
-  return null
-}
-
-function numberOr(
-  value: unknown,
-  key: string,
-  report: Report,
-  fallback: number
-): number {
-  if (value === undefined) return fallback
-  if (typeof value === "number") return value
-  report(key, "Es un número")
-  return fallback
-}
-
-/** A list field: its items, or none (reported) when it is not a list. */
-function listOf(
-  value: unknown,
-  key: string,
-  report: Report,
-  required: boolean
-): unknown[] {
-  if (value === undefined) {
-    if (required) report(key, "Falta: es una lista con al menos un elemento")
-    return []
-  }
-  if (!Array.isArray(value)) {
-    report(key, "Es una lista")
-    return []
-  }
-  if (required && value.length === 0)
-    report(key, "Es una lista con al menos un elemento")
-  return value
-}
-
-function optional<T>(
-  schema: z.ZodType<T>,
-  value: unknown,
-  key: string,
-  report: Report
-): T | undefined {
-  if (value === undefined) return undefined
-  const parsed = schema.safeParse(value, { error: spanishErrors })
-  if (parsed.success) return parsed.data
-  for (const issue of parsed.error.issues)
-    report(joinPath(key, issueKey(issue)), issueMessage(issue))
-  return undefined
-}
-
-/**
- * One part of a list (a box, an arrow…) checked by `schema`. Every problem
- * is reported; a part whose wrong fields are all optional is kept without
- * them, and one missing a `required` field is left out.
- */
-function salvaged<T>(
-  schema: z.ZodType<T>,
-  value: unknown,
-  at: string,
-  required: readonly string[],
-  report: Report
-): T | null {
-  const parsed = schema.safeParse(value, { error: spanishErrors })
-  if (parsed.success) return parsed.data
-  const wrong = new Set<string>()
-  let whole = false
-  for (const issue of parsed.error.issues) {
-    report(joinPath(at, issueKey(issue)), issueMessage(issue))
-    const key = issueKey(issue)
-    if (key === "") whole = true
-    else wrong.add(firstKey(key))
-  }
-  if (whole || !isRecord(value)) return null
-  if (required.some((key) => wrong.has(key))) return null
-  const kept = Object.fromEntries(
-    Object.entries(value).filter(([key]) => !wrong.has(key))
-  )
-  const again = schema.safeParse(kept)
-  if (again.success) return again.data
-  return null
-}
-
-function firstKey(key: string): string {
-  const [first = ""] = key.split(".")
-  return first
-}
-
-/** Where an issue points; an unknown key points at that key. */
-function issueKey(issue: z.core.$ZodIssue): string {
-  const path = issue.path.map(String)
-  if (issue.code === "unrecognized_keys") {
-    const [first] = issue.keys
-    if (first !== undefined) path.push(first)
-  }
-  return path.join(".")
-}
-
-function issueMessage(issue: z.core.$ZodIssue): string {
-  if (issue.code === "unrecognized_keys")
-    return `no es una clave que admita (${issue.keys.map((key) => `\`${key}\``).join(", ")})`
-  return issue.message
-}
-
-function subLines(sub: string | string[] | undefined): string[] {
-  if (sub === undefined) return []
-  if (typeof sub === "string") return [sub]
-  return sub
 }
 
 // ── The figure ──────────────────────────────────────────────────────────
@@ -952,10 +1064,8 @@ export function diagramsByEntity(
   for (const { diagram } of diagrams.values()) {
     if (diagram === null) continue
     const entities = new Set<string>()
-    for (const node of diagram.nodes) {
-      if (node.entity !== null)
-        entities.add(entityPath(node.entity.type, node.entity.id))
-    }
+    for (const entity of diagram.entities)
+      entities.add(entityPath(entity.type, entity.id))
     for (const entity of entities) {
       const list = found.get(entity)
       if (list === undefined) found.set(entity, [diagram.id])
@@ -1001,6 +1111,30 @@ export function diagramFigure(
     if (zone === undefined) return [text(id)]
     return [text(zone.label)]
   }
+  const textVersion = textVersionOf(diagram, name, zoneLabel)
+  const caption = element("figcaption", {}, [
+    element("strong", {}, [text(diagram.title)]),
+    text(captionTail(diagram.description)),
+  ])
+  const properties = { className: ["doc-diagram"], dataDiagram: diagram.id }
+  if (diagram.size === null)
+    return element("figure", properties, [caption, ...textVersion])
+  return element("figure", { ...properties, dataDrawn: "" }, [
+    caption,
+    element("div", { className: ["doc-diagram-canvas"] }, [
+      diagramSvg(diagram, diagram.size, routeOf),
+    ]),
+    element("div", { className: ["doc-diagram-text"] }, textVersion),
+  ])
+}
+
+/** A typed form's text version, or a drawn diagram's zones and arrows. */
+function textVersionOf(
+  diagram: Diagram,
+  name: (id: string) => ElementContent[],
+  zoneLabel: (id: string) => ElementContent[]
+): ElementContent[] {
+  if (diagram.text !== null) return typedText(diagram.text, name)
   const textVersion: ElementContent[] = []
   const zones = diagram.zones
     .filter((zone) => zone.id !== null)
@@ -1047,20 +1181,66 @@ export function diagramFigure(
       )
     )
   }
-  const caption = element("figcaption", {}, [
-    element("strong", {}, [text(diagram.title)]),
-    text(captionTail(diagram.description)),
-  ])
-  const properties = { className: ["doc-diagram"], dataDiagram: diagram.id }
-  if (diagram.size === null)
-    return element("figure", properties, [caption, ...textVersion])
-  return element("figure", { ...properties, dataDrawn: "" }, [
-    caption,
-    element("div", { className: ["doc-diagram-canvas"] }, [
-      diagramSvg(diagram, diagram.size, routeOf),
-    ]),
-    element("div", { className: ["doc-diagram-text"] }, textVersion),
-  ])
+  return textVersion
+}
+
+/** The blocks of a typed form's text version, as lists and tables. */
+function typedText(
+  blocks: readonly TextBlock[],
+  name: (id: string) => ElementContent[]
+): ElementContent[] {
+  const line = (parts: readonly TextPart[]): ElementContent[] => {
+    const content: ElementContent[] = []
+    for (const part of parts) {
+      if (typeof part === "string") content.push(text(part))
+      else content.push(...name(part.box))
+    }
+    return content
+  }
+  const tree = (items: readonly TextTree[]): Element =>
+    element(
+      "ul",
+      {},
+      items.map((item) => {
+        if (item.children.length === 0)
+          return element("li", {}, line(item.line))
+        return element("li", {}, [...line(item.line), tree(item.children)])
+      })
+    )
+  return blocks.map((block) => {
+    if (block.kind === "tree") return tree(block.items)
+    if (block.kind === "list")
+      return element(
+        listTag(block.ordered),
+        {},
+        block.items.map((item) => element("li", {}, line(item)))
+      )
+    return element("table", {}, [
+      element("thead", {}, [
+        element(
+          "tr",
+          {},
+          block.head.map((cell) => element("th", {}, [text(cell)]))
+        ),
+      ]),
+      element(
+        "tbody",
+        {},
+        block.rows.map((row) =>
+          element(
+            "tr",
+            {},
+            row.map((cell) => element("td", {}, [text(cell)]))
+          )
+        )
+      ),
+    ])
+  })
+}
+
+function listTag(ordered: boolean): string {
+  if (ordered) return "ol"
+  return "ul"
 }
 
 function connectionEnd(

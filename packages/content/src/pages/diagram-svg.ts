@@ -4,12 +4,19 @@ import {
   type Anchor,
   EDGE_KINDS,
   type EdgeKind,
+  type Head,
   type Hue,
   NODE_KINDS,
   type NodeKind,
-  type Shape,
 } from "#pages/diagram-schema"
+import {
+  type Graphic,
+  type LegendEntry,
+  type LegendSample,
+  TEXT_ROLES,
+} from "#pages/diagram-types/scene"
 import type {
+  BoxShape,
   Diagram,
   DiagramBox,
   DiagramEdge,
@@ -51,6 +58,10 @@ const BADGE_NAME = "Conexión con una pieza lejana"
 /** A marker 8×6 at refX 7 on a 1.2 stroke, as `lib.mjs` draws its heads. */
 const HEAD = { length: 9.6, half: 3.6, past: 1.2 }
 
+/** The UML heads: a hollow triangle, and a diamond twice as long as wide. */
+const TRIANGLE = { length: 12, half: 6, past: 0 }
+const DIAMOND = { length: 16, half: 5, past: 0 }
+
 /** The drawings this wide or wider keep 640px on narrow screens. */
 const WIDE = 640
 
@@ -87,6 +98,8 @@ export function diagramSvg(
   size: { width: number; height: number },
   routeOf: (pagePath: string) => string
 ): Element {
+  if (diagram.illustration !== null)
+    return illustrationSvg(diagram, diagram.illustration, size)
   const byId = new Map<string, DiagramBox>()
   for (const box of diagram.nodes) if (box.id !== null) byId.set(box.id, box)
   const legend = legendOf(diagram, size)
@@ -94,6 +107,7 @@ export function diagramSvg(
     element("title", {}, [text(diagram.title)]),
     rect(cls("paper"), 0, 0, size.width, legend.height, 0),
   ]
+  for (const graphic of diagram.under) parts.push(graphicOf(graphic, routeOf))
   const titles: Element[] = []
   for (const zone of diagram.zones) {
     parts.push(zoneFrame(zone))
@@ -127,6 +141,7 @@ export function diagramSvg(
   for (const box of diagram.nodes) parts.push(boxOf(box, routeOf))
   for (const box of diagram.nodes)
     parts.push(...badgesOf(box, diagram.edges, byId))
+  for (const graphic of diagram.over) parts.push(graphicOf(graphic, routeOf))
   parts.push(...legend.parts)
   const className = [`${P}svg`]
   if (size.width >= WIDE) className.push(`${P}svg-wide`)
@@ -140,6 +155,27 @@ export function diagramSvg(
       ariaLabel: altText(diagram),
     },
     parts
+  )
+}
+
+/** A hand-drawn diagram: its own drawing, sized and labelled as any other. */
+function illustrationSvg(
+  diagram: Diagram,
+  illustration: { viewBox: string; children: ElementContent[] },
+  size: { width: number; height: number }
+): Element {
+  const className = [`${P}svg`, `${P}illustration`]
+  if (size.width >= WIDE) className.push(`${P}svg-wide`)
+  return element(
+    "svg",
+    {
+      className,
+      viewBox: illustration.viewBox,
+      width: n(size.width),
+      role: "img",
+      ariaLabel: altText(diagram),
+    },
+    [element("title", {}, [text(diagram.title)]), ...illustration.children]
   )
 }
 
@@ -249,21 +285,78 @@ function edgeClasses(
   return [...cls(base), ...hued(edge.hue)]
 }
 
-/** The line along its points with rounded corners, then its head. */
+/** The line along its points (rounded corners, or a curve), then its head. */
 function edgeLine(edge: DiagramEdge, points: readonly Point[]): Element[] {
   const ends = endsOf(edge) ?? {}
   const line = element("path", {
     className: edgeClasses(edge, "edge"),
     ...ends,
-    d: roundedPath(points),
+    d: routePath(edge, points),
   })
   if (edge.noHead) return [line]
-  const head = arrowHead(points)
+  const head = headPath(edge.head, lastLeg(edge, points))
   if (head === null) return [line]
-  return [
-    line,
-    element("path", { className: edgeClasses(edge, "head"), ...ends, d: head }),
-  ]
+  const className = edgeClasses(edge, "head")
+  if (edge.head === "triangle" || edge.head === "open-diamond")
+    className.push(`${P}head-hollow`)
+  return [line, element("path", { className, ...ends, d: head })]
+}
+
+function routePath(edge: DiagramEdge, points: readonly Point[]): string {
+  if (edge.route === "curve") return curvePath(points)
+  return roundedPath(points)
+}
+
+/** The two points the head points along: the last segment's, or the curve's tangent. */
+function lastLeg(edge: DiagramEdge, points: readonly Point[]): Point[] {
+  const end = points.at(-1)
+  if (edge.route !== "curve" || end === undefined || points.length < 3)
+    return points.slice(-2)
+  const [, , control] = curveSegments(points).at(-1) ?? []
+  if (control === undefined) return points.slice(-2)
+  return [control, end]
+}
+
+/**
+ * The Catmull-Rom curve through `points` as cubic Bézier segments: for
+ * each segment its start, its two control points and its end.
+ */
+function curveSegments(points: readonly Point[]): Point[][] {
+  const segments: Point[][] = []
+  for (let i = 0; i < points.length - 1; i++) {
+    const p1 = points[i]
+    const p2 = points[i + 1]
+    if (p1 === undefined || p2 === undefined) continue
+    const p0 = points[i - 1] ?? p1
+    const p3 = points[i + 2] ?? p2
+    segments.push([
+      p1,
+      [p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6],
+      [p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6],
+      p2,
+    ])
+  }
+  return segments
+}
+
+/** `M … C …` through `points`, a smooth curve. */
+function curvePath(points: readonly Point[]): string {
+  const [first] = points
+  if (first === undefined) return ""
+  const parts = [`M${n(first[0])} ${n(first[1])}`]
+  for (const [, a, b, end] of curveSegments(points)) {
+    if (a === undefined || b === undefined || end === undefined) continue
+    parts.push(
+      `C${n(a[0])} ${n(a[1])} ${n(b[0])} ${n(b[1])} ${n(end[0])} ${n(end[1])}`
+    )
+  }
+  return parts.join(" ")
+}
+
+function headPath(head: Head, leg: readonly Point[]): string | null {
+  if (head === "triangle") return arrowHead(leg, TRIANGLE)
+  if (head === "diamond" || head === "open-diamond") return diamondHead(leg)
+  return arrowHead(leg, HEAD)
 }
 
 /** A wider invisible line along the arrow, where the pointer catches it. */
@@ -278,7 +371,7 @@ function hitOf(
   return element("path", {
     className: cls("hit"),
     ...data,
-    d: roundedPath(points),
+    d: routePath(edge, points),
   })
 }
 
@@ -339,25 +432,57 @@ function roundedPath(points: readonly Point[]): string {
   return parts.join(" ")
 }
 
-/** A filled triangle at the route's end, pointing along its last segment. */
-function arrowHead(points: readonly Point[]): string | null {
+/** The unit direction of the last segment of `points`, and its end. */
+function direction(
+  points: readonly Point[]
+): { end: Point; dx: number; dy: number } | null {
   const end = points.at(-1)
   const before = points.at(-2)
   if (end === undefined || before === undefined) return null
   const length = Math.hypot(end[0] - before[0], end[1] - before[1])
   if (length === 0) return null
-  const dx = (end[0] - before[0]) / length
-  const dy = (end[1] - before[1]) / length
-  const tipX = end[0] + dx * HEAD.past
-  const tipY = end[1] + dy * HEAD.past
-  const baseX = tipX - dx * HEAD.length
-  const baseY = tipY - dy * HEAD.length
-  const sideX = -dy * HEAD.half
-  const sideY = dx * HEAD.half
+  return {
+    end,
+    dx: (end[0] - before[0]) / length,
+    dy: (end[1] - before[1]) / length,
+  }
+}
+
+/** A triangle at the route's end, pointing along its last segment. */
+function arrowHead(
+  points: readonly Point[],
+  size: { length: number; half: number; past: number }
+): string | null {
+  const along = direction(points)
+  if (along === null) return null
+  const { end, dx, dy } = along
+  const tipX = end[0] + dx * size.past
+  const tipY = end[1] + dy * size.past
+  const baseX = tipX - dx * size.length
+  const baseY = tipY - dy * size.length
+  const sideX = -dy * size.half
+  const sideY = dx * size.half
   return [
     `M${n(tipX)} ${n(tipY)}`,
     `L${n(baseX + sideX)} ${n(baseY + sideY)}`,
     `L${n(baseX - sideX)} ${n(baseY - sideY)}`,
+    "Z",
+  ].join(" ")
+}
+
+/** A diamond whose far corner is the route's end, as UML's compositions. */
+function diamondHead(points: readonly Point[]): string | null {
+  const along = direction(points)
+  if (along === null) return null
+  const { end, dx, dy } = along
+  const mid = DIAMOND.length / 2
+  const cx = end[0] - dx * mid
+  const cy = end[1] - dy * mid
+  return [
+    `M${n(end[0])} ${n(end[1])}`,
+    `L${n(cx - dy * DIAMOND.half)} ${n(cy + dx * DIAMOND.half)}`,
+    `L${n(end[0] - dx * DIAMOND.length)} ${n(end[1] - dy * DIAMOND.length)}`,
+    `L${n(cx + dy * DIAMOND.half)} ${n(cy - dx * DIAMOND.half)}`,
     "Z",
   ].join(" ")
 }
@@ -396,17 +521,43 @@ function boxOf(
   )
 }
 
-/** A rounded box, or a pill or a cylinder by its shape. */
+/** A rounded box, or the outline its shape names. */
 function outline(
   className: string[],
   x: number,
   y: number,
   w: number,
   h: number,
-  shape: Shape | null,
+  shape: BoxShape | null,
   rim: boolean
 ): Element[] {
   if (shape === "pill") return [rect(className, x, y, w, h, h / 2)]
+  if (shape === "rounded") return [rect(className, x, y, w, h, h / 3)]
+  if (shape === "diamond")
+    return [
+      element("path", {
+        className,
+        d: `M${n(x + w / 2)} ${n(y)} L${n(x + w)} ${n(y + h / 2)} L${n(x + w / 2)} ${n(y + h)} L${n(x)} ${n(y + h / 2)} Z`,
+      }),
+    ]
+  if (shape === "parallelogram") {
+    const slant = Math.min(16, w / 6)
+    return [
+      element("path", {
+        className,
+        d: `M${n(x + slant)} ${n(y)} H${n(x + w)} L${n(x + w - slant)} ${n(y + h)} H${n(x)} Z`,
+      }),
+    ]
+  }
+  if (shape === "circle")
+    return [
+      element("circle", {
+        className,
+        cx: n(x + w / 2),
+        cy: n(y + h / 2),
+        r: n(Math.min(w, h) / 2),
+      }),
+    ]
   if (shape === "cylinder") {
     const r = Math.min(7, h / 4)
     const rx = w / 2
@@ -446,6 +597,13 @@ function tagOf(tag: string, kind: NodeKind, x: number, y: number): Element[] {
   ]
 }
 
+/** Where a box's tag sits: on its top row, or over the name inside a shape that narrows. */
+function tagTop(box: DiagramBox, nameY: number): number {
+  if (box.shape === "cylinder") return box.y + 16
+  if (box.shape === "diamond" || box.shape === "circle") return nameY - 26
+  return box.y + 6
+}
+
 function plainBox(box: DiagramBox): Element[] {
   const { x, y, w, h, shape } = box
   const cx = x + w / 2
@@ -460,10 +618,9 @@ function plainBox(box: DiagramBox): Element[] {
     ...outline(nodeClasses(box.kind), x, y, w, h, shape, true),
   ]
   if (box.tag !== null) {
-    // Centred on a pill or a cylinder, at the left on a box.
+    // Centred on any shape, at the left on a box.
     const tx = shape === null ? x + 8 : cx - tagWidth(box.tag) / 2
-    const ty = cylinder ? y + 16 : y + 6
-    parts.push(...tagOf(box.tag, box.kind, tx, ty))
+    parts.push(...tagOf(box.tag, box.kind, tx, tagTop(box, nameY)))
   }
   parts.push(textAt(cls("name"), cx, nameY, box.name, "middle"))
   box.sub.forEach((line, index) => {
@@ -499,8 +656,20 @@ function tableBox(box: DiagramBox, rows: readonly DiagramRow[]): Element[] {
     if (row.type !== null)
       parts.push(textAt(cls("type"), x + w - 12, ry, row.type, "end"))
   })
+  const moreRow = box.more === null ? 0 : 14
   if (box.more !== null)
     parts.push(textAt(cls("more"), x + 12, y + 46 + 14 * rows.length, box.more))
+  if (box.ops !== null && box.ops.length > 0) {
+    const top = y + 36 + 14 * rows.length + moreRow
+    parts.push(hair(x, x + w, top))
+    box.ops.forEach((op, index) => {
+      const ry = top + 20 + 14 * index
+      if (op.key !== null) parts.push(textAt(cls("key"), x + 12, ry, op.key))
+      parts.push(textAt(cls("col"), x + 40, ry, op.name))
+      if (op.type !== null)
+        parts.push(textAt(cls("type"), x + w - 12, ry, op.type, "end"))
+    })
+  }
   return parts
 }
 
@@ -557,18 +726,20 @@ type LegendItem = {
   name: string
   mark: number
   draw: (x: number, y: number) => Element[]
+  /** Hovering the entry lights the marks of this series. */
+  series?: string
 }
 
 function legendSample(
   kind: NodeKind,
-  shape: Shape | undefined
+  shape: BoxShape | undefined
 ): LegendItem["draw"] {
   if (shape === undefined)
     return (x, y) => [rect(nodeClasses(kind), x, y - 6, 20, 12, 3)]
   return (x, y) => outline(nodeClasses(kind), x, y - 7, 20, 14, shape, true)
 }
 
-function edgeSample(kind: EdgeKind): LegendItem["draw"] {
+function edgeSample(kind: EdgeKind, head: Head = "arrow"): LegendItem["draw"] {
   return (x, y) => {
     const edge: DiagramEdge = {
       index: -1,
@@ -583,6 +754,8 @@ function edgeSample(kind: EdgeKind): LegendItem["draw"] {
       hue: null,
       info: null,
       noHead: false,
+      head,
+      route: "orthogonal",
       badge: null,
     }
     return edgeLine(edge, [
@@ -609,6 +782,10 @@ function legendOf(
   diagram: Diagram,
   size: { width: number; height: number }
 ): { height: number; parts: Element[] } {
+  if (diagram.legend !== null) {
+    if (diagram.legend.length === 0) return { height: size.height, parts: [] }
+    return legendStrip(typedLegend(diagram.legend), size)
+  }
   const kinds = new Set(diagram.nodes.map((box) => box.kind))
   const lines = diagram.edges.filter((edge) => edge.badge === null)
   const edgeKinds = new Set(lines.map((edge) => edge.kind))
@@ -635,7 +812,17 @@ function legendOf(
       mark: badgeWidth("SSO") + 8,
       draw: badgeSample,
     })
+  return legendStrip(items, size)
+}
 
+/**
+ * The strip under the drawing, a hairline and "LEYENDA" before `items`;
+ * a typed form's drawing with no items has no strip.
+ */
+function legendStrip(
+  items: readonly LegendItem[],
+  size: { width: number; height: number }
+): { height: number; parts: Element[] } {
   const legendY = size.height + 28
   const parts: Element[] = [
     hair(24, size.width - 24, legendY - 16),
@@ -649,10 +836,19 @@ function legendOf(
       x = 96
       y += 22
     }
-    parts.push(
+    const drawn = [
       ...item.draw(x, y),
-      textAt(cls("legend-item"), x + item.mark, y + 4, item.name)
-    )
+      textAt(cls("legend-item"), x + item.mark, y + 4, item.name),
+    ]
+    if (item.series === undefined) parts.push(...drawn)
+    else
+      parts.push(
+        element(
+          "g",
+          { className: cls("legend-entry"), dataSeries: item.series },
+          drawn
+        )
+      )
     x += width + 20
   }
   return { height: y + 32, parts }
@@ -673,4 +869,157 @@ function edgeName(diagram: Diagram, kind: EdgeKind): string {
 function badgeName(own: string | null): string {
   if (own !== null) return own
   return BADGE_NAME
+}
+
+/** A typed form's legend entries as strip items. */
+function typedLegend(entries: readonly LegendEntry[]): LegendItem[] {
+  return entries.map((entry) => {
+    const item: LegendItem = {
+      name: entry.name,
+      mark: sampleWidth(entry.sample),
+      draw: sampleDraw(entry.sample),
+    }
+    if (entry.series !== null) item.series = entry.series
+    return item
+  })
+}
+
+function sampleWidth(sample: LegendSample): number {
+  if (sample.kind === "edge" || sample.kind === "line") return 40
+  if (sample.kind === "dot") return 18
+  return 28
+}
+
+function sampleDraw(sample: LegendSample): LegendItem["draw"] {
+  if (sample.kind === "node")
+    return legendSample(sample.node, sample.shape ?? undefined)
+  if (sample.kind === "edge") return edgeSample(sample.edge, sample.head)
+  if (sample.kind === "swatch")
+    return (x, y) => [
+      rect(
+        [...cls(...sample.classes), ...hued(sample.hue)],
+        x,
+        y - 4,
+        16,
+        8,
+        1,
+        swatchOpacity(sample.opacity)
+      ),
+    ]
+  if (sample.kind === "dot")
+    return (x, y) => [
+      element("circle", {
+        className: [...cls(...sample.classes), ...hued(sample.hue)],
+        cx: n(x + 5),
+        cy: n(y),
+        r: "4",
+      }),
+    ]
+  return (x, y) => [
+    element("path", {
+      className: [...cls(...sample.classes), ...hued(sample.hue)],
+      d: `M${n(x)} ${n(y)} H${n(x + 30)}`,
+    }),
+  ]
+}
+
+// ── A typed form's shapes ─────────────────────────────────────────────────
+
+/**
+ * A shape of a typed form, painted by its classes and hue; a data mark
+ * carries what the reader's highlighting reads, a linked one is a link.
+ */
+function graphicOf(
+  graphic: Graphic,
+  routeOf: (pagePath: string) => string
+): Element {
+  const className = [...cls(...graphic.classes), ...hued(graphic.hue)]
+  const data: Properties = {}
+  if (graphic.opacity !== null) data.fillOpacity = n(graphic.opacity)
+  if (graphic.datum !== null) {
+    className.push(`${P}mark`)
+    data.dataNode = graphic.datum.id
+    data.dataLabel = graphic.datum.label
+    data.dataValue = graphic.datum.value
+    if (graphic.datum.series !== null) data.dataSeries = graphic.datum.series
+    if (graphic.datum.info !== null) data.dataInfo = graphic.datum.info
+  }
+  const shape = shapeOf(graphic, className, data)
+  if (graphic.link === null) return shape
+  return element(
+    "a",
+    { className: [`${P}link`], href: routeOf(graphic.link) },
+    [shape]
+  )
+}
+
+function shapeOf(
+  graphic: Graphic,
+  className: string[],
+  data: Properties
+): Element {
+  if (graphic.kind === "rect")
+    return rect(
+      className,
+      graphic.x,
+      graphic.y,
+      graphic.w,
+      graphic.h,
+      graphic.r,
+      data
+    )
+  if (graphic.kind === "circle")
+    return element("circle", {
+      className,
+      ...data,
+      cx: n(graphic.cx),
+      cy: n(graphic.cy),
+      r: n(graphic.r),
+    })
+  if (graphic.kind === "path")
+    return element("path", { className, ...data, d: graphic.d })
+  if (graphic.kind === "polygon")
+    return element("polygon", {
+      className,
+      ...data,
+      points: graphic.points.map(([x, y]) => `${n(x)},${n(y)}`).join(" "),
+    })
+  if (graphic.kind === "line")
+    return element("path", {
+      className,
+      ...data,
+      d: `M${n(graphic.x1)} ${n(graphic.y1)} L${n(graphic.x2)} ${n(graphic.y2)}`,
+    })
+  const label = element(
+    "text",
+    {
+      className: [...cls(graphic.role), ...className],
+      ...data,
+      x: n(graphic.x),
+      y: n(graphic.y),
+      textAnchor: graphic.anchor,
+    },
+    [text(graphic.text)]
+  )
+  if (!graphic.mask) return label
+  const face = TEXT_ROLES[graphic.role]
+  const width = Math.ceil(
+    textWidth(graphic.text, face.size, face.font, face.tracking) + 8
+  )
+  return element("g", {}, [
+    rect(
+      cls("mask"),
+      labelLeft(graphic.x, width, graphic.anchor),
+      graphic.y - face.size - 1,
+      width,
+      face.size + 4,
+      2
+    ),
+    label,
+  ])
+}
+
+function swatchOpacity(opacity: number | undefined): Properties {
+  if (opacity === undefined) return {}
+  return { fillOpacity: n(opacity) }
 }

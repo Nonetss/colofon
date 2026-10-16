@@ -209,6 +209,108 @@ describe("the drawing", () => {
   })
 })
 
+describe("the drawn form's shapes and arrows", () => {
+  test("a diamond is the rhombus whose corners touch the middle of each side, a circle the one inscribed", () => {
+    const html = drawing({
+      ...SIZE,
+      nodes: [
+        box("a", 0, { shape: "diamond", w: 160, h: 80 }),
+        box("b", 200, { shape: "circle", w: 60, h: 60 }),
+        box("c", 300, { shape: "rounded", w: 90, h: 60 }),
+      ],
+    })
+    expect(html).toContain(
+      '<path class="doc-diagram-node doc-diagram-service" d="M80 40 L160 80 L80 120 L0 80 Z">'
+    )
+    expect(html).toContain(
+      '<circle class="doc-diagram-node doc-diagram-service" cx="230" cy="70" r="30">'
+    )
+    expect(html).toContain(
+      '<rect class="doc-diagram-node doc-diagram-service" x="300" y="40" width="90" height="60" rx="20">'
+    )
+  })
+
+  test("a curved edge may run diagonally and is drawn as a smooth curve", () => {
+    const html = drawing({
+      ...SIZE,
+      nodes: [box("a", 0), box("b", 200)],
+      edges: [
+        {
+          from: "a",
+          to: "b",
+          route: "curve",
+          points: [
+            [100, 40],
+            [160, 20],
+            [200, 80],
+          ],
+        },
+      ],
+    })
+    expect(html).toMatch(
+      /<path class="doc-diagram-edge" data-edge="0" data-from="a" data-to="b" d="M100 40 C[^"]+ C[^"]+ 200 80">/
+    )
+  })
+
+  test("an arrow from a box to itself without points loops over its corner with its label beside it", () => {
+    const html = drawing({
+      ...SIZE,
+      nodes: [box("a", 40)],
+      edges: [{ from: "a", to: "a", label: "FALLO" }],
+    })
+    // The box is 120 wide at x 40 and y 40: the loop leaves its top 24px
+    // from its right side and comes back into that side.
+    expect(html).toContain(
+      'data-edge="0" data-from="a" data-to="a" d="M136 40 L136 28 Q136 20 144 20 L172 20 Q180 20 180 28 L180 48 Q180 56 172 56 L160 56">'
+    )
+    expect(html).toContain(">FALLO</text>")
+  })
+
+  test("UML heads: a hollow triangle and a filled or hollow diamond", () => {
+    const html = drawing({
+      ...SIZE,
+      nodes: [box("a", 0), box("b", 200)],
+      edges: [
+        { ...A_TO_B, head: "triangle" },
+        { ...A_TO_B, head: "diamond" },
+        { ...A_TO_B, head: "open-diamond" },
+      ],
+    })
+    expect(html).toContain(
+      '<path class="doc-diagram-head doc-diagram-head-hollow" data-edge="0" data-from="a" data-to="b" d="M200 76 L188 82 L188 70 Z">'
+    )
+    expect(html).toContain(
+      '<path class="doc-diagram-head" data-edge="1" data-from="a" data-to="b" d="M200 76 L192 81 L184 76 L192 71 Z">'
+    )
+    expect(html).toContain(
+      '<path class="doc-diagram-head doc-diagram-head-hollow" data-edge="2"'
+    )
+  })
+
+  test("a table's ops go under a hairline after its rows, and count in its height", () => {
+    const html = drawing({
+      ...SIZE,
+      nodes: [
+        {
+          id: "user",
+          name: "User",
+          x: 0,
+          y: 0,
+          w: 220,
+          rows: [{ key: "+", name: "email", type: "string" }],
+          ops: [{ key: "+", name: "login()", type: "bool" }],
+        },
+      ],
+    })
+    // 36 + 14 + 10 + 14 + 6
+    expect(html).toContain('width="220" height="80" rx="6">')
+    expect(html).toContain('<path class="doc-diagram-hair" d="M0 50 H220">')
+    expect(html).toContain(
+      '<text class="doc-diagram-col" x="40" y="70" text-anchor="start">login()</text>'
+    )
+  })
+})
+
 describe("the sanitizer and a diagram's SVG", () => {
   test("keeps every part of a drawing: shapes, text, classes, links and data", () => {
     const figure = figureOf({
@@ -265,6 +367,120 @@ describe("the sanitizer and a diagram's SVG", () => {
       'href="/casa/red"',
     ])
       expect(html).toContain(kept)
+  })
+
+  test("keeps a typed form's shapes: circles, polygons, opacities, marks, series and their legend", () => {
+    const mark = (id: string) => ({
+      hue: "blue" as const,
+      opacity: 0.4,
+      datum: {
+        id,
+        label: "Marzo",
+        series: "Altas",
+        value: "1.200",
+        info: "Récord",
+      },
+      link: null,
+    })
+    const diagram: Diagram = {
+      ...diagramOf({ ...SIZE, nodes: [box("a", 0)] }),
+      type: "bar",
+      under: [
+        {
+          kind: "line",
+          x1: 0,
+          y1: 0,
+          x2: 10,
+          y2: 0,
+          ...mark("m0"),
+          classes: ["line-rule"],
+          datum: null,
+        },
+      ],
+      over: [
+        {
+          kind: "rect",
+          x: 1,
+          y: 2,
+          w: 3,
+          h: 4,
+          r: 0,
+          classes: ["fill-hue"],
+          ...mark("m1"),
+        },
+        {
+          kind: "circle",
+          cx: 5,
+          cy: 5,
+          r: 2,
+          classes: ["fill-hue"],
+          ...mark("m2"),
+        },
+        {
+          kind: "polygon",
+          points: [
+            [0, 0],
+            [4, 0],
+            [2, 3],
+          ],
+          classes: ["fill-hue"],
+          ...mark("m3"),
+        },
+        {
+          kind: "text",
+          x: 1,
+          y: 9,
+          text: "1.200",
+          role: "value",
+          anchor: "middle",
+          mask: true,
+          classes: ["text-ink"],
+          hue: null,
+          opacity: null,
+          datum: null,
+          link: "red",
+        },
+      ],
+      legend: [
+        {
+          name: "Altas",
+          sample: { kind: "swatch", classes: ["fill-hue"], hue: "blue" },
+          series: "Altas",
+        },
+      ],
+      text: [],
+    }
+    const figure = diagramFigure(diagram, (pagePath) => `/casa/${pagePath}`)
+    const html = toHtml(figure)
+    expect(toHtml(sanitize(figure, SANITIZE_SCHEMA))).toBe(html)
+    expect(html).toContain(
+      '<circle class="doc-diagram-fill-hue doc-diagram-hued doc-diagram-hue-blue doc-diagram-mark" fill-opacity="0.4" data-node="m2" data-label="Marzo" data-value="1.200" data-series="Altas" data-info="Récord" cx="5" cy="5" r="2">'
+    )
+    expect(html).toContain('<polygon class="doc-diagram-fill-hue')
+    expect(html).toContain('points="0,0 4,0 2,3"')
+    expect(html).toContain(
+      '<g class="doc-diagram-legend-entry" data-series="Altas">'
+    )
+    expect(html).toContain('<a class="doc-diagram-link" href="/casa/red">')
+  })
+
+  test("a fill opacity that is not a number between 0 and 1 is stripped", () => {
+    const tree: Element = {
+      type: "element",
+      tagName: "svg",
+      properties: { className: ["doc-diagram-svg"] },
+      children: [
+        {
+          type: "element",
+          tagName: "circle",
+          properties: { fillOpacity: "url(#x)", cx: "1" },
+          children: [],
+        },
+      ],
+    }
+    expect(toHtml(sanitize(tree, SANITIZE_SCHEMA))).toBe(
+      '<svg class="doc-diagram-svg"><circle cx="1"></circle></svg>'
+    )
   })
 
   test("strips styles, handlers, foreign classes, foreign elements and javascript links", () => {

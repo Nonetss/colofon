@@ -107,6 +107,44 @@ describe("editorSchemas", () => {
     expect(text).toContain('"$schema"')
   })
 
+  test("each typed form is its own branch of the diagram schema, told apart by its type, with its own keys only", async () => {
+    const diagram = schemaNamed(editorSchemas(await loadSite()), "diagram")
+    const branches = diagram.schema.anyOf
+    if (!Array.isArray(branches)) throw new Error("no anyOf")
+    const flowchart = branches.find((branch) =>
+      JSON.stringify(branch).includes('"const":"flowchart"')
+    )
+    if (flowchart === undefined) throw new Error("no flowchart branch")
+    const text = JSON.stringify(flowchart)
+    expect(text).toContain('"steps"')
+    expect(text).toContain('"links"')
+    expect(text).not.toContain('"nodes"')
+    expect(text).toContain('"additionalProperties":false')
+    expect(text).toContain(
+      '"enum":["maquinas/nas","maquinas/pve-01","ubicaciones/casa"]'
+    )
+    const drawn = branches[0]
+    expect(JSON.stringify(drawn)).toContain('"type":{"not":{}}')
+  })
+
+  test("a Gantt file gets its own keys and refuses a drawn diagram's, and a task's entity lists the catalog", async () => {
+    const diagram = schemaNamed(editorSchemas(await loadSite()), "diagram")
+    const branches = diagram.schema.anyOf
+    if (!Array.isArray(branches)) throw new Error("no anyOf")
+    const gantt = branches.find((branch) =>
+      JSON.stringify(branch).includes('"const":"gantt"')
+    )
+    if (gantt === undefined) throw new Error("no gantt branch")
+    const text = JSON.stringify(gantt)
+    expect(text).toContain('"phases"')
+    expect(text).toContain('"today"')
+    expect(text).not.toContain('"nodes"')
+    expect(text).toContain('"additionalProperties":false')
+    expect(text).toContain(
+      '"enum":["maquinas/nas","maquinas/pve-01","ubicaciones/casa"]'
+    )
+  })
+
   test("every icono lists the Lucide names, so a wrong one is marked", async () => {
     const schemas = editorSchemas(await loadSite())
     for (const name of ["type", "menu"]) {

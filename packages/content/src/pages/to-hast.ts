@@ -2,6 +2,12 @@ import type { Element, Root as HastRoot } from "hast"
 import { defaultSchema, type Schema, sanitize } from "hast-util-sanitize"
 import type { Root } from "mdast"
 import { type Handler, toHast } from "mdast-util-to-hast"
+import {
+  NUMBER,
+  NUMBERS,
+  PATH_DATA,
+  TRANSFORM,
+} from "#pages/diagram-illustration"
 import { componentMessage } from "#pages/transform"
 
 // Turns a transformed page tree into the HTML tree the reader renders. The
@@ -67,12 +73,48 @@ const DIAGRAM_DATA = [
   "dataToZone",
   "dataLabel",
   "dataInfo",
+  "dataSeries",
+  "dataValue",
 ]
 
+/** An opacity between 0 and 1, as a typed form's ramps write it. */
+const OPACITY = /^(0|1|0?\.\d+)$/
+
 /**
- * The SVG a drawn diagram is made of: shapes, text and links, with geometry
- * and its `data-*` attributes only. No styles, `use`, `foreignObject`,
- * markers or event handlers.
+ * What any shape may be painted with besides its class: an opacity, and in
+ * a hand-drawn illustration (`diagram-illustration.ts`, same patterns) a
+ * transform, stroke details and `fill`/`stroke` set to `none`.
+ */
+const PAINT = [
+  ["className", DIAGRAM_CLASS],
+  ["fillOpacity", OPACITY],
+  ["opacity", OPACITY],
+  ["strokeOpacity", OPACITY],
+  ["transform", TRANSFORM],
+  ["strokeWidth", NUMBER],
+  ["strokeDashArray", NUMBERS],
+  ["strokeLineCap", "butt", "round", "square"],
+  ["strokeLineJoin", "miter", "round", "bevel"],
+  ["fill", "none"],
+  ["stroke", "none"],
+  ...DIAGRAM_DATA,
+] satisfies NonNullable<Schema["attributes"]>[string]
+
+const TEXT = [
+  ...PAINT,
+  "x",
+  "y",
+  "dx",
+  "dy",
+  ["textAnchor", "middle", "start", "end"],
+  ["fontSize", NUMBER],
+  ["fontWeight", NUMBER, "normal", "bold"],
+] satisfies NonNullable<Schema["attributes"]>[string]
+
+/**
+ * The SVG a drawn, typed or hand-drawn diagram is made of: shapes, text and
+ * links, with geometry, paint and its `data-*` attributes only. No styles,
+ * ids, `use`, `foreignObject`, markers, references or event handlers.
  */
 const DIAGRAM_SVG_ATTRIBUTES = {
   svg: [
@@ -83,24 +125,16 @@ const DIAGRAM_SVG_ATTRIBUTES = {
     "role",
     "ariaLabel",
   ],
-  g: [["className", DIAGRAM_CLASS], ...DIAGRAM_DATA],
-  rect: [
-    ["className", DIAGRAM_CLASS],
-    "x",
-    "y",
-    "width",
-    "height",
-    "rx",
-    "ry",
-    "dataZone",
-  ],
-  path: [["className", DIAGRAM_CLASS], "d", ...DIAGRAM_DATA],
-  text: [
-    ["className", DIAGRAM_CLASS],
-    "x",
-    "y",
-    ["textAnchor", "middle", "start", "end"],
-  ],
+  g: PAINT,
+  rect: [...PAINT, "x", "y", "width", "height", "rx", "ry"],
+  path: [...PAINT, ["d", PATH_DATA]],
+  circle: [...PAINT, "cx", "cy", "r"],
+  ellipse: [...PAINT, "cx", "cy", "rx", "ry"],
+  line: [...PAINT, "x1", "y1", "x2", "y2"],
+  polyline: [...PAINT, ["points", NUMBERS]],
+  polygon: [...PAINT, ["points", NUMBERS]],
+  text: TEXT,
+  tspan: TEXT,
   title: [],
 } satisfies NonNullable<Schema["attributes"]>
 

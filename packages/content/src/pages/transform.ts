@@ -293,7 +293,7 @@ function diagramElement(
   }
   const found = context.diagrams.get(id)
   if (found === undefined || found.diagram === null) {
-    const message = `<${DIAGRAM} id="${id}">: no hay ningún diagramas/${id}.json que se pueda leer (hay: ${known})`
+    const message = `<${DIAGRAM} id="${id}">: no hay ningún diagramas/${id}.json ni diagramas/${id}.svg que se pueda leer (hay: ${known})`
     const fileProblems = (found?.problems ?? []).map(
       (problem) => `${problem.file}: ${problem.message}`
     )

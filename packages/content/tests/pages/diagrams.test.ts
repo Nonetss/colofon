@@ -491,7 +491,7 @@ describe("<Diagram> and ```diagram", () => {
     })
     const notas = pageAt(site, "notas")
     expect(messagesOf(notas)).toEqual([
-      '<Diagram id="mapa">: no hay ningún diagramas/mapa.json que se pueda leer (hay: komodo)',
+      '<Diagram id="mapa">: no hay ningún diagramas/mapa.json ni diagramas/mapa.svg que se pueda leer (hay: komodo)',
       "<Diagram> necesita id, el nombre de un fichero de diagramas/ (hay: komodo)",
       "<Diagram> no tiene el atributo size",
     ])
@@ -532,5 +532,34 @@ describe("<Diagram> and ```diagram", () => {
     const nas = pageAt(site, "catalogo/maquinas/nas")
     expect(nas.headings.map((heading) => heading.text)).toEqual(["Diagramas"])
     expect(htmlOf(nas.tree)).toContain('data-diagram="komodo"')
+  })
+
+  test("ops without rows are reported and the box drawn without them", async () => {
+    const site = await siteOf({
+      "diagramas/red.json": drawn({
+        nodes: [box("a", 24, { ops: [{ name: "login()" }] })],
+      }),
+      "docs/index.mdx": page("Casa", '<Diagram id="red" />'),
+    })
+    expect(diagramProblems(site, "diagramas/red.json")).toEqual([
+      "nodes.0.ops: ops va bajo las filas de una tabla: lleva rows",
+    ])
+  })
+
+  test("an entity that is an item of a typed diagram lists that diagram too", async () => {
+    const site = await siteOf({
+      "diagramas/flujo.json": json({
+        type: "flowchart",
+        title: "Flujo",
+        desc: "El flujo",
+        steps: [
+          { id: "a", entity: "maquinas/nas" },
+          { id: "b", name: "Fin" },
+        ],
+        links: [{ from: "a", to: "b" }],
+      }),
+    })
+    const nas = pageAt(site, "catalogo/maquinas/nas")
+    expect(htmlOf(nas.tree)).toContain('data-diagram="flujo"')
   })
 })

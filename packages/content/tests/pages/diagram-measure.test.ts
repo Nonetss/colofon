@@ -21,6 +21,8 @@ describe("diagram text measures", () => {
     expect(badgeWidth("SSO")).toBe(25)
     expect(tableHeight(3, false)).toBe(84)
     expect(tableHeight(3, true)).toBe(98)
+    // 36 + 14 × 3 + (10 + 14 × 2) + 6
+    expect(tableHeight(3, false, 2)).toBe(122)
   })
 
   test("a box fits its longest line on the 4px grid, never below its minimum", () => {

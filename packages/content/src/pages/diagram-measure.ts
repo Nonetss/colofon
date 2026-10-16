@@ -28,10 +28,14 @@ export function badgeWidth(badge: string): number {
   return Math.ceil(textWidth(badge, 7, "mono", 0.08) + 10)
 }
 
-/** The height of a table box with `rows` columns, plus its "more" line. */
-export function tableHeight(rows: number, more: boolean): number {
+/**
+ * The height of a table box with `rows` columns, plus its "more" line and,
+ * under a hairline, its `ops` rows.
+ */
+export function tableHeight(rows: number, more: boolean, ops = 0): number {
   const moreLine = more ? 14 : 0
-  return 36 + 14 * rows + moreLine + 6
+  const opsBlock = ops > 0 ? 10 + 14 * ops : 0
+  return 36 + 14 * rows + moreLine + opsBlock + 6
 }
 
 /** The width that fits a box's longest line, rounded up to the 4px grid. */
