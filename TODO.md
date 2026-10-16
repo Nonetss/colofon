@@ -53,6 +53,9 @@ que el MCP porque el MCP tiene que respetarlos.
 - [ ] `skills()` / `skill(name)` (depende del punto 5).
 - [ ] `read` de una sola sección: con `#ancla`, devolver solo esa sección
       (y sus subsecciones) en vez de la página entera.
+- [ ] Más adelante: escritura desde el MCP en los repositorios alojados en la
+      plataforma, para que el agente cree y edite páginas con un commit en
+      la rama publicada (con los permisos del dueño de la key).
 
 ### 7. Búsqueda y Markdown (de la primera prueba del MCP)
 
@@ -97,7 +100,7 @@ solo para ella.
 - [ ] Bóveda y broker de secretos: conexiones, `consultar`, `actuar`,
       `generar_secreto`, redacción y auditoría. Primer caso: Duplicati.
 - [ ] Importadores (por ejemplo, los dockers desde Komodo).
-- [ ] Webhook del servidor git para sincronizar al hacer push.
+- [x] Webhook del servidor git para sincronizar al hacer push.
 - [ ] Conectores SSH y de bases de datos en solo lectura.
 - [ ] Actualizar `VISION.md`: diagramas, búsqueda y `llms.txt` ya están hechos.
 
