@@ -5,8 +5,9 @@
 // bundle loads this file on its own.
 
 /**
- * The tools the server registers (`server.ts`), as `/llms.txt` names them;
- * `tests/v1/mcp/handler.test.ts` checks they are the ones it lists.
+ * The documentation tools the server always registers (`server.ts`), as
+ * `/llms.txt` names them; `tests/v1/mcp/handler.test.ts` checks they are the
+ * ones it lists.
  */
 export const MCP_TOOL_NAMES = [
   "repositories",
@@ -17,6 +18,12 @@ export const MCP_TOOL_NAMES = [
   "skills",
   "skill",
 ] as const
+
+/**
+ * The tools the server adds when the secrets feature is on
+ * (`SECRETS_ENCRYPTION_KEY` set), which the frontend can't tell.
+ */
+export const MCP_SECRET_TOOL_NAMES = ["secrets", "request"] as const
 
 /** The name every client lists the server under. */
 const SERVER_NAME = "colofon"

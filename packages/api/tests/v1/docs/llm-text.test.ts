@@ -8,7 +8,11 @@ import {
   llmsIndex,
   repositoryLlmsIndex,
 } from "#v1/docs/llm-text"
-import { claudeCodeCommand, MCP_TOOL_NAMES } from "#v1/mcp/setup"
+import {
+  claudeCodeCommand,
+  MCP_SECRET_TOOL_NAMES,
+  MCP_TOOL_NAMES,
+} from "#v1/mcp/setup"
 
 const origin = "https://docs.example.org"
 
@@ -160,6 +164,13 @@ describe("agentGuide", () => {
     expect(guide).toContain("https://docs.example.org/mcp")
     expect(guide).toContain(claudeCodeCommand(origin, "<tu API key>"))
     for (const name of MCP_TOOL_NAMES) expect(guide).toContain(`\`${name}\``)
+  })
+
+  test("names the secrets tools as served only when secrets are on", () => {
+    for (const name of MCP_SECRET_TOOL_NAMES) {
+      expect(guide).toContain(`\`${name}\``)
+    }
+    expect(guide).toContain("si el servidor tiene activados los secretos")
   })
 
   test("gives the skills index, how to install one and only the platform's skills", () => {

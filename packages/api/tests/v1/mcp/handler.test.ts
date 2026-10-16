@@ -1,12 +1,14 @@
-import { afterEach, describe, expect, test } from "bun:test"
+import { afterEach, beforeEach, describe, expect, test } from "bun:test"
 import {
   Client,
   StreamableHTTPClientTransport,
 } from "@modelcontextprotocol/client"
 import type { CallToolResult } from "@modelcontextprotocol/server"
+import { resetEnv, testEnv } from "#tests/fixtures/env"
 import { serveMcp } from "#v1/mcp/handler"
-import { MCP_TOOL_NAMES } from "#v1/mcp/setup"
-import type { DocsClient, SkillsClient, ToolScope } from "#v1/mcp/tools"
+import type { McpScope, SecretsAccess } from "#v1/mcp/secret-tools"
+import { MCP_SECRET_TOOL_NAMES, MCP_TOOL_NAMES } from "#v1/mcp/setup"
+import type { DocsClient, SkillsClient } from "#v1/mcp/tools"
 
 // The real handler and server, driven by the SDK's own client over a fetch
 // that calls `serveMcp` directly: no network, no backend. Each request gets the
@@ -35,7 +37,31 @@ const skills: SkillsClient = {
   },
 }
 
-const scope: ToolScope = { docs, skills, origin }
+const requested: unknown[] = []
+
+const secrets: SecretsAccess = {
+  list: async () => ({ enabled: true, secrets: [] }),
+  request: async (input) => {
+    requested.push(input)
+    return {
+      ok: true,
+      response: {
+        status: 200,
+        statusText: "OK",
+        headers: [["content-type", "application/json"]],
+        body: {
+          kind: "text",
+          text: '{"echo":"[secret:komodo.key]"}',
+          size: 30,
+          truncated: false,
+          complete: true,
+        },
+      },
+    }
+  },
+}
+
+const scope: McpScope = { docs, skills, secrets, origin }
 
 async function mcpFetch(
   url: string | URL,
@@ -57,10 +83,18 @@ async function connect(): Promise<Client> {
   return client
 }
 
+beforeEach(() => resetEnv())
+
 afterEach(async () => {
   await Promise.all(open.splice(0).map((client) => client.close()))
   searched.length = 0
+  requested.length = 0
 })
+
+/** Turns the secrets feature on for the rest of the test. */
+function enableSecrets() {
+  testEnv.SECRETS_ENCRYPTION_KEY = Buffer.alloc(32, 7).toString("base64")
+}
 
 function text(result: CallToolResult): string {
   const [first] = result.content
@@ -69,7 +103,7 @@ function text(result: CallToolResult): string {
 }
 
 describe("serveMcp", () => {
-  test("serves exactly the seven read-only tools, the ones /llms.txt names", async () => {
+  test("with secrets off, serves exactly the seven read-only tools /llms.txt names", async () => {
     const client = await connect()
     const { tools } = await client.listTools()
     const names = tools.map((tool) => tool.name).sort()
@@ -87,6 +121,60 @@ describe("serveMcp", () => {
       expect(tool.annotations?.readOnlyHint).toBe(true)
       expect(tool.annotations?.idempotentHint).toBe(true)
     }
+  })
+
+  test("with secrets on, adds secrets (read-only) and request (destructive, open-world)", async () => {
+    enableSecrets()
+    const client = await connect()
+    const { tools } = await client.listTools()
+
+    expect(tools.map((tool) => tool.name).sort()).toEqual(
+      [...MCP_TOOL_NAMES, ...MCP_SECRET_TOOL_NAMES].sort()
+    )
+    for (const tool of tools) {
+      if (tool.name === "request") {
+        expect(tool.annotations).toMatchObject({
+          readOnlyHint: false,
+          destructiveHint: true,
+          idempotentHint: false,
+          openWorldHint: true,
+        })
+        continue
+      }
+      expect(tool.annotations?.readOnlyHint).toBe(true)
+      expect(tool.annotations?.idempotentHint).toBe(true)
+    }
+    expect(client.getInstructions()).toContain("`request`")
+  })
+
+  test("with secrets off, the instructions don't mention them", async () => {
+    const client = await connect()
+
+    expect(client.getInstructions()).not.toContain("`request`")
+  })
+
+  test("request reaches the caller's executor with the arguments", async () => {
+    enableSecrets()
+    const client = await connect()
+    const result = await client.callTool({
+      name: "request",
+      arguments: {
+        method: "POST",
+        url: "https://komodo.casa.lan/execute",
+        headers: { "X-Api-Key": "{{komodo.key}}" },
+        body: { type: "DeployStack" },
+      },
+    })
+
+    expect(result.isError).toBeFalsy()
+    expect(requested).toEqual([
+      {
+        method: "POST",
+        url: "https://komodo.casa.lan/execute",
+        headers: { "X-Api-Key": "{{komodo.key}}" },
+        body: { type: "DeployStack" },
+      },
+    ])
   })
 
   test("identifies itself and tells the agent where to start", async () => {

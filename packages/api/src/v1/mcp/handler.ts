@@ -3,8 +3,8 @@ import {
   type McpHttpHandler,
   type McpRequestContext,
 } from "@modelcontextprotocol/server"
+import type { McpScope } from "#v1/mcp/secret-tools"
 import { createDocsMcpServer } from "#v1/mcp/server"
-import type { ToolScope } from "#v1/mcp/tools"
 
 // The `/mcp` endpoint's handler: one per process, serving each request with a
 // fresh server (stateless, the current protocol revision plus the 2025-era
@@ -16,7 +16,7 @@ import type { ToolScope } from "#v1/mcp/tools"
 
 type McpState = {
   handler: McpHttpHandler
-  scopes: Map<string, ToolScope>
+  scopes: Map<string, McpScope>
 }
 
 // `bun --hot` re-runs this module: keeping the handler on globalThis leaves a
@@ -28,7 +28,7 @@ declare global {
 function state(): McpState {
   const existing = globalThis.__docsMcp
   if (existing) return existing
-  const scopes = new Map<string, ToolScope>()
+  const scopes = new Map<string, McpScope>()
   const created: McpState = {
     scopes,
     handler: createMcpHandler((context) =>
@@ -40,9 +40,9 @@ function state(): McpState {
 }
 
 function takeScope(
-  scopes: Map<string, ToolScope>,
+  scopes: Map<string, McpScope>,
   context: McpRequestContext
-): ToolScope {
+): McpScope {
   const key = context.authInfo?.token
   if (key === undefined) throw new Error("MCP request without its scope key")
   const scope = scopes.get(key)
@@ -58,7 +58,7 @@ function takeScope(
  */
 export async function serveMcp(
   request: Request,
-  scope: ToolScope
+  scope: McpScope
 ): Promise<Response> {
   const { handler, scopes } = state()
   // Not a credential: only the key of this request's scope in the map.

@@ -1,6 +1,11 @@
 import type { z } from "zod"
 import type { DocsNavNode, docsOutput } from "#v1/docs/output"
-import { claudeCodeCommand, MCP_TOOL_NAMES, mcpUrl } from "#v1/mcp/setup"
+import {
+  claudeCodeCommand,
+  MCP_SECRET_TOOL_NAMES,
+  MCP_TOOL_NAMES,
+  mcpUrl,
+} from "#v1/mcp/setup"
 import type { skillsOutput } from "#v1/skills/output"
 
 // `/llms.txt` and `/<repo>/llms.txt` (https://llmstxt.org): the map of the
@@ -138,6 +143,9 @@ export function agentGuide(
 ): string[] {
   const platform = skills.filter((skill) => skill.repository === null)
   const tools = MCP_TOOL_NAMES.map((name) => `\`${name}\``).join(", ")
+  const secretTools = MCP_SECRET_TOOL_NAMES.map((name) => `\`${name}\``).join(
+    " y "
+  )
   const lines = [
     "## Para agentes",
     "",
@@ -145,7 +153,7 @@ export function agentGuide(
     "",
     "Cada página tiene su texto en Markdown en `<página>/llm.txt`, con sus enlaces como direcciones completas.",
     "",
-    `El MCP de la documentación está en ${mcpUrl(origin)}, con la key en \`x-api-key\`. Sus herramientas: ${tools}. En Claude Code:`,
+    `El MCP de la documentación está en ${mcpUrl(origin)}, con la key en \`x-api-key\`. Sus herramientas: ${tools}; si el servidor tiene activados los secretos, también ${secretTools}, para llamar a las APIs de tus servicios con los secretos que guardes en ${origin}/me sin que el agente vea sus valores. En Claude Code:`,
     "",
     ...fenced(claudeCodeCommand(origin, KEY_PLACEHOLDER)),
     "",
