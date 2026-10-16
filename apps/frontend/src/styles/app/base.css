@@ -50,7 +50,7 @@
     z-index: 40;
   }
   ::selection {
-    background-color: var(--brand-orange);
+    background-color: var(--primary);
     color: var(--primary-foreground);
   }
 }
