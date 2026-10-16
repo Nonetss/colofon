@@ -82,4 +82,5 @@ Also:
 - `open_questions` is a header field this site declares in `doc.config.yaml`
   (`doc-config.md`); how pages fill it: `docs` skill, `references/header.md`.
 - Closing the round means validating what you touched: `validation.md`.
-- `/questions` is `.claude/commands/questions.md`; it defers to this file.
+- `/questions` is `.agents/commands/questions.md` (symlinked from
+  `.claude/commands/`); it defers to this file.

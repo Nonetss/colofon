@@ -21,7 +21,10 @@ publica. Aquí no se compila ni se ejecuta nada.
   de las convenciones vive en las referencias de la skill.
 - Las skills viven en `.agents/skills/<name>/`; `.claude/skills/<name>` es un
   enlace simbólico a ellas (`../../.agents/skills/<name>`). Una skill nueva va
-  en `.agents/skills/` y recibe el mismo enlace simbólico.
+  en `.agents/skills/` y recibe el mismo enlace simbólico. Los commands siguen
+  la misma regla: viven en `.agents/commands/<name>.md` y
+  `.claude/commands/<name>.md` enlaza a ellos
+  (`../../.agents/commands/<name>.md`).
 - El detalle de una convención nueva va en la skill de la carpeta a la que
   afecta; lo que afecta al repositorio entero (los ficheros de la raíz, el
   menú, las rondas de preguntas), en una referencia de `documentation`. Una
@@ -44,7 +47,7 @@ publica. Aquí no se compila ni se ejecuta nada.
 | `skills/<name>/SKILL.md` | Skills que la plataforma **sirve a otros agentes** para trabajar con este sitio |
 | `.agents/skills/documentation/` | La skill para **ti**, el agente que escribe aquí: el repositorio entero |
 | `.agents/skills/<carpeta>/` | Una skill por carpeta de contenido (`docs`, `catalogo`, `diagramas`, `skills`): cómo se escribe lo que va en ella |
-| `.claude/commands/questions.md` | `/questions`: rondas de preguntas para terminar de documentar una sección |
+| `.agents/commands/questions.md` | `/questions`: rondas de preguntas para terminar de documentar una sección |
 | `.vscode/settings.json` | El catálogo de esquemas de la plataforma, para el autocompletado en el editor |
 
 Detalles y convenciones: la skill `documentation` y la de cada carpeta.
