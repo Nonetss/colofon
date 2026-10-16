@@ -87,6 +87,26 @@ describe("generated catalog pages", () => {
     expect(machines.headings).toEqual([])
   })
 
+  test("an entity's page is dated with its file's last commit; the generated index and type pages are not", async () => {
+    const site = await siteOf(
+      FILES,
+      new Map([
+        ["catalogo/machines/docker-01.yaml", "2026-09-30"],
+        ["catalogo/machines/pve-01.yaml", "2026-08-01"],
+        ["catalogo/machines/_tipo.yaml", "2026-07-01"],
+      ])
+    )
+    expect(pageAt(site, "catalogo/machines/docker-01").header).toMatchObject({
+      actualizado: "2026-10-01",
+      editado: "2026-09-30",
+    })
+    expect(pageAt(site, "catalogo/machines/pve-01").header.editado).toBe(
+      "2026-08-01"
+    )
+    expect(pageAt(site, "catalogo/machines").header.editado).toBeNull()
+    expect(pageAt(site, "catalogo").header.editado).toBeNull()
+  })
+
   test("a type without a description gets one from its plural", async () => {
     const site = await siteOf(FILES)
     expect(pageAt(site, "catalogo/stacks").header.descripcion).toBe(

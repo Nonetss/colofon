@@ -1,7 +1,12 @@
 import GithubSlugger from "github-slugger"
 import type { Element, ElementContent, Root } from "hast"
 import { sanitize } from "hast-util-sanitize"
-import type { Catalog, CatalogType, Entity } from "#catalog"
+import {
+  type Catalog,
+  type CatalogType,
+  type Entity,
+  entityFile,
+} from "#catalog"
 import { CATALOG_PATH } from "#load"
 import { catalogTypePath, entityPath } from "#pages/catalog-paths"
 import {
@@ -26,8 +31,14 @@ import type { Page, PageHeader, PageHeading, PageProblem } from "#pages/types"
 /** The title of the catalog's own page and section. */
 export const CATALOG_TITLE = "Catálogo"
 
-/** Every generated catalog page, by path, with its header and no body yet. */
-export function catalogPages(catalog: Catalog): Map<string, Page> {
+/**
+ * Every generated catalog page, by path, with its header and no body yet.
+ * An entity's page is dated with its file's entry in `editDates`.
+ */
+export function catalogPages(
+  catalog: Catalog,
+  editDates: ReadonlyMap<string, string>
+): Map<string, Page> {
   const pages = new Map<string, Page>()
   pages.set(CATALOG_PATH, generated(CATALOG_PATH, catalogHeader()))
   for (const type of catalog.values()) {
@@ -35,7 +46,11 @@ export function catalogPages(catalog: Catalog): Map<string, Page> {
     pages.set(typePath, generated(typePath, typeHeader(type)))
     for (const entity of type.entities.values()) {
       const pagePath = entityPath(type.id, entity.id)
-      pages.set(pagePath, generated(pagePath, entityHeader(type, entity)))
+      const editado = editDates.get(entityFile(type.id, entity.id)) ?? null
+      pages.set(
+        pagePath,
+        generated(pagePath, entityHeader(type, entity, editado))
+      )
     }
   }
   return pages
@@ -98,6 +113,7 @@ function header(
     icono,
     orden: null,
     actualizado: null,
+    editado: null,
     campos: {},
   }
 }
@@ -124,7 +140,11 @@ function typeDescription(type: CatalogType): string {
   return `Datos de ${type.definition.plural}`
 }
 
-function entityHeader(type: CatalogType, entity: Entity): PageHeader {
+function entityHeader(
+  type: CatalogType,
+  entity: Entity,
+  editado: string | null
+): PageHeader {
   return {
     ...header(
       entity.label,
@@ -132,6 +152,7 @@ function entityHeader(type: CatalogType, entity: Entity): PageHeader {
       type.definition.icono ?? null
     ),
     actualizado: dateOf(entity.values.actualizado),
+    editado,
   }
 }
 

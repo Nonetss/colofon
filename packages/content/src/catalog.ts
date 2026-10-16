@@ -40,6 +40,11 @@ export type CatalogType = {
 /** Every catalog type by id. */
 export type Catalog = ReadonlyMap<string, CatalogType>
 
+/** The path of an entity's file, relative to the content root. */
+export function entityFile(typeId: string, id: string): string {
+  return `${CATALOG_DIR}/${typeId}/${id}.yaml`
+}
+
 /** Reads and validates every entity file of the repository at `root`. */
 export async function readCatalog(
   root: string,
@@ -51,7 +56,7 @@ export async function readCatalog(
     const entities = new Map<string, Entity>()
     const problems: ContentProblem[] = []
     for (const id of declarations.index.entityIds.get(typeId) ?? []) {
-      const file = `${CATALOG_DIR}/${typeId}/${id}.yaml`
+      const file = entityFile(typeId, id)
       const text = await readText(path.join(root, file))
       if (text === undefined) continue
       const data = parseYaml(text, file, problems)

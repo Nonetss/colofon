@@ -42,8 +42,8 @@ function inClone(id: string, files: Record<string, string>) {
   )
 }
 
-async function remote(files: Record<string, string>) {
-  const created = await createContentRemote(files)
+async function remote(files: Record<string, string>, date?: string) {
+  const created = await createContentRemote(files, date)
   cleanups.push(created.remove)
   return created.url
 }
@@ -121,6 +121,37 @@ describe("contentReader.site", () => {
     )
     expect(pageWarnings).toHaveLength(1)
     expect(JSON.stringify(pageWarnings[0])).toContain("diagramas/red.json")
+  })
+})
+
+describe("contentReader edit dates", () => {
+  test("a synced repository's pages are dated with their files' last commit", async () => {
+    const url = await remote(CONTENT_SITE, "2026-03-02T10:00:00+01:00")
+    const repository = storedRepository({ url })
+    const { reader, logger } = await readerWith([repository])
+
+    await reader.sync(repository)
+    const read = await reader.site("documentacion")
+    expect(read?.site?.pages.get("red/dns")?.header.editado).toBe("2026-03-02")
+    const dateWarnings = logger.warn.mock.calls.filter((args: unknown[]) =>
+      args.includes("Edit dates could not be read; pages have none")
+    )
+    expect(dateWarnings).toHaveLength(0)
+  })
+
+  test("a folder git can't read still gives pages, without dates, and logs it naming the repository", async () => {
+    const repository = storedRepository()
+    const { reader, logger } = await readerWith(
+      [repository],
+      inClone(repository.id, CONTENT_SITE)
+    )
+    const read = await reader.site("documentacion")
+    expect(read?.site?.pages.get("red/dns")?.header.editado).toBeNull()
+    const dateWarnings = logger.warn.mock.calls.filter((args: unknown[]) =>
+      args.includes("Edit dates could not be read; pages have none")
+    )
+    expect(dateWarnings).toHaveLength(1)
+    expect(JSON.stringify(dateWarnings[0])).toContain("documentacion")
   })
 })
 

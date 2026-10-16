@@ -37,8 +37,14 @@ export function page(titulo: string, body = "", extra = ""): string {
   return `---\ntitulo: ${titulo}\ndescripcion: Sobre ${titulo}\n${extra}---\n\n${body}\n`
 }
 
-/** Reads a site made of `files` (paths under the content root) plus the catalog. */
-export async function siteOf(files: Record<string, string>): Promise<Site> {
+/**
+ * Reads a site made of `files` (paths under the content root) plus the
+ * catalog, with `editDates` as the files' last commit dates.
+ */
+export async function siteOf(
+  files: Record<string, string>,
+  editDates: ReadonlyMap<string, string> = new Map()
+): Promise<Site> {
   const dir = await createContentDir({ ...CATALOG, ...files })
   try {
     const loaded = await loadContent(dir.root)
@@ -49,7 +55,8 @@ export async function siteOf(files: Record<string, string>): Promise<Site> {
       loaded.content.index,
       await readCatalog(dir.root, loaded.content),
       ROUTES,
-      loaded.content.menu
+      loaded.content.menu,
+      editDates
     )
   } finally {
     await dir.remove()

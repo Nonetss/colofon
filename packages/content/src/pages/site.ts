@@ -86,14 +86,18 @@ export type SiteRoutes = {
   fileUrlOf: (docsPath: string) => string
 }
 
-/** Reads the pages of the repository at `root`. */
+/**
+ * Reads the pages of the repository at `root`. `editDates` holds the last
+ * commit date of each file, by its path under `root` (`readEditDates`).
+ */
 export async function readSite(
   root: string,
   config: SiteConfig,
   index: CatalogIndex,
   catalog: Catalog,
   routes: SiteRoutes,
-  menu: Menu | null
+  menu: Menu | null,
+  editDates: ReadonlyMap<string, string>
 ): Promise<Site> {
   const docsRoot = path.join(root, DOCS_DIR)
   const files = await listFiles(docsRoot)
@@ -132,9 +136,11 @@ export async function readSite(
   const headed: HeadedPage[] = []
   for (const file of mdxFiles) {
     const source = await readFile(path.join(docsRoot, file), "utf8")
-    headed.push(withOverride(headPage(source, file, schema), resolved))
+    headed.push(
+      withOverride(headPage(source, file, schema, editDates), resolved)
+    )
   }
-  const generated = catalogPages(catalog)
+  const generated = catalogPages(catalog, editDates)
   for (const [pagePath, page] of generated)
     generated.set(pagePath, overridden(page, resolved.overrides))
 
@@ -297,7 +303,8 @@ function titleOr(title: string | undefined, pagePath: string): string {
 function headPage(
   source: string,
   file: string,
-  schema: HeaderSchema
+  schema: HeaderSchema,
+  editDates: ReadonlyMap<string, string>
 ): HeadedPage {
   const pagePath = pagePathOf(file)
   const contentFile = `${DOCS_DIR}/${file}`
@@ -308,7 +315,15 @@ function headPage(
     contentFile,
     fallbackTitleOf(pagePath)
   )
-  return { path: pagePath, file, contentFile, parsed, header, problems }
+  const editado = editDates.get(contentFile) ?? null
+  return {
+    path: pagePath,
+    file,
+    contentFile,
+    parsed,
+    header: { ...header, editado },
+    problems,
+  }
 }
 
 /**
@@ -600,6 +615,7 @@ function folderHeader(entry: NavEntry): PageHeader {
     icono: entry.icon,
     orden: null,
     actualizado: null,
+    editado: null,
     campos: {},
   }
 }

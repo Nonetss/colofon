@@ -182,6 +182,43 @@ function group(nodes: NavNode[], title: string) {
   return found
 }
 
+describe("readSite edit dates", () => {
+  test("a page is dated with its file's last commit, independent of actualizado", async () => {
+    const site = await siteOf(
+      {
+        ...SITE,
+        "docs/red/vpn.mdx": page("VPN", "", "actualizado: 2026-01-10\n"),
+      },
+      new Map([
+        ["docs/red/dns.mdx", "2026-03-02"],
+        ["docs/red/vpn.mdx", "2026-10-14"],
+      ])
+    )
+    expect(pageAt(site, "red/dns").header).toMatchObject({
+      actualizado: null,
+      editado: "2026-03-02",
+    })
+    expect(pageAt(site, "red/vpn").header).toMatchObject({
+      actualizado: "2026-01-10",
+      editado: "2026-10-14",
+    })
+  })
+
+  test("a folder page without index has no edit date", async () => {
+    const site = await siteOf(
+      SITE,
+      new Map([["docs/varios/alfa.mdx", "2026-03-02"]])
+    )
+    expect(pageAt(site, "varios").header.editado).toBeNull()
+  })
+
+  test("without dates every page has none", async () => {
+    const site = await siteOf(SITE)
+    for (const sitePage of site.pages.values())
+      expect(sitePage.header.editado).toBeNull()
+  })
+})
+
 describe("readSite with menu.yaml", () => {
   test("groups show folders and pages from anywhere, keeping each folder's order and the file paths", async () => {
     const site = await siteOf({

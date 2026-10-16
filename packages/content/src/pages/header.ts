@@ -163,6 +163,7 @@ function salvage(
     icono: textOrNull(valid.get("icono")),
     orden: numberOrNull(valid.get("orden")),
     actualizado: textOrNull(valid.get("actualizado")),
+    editado: null,
     campos,
   }
 }

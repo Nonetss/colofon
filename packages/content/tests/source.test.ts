@@ -11,6 +11,7 @@ import {
   listRemoteBranches,
   pruneClones,
   publicUrl,
+  readEditDates,
   redactCredentials,
   type SyncResult,
 } from "#source"
@@ -111,6 +112,39 @@ describe("createRepoSync", () => {
     expect(await readFile(path.join(root, "doc.config.yaml"), "utf8")).toBe(
       "nombre: Dos\n"
     )
+  })
+
+  test("the clone keeps the full history of the ref", async () => {
+    const origin = await remote()
+    await origin.commit({ "a.yaml": "x: 1\n" })
+    await origin.commit({ "a.yaml": "x: 2\n" })
+    const root = await tempFolder()
+    const sync = createRepoSync({ url: origin.url, ref: "main", root })
+    commitOf(await sync())
+    await origin.commit({ "a.yaml": "x: 3\n" })
+    commitOf(await sync())
+
+    expect(await inClone(root, ["rev-parse", "--is-shallow-repository"])).toBe(
+      "false"
+    )
+    expect(await inClone(root, ["rev-list", "--count", "HEAD"])).toBe("3")
+  })
+
+  test("a shallow clone from an earlier version is deepened", async () => {
+    const origin = await remote()
+    await origin.commit({ "a.yaml": "x: 1\n" })
+    await origin.commit({ "a.yaml": "x: 2\n" })
+    const root = await tempFolder()
+    await inClone(root, ["init", "--quiet"])
+    await inClone(root, ["remote", "add", "origin", origin.url])
+    await inClone(root, ["fetch", "--quiet", "--depth", "1", "origin", "main"])
+    await inClone(root, ["checkout", "--quiet", "--detach", "FETCH_HEAD"])
+
+    commitOf(await createRepoSync({ url: origin.url, ref: "main", root })())
+    expect(await inClone(root, ["rev-parse", "--is-shallow-repository"])).toBe(
+      "false"
+    )
+    expect(await inClone(root, ["rev-list", "--count", "HEAD"])).toBe("2")
   })
 
   test("a tag can be the ref", async () => {
@@ -230,3 +264,81 @@ describe("listRemoteBranches", () => {
     expect(result.error).not.toContain("s3cret")
   })
 })
+
+describe("readEditDates", () => {
+  async function synced(origin: GitRemote): Promise<string> {
+    const root = await tempFolder()
+    commitOf(await createRepoSync({ url: origin.url, ref: "main", root })())
+    return root
+  }
+
+  test("each file gets the date of the last commit that touched it", async () => {
+    const origin = await remote()
+    await origin.commit(
+      {
+        "docs/red/dns.mdx": "uno\n",
+        "docs/red/vpn.mdx": "uno\n",
+        "catalogo/machines/nas.yaml": "id: nas\n",
+      },
+      "2026-03-02T10:00:00+01:00"
+    )
+    await origin.commit(
+      { "docs/red/vpn.mdx": "dos\n" },
+      "2026-10-14T09:00:00+02:00"
+    )
+
+    const dates = await readEditDates(await synced(origin))
+    expect(dates.get("docs/red/dns.mdx")).toBe("2026-03-02")
+    expect(dates.get("docs/red/vpn.mdx")).toBe("2026-10-14")
+    expect(dates.get("catalogo/machines/nas.yaml")).toBe("2026-03-02")
+  })
+
+  test("the date is the committer's day in the committer's time zone", async () => {
+    const origin = await remote()
+    await origin.commit({ "docs/a.mdx": "a\n" }, "2026-05-01T23:30:00-05:00")
+
+    const dates = await readEditDates(await synced(origin))
+    expect(dates.get("docs/a.mdx")).toBe("2026-05-01")
+  })
+
+  test("a moved file takes the date of the commit that moved it", async () => {
+    const origin = await remote()
+    await origin.commit({ "docs/old.mdx": "a\n" }, "2026-01-05T12:00:00Z")
+    await origin.move("docs/old.mdx", "docs/new.mdx", "2026-06-20T12:00:00Z")
+
+    const dates = await readEditDates(await synced(origin))
+    expect(dates.get("docs/new.mdx")).toBe("2026-06-20")
+  })
+
+  test("paths with non-ASCII characters are keyed as written", async () => {
+    const origin = await remote()
+    await origin.commit({ "docs/guía.mdx": "a\n" }, "2026-02-14T12:00:00Z")
+
+    const dates = await readEditDates(await synced(origin))
+    expect(dates.get("docs/guía.mdx")).toBe("2026-02-14")
+  })
+
+  test("files outside docs and catalogo are left out", async () => {
+    const origin = await remote()
+    await origin.commit({
+      "doc.config.yaml": "nombre: Uno\n",
+      "docs/a.mdx": "a\n",
+    })
+
+    const dates = await readEditDates(await synced(origin))
+    expect([...dates.keys()]).toEqual(["docs/a.mdx"])
+  })
+
+  test("a folder that is not a clone rejects", async () => {
+    expect(readEditDates(await tempFolder())).rejects.toThrow()
+  })
+})
+
+/** Runs git on the clone at `root` only, like the sync does. */
+async function inClone(root: string, args: string[]): Promise<string> {
+  const output = await git(root, args, {
+    GIT_DIR: path.join(root, ".git"),
+    GIT_WORK_TREE: root,
+  })
+  return output.trim()
+}

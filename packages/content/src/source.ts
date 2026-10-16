@@ -1,6 +1,7 @@
 import { mkdir, readdir, rm } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import path from "node:path"
+import { CATALOG_DIR, DOCS_DIR } from "#load"
 
 // Where the content comes from: git repositories, each kept in its own clone
 // folder under one clone root with the git CLI. Credentials only travel
@@ -129,7 +130,7 @@ async function syncRepo(options: RepoSyncOptions): Promise<SyncResult> {
       await git(["init", "--quiet"])
       await git(["remote", "add", "origin", options.url])
     }
-    await git(["fetch", "--quiet", "--depth", "1", "origin", options.ref])
+    await git(await fetchArgs(git, options.ref))
     await git(["checkout", "--quiet", "--force", "--detach", "FETCH_HEAD"])
     await git(["clean", "--quiet", "-ffdx"])
     const commit = await git(["rev-parse", "HEAD"])
@@ -143,11 +144,61 @@ async function syncRepo(options: RepoSyncOptions): Promise<SyncResult> {
 type Git = (args: string[]) => Promise<string>
 
 /**
+ * Fetches the full history of `ref`, which the last edit dates need. A clone
+ * left shallow by an earlier `--depth 1` fetch is deepened.
+ */
+async function fetchArgs(git: Git, ref: string): Promise<string[]> {
+  const shallow = await git(["rev-parse", "--is-shallow-repository"])
+  if (shallow.trim() === "true") {
+    return ["fetch", "--quiet", "--unshallow", "origin", ref]
+  }
+  return ["fetch", "--quiet", "origin", ref]
+}
+
+/** Separates the commits in the output of `readEditDates`' log. */
+const COMMIT_MARK = "\u0001"
+
+/**
+ * The date (`YYYY-MM-DD`, the committer's) of the last commit that touched
+ * each file under `docs/` and `catalogo/` of the checkout at `root`, keyed
+ * by its path relative to `root`. One `git log` pass over the history.
+ */
+export async function readEditDates(
+  root: string,
+  timeoutMs = GIT_TIMEOUT_MS
+): Promise<ReadonlyMap<string, string>> {
+  const git = gitRunner({ root, timeoutMs })
+  const log = await git([
+    "-c",
+    "core.quotePath=false",
+    "log",
+    "--format=format:%x01%cs",
+    "--name-only",
+    "HEAD",
+    "--",
+    DOCS_DIR,
+    CATALOG_DIR,
+  ])
+  const dates = new Map<string, string>()
+  for (const chunk of log.split(COMMIT_MARK)) {
+    const [date, ...files] = chunk.split("\n")
+    if (date === undefined || date === "") continue
+    for (const file of files) {
+      if (file !== "" && !dates.has(file)) dates.set(file, date)
+    }
+  }
+  return dates
+}
+
+/**
  * Runs git on the clone only. GIT_DIR and GIT_WORK_TREE pin it to `root`:
  * without them git would look for a repository in the parent folders and,
  * in native dev, find this platform's own checkout around `.content/`.
  */
-function gitRunner(options: RepoSyncOptions): Git {
+function gitRunner(options: {
+  root: string
+  timeoutMs?: number | undefined
+}): Git {
   const { timeoutMs = GIT_TIMEOUT_MS } = options
   const env = {
     ...process.env,

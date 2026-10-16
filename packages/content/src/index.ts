@@ -81,6 +81,7 @@ export {
   publicUrl,
   type RemoteBranches,
   type RepositorySource,
+  readEditDates,
   redactCredentials,
   type SyncResult,
 } from "#source"

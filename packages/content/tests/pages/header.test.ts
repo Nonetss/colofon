@@ -64,6 +64,15 @@ describe("page header", () => {
     expect(problem?.line).toBe(4)
   })
 
+  test("editado comes from git, never from the header: writing it is reported", async () => {
+    const site = await siteOf({
+      "docs/notas.mdx": page("Notas", "", "editado: 2026-10-01\n"),
+    })
+    const notas = pageAt(site, "notas")
+    expect(notas.problems[0]?.message).toContain("`editado`")
+    expect(notas.header.editado).toBeNull()
+  })
+
   test("a bad date is reported and the rest of the header is kept", async () => {
     const site = await siteOf({
       "docs/notas.mdx": page("Notas", "", "actualizado: 15/10/2026\n"),

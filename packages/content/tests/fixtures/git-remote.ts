@@ -5,8 +5,13 @@ import path from "node:path"
 /** A bare repository in a temp folder, reachable at `url`, fed by `commit`. */
 export type GitRemote = {
   url: string
-  /** Writes `files` into the work tree, commits them on main and pushes. */
-  commit: (files: Record<string, string>) => Promise<void>
+  /**
+   * Writes `files` into the work tree, commits them on main and pushes;
+   * `date` (ISO 8601) dates the commit, now when left out.
+   */
+  commit: (files: Record<string, string>, date?: string) => Promise<void>
+  /** Moves the file `from` to `to`, commits on main and pushes. */
+  move: (from: string, to: string, date?: string) => Promise<void>
   /** Tags main's current commit and pushes the tag. */
   tag: (name: string) => Promise<void>
   /** Pushes main's current commit as a new branch. */
@@ -24,15 +29,19 @@ export async function createGitRemote(): Promise<GitRemote> {
 
   return {
     url: `file://${bare}`,
-    commit: async (files) => {
+    commit: async (files, date) => {
       for (const [file, text] of Object.entries(files)) {
         const target = path.join(work, file)
         await mkdir(path.dirname(target), { recursive: true })
         await writeFile(target, text)
       }
       await git(work, ["add", "--all"])
-      await git(work, ["commit", "--quiet", "-m", "content"])
-      await git(work, ["push", "--quiet", "origin", "main"])
+      await commitAndPush(work, date)
+    },
+    move: async (from, to, date) => {
+      await mkdir(path.dirname(path.join(work, to)), { recursive: true })
+      await git(work, ["mv", from, to])
+      await commitAndPush(work, date)
     },
     tag: async (name) => {
       await git(work, ["tag", name])
@@ -45,13 +54,27 @@ export async function createGitRemote(): Promise<GitRemote> {
   }
 }
 
+async function commitAndPush(work: string, date: string | undefined) {
+  await git(work, ["commit", "--quiet", "-m", "content"], dateEnv(date))
+  await git(work, ["push", "--quiet", "origin", "main"])
+}
+
+function dateEnv(date: string | undefined): Record<string, string> {
+  if (date === undefined) return {}
+  return { GIT_AUTHOR_DATE: date, GIT_COMMITTER_DATE: date }
+}
+
 /** Runs git in `cwd` with a fixed identity, failing loudly. */
-export async function git(cwd: string, args: string[]): Promise<string> {
+export async function git(
+  cwd: string,
+  args: string[],
+  env: Record<string, string> = {}
+): Promise<string> {
   const child = Bun.spawn(
     ["git", "-c", "user.name=test", "-c", "user.email=test@test", ...args],
     {
       cwd,
-      env: { ...process.env, GIT_TERMINAL_PROMPT: "0" },
+      env: { ...process.env, GIT_TERMINAL_PROMPT: "0", ...env },
       stdout: "pipe",
       stderr: "pipe",
     }

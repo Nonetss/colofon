@@ -87,10 +87,12 @@ export function storedRepository(
 
 /**
  * A git repository on disk, reached over `file://`, holding `files` on main:
- * syncs run the real git CLI and stay hermetic.
+ * syncs run the real git CLI and stay hermetic. `date` (ISO 8601) dates its
+ * commit, now when left out.
  */
 export async function createContentRemote(
-  files: Record<string, string> = CONTENT_SITE
+  files: Record<string, string> = CONTENT_SITE,
+  date?: string
 ): Promise<{ url: string; remove: () => Promise<void> }> {
   const base = await mkdtemp(path.join(tmpdir(), "api-content-remote-"))
   const bare = path.join(base, "remote.git")
@@ -103,7 +105,7 @@ export async function createContentRemote(
     await writeFile(target, text)
   }
   await git(work, ["add", "--all"])
-  await git(work, ["commit", "--quiet", "-m", "content"])
+  await git(work, ["commit", "--quiet", "-m", "content"], dateEnv(date))
   await git(work, ["push", "--quiet", bare, "main"])
   return {
     url: `file://${bare}`,
@@ -111,13 +113,22 @@ export async function createContentRemote(
   }
 }
 
+function dateEnv(date: string | undefined): Record<string, string> {
+  if (date === undefined) return {}
+  return { GIT_AUTHOR_DATE: date, GIT_COMMITTER_DATE: date }
+}
+
 /** Runs git in `cwd` with a fixed identity, failing loudly. */
-export async function git(cwd: string, args: string[]) {
+export async function git(
+  cwd: string,
+  args: string[],
+  env: Record<string, string> = {}
+) {
   const child = Bun.spawn(
     ["git", "-c", "user.name=test", "-c", "user.email=test@test", ...args],
     {
       cwd,
-      env: { ...process.env, GIT_TERMINAL_PROMPT: "0" },
+      env: { ...process.env, GIT_TERMINAL_PROMPT: "0", ...env },
       stdout: "pipe",
       stderr: "pipe",
     }

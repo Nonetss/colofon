@@ -15,6 +15,11 @@ export type PageHeader = {
   icono: string | null
   orden: number | null
   actualizado: string | null
+  /**
+   * The date of the last commit that touched the page's file, from git;
+   * never written in the file. `null` for pages that come from no file.
+   */
+  editado: string | null
   /** The site's own header fields (`cabecera`), the valid ones only. */
   campos: Record<string, unknown>
 }

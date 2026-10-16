@@ -7,6 +7,7 @@ import {
   loadContent,
   pruneClones,
   readCatalog,
+  readEditDates,
   readSite,
   redactCredentials,
   type Site,
@@ -181,7 +182,10 @@ export function createContentReader(
     declarations: ContentDeclarations,
     folder: string
   ): Promise<Site> {
-    const catalog = await readCatalog(folder, declarations)
+    const [catalog, editDates] = await Promise.all([
+      readCatalog(folder, declarations),
+      editDatesOf(repository, folder),
+    ])
     const catalogProblems = [...catalog.values()].flatMap(
       (type) => type.problems
     )
@@ -200,7 +204,8 @@ export function createContentReader(
       declarations.index,
       catalog,
       readerRoutesOf(repository.slug),
-      declarations.menu
+      declarations.menu,
+      editDates
     )
     if (built.problems.length > 0) {
       logger.warn(
@@ -212,6 +217,26 @@ export function createContentReader(
       )
     }
     return built
+  }
+
+  /** The clone's last commit date per file; none when git can't tell. */
+  async function editDatesOf(
+    repository: StoredRepository,
+    folder: string
+  ): Promise<ReadonlyMap<string, string>> {
+    try {
+      return await readEditDates(folder)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
+      logger.warn(
+        {
+          source: describeRepository(repository),
+          error: redactCredentials(message, repository.url),
+        },
+        "Edit dates could not be read; pages have none"
+      )
+      return new Map()
+    }
   }
 
   function folderOf(repository: StoredRepository) {
