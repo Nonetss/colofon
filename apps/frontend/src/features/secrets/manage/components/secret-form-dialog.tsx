@@ -1,7 +1,11 @@
-import type { SyntheticEvent } from "react"
+import type { ReactNode, SyntheticEvent } from "react"
 import { Text } from "@/components/shared/brand/typography"
-import type { DialogFieldDescriptor } from "@/components/shared/form/dialog-fields"
+import { FormField } from "@/components/shared/form/field-label"
 import { FormDialog } from "@/components/shared/form/form-dialog"
+import { SectionHeading } from "@/components/shared/layout/section-heading"
+import { Input } from "@/components/ui/input"
+import { Switch } from "@/components/ui/switch"
+import { Textarea } from "@/components/ui/textarea"
 import { SecretFieldList } from "@/features/secrets/manage/components/secret-field-list"
 import {
   useSecretCreate,
@@ -18,48 +22,27 @@ import {
 import type { SecretListItem } from "@/features/secrets/manage/model/types"
 import { useDialogForm } from "@/hooks/use-dialog-form"
 
-const fields: DialogFieldDescriptor<SecretFormValues>[] = [
+type PermissionKey = "allowWrite" | "allowInUrl" | "allowInBody"
+
+const PERMISSIONS: {
+  key: PermissionKey
+  title: string
+  description: string
+}[] = [
   {
-    kind: "text",
-    key: "name",
-    label: "Nombre",
-    placeholder: "komodo",
-    autoComplete: "off",
-    hint: "El agente lo usa en los marcadores: {{nombre.campo}}.",
-  },
-  {
-    kind: "textarea",
-    key: "description",
-    label: "Descripción (opcional)",
-    placeholder: "Para qué sirve; el agente la lee",
-    rows: 2,
-  },
-  {
-    kind: "textarea",
-    key: "origins",
-    label: "Orígenes",
-    placeholder: "https://komodo.casa.lan\nhttp://10.0.0.5:3003",
-    rows: 3,
-    hint: "Uno por línea, sin ruta. *.dominio cubre sus subdominios. Solo se envía a estos.",
-  },
-  {
-    kind: "checkbox",
     key: "allowWrite",
-    label: "Escritura",
-    description: "Permitir POST, PUT, PATCH y DELETE",
+    title: "Escritura",
+    description: "POST, PUT, PATCH y DELETE. Sin ella, solo lectura.",
   },
   {
-    kind: "checkbox",
     key: "allowInUrl",
-    label: "En la URL",
-    description: "Permitir sus marcadores en la ruta y la query",
+    title: "En la URL",
+    description: "Sus marcadores en la ruta y la query.",
   },
   {
-    kind: "checkbox",
     key: "allowInBody",
-    label: "En el body",
-    description:
-      "Permitir sus marcadores en el body (el servicio podría guardarlo)",
+    title: "En el body",
+    description: "Sus marcadores en el cuerpo; el servicio podría guardarlo.",
   },
 ]
 
@@ -68,6 +51,66 @@ function dialogCopy(secret: SecretListItem | null) {
   if (secret === null)
     return { title: "Nuevo secreto", submit: "Crear secreto" }
   return { title: `Editar ${secret.name}`, submit: "Guardar" }
+}
+
+function FieldError({ message }: { message: string | undefined }) {
+  if (message === undefined) return null
+  return (
+    <Text as="p" variant="meta" tone="destructive" role="alert">
+      {message}
+    </Text>
+  )
+}
+
+/** A block of the form under its micro-caps heading, ruled from the last. */
+function FormSection({
+  title,
+  children,
+}: {
+  title: string
+  children: ReactNode
+}) {
+  return (
+    <section className="space-y-3 border-t pt-5 first:border-t-0 first:pt-0">
+      <SectionHeading as="h3" title={title} />
+      {children}
+    </section>
+  )
+}
+
+/** One permission as a tile with its switch; the whole tile toggles it. */
+function PermissionTile({
+  id,
+  title,
+  description,
+  checked,
+  onCheckedChange,
+}: {
+  id: string
+  title: string
+  description: string
+  checked: boolean
+  onCheckedChange: (checked: boolean) => void
+}) {
+  return (
+    <label
+      htmlFor={id}
+      className="flex cursor-pointer flex-col gap-1.5 rounded-lg border p-3 transition-colors hover:bg-muted/40 has-data-checked:border-foreground"
+    >
+      <span className="flex items-center justify-between gap-2">
+        <Text variant="title">{title}</Text>
+        <Switch
+          id={id}
+          checked={checked}
+          onCheckedChange={onCheckedChange}
+          className="data-checked:bg-foreground"
+        />
+      </span>
+      <Text variant="compact" tone="muted">
+        {description}
+      </Text>
+    </label>
+  )
 }
 
 /**
@@ -91,11 +134,12 @@ export function SecretFormDialog({
   const needsEveryValue = secret?.unreadable === true
   const pending = createSecret.isPending || updateSecret.isPending
   const copy = dialogCopy(secret)
+  const { values, errors } = form
 
   const handleSubmit = async (event: SyntheticEvent<HTMLFormElement>) => {
     event.preventDefault()
     form.clearErrors()
-    const problems = secretFormProblems(form.values, needsEveryValue)
+    const problems = secretFormProblems(values, needsEveryValue)
     if (problems.name !== undefined) form.setError("name", problems.name)
     if (problems.origins !== undefined) {
       form.setError("origins", problems.origins)
@@ -104,9 +148,9 @@ export function SecretFormDialog({
     if (Object.keys(problems).length > 0) return
     try {
       if (secret === null) {
-        await createSecret.mutateAsync(createInputOf(form.values))
+        await createSecret.mutateAsync(createInputOf(values))
       } else {
-        await updateSecret.mutateAsync(updateInputOf(secret.id, form.values))
+        await updateSecret.mutateAsync(updateInputOf(secret.id, values))
       }
       onOpenChange(false)
     } catch {
@@ -115,7 +159,7 @@ export function SecretFormDialog({
   }
 
   return (
-    <FormDialog
+    <FormDialog<SecretFormValues>
       open={open}
       onOpenChange={onOpenChange}
       title={copy.title}
@@ -123,21 +167,89 @@ export function SecretFormDialog({
       onSubmit={handleSubmit}
       isPending={pending}
       submitLabel={copy.submit}
-      form={form}
-      fields={fields}
+      className="sm:max-w-3xl"
     >
-      {needsEveryValue && (
-        <Text as="p" variant="compact" tone="destructive">
-          Sus valores no se pueden descifrar (cambió la clave del servidor):
-          escríbelos todos de nuevo.
-        </Text>
-      )}
-      <SecretFieldList
-        fields={form.values.fields}
-        onChange={(next) => form.set("fields", next)}
-        needsEveryValue={needsEveryValue}
-        problem={form.errors.fields}
-      />
+      <div className="@container space-y-5">
+        {needsEveryValue && (
+          <Text as="p" variant="compact" tone="destructive">
+            Sus valores no se pueden descifrar (cambió la clave del servidor):
+            escríbelos todos de nuevo.
+          </Text>
+        )}
+
+        <FormSection title="Identidad">
+          <div className="grid gap-4 @xl:grid-cols-[minmax(0,15rem)_minmax(0,1fr)]">
+            <FormField label="Nombre" htmlFor="secret-name">
+              <Input
+                id="secret-name"
+                value={values.name}
+                onChange={(event) => form.set("name", event.target.value)}
+                placeholder="komodo"
+                className="font-mono"
+                autoComplete="off"
+                spellCheck={false}
+                aria-invalid={errors.name ? true : undefined}
+              />
+              <FieldError message={errors.name} />
+            </FormField>
+            <FormField label="Descripción" htmlFor="secret-description">
+              <Input
+                id="secret-description"
+                value={values.description}
+                onChange={(event) =>
+                  form.set("description", event.target.value)
+                }
+                placeholder="Opcional. Para qué sirve; el agente la lee"
+              />
+            </FormField>
+          </div>
+        </FormSection>
+
+        <FormSection title="Dónde se puede enviar">
+          <FormField
+            label="Orígenes"
+            htmlFor="secret-origins"
+            hint="Uno por línea, sin ruta. *.dominio cubre sus subdominios. El secreto nunca sale hacia otro sitio."
+          >
+            <Textarea
+              id="secret-origins"
+              value={values.origins}
+              onChange={(event) => form.set("origins", event.target.value)}
+              placeholder={"https://komodo.casa.lan\nhttp://10.0.0.5:3003"}
+              rows={3}
+              className="font-mono"
+              spellCheck={false}
+              aria-invalid={errors.origins ? true : undefined}
+            />
+            <FieldError message={errors.origins} />
+          </FormField>
+        </FormSection>
+
+        <FormSection title="Permisos">
+          <div className="grid gap-2 @xl:grid-cols-3">
+            {PERMISSIONS.map((permission) => (
+              <PermissionTile
+                key={permission.key}
+                id={`secret-${permission.key}`}
+                title={permission.title}
+                description={permission.description}
+                checked={values[permission.key]}
+                onCheckedChange={(checked) => form.set(permission.key, checked)}
+              />
+            ))}
+          </div>
+        </FormSection>
+
+        <div className="border-t pt-5">
+          <SecretFieldList
+            secretName={values.name}
+            fields={values.fields}
+            onChange={(next) => form.set("fields", next)}
+            needsEveryValue={needsEveryValue}
+            problem={errors.fields}
+          />
+        </div>
+      </div>
     </FormDialog>
   )
 }
