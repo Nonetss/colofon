@@ -331,7 +331,7 @@ dev PostgreSQL and the containerized stacks) and a PostgreSQL database for
 development (see [Database](#database)).
 
 ```bash
-git clone https://github.com/Nonetss/doc.git
+git clone https://github.com/Nonetss/colofon.git
 cd doc
 bun install
 bun run setup:dev   # writes the root .env with real secrets and the admin seed
@@ -393,7 +393,7 @@ bun run dev:local  # the same apps natively through Turbo; also run `bun run gat
 #### Trust the local certificate (once)
 
 The dev gateway signs `https://localhost:4321` with Caddy's local certificate
-authority, kept in the `doc-dev_gateway_data` Docker volume so it survives
+authority, kept in the `colofon-dev_gateway_data` Docker volume so it survives
 restarts. After the gateway has started once:
 
 ```bash
@@ -460,7 +460,7 @@ prompts for the public URL and admin credentials, generates `.env`, downloads
 `compose.prod.yml` if missing, and can start the stack:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Nonetss/doc/main/scripts/bootstrap.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Nonetss/colofon/main/scripts/bootstrap.sh | bash
 ```
 
 Session cookies are `Secure`, so outside `localhost` the stack must be served
