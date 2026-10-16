@@ -12,6 +12,7 @@ import { UserAvatar } from "@/components/shared/user/avatar"
 import { Button } from "@/components/ui/button"
 import { ChangePasswordDialog } from "@/features/profile/overview/components/change-password-dialog"
 import { EditNameDialog } from "@/features/profile/overview/components/edit-name-dialog"
+import { ProfileAgentSkills } from "@/features/profile/overview/components/profile-agent-skills"
 import { ProfileApiKeys } from "@/features/profile/overview/components/profile-api-keys"
 import { authClient } from "@/lib/auth-client"
 import { formatDate } from "@/lib/format"
@@ -143,6 +144,8 @@ export function ProfileContent({ user: initialUser }: ProfilePageProps) {
       />
 
       <ProfileApiKeys />
+
+      <ProfileAgentSkills />
 
       <EditNameDialog
         open={editNameOpen}

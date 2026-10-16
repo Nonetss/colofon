@@ -5,6 +5,10 @@ export {
   useApiKeyDelete,
   useApiKeysList,
 } from "@/features/api-keys/manage/hooks/use-api-keys"
+export {
+  KEY_PLACEHOLDER,
+  skillsPrompt,
+} from "@/features/api-keys/manage/model/skills-prompt"
 export type {
   ApiKey,
   ApiKeyListItem,
