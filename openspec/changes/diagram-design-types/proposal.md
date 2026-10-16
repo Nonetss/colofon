@@ -39,5 +39,5 @@ A diagram file can only take two forms today: a drawn diagram, where the content
 - `packages/content/src/editor-schemas.ts`: the diagram schema union.
 - `apps/frontend`: `features/docs/diagrams/model/diagram-graph.ts` and `diagram-highlights.ts` for chart marks and series; `styles/global.css` for the classes of the new types, in light and dark.
 - Tests in `packages/content/tests/pages/` and `apps/frontend/tests/unit/features/docs/diagrams/`, with fixtures for each type.
-- `docs/human/contenido.md` ("Diagramas"): the author guide for each type.
+- `doc-example` (the content repository with the "Escribir documentación" guide): a `docs/diagrams/` section with a page per family, a working example of every type, and a `diagram-types` catalog type.
 - One new dependency in `packages/content`: `hast-util-from-html`, from the unified family already in use, to parse illustrations. There is no layout library, no database change and no API shape change beyond the editor schema's content.

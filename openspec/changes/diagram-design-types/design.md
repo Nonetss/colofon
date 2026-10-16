@@ -73,7 +73,7 @@ Architecture, high-level, IT current-state, data flow, DP integration, deploymen
 - `head` (`triangle` and the two diamonds, for UML), drawn as their own paths like today's arrowheads;
 - `ops` on table boxes.
 
-They are documented as recipes in `docs/human/contenido.md`, with one example each. They are not new types, to keep the type count down, which is diagram-design's own advice (semantic patterns over new types).
+They are documented as recipes in the `doc-example` guide's drawn-diagram page. They are not new types, to keep the type count down, which is diagram-design's own advice (semantic patterns over new types).
 
 ### 5. Illustrations: own parser, whitelist and report, then the page sanitizer
 
@@ -116,7 +116,7 @@ The foundation comes first: registry, `Scene`, sanitizer, drawn-form growth, bud
 - [Widening the sanitizer] → Only geometry attributes are added, with value patterns. No styles, references or scripts are allowed. Tests cover a hostile SVG fixture, through both the walker and `SANITIZE_SCHEMA`.
 - [Editor `anyOf` errors become noisy when a file matches no branch] → The `type` literal narrows the branch. Unknown `type` is also reported by the platform with the list of types.
 - [Diverging from diagram-design over time] → We port a snapshot. The ported reference version is recorded in a comment per module, and the platform does not track upstream automatically.
-- [New accent warning on existing diagrams] → Report only, no render change. It is called out in the commit and in `contenido.md`.
+- [New accent warning on existing diagrams] → Report only, no render change, and a run of accent arrows joined end to end counts as one main path, so the usual "camino principal" does not trip it. It is explained in the guide.
 
 ## Migration Plan
 

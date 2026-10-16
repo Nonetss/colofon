@@ -194,7 +194,7 @@ A box or typed item with `entity` or `page` SHALL link to its page. Every drawin
 
 ### Requirement: Measured problems
 
-The platform SHALL measure each box's and typed item's texts with an average glyph width per font and size and SHALL report, on the field path, every `name`, `sub` line, table column or tag-plus-name that does not fit the width it is drawn in, and every box whose badges do not fit beside its tag. A typed diagram SHALL also be checked against its type's complexity budget (`content-diagram-types`), and every diagram SHALL be reported when more than two of its elements carry the accent (focal boxes, accent arrows, focal items). These problems SHALL NOT stop the diagram from rendering.
+The platform SHALL measure each box's and typed item's texts with an average glyph width per font and size and SHALL report, on the field path, every `name`, `sub` line, table column or tag-plus-name that does not fit the width it is drawn in, and every box whose badges do not fit beside its tag. A typed diagram SHALL also be checked against its type's complexity budget (`content-diagram-types`), and every diagram SHALL be reported when more than two of its elements carry the accent (each focal box or focal item, and each main path, a run of accent arrows joined end to end counting once). These problems SHALL NOT stop the diagram from rendering.
 
 #### Scenario: Name too wide
 
@@ -205,6 +205,11 @@ The platform SHALL measure each box's and typed item's texts with an average gly
 
 - **WHEN** a drawn diagram has two `focal` boxes and one `accent` edge
 - **THEN** the diagram SHALL be reported saying at most two elements carry the accent, and SHALL still render
+
+#### Scenario: A main path counts once
+
+- **WHEN** a drawn diagram has one `focal` box and three `accent` edges joined end to end
+- **THEN** no accent problem SHALL be reported
 
 ### Requirement: Diagram interaction
 
