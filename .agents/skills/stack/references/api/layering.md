@@ -10,6 +10,7 @@ The package root holds infrastructure shared by every API version:
 | --- | --- |
 | `publicProcedure` | no auth |
 | `protectedProcedure` | any signed-in user; `UNAUTHORIZED` otherwise |
+| `sessionProcedure` | a signed-in user acting from the browser: `UNAUTHORIZED` without session, `FORBIDDEN` when the request carries an `x-api-key` header (Better Auth turns a key into a session indistinguishable from a sign-in). For what an agent holding a key must not do: managing secrets (`v1.secret`) |
 | `adminProcedure` | global `user.role === "admin"` (`UNAUTHORIZED` without session, `FORBIDDEN` otherwise) |
 | `permissionProcedure(resource, action)` | organization-scoped permission via Better Auth `hasPermission` in the session's active organization; global admins bypass it. Resources/actions come from `appStatements` in `packages/auth/src/permissions.ts` |
 | `cronProcedure` | reachable only from the in-process scheduler |

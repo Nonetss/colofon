@@ -58,3 +58,12 @@ export function adminContext(): Context {
 export function cronContext(base: Context = adminContext()): Context {
   return { ...base, cron: { jobId: "job-id", jobName: "job name" } }
 }
+
+/** A signed-in user whose request came with an API key in `x-api-key`. */
+export function apiKeyContext(): Context {
+  const context = userContext()
+  return {
+    ...context,
+    headers: new Headers({ "x-api-key": "colofon_test-key" }),
+  }
+}

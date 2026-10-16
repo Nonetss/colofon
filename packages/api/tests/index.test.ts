@@ -6,6 +6,7 @@ import type { Context } from "#context"
 import {
   adminContext,
   anonymousContext,
+  apiKeyContext,
   cronContext,
   userContext,
 } from "#tests/fixtures/context"
@@ -24,6 +25,7 @@ const {
   permissionProcedure,
   protectedProcedure,
   publicProcedure,
+  sessionProcedure,
 } = await import("#index")
 
 // Any declared app permission works; the builder's logic doesn't depend on it.
@@ -35,6 +37,7 @@ const ok = () => "ok" as const
 const procedures = {
   public: publicProcedure.handler(ok),
   protected: protectedProcedure.handler(ok),
+  session: sessionProcedure.handler(ok),
   admin: adminProcedure.handler(ok),
   permission: permissionProcedure(resource, action).handler(ok),
   cron: cronProcedure.handler(ok),
@@ -74,6 +77,30 @@ describe("protectedProcedure", () => {
 
   test("lets a signed-in user through", async () => {
     expect(await run(procedures.protected, userContext())).toBe("ok")
+  })
+})
+
+describe("sessionProcedure", () => {
+  test("rejects an anonymous caller with UNAUTHORIZED", async () => {
+    await expectCode(
+      run(procedures.session, anonymousContext()),
+      "UNAUTHORIZED"
+    )
+  })
+
+  test("lets a user signed in with a cookie through", async () => {
+    expect(await run(procedures.session, userContext())).toBe("ok")
+  })
+
+  test("rejects a request with an API key with FORBIDDEN", async () => {
+    await expectCode(run(procedures.session, apiKeyContext()), "FORBIDDEN")
+  })
+
+  test("rejects a request with both a cookie and an API key", async () => {
+    const context = userContext()
+    context.headers.set("x-api-key", "colofon_test-key")
+
+    await expectCode(run(procedures.session, context), "FORBIDDEN")
   })
 })
 
@@ -153,6 +180,7 @@ describe("access meta", () => {
   test.each([
     ["public", "public"],
     ["protected", "protected"],
+    ["session", "session"],
     ["admin", "admin"],
     ["permission", "admin"],
     ["cron", "cron"],
@@ -175,6 +203,7 @@ describe("middleware names", () => {
       )
 
     expect(names(protectedProcedure)).toEqual(["requireAuth"])
+    expect(names(sessionProcedure)).toEqual(["requireSignInSession"])
     expect(names(adminProcedure)).toEqual(["requireAdmin"])
     expect(names(permissionProcedure(resource, action))).toEqual([
       "requirePermission",

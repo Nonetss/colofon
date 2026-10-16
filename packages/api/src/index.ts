@@ -10,7 +10,7 @@ import { userHasOrganizationPermission } from "#lib/permissions"
  * procedure, never by hand — that is what keeps it in sync with the
  * middleware actually enforcing it.
  */
-export type AppAccess = "public" | "protected" | "admin" | "cron"
+export type AppAccess = "public" | "protected" | "session" | "admin" | "cron"
 
 /**
  * How a procedure takes part in cron scheduling. The two forms are mutually
@@ -73,6 +73,41 @@ const requireAuth = o.middleware(async function requireAuth({ context, next }) {
 export const protectedProcedure = publicProcedure
   .use(requireAuth)
   .meta(accessMeta("protected"))
+
+/** The header Better Auth reads an API key from. */
+const API_KEY_HEADER = "x-api-key"
+
+const requireSignInSession = o.middleware(async function requireSignInSession({
+  context,
+  next,
+}) {
+  if (!context.user) {
+    throw errors.UNAUTHORIZED()
+  }
+  // Better Auth turns an API key into a session that looks like a sign-in,
+  // and the key wins over a cookie sent with it, so the header decides.
+  if (context.headers.has(API_KEY_HEADER)) {
+    throw errors.FORBIDDEN({
+      message: "Esta operación solo está disponible desde la web",
+    })
+  }
+  return next({
+    context: {
+      ...context,
+      user: context.user,
+      session: context.session,
+    },
+  })
+})
+
+/**
+ * A signed-in user acting from the browser: like `protectedProcedure`, but a
+ * request that carries an API key is `FORBIDDEN`. For what an agent holding
+ * a key must not do, such as managing the secrets it can use.
+ */
+export const sessionProcedure = publicProcedure
+  .use(requireSignInSession)
+  .meta(accessMeta("session"))
 
 const requireAdmin = o.middleware(async function requireAdmin({
   context,
