@@ -20,6 +20,7 @@ import {
   entityPagePath,
   entityPath,
 } from "#contract/catalog-paths"
+import { isImageFile } from "#contract/images"
 import type { PageProblem } from "#contract/problems"
 import { diagramFigure } from "#diagrams/figure"
 import type { DiagramFile } from "#diagrams/model"
@@ -34,17 +35,6 @@ import type { PageHeading } from "#pages/types"
 // (`diagrams/figure.ts`); a ```diagram block, which belongs in diagramas/, by a
 // notice. Other MDX nodes are left in place and `to-hast.ts` drops them or
 // renders them as notices.
-
-/** Image files a page can show, by extension. */
-export const IMAGE_EXTENSIONS = [
-  "png",
-  "jpg",
-  "jpeg",
-  "gif",
-  "webp",
-  "avif",
-  "svg",
-] as const
 
 export type TransformContext = {
   /** The page file relative to the content root (`docs/red/dns.mdx`). */
@@ -646,10 +636,4 @@ export function pagePathOf(file: string): string {
   if (withoutExt.endsWith("/index"))
     return withoutExt.slice(0, -"/index".length)
   return withoutExt
-}
-
-/** Whether a file under `docs/` is an image a page can show. */
-export function isImageFile(file: string): boolean {
-  const extension = path.posix.extname(file).slice(1).toLowerCase()
-  return IMAGE_EXTENSIONS.some((allowed) => allowed === extension)
 }

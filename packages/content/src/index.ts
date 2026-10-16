@@ -12,6 +12,7 @@ export {
   fieldSchema,
 } from "#contract/entity-schema"
 export { iconName, LUCIDE_ICON_NAMES } from "#contract/icon-name"
+export { IMAGE_EXTENSIONS, isImageFile } from "#contract/images"
 export {
   type ContentDeclarations,
   type ContentProblem,
@@ -83,5 +84,4 @@ export {
   type SiteRoutes,
 } from "#pages/site"
 export { SANITIZE_SCHEMA } from "#pages/to-hast"
-export { IMAGE_EXTENSIONS, isImageFile } from "#pages/transform"
 export type { Page, PageHeader, PageHeading } from "#pages/types"
