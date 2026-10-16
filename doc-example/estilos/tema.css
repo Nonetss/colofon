@@ -1,0 +1,13 @@
+/* El tema de «Escribir documentación»: el acento en azul en vez del terracota
+   de la plataforma, para que la guía muestre funcionando lo que explica
+   (docs/repository/styles.mdx). Cada variable va en los dos temas: :root es el
+   claro y .dark el oscuro. --primary colorea los enlaces, las negritas, la
+   página actual de la barra lateral y el foco. */
+
+:root {
+  --primary: oklch(0.55 0.17 255);
+}
+
+.dark {
+  --primary: oklch(0.72 0.13 255);
+}
