@@ -128,6 +128,10 @@ services:
         - action: sync+restart
           path: ./packages/api/src
           target: /app/packages/api/src
+        # The platform's Agent Skills, read once per process (v1.skills).
+        - action: sync+restart
+          path: ./packages/api/skills
+          target: /app/packages/api/skills
         - action: sync+restart
           path: ./packages/auth/src
           target: /app/packages/auth/src

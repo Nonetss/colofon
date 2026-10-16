@@ -5,7 +5,8 @@ import {
 } from "@modelcontextprotocol/client"
 import type { CallToolResult } from "@modelcontextprotocol/server"
 import { serveMcp } from "#v1/mcp/handler"
-import type { DocsClient, ToolScope } from "#v1/mcp/tools"
+import { MCP_TOOL_NAMES } from "#v1/mcp/setup"
+import type { DocsClient, SkillsClient, ToolScope } from "#v1/mcp/tools"
 
 // The real handler and server, driven by the SDK's own client over a fetch
 // that calls `serveMcp` directly: no network, no backend. Each request gets the
@@ -27,7 +28,14 @@ const docs: DocsClient = {
   },
 }
 
-const scope: ToolScope = { docs, origin }
+const skills: SkillsClient = {
+  list: async () => ({ skills: [] }),
+  get: async () => {
+    throw new Error("not used")
+  },
+}
+
+const scope: ToolScope = { docs, skills, origin }
 
 async function mcpFetch(
   url: string | URL,
@@ -61,16 +69,20 @@ function text(result: CallToolResult): string {
 }
 
 describe("serveMcp", () => {
-  test("serves exactly the five read-only tools", async () => {
+  test("serves exactly the seven read-only tools, the ones /llms.txt names", async () => {
     const client = await connect()
     const { tools } = await client.listTools()
-    expect(tools.map((tool) => tool.name).sort()).toEqual([
+    const names = tools.map((tool) => tool.name).sort()
+    expect(names).toEqual([
       "entity",
       "index",
       "read",
       "repositories",
       "search",
+      "skill",
+      "skills",
     ])
+    expect(names).toEqual([...MCP_TOOL_NAMES].sort())
     for (const tool of tools) {
       expect(tool.annotations?.readOnlyHint).toBe(true)
       expect(tool.annotations?.idempotentHint).toBe(true)
@@ -82,6 +94,7 @@ describe("serveMcp", () => {
     expect(client.getServerVersion()?.name).toBe("colofon")
     expect(client.getInstructions()).toContain("`search`")
     expect(client.getInstructions()).toContain("`entity`")
+    expect(client.getInstructions()).toContain("`skills`")
     expect(client.getInstructions()).toContain("`#section`")
   })
 

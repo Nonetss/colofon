@@ -1,9 +1,14 @@
+import { CORS_ORIGIN } from "astro:env/server"
 import { defineMiddleware } from "astro:middleware"
 import type { APIContext, MiddlewareNext } from "astro"
 import { splitSetCookieHeader } from "better-auth/cookies"
 import { authServer } from "@/lib/auth-server"
 import { logger } from "@/lib/logger"
-import { isMarkdownTextPath } from "@/lib/markdown-text-path"
+import {
+  isMarkdownTextPath,
+  isOptionalCredentialPath,
+} from "@/lib/markdown-text-path"
+import { publicOrigin } from "@/lib/public-origin"
 
 const publicPaths = ["/login", "/signup"]
 const publicExactPaths = new Set(["/logo.svg"])
@@ -31,9 +36,9 @@ function isRefusedCredential(status: number): boolean {
   return status === 401 || status === 403
 }
 
-function unauthorizedText(): Response {
+function unauthorizedText(origin: string): Response {
   return new Response(
-    "Inicia sesión o envía una API key en la cabecera x-api-key.\n",
+    `Inicia sesión o envía una API key en la cabecera x-api-key. Cómo conseguirla, el MCP y las skills: ${origin}/llms.txt\n`,
     {
       status: 401,
       headers: {
@@ -97,9 +102,15 @@ async function handleProtectedRequest(
   }
 
   if (sessionResult.data === null) {
+    // The agent's way in answers anyway, showing only what needs no key.
+    if (isOptionalCredentialPath(path))
+      return appendRefreshedCookies(await next(), refreshedCookies)
     // An agent reading the Markdown routes gets told why, not a login page.
     if (isMarkdownTextPath(path))
-      return appendRefreshedCookies(unauthorizedText(), refreshedCookies)
+      return appendRefreshedCookies(
+        unauthorizedText(publicOrigin(CORS_ORIGIN, context.url)),
+        refreshedCookies
+      )
     return appendRefreshedCookies(context.redirect("/login"), refreshedCookies)
   }
 

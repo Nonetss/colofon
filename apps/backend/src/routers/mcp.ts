@@ -35,6 +35,7 @@ router.all("/mcp", async (c) => {
   const client = createRouterClient(appRouter, { context })
   return serveMcp(c.req.raw, {
     docs: client.v1.docs,
+    skills: client.v1.skills,
     origin: publicUrl.origin,
   })
 })

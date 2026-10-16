@@ -1,10 +1,14 @@
 import { describe, expect, test } from "bun:test"
 import {
+  agentGuide,
   type DocsRepository,
+  type DocsSkill,
   flattenPages,
+  llmsGuide,
   llmsIndex,
   repositoryLlmsIndex,
 } from "#v1/docs/llm-text"
+import { claudeCodeCommand, MCP_TOOL_NAMES } from "#v1/mcp/setup"
 
 const origin = "https://docs.example.org"
 
@@ -117,25 +121,93 @@ describe("flattenPages", () => {
   })
 })
 
+const colofon: DocsSkill = {
+  name: "colofon",
+  repository: null,
+  description: "Cómo usar el sitio.",
+  path: "/.well-known/agent-skills/colofon/SKILL.md",
+  digest: "sha256:0",
+}
+
+const casaDeploy: DocsSkill = {
+  name: "casa-deploy",
+  repository: { slug: "casa", name: "Casa" },
+  description: "Cómo se despliega.",
+  path: "/.well-known/agent-skills/casa-deploy/SKILL.md",
+  digest: "sha256:1",
+}
+
+/** The lines of the repository sections, after the guide. */
+function afterGuide(text: string): string[] {
+  const lines = text.split("\n")
+  const start = lines.findIndex(
+    (line, at) => at > 0 && line.startsWith("## ") && line !== "## Para agentes"
+  )
+  if (start === -1) return []
+  return lines.slice(start)
+}
+
+describe("agentGuide", () => {
+  const guide = agentGuide([colofon, casaDeploy], origin).join("\n")
+
+  test("says where to get the key and how to send it", () => {
+    expect(guide).toContain("https://docs.example.org/me")
+    expect(guide).toContain("`x-api-key`")
+    expect(guide).toContain("`<página>/llm.txt`")
+  })
+
+  test("gives the MCP's address, the dialog's Claude Code command and the tools", () => {
+    expect(guide).toContain("https://docs.example.org/mcp")
+    expect(guide).toContain(claudeCodeCommand(origin, "<tu API key>"))
+    for (const name of MCP_TOOL_NAMES) expect(guide).toContain(`\`${name}\``)
+  })
+
+  test("gives the skills index, how to install one and only the platform's skills", () => {
+    expect(guide).toContain(
+      "https://docs.example.org/.well-known/agent-skills/index.json"
+    )
+    expect(guide).toContain(
+      'curl -fsS -H "x-api-key: <tu API key>" https://docs.example.org/.well-known/agent-skills/colofon/SKILL.md -o ~/.claude/skills/colofon/SKILL.md'
+    )
+    expect(guide).toContain(
+      "- [colofon](https://docs.example.org/.well-known/agent-skills/colofon/SKILL.md): Cómo usar el sitio."
+    )
+    expect(guide).not.toContain("casa-deploy")
+  })
+})
+
+describe("llmsGuide", () => {
+  test("is the guide and what a key adds, without any repository", () => {
+    const text = llmsGuide([colofon], origin)
+    expect(text.startsWith("# Documentación\n\n> ")).toBe(true)
+    expect(text).toContain("## Para agentes")
+    expect(text.trimEnd().endsWith("sus páginas y sus skills.")).toBe(true)
+    expect(afterGuide(text)).toEqual([])
+  })
+})
+
 describe("llmsIndex", () => {
-  test("opens with the heading, the summary and how to read the pages", () => {
-    const [heading, , summary, , howTo] = llmsIndex([], origin).split("\n")
+  test("opens with the heading, the summary and the guide", () => {
+    const text = llmsIndex([], [colofon], origin)
+    const [heading, , summary, , guide] = text.split("\n")
     expect(heading).toBe("# Documentación")
     expect(summary?.startsWith("> ")).toBe(true)
-    expect(howTo).toContain("`<página>/llm.txt`")
-    expect(howTo).toContain("`x-api-key`")
+    expect(guide).toBe("## Para agentes")
+    expect(text).not.toContain("sus páginas y sus skills.")
   })
 
   test("has one section per repository with content, in the given order", () => {
-    expect(sections(llmsIndex([casa, nuevo, trabajo], origin))).toEqual([
+    const text = llmsIndex([casa, nuevo, trabajo], [], origin)
+    expect(sections(afterGuide(text).join("\n"))).toEqual([
       "## Casa",
       "## Trabajo",
     ])
   })
 
   test("lists the home first, then sections and pages depth first", () => {
-    const text = llmsIndex([casa], origin)
-    const lines = text.split("\n").filter((line) => line.startsWith("- "))
+    const lines = afterGuide(llmsIndex([casa], [], origin)).filter((line) =>
+      line.startsWith("- ")
+    )
     expect(lines).toEqual([
       "- [Inicio](https://docs.example.org/casa/llm.txt): Portada",
       "- [Red](https://docs.example.org/casa/red/llm.txt)",
@@ -146,15 +218,23 @@ describe("llmsIndex", () => {
   })
 
   test("a repository without a home starts with its pages", () => {
-    expect(llmsIndex([trabajo], origin)).toContain(
+    expect(llmsIndex([trabajo], [], origin)).toContain(
       "## Trabajo\n\n- [Correo](https://docs.example.org/trabajo/correo/llm.txt)\n"
     )
+  })
+
+  test("a repository's skills close its section; one without has none", () => {
+    const text = llmsIndex([casa, trabajo], [colofon, casaDeploy], origin)
+    expect(text).toContain(
+      "- [Red / VPN / WireGuard](https://docs.example.org/casa/red/vpn/wg/llm.txt)\n\n### Skills\n\n- [casa-deploy](https://docs.example.org/.well-known/agent-skills/casa-deploy/SKILL.md): Cómo se despliega.\n\n## Trabajo"
+    )
+    expect(text.split("### Skills")).toHaveLength(2)
   })
 })
 
 describe("repositoryLlmsIndex", () => {
   test("is headed by the repository with its description as the summary", () => {
-    const text = repositoryLlmsIndex(casa, origin)
+    const text = repositoryLlmsIndex(casa, [], origin)
     expect(text.startsWith("# Casa\n\n> Lo que corre en casa\n\n")).toBe(true)
     expect(sections(text)).toEqual([])
     expect(text).toContain(
@@ -163,7 +243,7 @@ describe("repositoryLlmsIndex", () => {
   })
 
   test("leaves out the summary when the repository has no description", () => {
-    const text = repositoryLlmsIndex(trabajo, origin)
+    const text = repositoryLlmsIndex(trabajo, [], origin)
     expect(text.startsWith("# Trabajo\n\nCada página")).toBe(true)
   })
 
@@ -180,10 +260,19 @@ describe("repositoryLlmsIndex", () => {
         },
       ],
     }
-    const index = repositoryLlmsIndex(grouped, origin)
+    const index = repositoryLlmsIndex(grouped, [], origin)
     expect(index).toContain(
       "- [Infraestructura / Red / DNS](https://docs.example.org/casa/red/dns/llm.txt): Resolución de nombres"
     )
     expect(index).not.toContain("[Infraestructura](")
+  })
+})
+
+describe("repositoryLlmsIndex with skills", () => {
+  test("lists the repository's skills and points at /llms.txt for the rest", () => {
+    const text = repositoryLlmsIndex(casa, [colofon, casaDeploy], origin)
+    expect(text).toContain("https://docs.example.org/llms.txt")
+    expect(text).toContain("### Skills\n\n- [casa-deploy]")
+    expect(text).not.toContain("[colofon]")
   })
 })

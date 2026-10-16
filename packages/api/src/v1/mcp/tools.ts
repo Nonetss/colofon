@@ -8,6 +8,7 @@ import { withOrigin } from "#v1/docs/full-links"
 import type { docsInput } from "#v1/docs/input"
 import {
   type DocsRepository,
+  type DocsSkill,
   llmsIndex,
   repositoryLlmsIndex,
 } from "#v1/docs/llm-text"
@@ -27,9 +28,13 @@ export type DocsClient = Pick<
   "nav" | "page" | "search"
 >
 
+/** The `v1.skills` procedures the skills tools read through. */
+export type SkillsClient = Pick<AppRouterClient["v1"]["skills"], "list" | "get">
+
 /** What every tool gets: the caller's client and the public origin. */
 export type ToolScope = {
   docs: DocsClient
+  skills: SkillsClient
   /** Origin the site is reached at, prefixed to every reader route. */
   origin: string
 }
@@ -219,20 +224,22 @@ async function missingRepository(
 /** `index`: the `llms.txt` of every repository, or of one. */
 export async function indexTool({
   docs,
+  skills,
   origin,
   input,
 }: ToolScope & {
   input: { repository?: string | undefined }
 }): Promise<CallToolResult> {
   const nav = await docs.nav()
+  const listed = await skills.list()
   if (input.repository === undefined)
-    return textResult(llmsIndex(nav.repositories, origin))
+    return textResult(llmsIndex(nav.repositories, listed.skills, origin))
   const repository = nav.repositories.find(
     (entry) => entry.slug === input.repository && entry.available
   )
   if (repository === undefined)
     return errorResult(unknownRepository(input.repository))
-  return textResult(repositoryLlmsIndex(repository, origin))
+  return textResult(repositoryLlmsIndex(repository, listed.skills, origin))
 }
 
 type SearchOutput = Awaited<ReturnType<DocsClient["search"]>>
@@ -449,5 +456,82 @@ export async function entityTool({
   } catch (error) {
     if (!isMissing(error)) throw error
     return errorResult(await missingEntity(docs, input))
+  }
+}
+
+/** What `skills` returns as structured content. */
+export const skillsOutput = z.object({
+  skills: z.array(
+    z.object({
+      name: z.string(),
+      repository: z
+        .string()
+        .nullable()
+        .describe(
+          "Slug of the repository it comes from; null for the platform's"
+        ),
+      description: z.string(),
+      url: z.string().describe("Full address of its SKILL.md"),
+    })
+  ),
+})
+
+type SkillSummary = z.infer<typeof skillsOutput>["skills"][number]
+
+function skillSummary(skill: DocsSkill, origin: string): SkillSummary {
+  return {
+    name: skill.name,
+    repository: repositorySlug(skill),
+    description: skill.description,
+    url: `${origin}${skill.path}`,
+  }
+}
+
+function repositorySlug(skill: DocsSkill): string | null {
+  if (skill.repository === null) return null
+  return skill.repository.slug
+}
+
+function ownerOf(skill: DocsSkill): string {
+  if (skill.repository === null) return "the platform's"
+  return `${skill.repository.name}'s`
+}
+
+/** `skills`: every skill the caller can see, as the discovery index lists them. */
+export async function skillsTool({
+  skills,
+  origin,
+}: ToolScope): Promise<CallToolResult> {
+  const listed = await skills.list()
+  const summaries = listed.skills.map((skill) => skillSummary(skill, origin))
+  const lines = listed.skills.map(
+    (skill) =>
+      `- \`${skill.name}\` (${ownerOf(skill)}): ${skill.description} ${origin}${skill.path}`
+  )
+  return {
+    ...textResult(
+      [
+        ...lines,
+        "",
+        "Call skill with a name for its SKILL.md, or save it as <skills folder>/<name>/SKILL.md to install it.",
+      ].join("\n")
+    ),
+    structuredContent: { skills: summaries },
+  }
+}
+
+/** `skill`: one skill's SKILL.md, as its route serves it to the caller. */
+export async function skillTool({
+  skills,
+  input,
+}: ToolScope & { input: { name: string } }): Promise<CallToolResult> {
+  try {
+    const skill = await skills.get({ name: input.name })
+    return textResult(skill.text)
+  } catch (error) {
+    if (!isMissing(error)) throw error
+    return errorResult(
+      `There is no skill "${input.name}" you can read. Call skills to list them.`
+    )
   }
 }

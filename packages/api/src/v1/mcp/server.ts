@@ -9,6 +9,9 @@ import {
   repositoriesTool,
   searchOutput,
   searchTool,
+  skillsOutput,
+  skillsTool,
+  skillTool,
   type ToolScope,
 } from "#v1/mcp/tools"
 
@@ -20,6 +23,7 @@ const INSTRUCTIONS = [
   "Start with `repositories` to see what there is, or `search` to find pages by their words.",
   "`index` lists every page of a repository (or of all of them) with its route; `read` returns one page as Markdown, or only one section when the route ends in `#section` as search results do.",
   "`entity` looks up a catalog entity by repository, type and id: its fields, the pages that cite it and the entities that point at it.",
+  "`skills` lists the Agent Skills you can install (the platform's and each project's) and `skill` returns one's SKILL.md.",
   "Every link in the texts is a full address on this site; pass a page's route to `read` to follow it.",
 ].join(" ")
 
@@ -55,6 +59,15 @@ const entityInput = z.object({
     .min(1)
     .describe("Id of the catalog type, as in catalog/<type> routes"),
   id: z.string().min(1).describe("Id of the entity within its type"),
+})
+
+const skillInput = z.object({
+  name: z
+    .string()
+    .min(1)
+    .describe(
+      "Name of the skill, as skills lists it (`colofon`, `casa-deploy`)"
+    ),
 })
 
 /** The MCP server for one request, its tools reading as that request's user. */
@@ -123,6 +136,30 @@ export function createDocsMcpServer(scope: ToolScope): McpServer {
       annotations,
     },
     (input) => entityTool({ ...scope, input })
+  )
+
+  server.registerTool(
+    "skills",
+    {
+      title: "Skills",
+      description:
+        "List the Agent Skills you can install from this site: the platform's own (how to work with the site, how to write a content repository) and each project's, named <repository>-<name>, each with its description and the full address of its SKILL.md.",
+      outputSchema: skillsOutput,
+      annotations,
+    },
+    () => skillsTool(scope)
+  )
+
+  server.registerTool(
+    "skill",
+    {
+      title: "Skill",
+      description:
+        "Read one Agent Skill's SKILL.md by the name skills lists, exactly as the site serves it, to follow it now or save it as <skills folder>/<name>/SKILL.md. An unknown name is an error.",
+      inputSchema: skillInput,
+      annotations,
+    },
+    (input) => skillTool({ ...scope, input })
   )
 
   return server

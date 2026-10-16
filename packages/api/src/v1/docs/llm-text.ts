@@ -1,11 +1,15 @@
 import type { z } from "zod"
 import type { DocsNavNode, docsOutput } from "#v1/docs/output"
+import { claudeCodeCommand, MCP_TOOL_NAMES, mcpUrl } from "#v1/mcp/setup"
+import type { skillsOutput } from "#v1/skills/output"
 
 // `/llms.txt` and `/<repo>/llms.txt` (https://llmstxt.org): the map of the
-// documentation for an AI. Every page is a link to its `llm.txt`, the page
-// as Markdown, grouped by repository and listed as the sidebar orders it.
-// The frontend serves it as text and the MCP's `index` tool returns it, so
-// both answer the same.
+// documentation for an AI. `/llms.txt` opens with the guide an agent reads
+// when it has only been given the site's address (credentials, the MCP, the
+// skills), which is all it shows without a credential; with one, every page
+// follows as a link to its `llm.txt`, grouped by repository and listed as
+// the sidebar orders it, with each repository's skills. The frontend serves
+// it as text and the MCP's `index` tool returns it, so both answer the same.
 
 /** A repository as `v1.docs.nav` answers it. */
 export type DocsRepository = z.infer<
@@ -27,6 +31,14 @@ const SITE_SUMMARY =
 
 const HOW_TO_READ =
   "Cada página tiene su texto en Markdown en `<página>/llm.txt`, con sus enlaces como direcciones completas. Las peticiones necesitan una sesión o una API key en la cabecera `x-api-key`."
+
+const KEY_PLACEHOLDER = "<tu API key>"
+
+const WITH_A_KEY =
+  "Con una API key, este índice lista también los repositorios, sus páginas y sus skills."
+
+/** A skill as `v1.skills.list` answers it. */
+export type DocsSkill = z.infer<typeof skillsOutput.list>["skills"][number]
 
 /**
  * Every page of `repositories`, home included, depth first. `withRepository`
@@ -97,32 +109,123 @@ function text(lines: string[]): string {
   return `${lines.join("\n")}\n`
 }
 
-/** `/llms.txt`: every repository with content, one section each. */
-export function llmsIndex(
-  repositories: readonly DocsRepository[],
+function skillLine(skill: DocsSkill, origin: string): string {
+  return `- [${skill.name}](${origin}${skill.path}): ${skill.description}`
+}
+
+function skillsIndexUrl(origin: string): string {
+  return `${origin}/.well-known/agent-skills/index.json`
+}
+
+/** An example that installs `skill` in Claude Code's personal skills. */
+function installCommand(skill: DocsSkill, origin: string): string {
+  const folder = `~/.claude/skills/${skill.name}`
+  return `mkdir -p ${folder} && curl -fsS -H "x-api-key: ${KEY_PLACEHOLDER}" ${origin}${skill.path} -o ${folder}/SKILL.md`
+}
+
+function fenced(command: string): string[] {
+  return ["```sh", command, "```"]
+}
+
+/**
+ * What an agent needs from the site's address alone: how to authenticate,
+ * read the pages, connect the MCP and install the skills, with the
+ * platform's skills listed.
+ */
+export function agentGuide(
+  skills: readonly DocsSkill[],
+  origin: string
+): string[] {
+  const platform = skills.filter((skill) => skill.repository === null)
+  const tools = MCP_TOOL_NAMES.map((name) => `\`${name}\``).join(", ")
+  const lines = [
+    "## Para agentes",
+    "",
+    `Las páginas, el índice de cada repositorio, el MCP y las skills de los proyectos necesitan una sesión o una API key en la cabecera \`x-api-key\`. Cada usuario crea sus keys en ${origin}/me.`,
+    "",
+    "Cada página tiene su texto en Markdown en `<página>/llm.txt`, con sus enlaces como direcciones completas.",
+    "",
+    `El MCP de la documentación está en ${mcpUrl(origin)}, con la key en \`x-api-key\`. Sus herramientas: ${tools}. En Claude Code:`,
+    "",
+    ...fenced(claudeCodeCommand(origin, KEY_PLACEHOLDER)),
+    "",
+    `Las skills están en ${skillsIndexUrl(origin)} (el formato Agent Skills discovery), cada una con su dirección y el digest SHA-256 de su texto. Las de cada proyecto se llaman \`<repositorio>-<nombre>\` y solo aparecen con la key. Para instalar una, guarda su \`SKILL.md\` como \`<nombre>/SKILL.md\` en la carpeta de skills de tu agente (en Claude Code, \`~/.claude/skills/\`).`,
+  ]
+  const [first] = platform
+  if (first === undefined) return lines
+  lines.push(
+    "",
+    ...fenced(installCommand(first, origin)),
+    "",
+    "Skills de la plataforma:",
+    "",
+    ...platform.map((skill) => skillLine(skill, origin))
+  )
+  return lines
+}
+
+/** The skills of `repository`, under their own heading; none without. */
+function repositorySkillLines(
+  repository: DocsRepository,
+  skills: readonly DocsSkill[],
+  origin: string
+): string[] {
+  const own = skills.filter(
+    (skill) => skill.repository?.slug === repository.slug
+  )
+  if (own.length === 0) return []
+  return ["", "### Skills", "", ...own.map((skill) => skillLine(skill, origin))]
+}
+
+function opening(): string[] {
+  return [`# ${SITE_TITLE}`, "", `> ${SITE_SUMMARY}`, ""]
+}
+
+/** `/llms.txt` without a credential: the guide, and what a key adds. */
+export function llmsGuide(
+  skills: readonly DocsSkill[],
   origin: string
 ): string {
-  const lines = [`# ${SITE_TITLE}`, "", `> ${SITE_SUMMARY}`, "", HOW_TO_READ]
+  return text([...opening(), ...agentGuide(skills, origin), "", WITH_A_KEY])
+}
+
+/**
+ * `/llms.txt` with a credential: the guide, then every repository with
+ * content, one section each with its pages and its skills.
+ */
+export function llmsIndex(
+  repositories: readonly DocsRepository[],
+  skills: readonly DocsSkill[],
+  origin: string
+): string {
+  const lines = [...opening(), ...agentGuide(skills, origin)]
   for (const repository of repositories) {
     if (!repository.available) continue
     lines.push(
       "",
       `## ${repository.name}`,
       "",
-      ...pageLines(repository, origin)
+      ...pageLines(repository, origin),
+      ...repositorySkillLines(repository, skills, origin)
     )
   }
   return text(lines)
 }
 
-/** `/<repo>/llms.txt`: the pages of one repository. */
+/** `/<repo>/llms.txt`: the pages and skills of one repository. */
 export function repositoryLlmsIndex(
   repository: DocsRepository,
+  skills: readonly DocsSkill[],
   origin: string
 ): string {
   const lines = [`# ${repository.name}`, ""]
   if (repository.description !== null && repository.description !== "")
     lines.push(`> ${repository.description}`, "")
-  lines.push(HOW_TO_READ, "", ...pageLines(repository, origin))
+  lines.push(
+    `${HOW_TO_READ} La guía para agentes, con el MCP y las skills, está en ${origin}/llms.txt.`,
+    "",
+    ...pageLines(repository, origin),
+    ...repositorySkillLines(repository, skills, origin)
+  )
   return text(lines)
 }

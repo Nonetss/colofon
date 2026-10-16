@@ -46,6 +46,9 @@ RUN apt-get update \
 # repo layout below must match what the path expects at runtime.
 COPY --from=build /app/apps/backend/dist /app/apps/backend/dist
 COPY --from=build /app/packages/db/src/migrations /app/packages/db/src/migrations
+# The platform's skills are read at runtime from ../../packages/api/skills
+# (v1.skills), the same way, since the bundle doesn't include them.
+COPY --from=build /app/packages/api/skills /app/packages/api/skills
 
 EXPOSE 3000
 

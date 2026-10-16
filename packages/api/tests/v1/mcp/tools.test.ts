@@ -3,7 +3,7 @@ import type { CallToolResult } from "@modelcontextprotocol/server"
 import { ORPCError } from "@orpc/server"
 import type { z } from "zod"
 import { withOrigin } from "#v1/docs/full-links"
-import type { DocsRepository } from "#v1/docs/llm-text"
+import type { DocsRepository, DocsSkill } from "#v1/docs/llm-text"
 import { llmsIndex, repositoryLlmsIndex } from "#v1/docs/llm-text"
 import { bodyMarkdown, pageMarkdown } from "#v1/docs/markdown"
 import type { docsOutput } from "#v1/docs/output"
@@ -14,7 +14,10 @@ import {
   parseRoute,
   readTool,
   repositoriesTool,
+  type SkillsClient,
   searchTool,
+  skillsTool,
+  skillTool,
 } from "#v1/mcp/tools"
 
 const origin = "https://docs.example.org"
@@ -210,12 +213,22 @@ function fakeDocs({
   repositories = [casa, nuevo],
   search = noResults,
   pages = casaPages,
+  skillList = [],
 }: {
   repositories?: DocsRepository[]
   search?: SearchOutput
   pages?: ReadonlyMap<string, Page>
-} = {}): { docs: DocsClient; calls: Calls } {
+  skillList?: DocsSkill[]
+} = {}): { docs: DocsClient; skills: SkillsClient; calls: Calls } {
   const calls: Calls = { page: [], search: [] }
+  const skills: SkillsClient = {
+    list: async () => ({ skills: skillList }),
+    get: async (input) => {
+      const found = skillList.find((skill) => skill.name === input.name)
+      if (found === undefined) throw new ORPCError("NOT_FOUND")
+      return { name: found.name, text: `text of ${found.name}` }
+    },
+  }
   const docs: DocsClient = {
     nav: async () => ({ repositories }),
     page: async (input) => {
@@ -229,7 +242,7 @@ function fakeDocs({
       return search
     },
   }
-  return { docs, calls }
+  return { docs, skills, calls }
 }
 
 function text(result: CallToolResult): string {
@@ -302,8 +315,8 @@ describe("parseRoute", () => {
 
 describe("repositoriesTool", () => {
   test("lists every repository, with its index when it has content", async () => {
-    const { docs } = fakeDocs()
-    const result = await repositoriesTool({ docs, origin })
+    const { docs, skills } = fakeDocs()
+    const result = await repositoriesTool({ docs, skills, origin })
     expect(result.isError).toBeUndefined()
     expect(text(result)).toBe(
       [
@@ -332,8 +345,8 @@ describe("repositoriesTool", () => {
   })
 
   test("says so when there is none", async () => {
-    const { docs } = fakeDocs({ repositories: [] })
-    const result = await repositoriesTool({ docs, origin })
+    const { docs, skills } = fakeDocs({ repositories: [] })
+    const result = await repositoriesTool({ docs, skills, origin })
     expect(text(result)).toBe("There are no documentation repositories.")
     expect(result.structuredContent).toEqual({ repositories: [] })
   })
@@ -341,25 +354,31 @@ describe("repositoriesTool", () => {
 
 describe("indexTool", () => {
   test("without a repository is the global llms.txt", async () => {
-    const { docs } = fakeDocs()
-    const result = await indexTool({ docs, origin, input: {} })
-    expect(text(result)).toBe(llmsIndex([casa, nuevo], origin))
+    const { docs, skills } = fakeDocs()
+    const result = await indexTool({ docs, skills, origin, input: {} })
+    expect(text(result)).toBe(llmsIndex([casa, nuevo], [], origin))
   })
 
   test("with a repository is its llms.txt", async () => {
-    const { docs } = fakeDocs()
+    const { docs, skills } = fakeDocs()
     const result = await indexTool({
       docs,
+      skills,
       origin,
       input: { repository: "casa" },
     })
-    expect(text(result)).toBe(repositoryLlmsIndex(casa, origin))
+    expect(text(result)).toBe(repositoryLlmsIndex(casa, [], origin))
   })
 
   test("an unknown repository or one without content is an error", async () => {
-    const { docs } = fakeDocs()
+    const { docs, skills } = fakeDocs()
     for (const repository of ["no-existe", "nuevo"]) {
-      const result = await indexTool({ docs, origin, input: { repository } })
+      const result = await indexTool({
+        docs,
+        skills,
+        origin,
+        input: { repository },
+      })
       expect(result.isError).toBe(true)
       expect(text(result)).toContain(`"${repository}" does not exist`)
     }
@@ -397,9 +416,9 @@ describe("searchTool", () => {
   }
 
   test("passes the query through and lists the results with their routes", async () => {
-    const { docs, calls } = fakeDocs({ search: found })
+    const { docs, skills, calls } = fakeDocs({ search: found })
     const input = { query: "inversa", repository: undefined, limit: 10 }
-    const result = await searchTool({ docs, origin, input })
+    const result = await searchTool({ docs, skills, origin, input })
     expect(calls.search).toEqual([input])
     expect(text(result)).toBe(
       [
@@ -436,11 +455,12 @@ describe("searchTool", () => {
   })
 
   test("leaves the repository out when only one was searched", async () => {
-    const { docs } = fakeDocs({
+    const { docs, skills } = fakeDocs({
       search: { ...found, allRepositories: false },
     })
     const result = await searchTool({
       docs,
+      skills,
       origin,
       input: { query: "inversa", repository: "casa", limit: 10 },
     })
@@ -448,10 +468,11 @@ describe("searchTool", () => {
   })
 
   test("an unknown repository or one without content is an error, not a search everywhere", async () => {
-    const { docs, calls } = fakeDocs({ search: found })
+    const { docs, skills, calls } = fakeDocs({ search: found })
     for (const repository of ["no-existe", "nuevo"]) {
       const result = await searchTool({
         docs,
+        skills,
         origin,
         input: { query: "inversa", repository, limit: 10 },
       })
@@ -462,9 +483,10 @@ describe("searchTool", () => {
   })
 
   test("says so when nothing matches, without an error", async () => {
-    const { docs } = fakeDocs()
+    const { docs, skills } = fakeDocs()
     const result = await searchTool({
       docs,
+      skills,
       origin,
       input: { query: "zzz", repository: undefined, limit: 10 },
     })
@@ -476,9 +498,10 @@ describe("searchTool", () => {
 
 describe("readTool", () => {
   test("is the page's llm.txt text under a line saying where it is", async () => {
-    const { docs, calls } = fakeDocs()
+    const { docs, skills, calls } = fakeDocs()
     const result = await readTool({
       docs,
+      skills,
       origin,
       input: { route: "/casa/red/dns" },
     })
@@ -498,11 +521,12 @@ describe("readTool", () => {
   })
 
   test("with a section, is only that section and its subsections", async () => {
-    const { docs, calls } = fakeDocs({
+    const { docs, skills, calls } = fakeDocs({
       pages: new Map([["red/dns", sections]]),
     })
     const result = await readTool({
       docs,
+      skills,
       origin,
       input: { route: "/casa/red/dns#resolucion-inversa" },
     })
@@ -528,9 +552,12 @@ describe("readTool", () => {
   })
 
   test("a level 3 section stops at the next heading of its level", async () => {
-    const { docs } = fakeDocs({ pages: new Map([["red/dns", sections]]) })
+    const { docs, skills } = fakeDocs({
+      pages: new Map([["red/dns", sections]]),
+    })
     const result = await readTool({
       docs,
+      skills,
       origin,
       input: { route: "/casa/red/dns#ptr" },
     })
@@ -540,9 +567,12 @@ describe("readTool", () => {
   })
 
   test("an unknown section is an error listing the page's sections", async () => {
-    const { docs } = fakeDocs({ pages: new Map([["red/dns", sections]]) })
+    const { docs, skills } = fakeDocs({
+      pages: new Map([["red/dns", sections]]),
+    })
     const result = await readTool({
       docs,
+      skills,
       origin,
       input: { route: "/casa/red/dns#no-existe" },
     })
@@ -561,9 +591,10 @@ describe("readTool", () => {
   })
 
   test("a section of a page without sections is an error too", async () => {
-    const { docs } = fakeDocs()
+    const { docs, skills } = fakeDocs()
     const result = await readTool({
       docs,
+      skills,
       origin,
       input: { route: "/casa/red/dns#x" },
     })
@@ -572,14 +603,18 @@ describe("readTool", () => {
   })
 
   test("a section nested in another element gives the whole page", async () => {
-    const { docs } = fakeDocs({ pages: new Map([["red/dns", sections]]) })
+    const { docs, skills } = fakeDocs({
+      pages: new Map([["red/dns", sections]]),
+    })
     const nested = await readTool({
       docs,
+      skills,
       origin,
       input: { route: "/casa/red/dns#anidada" },
     })
     const whole = await readTool({
       docs,
+      skills,
       origin,
       input: { route: "/casa/red/dns" },
     })
@@ -611,9 +646,10 @@ describe("readTool", () => {
       },
       headings: [{ depth: 2, id: "vpn", text: "VPN" }],
     }
-    const { docs } = fakeDocs({ pages: new Map([["red/dns", linked]]) })
+    const { docs, skills } = fakeDocs({ pages: new Map([["red/dns", linked]]) })
     const result = await readTool({
       docs,
+      skills,
       origin,
       input: { route: "/casa/red/dns#vpn" },
     })
@@ -626,9 +662,10 @@ describe("readTool", () => {
   })
 
   test("a missing page is an error, not a failure", async () => {
-    const { docs } = fakeDocs()
+    const { docs, skills } = fakeDocs()
     const result = await readTool({
       docs,
+      skills,
       origin,
       input: { route: "/casa/no-existe" },
     })
@@ -637,29 +674,39 @@ describe("readTool", () => {
   })
 
   test("a route the reader rejects is an error too", async () => {
-    const { docs } = fakeDocs()
+    const { docs, skills } = fakeDocs()
     docs.page = async () => {
       throw new ORPCError("BAD_REQUEST")
     }
-    const result = await readTool({ docs, origin, input: { route: "/X/.." } })
+    const result = await readTool({
+      docs,
+      skills,
+      origin,
+      input: { route: "/X/.." },
+    })
     expect(result.isError).toBe(true)
   })
 
   test("something that is not a route never reaches the reader", async () => {
-    const { docs, calls } = fakeDocs()
-    const result = await readTool({ docs, origin, input: { route: "/" } })
+    const { docs, skills, calls } = fakeDocs()
+    const result = await readTool({
+      docs,
+      skills,
+      origin,
+      input: { route: "/" },
+    })
     expect(result.isError).toBe(true)
     expect(text(result)).toContain("is not a documentation route")
     expect(calls.page).toEqual([])
   })
 
   test("other failures are not hidden", async () => {
-    const { docs } = fakeDocs()
+    const { docs, skills } = fakeDocs()
     docs.page = async () => {
       throw new ORPCError("INTERNAL_SERVER_ERROR")
     }
     await expect(
-      readTool({ docs, origin, input: { route: "/casa/red/dns" } })
+      readTool({ docs, skills, origin, input: { route: "/casa/red/dns" } })
     ).rejects.toBeInstanceOf(ORPCError)
   })
 })
@@ -668,13 +715,14 @@ describe("entityTool", () => {
   const input = { repository: "casa", type: "servidor", id: "nas" }
 
   test("is its catalog page, as read returns it", async () => {
-    const { docs, calls } = fakeDocs()
-    const result = await entityTool({ docs, origin, input })
+    const { docs, skills, calls } = fakeDocs()
+    const result = await entityTool({ docs, skills, origin, input })
     expect(calls.page).toEqual([
       { repository: "casa", path: "catalog/servidor/nas" },
     ])
     const read = await readTool({
       docs,
+      skills,
       origin,
       input: { route: "/casa/catalog/servidor/nas" },
     })
@@ -687,9 +735,10 @@ describe("entityTool", () => {
   })
 
   test("an unknown id points at its type's catalog page", async () => {
-    const { docs } = fakeDocs()
+    const { docs, skills } = fakeDocs()
     const result = await entityTool({
       docs,
+      skills,
       origin,
       input: { ...input, id: "no-existe" },
     })
@@ -700,9 +749,10 @@ describe("entityTool", () => {
   })
 
   test("an unknown type points at the catalog", async () => {
-    const { docs } = fakeDocs()
+    const { docs, skills } = fakeDocs()
     const result = await entityTool({
       docs,
+      skills,
       origin,
       input: { ...input, type: "no-existe" },
     })
@@ -713,10 +763,11 @@ describe("entityTool", () => {
   })
 
   test("an unknown repository or one without content says so", async () => {
-    const { docs } = fakeDocs()
+    const { docs, skills } = fakeDocs()
     for (const repository of ["no-existe", "nuevo"]) {
       const result = await entityTool({
         docs,
+        skills,
         origin,
         input: { ...input, repository },
       })
@@ -726,12 +777,114 @@ describe("entityTool", () => {
   })
 
   test("other failures are not hidden", async () => {
-    const { docs } = fakeDocs()
+    const { docs, skills } = fakeDocs()
     docs.page = async () => {
       throw new ORPCError("INTERNAL_SERVER_ERROR")
     }
-    await expect(entityTool({ docs, origin, input })).rejects.toBeInstanceOf(
-      ORPCError
+    await expect(
+      entityTool({ docs, skills, origin, input })
+    ).rejects.toBeInstanceOf(ORPCError)
+  })
+})
+
+const colofon: DocsSkill = {
+  name: "colofon",
+  repository: null,
+  description: "Cómo usar el sitio.",
+  path: "/.well-known/agent-skills/colofon/SKILL.md",
+  digest: "sha256:0",
+}
+
+const casaDeploy: DocsSkill = {
+  name: "casa-deploy",
+  repository: { slug: "casa", name: "Casa" },
+  description: "Cómo se despliega.",
+  path: "/.well-known/agent-skills/casa-deploy/SKILL.md",
+  digest: "sha256:1",
+}
+
+describe("skillsTool", () => {
+  test("lists each skill with its owner, description and address", async () => {
+    const { docs, skills } = fakeDocs({ skillList: [colofon, casaDeploy] })
+    const result = await skillsTool({ docs, skills, origin })
+    expect(text(result)).toBe(
+      [
+        "- `colofon` (the platform's): Cómo usar el sitio. https://docs.example.org/.well-known/agent-skills/colofon/SKILL.md",
+        "- `casa-deploy` (Casa's): Cómo se despliega. https://docs.example.org/.well-known/agent-skills/casa-deploy/SKILL.md",
+        "",
+        "Call skill with a name for its SKILL.md, or save it as <skills folder>/<name>/SKILL.md to install it.",
+      ].join("\n")
     )
+    expect(result.structuredContent).toEqual({
+      skills: [
+        {
+          name: "colofon",
+          repository: null,
+          description: "Cómo usar el sitio.",
+          url: "https://docs.example.org/.well-known/agent-skills/colofon/SKILL.md",
+        },
+        {
+          name: "casa-deploy",
+          repository: "casa",
+          description: "Cómo se despliega.",
+          url: "https://docs.example.org/.well-known/agent-skills/casa-deploy/SKILL.md",
+        },
+      ],
+    })
+  })
+})
+
+describe("skillTool", () => {
+  test("is the skill's text as the procedure returns it", async () => {
+    const { docs, skills } = fakeDocs({ skillList: [colofon] })
+    const result = await skillTool({
+      docs,
+      skills,
+      origin,
+      input: { name: "colofon" },
+    })
+    expect(result.isError).toBeUndefined()
+    expect(text(result)).toBe("text of colofon")
+  })
+
+  test("an unknown skill is an error pointing at skills", async () => {
+    const { docs, skills } = fakeDocs({ skillList: [colofon] })
+    const result = await skillTool({
+      docs,
+      skills,
+      origin,
+      input: { name: "no-existe" },
+    })
+    expect(result.isError).toBe(true)
+    expect(text(result)).toBe(
+      'There is no skill "no-existe" you can read. Call skills to list them.'
+    )
+  })
+
+  test("other failures are not hidden", async () => {
+    const { docs, skills } = fakeDocs()
+    skills.get = async () => {
+      throw new ORPCError("INTERNAL_SERVER_ERROR")
+    }
+    await expect(
+      skillTool({ docs, skills, origin, input: { name: "colofon" } })
+    ).rejects.toBeInstanceOf(ORPCError)
+  })
+})
+
+describe("indexTool with skills", () => {
+  test("is still /llms.txt, guide and repository skills included", async () => {
+    const skillList = [colofon, casaDeploy]
+    const { docs, skills } = fakeDocs({ skillList })
+    const global = await indexTool({ docs, skills, origin, input: {} })
+    expect(text(global)).toBe(llmsIndex([casa, nuevo], skillList, origin))
+    const one = await indexTool({
+      docs,
+      skills,
+      origin,
+      input: { repository: "casa" },
+    })
+    expect(text(one)).toBe(repositoryLlmsIndex(casa, skillList, origin))
+    expect(text(one)).toContain("[casa-deploy]")
   })
 })
