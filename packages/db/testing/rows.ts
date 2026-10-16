@@ -5,6 +5,8 @@ import type {
   entityIcons,
   member,
   organization,
+  secret,
+  secretUsage,
   session,
   team,
   user,
@@ -21,6 +23,8 @@ export type EntityIconRow = typeof entityIcons.$inferSelect
 export type OrganizationRow = typeof organization.$inferSelect
 export type MemberRow = typeof member.$inferSelect
 export type TeamRow = typeof team.$inferSelect
+export type SecretRow = typeof secret.$inferSelect
+export type SecretUsageRow = typeof secretUsage.$inferSelect
 
 export const NOW = new Date("2026-01-01T00:00:00.000Z")
 
@@ -175,6 +179,45 @@ export function contentRepositoryRow(
     lastSyncError: null,
     createdAt: NOW,
     updatedAt: NOW,
+    ...overrides,
+  }
+}
+
+export function secretRow(overrides: Partial<SecretRow> = {}): SecretRow {
+  return {
+    id: "00000000-0000-4000-8000-000000000001",
+    userId: "user-id",
+    name: "komodo",
+    description: null,
+    fieldNames: ["key", "secret"],
+    ciphertext: "",
+    origins: ["https://komodo.casa.lan"],
+    allowWrite: false,
+    allowInUrl: false,
+    allowInBody: false,
+    lastUsedAt: null,
+    createdAt: NOW,
+    updatedAt: NOW,
+    ...overrides,
+  }
+}
+
+export function secretUsageRow(
+  overrides: Partial<SecretUsageRow> = {}
+): SecretUsageRow {
+  return {
+    id: "00000000-0000-4000-8000-0000000000a1",
+    userId: "user-id",
+    apiKeyId: null,
+    secretIds: ["00000000-0000-4000-8000-000000000001"],
+    secretNames: ["komodo"],
+    method: "GET",
+    url: "https://komodo.casa.lan/read",
+    outcome: "sent",
+    status: 200,
+    detail: null,
+    durationMs: 12,
+    createdAt: NOW,
     ...overrides,
   }
 }
