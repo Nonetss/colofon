@@ -42,7 +42,7 @@ structure and **without the AI ever seeing a secret**.
 | Editor autocompletion | A schema catalog per repository served by the backend | ✅ |
 | Repositories on the platform | External or hosted on the platform, synced and managed at `/admin/content` | ✅ |
 | Documentation site | Rendered pages, `menu.yaml`, catalog pages, interactive tables, `llms.txt` | 🟡 Missing full-text search (the navbar finds pages by title, description and section) |
-| Diagrams | JSON files laid out by the content, drawn as SVG on the server, interactive | ✅ Diagrams derived from the catalog still to come |
+| Diagrams | Drawn by hand, typed forms the platform lays out from data, or SVG illustrations; drawn on the server, interactive | ✅ Diagrams derived from the catalog still to come |
 | Skills | Agent instructions served by the site | ⏳ |
 | Knowledge MCP | Search, read and query the catalog from any agent | ⏳ |
 | Secrets vault and broker | The AI calls APIs without seeing the credentials | ⏳ |
@@ -101,17 +101,23 @@ in Spanish.
 - **Catalog pages**: generated without any MDX at `/<slug>/catalogo`, one
   table per type and one page per entity with its fields, the pages that cite
   it, the entities pointing at it and the diagrams it appears in
-- **Diagrams**: `diagramas/<id>.json` files where the content places every
-  box, arrow and zone (or a self-laid chain), drawn as SVG on the server in
-  light and dark, with hover highlighting, paths, "what falls with it" and a
-  card per box; boxes can be catalog entities
+- **Diagrams**: `diagramas/<id>.json` files in three forms: drawn (the
+  content places every box, arrow and zone), a self-laid chain, or one of 30
+  typed forms the platform lays out from data (flowchart, sequence, timeline,
+  Gantt, swimlane, bar, line, Sankey, Wardley map…, each with a complexity
+  budget). Drawn as SVG on the server in light and dark, with hover
+  highlighting, paths, "what falls with it" and a card per box; boxes and typed
+  items can be catalog entities. A `diagramas/<id>.svg` is a hand-drawn
+  illustration, read through a whitelist
 - **For AI agents**: every page also as Markdown at `<page>/llm.txt`, and the
   `/llms.txt` and `/<slug>/llms.txt` indexes ([llmstxt.org](https://llmstxt.org)),
   read with the user's own API key in `x-api-key`
 - **Git hosting**: a content repository can live on the platform itself, at
   `/git/<slug>.git`, with a read-only browser at `/admin/git`
 - **Editor autocompletion**: a JSON schema catalog per repository at
-  `/api/v1/content/schemas/<slug>` for the YAML extension of VS Code / Cursor
+  `/api/v1/content/schemas/<slug>` for the YAML extension of VS Code / Cursor,
+  plus the diagrams' schema at `/api/v1/content/schemas/<slug>/diagram` for
+  the editor's own JSON support
 - **Astro + TailwindCSS**: SSR frontend with React islands and shadcn/ui (`base-nova` on Base UI), light/dark/system theme
 - **Hono + oRPC**: type-safe RPC and OpenAPI endpoints (`/rpc/v1`, `/api/v1`), versioned routing, CSRF protection, admin-only API docs at `/scalar`
 - **Better Auth**: email/password (plus optional OIDC), sessions, global admin role, organizations and teams with access control, API keys
@@ -164,8 +170,10 @@ documentacion/
 │   └── maquinas/
 │       ├── _tipo.yaml     # the type's schema
 │       └── nas.yaml       # one entity per file; the file name is its id
-├── diagramas/             # optional: one JSON per diagram, shown with <Diagram id="…" />
-└── skills/                # this site's own agent skills
+├── diagramas/             # optional: <id>.json diagrams or <id>.svg illustrations, shown with <Diagram id="…" />
+├── skills/                # this site's own agent skills
+├── .vscode/settings.json  # optional: editor autocompletion from the platform (below)
+└── AGENTS.md, .agents/    # optional: instructions for the agents that write it; the platform never reads them
 ```
 
 Each repository registered at `/admin/content` has a name, a slug (its name in
@@ -186,14 +194,35 @@ leaves the content invalid, it keeps serving the last valid version. Hosted
 repositories are bare repos in `.hosted/<id>/` (the `hosted_data` volume):
 that may be the only copy of their history, so back it up.
 
-For editor autocompletion, point the YAML extension at the repository's
-catalog (copy the exact URL from its card):
+For editor autocompletion, the content repository commits a
+`.vscode/settings.json` (recommending `redhat.vscode-yaml`) that points at its
+catalog; copy the exact URL from the repository's card. Two settings: the YAML
+extension takes the catalog (every type's fields, `enum` values, the ids a
+reference accepts, page paths, `menu.yaml` entries, icon names), and the
+diagrams, which are JSON, get their schema through the editor's own JSON
+support:
 
-```json
+```jsonc
 {
-  "yaml.schemaStore.url": "https://<site>/api/v1/content/schemas/<slug>"
+  "yaml.schemaStore.url": "https://<site>/api/v1/content/schemas/<slug>",
+  "json.schemas": [
+    {
+      "fileMatch": ["/diagramas/*.json"],
+      "url": "https://<site>/api/v1/content/schemas/<slug>/diagram"
+    }
+  ]
 }
 ```
+
+A diagram can also name that URL as its first key, `"$schema"`. Nothing is
+generated or committed: a new type, entity or page shows up after the next
+sync. In a multi-folder workspace the settings go in the workspace's, since
+the YAML extension doesn't read them from each folder's `.vscode/`; the YAML
+one replaces the public SchemaStore catalog in that window. In dev the
+extension doesn't trust the local CA of `https://localhost:4321`: set
+`"http.proxyStrictSSL": false` in the editor's **user** settings (it is
+ignored in `.vscode/`) and remove it once the catalog comes from production.
+`doc-example/.vscode/settings.json` is a working example.
 
 The full guide (in Spanish) is [`docs/human/contenido.md`](docs/human/contenido.md).
 
