@@ -1,0 +1,8 @@
+name: Máquina de estados
+family: graph
+purpose: "Los estados de una cosa y los eventos que la llevan de uno a otro"
+keys: states, transitions
+budget: 8 estados, 14 transiciones
+page: diagrams/graphs
+fuente: manual
+actualizado: 2026-10-16

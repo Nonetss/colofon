@@ -1,0 +1,12 @@
+{
+  "type": "journey",
+  "title": "El primer repositorio de contenido",
+  "desc": "Cómo vive quien escribe su primer repositorio de contenido, desde que descubre la guía hasta que lo ve publicado",
+  "stages": [
+    { "name": "Descubre", "sentiment": "bien", "actions": ["Lee la guía"], "touchpoints": ["el lector"], "page": "getting-started" },
+    { "name": "Configura", "sentiment": "neutral", "actions": ["doc.config.yaml", "menu.yaml"], "touchpoints": ["el editor"], "page": "repository/config" },
+    { "name": "Primer push", "sentiment": "mal", "actions": ["Sincroniza"], "thoughts": ["¿Por qué falla?"], "touchpoints": ["la portada"], "pain": "muchos avisos", "page": "publishing" },
+    { "name": "Corrige", "sentiment": "bien", "actions": ["Sigue los avisos"], "touchpoints": ["el editor"] },
+    { "name": "Publica", "sentiment": "muy-bien", "actions": ["Comparte el enlace"], "touchpoints": ["el lector"] }
+  ]
+}

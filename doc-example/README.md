@@ -18,8 +18,8 @@ no se compila ni se ejecuta nada.
 | `doc.config.yaml` | El sitio: su nombre, la versión del contrato de la plataforma y los campos extra de cabecera que usan sus páginas |
 | `menu.yaml` | La barra lateral: cuatro grupos (Inicio, Escritura, Datos, Publicación) y lo que muestra cada uno |
 | `docs/` | Las páginas de la guía, en MDX. Cada carpeta es una sección con su `index.mdx` |
-| `catalogo/<type>/` | El propio contrato como datos: los `files` de un repositorio, los `field-kinds`, los `header-fields` y los `components` de página. Las tablas de referencia de la guía se construyen a partir de él |
-| `diagramas/` | Los diagramas de la guía, cada uno mostrado en varias páginas con `<Diagram id="…" />` |
+| `catalogo/<type>/` | El propio contrato como datos: los `files` de un repositorio, los `field-kinds`, los `header-fields`, los `components` de página y los `diagram-types`. Las tablas de referencia de la guía se construyen a partir de él |
+| `diagramas/` | Los diagramas de la guía, mostrados con `<Diagram id="…" />`: los dibujados a mano, un ejemplo de cada tipo que la plataforma coloca sola y una ilustración en SVG |
 | `skills/doc-writing/SKILL.md` | Una skill que la plataforma sirve a otros agentes que escriben documentación |
 | `AGENTS.md`, `.agents/`, `.claude/` | Instrucciones para el agente de IA que escribe en este repositorio |
 | `.vscode/settings.json` | Autocompletado y validación de todos los ficheros YAML, a partir de la plataforma |

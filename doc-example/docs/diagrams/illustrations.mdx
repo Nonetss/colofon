@@ -1,0 +1,58 @@
+---
+titulo: Ilustraciones
+descripcion: Lo que ningún tipo coloca, como un despiece o un plano, se dibuja a mano en un SVG que la plataforma filtra y pinta con los colores del tema
+files: [diagram-illustration]
+orden: 8
+actualizado: 2026-10-16
+---
+
+## Un SVG propio
+
+Un despiece axonométrico, el plano de una planta o cualquier figura que no siga una regla no se describe con datos: se dibuja. Un `diagramas/<id>.svg` se muestra como cualquier diagrama, con `<Diagram id="<id>" />`:
+
+```xml
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 420">
+  <title>Un repositorio de contenido, despiezado</title>
+  <desc>Las tres carpetas de un repositorio de contenido separadas como capas</desc>
+  <polygon class="accent-soft" points="200,40 320,100 200,160 80,100"/>
+  <polygon class="accent" points="200,40 320,100 200,160 80,100" fill="none" stroke-width="1.2"/>
+  <text class="ink" x="412" y="98" font-size="14" font-weight="600">docs/</text>
+</svg>
+```
+
+<Diagram id="repository-exploded" />
+
+| Parte | Qué es |
+| --- | --- |
+| `viewBox` | Obligatoria, en el `<svg>`. Cuatro números: el tamaño del dibujo. |
+| `<title>` | Obligatoria. Su título. |
+| `<desc>` | Obligatoria. Qué muestra: es su texto alternativo y lo que leen los agentes. |
+
+Si falta alguna de las tres, se reporta y en su lugar se muestra un aviso. Si hay un `diagramas/<id>.json` con el mismo id, se usa el JSON y el SVG se reporta.
+
+## Los colores, por su papel
+
+Un color escrito (`fill="#eb6c36"`) no seguiría el tema claro u oscuro del lector, así que se quita. Los colores van con una clase:
+
+| Clase | Color |
+| --- | --- |
+| `ink` | El de la tinta: el texto y las líneas principales. |
+| `muted` | Un gris medio, para lo secundario. |
+| `soft` | Un gris claro, para guías y caras en sombra. |
+| `paper` | El del fondo, para tapar lo que queda detrás. |
+| `accent` | El de acento: lo que el lector debe ver primero. |
+| `accent-soft` | Un tono suave del acento, para rellenar lo destacado. |
+| `rose`, `blue`, `cyan`, `violet`, `green`, `indigo`, `fuchsia`, `slate`, `teal`, `lime` | Los diez tonos de los diagramas. |
+
+La clase pinta el relleno de la forma, salvo que diga `fill="none"`, y su trazo cuando la forma lleva `stroke-width`, salvo que diga `stroke="none"`. Una forma sin clase es de color tinta. Para un relleno de un color y un borde de otro, dibuja la forma dos veces: una rellena y otra con `fill="none"`, como en el ejemplo.
+
+## Lo que se conserva
+
+- **Elementos:** `svg`, `g`, `path`, `rect`, `circle`, `ellipse`, `line`, `polyline`, `polygon`, `text`, `tspan`, `title` y `desc`.
+- **Atributos:** la geometría de cada uno (`x`, `y`, `width`, `height`, `rx`, `ry`, `cx`, `cy`, `r`, `x1`… `y2`, `points`, `d`, `dx`, `dy`), `transform`, `opacity`, `fill-opacity`, `stroke-opacity`, `stroke-width`, `stroke-dasharray`, `stroke-linecap`, `stroke-linejoin`, `text-anchor`, `font-size` y `font-weight`; `fill` y `stroke` solo con `none`; y las clases de la tabla.
+
+Todo lo demás se quita: scripts, estilos, enlaces, imágenes, `use`, `defs`, degradados, colores escritos y cualquier otro atributo o clase. Se reporta una vez por cada cosa distinta, con cuántas veces aparecía ("Se ha quitado `fill="#eb6c36"` 14 veces"), y el resto se dibuja. El `xmlns`, el `version` y el `width` y `height` del `<svg>` se ignoran sin avisar: el tamaño lo pone el lector.
+
+## Lo que no tiene
+
+Una ilustración no tiene versión de texto ni se ilumina al pasar el ratón: para un lector de pantalla y para los agentes es su título y su `desc`. Escribe la `desc` pensando en quien no la ve. Si lo que quieres contar son piezas y conexiones, usa un diagrama [dibujado a mano](drawn.mdx) o uno por tipo: esos sí se leen como texto.

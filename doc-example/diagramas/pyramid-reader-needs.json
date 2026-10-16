@@ -1,0 +1,11 @@
+{
+  "type": "pyramid",
+  "title": "Lo que necesita quien lee",
+  "desc": "De lo que sostiene la guía, abajo, a lo que el lector viene a buscar, arriba: sin un contrato validado no hay reglas fiables, y sin reglas no hay respuestas",
+  "levels": [
+    { "name": "Su respuesta", "sub": "en una página", "focal": true },
+    { "name": "Ejemplos que copiar" },
+    { "name": "Reglas y claves", "page": "pages/header" },
+    { "name": "Contrato validado", "sub": "lo que la plataforma comprueba", "page": "repository" }
+  ]
+}

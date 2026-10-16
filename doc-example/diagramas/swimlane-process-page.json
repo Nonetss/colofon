@@ -1,0 +1,22 @@
+{
+  "type": "swimlane",
+  "variant": "process",
+  "title": "Escribir una página",
+  "desc": "Los pasos de escribir una página de esta guía, con lo que entra, lo que sale y con qué se hace cada uno",
+  "lanes": [
+    { "id": "author", "name": "Quien escribe" },
+    { "id": "editor", "name": "Editor", "page": "publishing/editor" },
+    { "id": "platform", "name": "Plataforma" }
+  ],
+  "steps": [
+    { "id": "header", "name": "Cabecera", "lane": "author", "outputs": ["titulo", "descripcion"], "page": "pages/header" },
+    { "id": "body", "name": "Cuerpo", "lane": "author", "inputs": ["la cabecera"], "tools": ["Markdown"], "page": "pages/markdown" },
+    { "id": "check", "name": "Valida", "lane": "editor", "inputs": ["el fichero"], "tools": ["esquemas"] },
+    { "id": "read", "name": "Lee y publica", "lane": "platform", "outputs": ["la página"], "focal": true }
+  ],
+  "links": [
+    { "from": "header", "to": "body" },
+    { "from": "body", "to": "check" },
+    { "from": "check", "to": "read", "label": "PUSH", "kind": "accent" }
+  ]
+}

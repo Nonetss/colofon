@@ -1,0 +1,13 @@
+{
+  "type": "line",
+  "variant": "stream",
+  "title": "Qué se cambia en cada mes",
+  "desc": "Los ficheros cambiados al mes, por tipo: páginas, catálogo y diagramas, apilados alrededor de un eje central",
+  "unit": "ficheros",
+  "x": ["2026-05", "2026-06", "2026-07", "2026-08", "2026-09", "2026-10"],
+  "series": [
+    { "name": "Páginas", "values": [12, 9, 14, 8, 10, 7] },
+    { "name": "Catálogo", "values": [3, 8, 6, 9, 4, 5] },
+    { "name": "Diagramas", "values": [1, 1, 2, 3, 6, 11] }
+  ]
+}

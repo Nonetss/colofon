@@ -1,0 +1,28 @@
+{
+  "type": "swimlane",
+  "title": "Quién hace qué al publicar",
+  "desc": "Los pasos de publicar un cambio, repartidos entre quien escribe, la plataforma y quien lee, y los relevos entre ellos",
+  "lanes": [
+    { "id": "writer", "name": "Quien escribe" },
+    { "id": "platform", "name": "Plataforma", "hue": "teal" },
+    { "id": "reader", "name": "Quien lee" }
+  ],
+  "steps": [
+    { "id": "edit", "name": "Escribe la página", "lane": "writer", "entity": "files/page" },
+    { "id": "push", "name": "Hace push", "lane": "writer" },
+    { "id": "sync", "name": "Sincroniza", "lane": "platform", "page": "publishing" },
+    { "id": "valid", "name": "¿Cumple el contrato?", "lane": "platform", "kind": "decision" },
+    { "id": "publish", "name": "Publica", "lane": "platform", "focal": true },
+    { "id": "report", "name": "Reporta problemas", "lane": "platform" },
+    { "id": "read", "name": "Lee la página", "lane": "reader" }
+  ],
+  "links": [
+    { "from": "edit", "to": "push" },
+    { "from": "push", "to": "sync", "label": "GIT" },
+    { "from": "sync", "to": "valid" },
+    { "from": "valid", "to": "publish", "label": "SÍ" },
+    { "from": "valid", "to": "report", "label": "NO" },
+    { "from": "publish", "to": "read", "kind": "accent" },
+    { "from": "report", "to": "edit", "kind": "dash", "info": "Quien escribe corrige lo reportado y vuelve a hacer push" }
+  ]
+}

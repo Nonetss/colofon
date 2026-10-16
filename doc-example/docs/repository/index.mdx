@@ -1,7 +1,7 @@
 ---
 titulo: El repositorio
 descripcion: Cada fichero y carpeta que puede contener un repositorio de contenido, y qué nombres pertenecen a la plataforma
-files: [doc-config, menu, page, type-declaration, entity, diagram-file, served-skill]
+files: [doc-config, menu, page, type-declaration, entity, diagram-file, diagram-illustration, served-skill]
 actualizado: 2026-10-16
 ---
 
@@ -46,7 +46,7 @@ La plataforma lee un conjunto fijo de nombres, y están en español salvo las cl
 | Un campo | `tipo`, `opcional`, `descripcion`, `valores`, `a`, `de`, `campos` |
 | Cada cabecera de página | `titulo`, `descripcion`, `icono`, `orden`, `actualizado` |
 | Cada entidad | `fuente`, `actualizado` |
-| Un diagrama (JSON) | `title`, `desc`, `width`, `height`, `nodes`, `edges`, `zones`, `notes`, `items`, `links` y las de cada caja, flecha y zona (ver [Diagramas](../diagrams/index.mdx)) |
+| Un diagrama (JSON) | `type`, `variant`, `title`, `desc` y las de su forma: `width`, `height`, `nodes`, `edges`, `zones`, `notes` si se dibuja a mano, `items` y `links` en una cadena, las de su tipo si lleva `type` (ver [Diagramas](../diagrams/index.mdx)) |
 | Enlaces | `catalogo:` seguido de un tipo, o de un tipo y un id |
 
 Todo lo demás es tuyo, en el idioma que escribas: ids de tipo, nombres de campo, valores de enum, los campos de cabecera que declares, carpetas, nombres de fichero y cada palabra de las páginas. La plataforma no sabe nada de tu dominio: un homelab declara máquinas y servicios, una tienda declararía productos y proveedores.

@@ -1,0 +1,90 @@
+{
+  "type": "architecture-delta",
+  "title": "De la barra por carpetas a menu.yaml",
+  "desc": "Qué cambia en un sitio cuando añade menu.yaml: las carpetas siguen guardando las páginas, pero los grupos de la barra lateral los decide el menú, y lo que no nombra va a Otros",
+  "before": {
+    "width": 392,
+    "height": 312,
+    "nodes": [
+      {
+        "id": "pages", "entity": "files/page", "sub": "docs/**.mdx",
+        "x": 24, "y": 40, "w": 136, "h": 56,
+        "info": "Cada página es un fichero .mdx bajo docs/"
+      },
+      {
+        "id": "folders", "name": "Carpetas", "sub": "una sección cada una",
+        "page": "repository/menu",
+        "x": 24, "y": 140, "w": 136, "h": 56,
+        "info": "Sin menu.yaml, cada carpeta de docs/ es una sección de la barra"
+      },
+      {
+        "id": "sidebar", "name": "Barra lateral", "kind": "focal",
+        "x": 232, "y": 140, "w": 136, "h": 56
+      }
+    ],
+    "edges": [
+      {
+        "from": "pages", "to": "folders",
+        "points": [[92, 96], [92, 140]], "label": "VIVEN EN", "at": [98, 122], "anchor": "start"
+      },
+      {
+        "from": "folders", "to": "sidebar", "kind": "accent",
+        "points": [[160, 168], [232, 168]], "label": "SECCIONES", "at": [196, 158]
+      }
+    ]
+  },
+  "after": {
+    "width": 392,
+    "height": 312,
+    "nodes": [
+      {
+        "id": "pages", "entity": "files/page", "sub": "docs/**.mdx",
+        "x": 24, "y": 40, "w": 136, "h": 56,
+        "info": "Cada página es un fichero .mdx bajo docs/"
+      },
+      {
+        "id": "folders", "name": "Carpetas", "sub": "guardan las páginas",
+        "page": "repository/menu",
+        "x": 24, "y": 140, "w": 136, "h": 56,
+        "info": "Siguen guardando las páginas y su URL"
+      },
+      {
+        "id": "menu", "entity": "files/menu", "sub": "grupos y su orden",
+        "x": 232, "y": 40, "w": 136, "h": 56
+      },
+      {
+        "id": "sidebar", "name": "Barra lateral", "kind": "focal",
+        "x": 232, "y": 140, "w": 136, "h": 56
+      },
+      {
+        "id": "others", "name": "Otros", "sub": "fuera del menú",
+        "kind": "store",
+        "x": 232, "y": 240, "w": 136, "h": 56,
+        "info": "Lo que ninguna entrada muestra va a este último grupo, y se reporta"
+      }
+    ],
+    "edges": [
+      {
+        "from": "pages", "to": "folders",
+        "points": [[92, 96], [92, 140]], "label": "VIVEN EN", "at": [98, 122], "anchor": "start"
+      },
+      {
+        "from": "folders", "to": "menu",
+        "points": [[160, 168], [196, 168], [196, 68], [232, 68]], "label": "RUTAS", "at": [202, 122], "anchor": "start"
+      },
+      {
+        "from": "menu", "to": "sidebar", "kind": "accent",
+        "points": [[300, 96], [300, 140]], "label": "GRUPOS", "at": [306, 122], "anchor": "start"
+      },
+      {
+        "from": "pages", "to": "others", "kind": "dash",
+        "points": [[24, 68], [12, 68], [12, 268], [232, 268]], "label": "SIN ENTRADA", "at": [120, 258]
+      }
+    ]
+  },
+  "changes": [
+    { "id": "folders", "note": "Siguen guardando las páginas y su URL, pero ya no deciden la barra" },
+    { "id": "menu", "note": "Agrupa carpetas y páginas de cualquier sitio, en el orden que diga" },
+    { "id": "others", "note": "Nada de lo escrito desaparece de la barra" }
+  ]
+}

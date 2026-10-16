@@ -1,0 +1,12 @@
+{
+  "type": "bar",
+  "variant": "dumbbell",
+  "title": "Problemas antes y después de revisar",
+  "desc": "Los problemas que la plataforma avisaba en cada sección antes de una revisión y los que quedan después",
+  "focal": "Catálogo",
+  "categories": ["Repositorio", "Páginas", "Catálogo", "Diagramas"],
+  "series": [
+    { "name": "Antes", "values": [6, 9, 14, 4] },
+    { "name": "Después", "values": [1, 2, 3, 2] }
+  ]
+}

@@ -1,0 +1,169 @@
+---
+titulo: Gráficos de valores
+descripcion: Cómo escribir gráficos de barras, de cascada, de líneas y de dispersión dando solo los valores, y qué avisa la plataforma de cada uno
+files: [diagram-file]
+diagram_types: [bar, waterfall, line, scatter]
+orden: 5
+actualizado: 2026-10-16
+---
+
+Un gráfico de valores no coloca nada a mano: el fichero da las categorías, las series y los números, y la plataforma dibuja los ejes, las barras, las líneas y los puntos. Como en cualquier diagrama, `type` elige la forma, `title` y `desc` son obligatorios, y se muestra con `<Diagram id="…" />` en un bloque propio. Al pasar el ratón por una barra, un punto o una línea, una tarjeta dice su categoría, su serie y su valor, y se ilumina el resto de su serie. La versión en texto que leen los lectores de pantalla y los agentes en `llm.txt` es una tabla con los valores.
+
+Los números de los ejemplos de esta página son ilustrativos.
+
+## Los valores
+
+Estas reglas valen para los cuatro tipos:
+
+| Clave | Qué es |
+| --- | --- |
+| `unit` | Opcional. El texto que va tras cada valor: `"usuarios"`, `"€"`, `"s"`. |
+| `decimals` | Opcional. Cuántos decimales se muestran, de 0 (por defecto) a 6. |
+
+- Un valor es un número JSON finito: `1234.5`, nunca `"1.234,5"`. La plataforma lo muestra con los separadores españoles y su unidad: `1234.5` con `"unit": "€"` y `"decimals": 1` se lee «1.234,5 €».
+- Una fecha se escribe `AAAA-MM-DD`, o `AAAA-MM` para un mes entero, y se muestra con el mes abreviado: «3 mar 2026», «mar 2026». Una fecha que no existe, como `2026-13-01`, se avisa.
+- El eje de valores empieza en cero, o lo incluye, y acaba en un número redondo por encima del mayor valor, con entre cuatro y seis marcas: con un máximo de 870 llega a 1.000, marcado de 200 en 200.
+- Una serie lleva un valor por categoría o por punto: si le sobran o le faltan, se avisa y se deja fuera.
+- Como en cualquier diagrama, como mucho dos cosas van en el color de acento.
+
+## Barras
+
+Para comparar un valor por categoría (las altas de cada mes, las páginas de cada sección) cuando la comparación entre barras es el mensaje. Con dos series, cada categoría lleva dos barras juntas y una leyenda.
+
+```json
+{
+  "type": "bar",
+  "title": "Páginas por sección",
+  "desc": "Cuántas páginas tiene cada sección de esta guía; Páginas es la más larga",
+  "unit": "páginas",
+  "focal": "Páginas",
+  "categories": ["Repositorio", "Páginas", "Catálogo", "Diagramas", "Publicar"],
+  "series": [{ "name": "Páginas", "values": [3, 4, 4, 5, 3] }]
+}
+```
+
+| Clave | Qué es |
+| --- | --- |
+| `categories` | Obligatoria. Las categorías, en orden. |
+| `series` | Obligatoria. Una o dos series: `{ "name", "values" }`, un valor por categoría, y opcionalmente `hue` e `info`. |
+| `orientation` | Opcional. `vertical` (por defecto) u `horizontal`, mejor con nombres largos. |
+| `focal` | Opcional. La categoría que va en el color de acento. |
+
+Se avisa una categoría `focal` que no existe, más de dos series y más de 12 categorías.
+
+<Diagram id="bar-pages-per-section" />
+
+Con `"variant": "dumbbell"` cada categoría es una fila con dos puntos unidos por una línea, uno por serie: el de la primera serie hueco, el de la segunda relleno. Sirve para un antes y un después por categoría. Pide exactamente dos series; con una se avisa y se dibuja como barras.
+
+<Diagram id="bar-dumbbell-problems" />
+
+## Cascada
+
+Para contar cómo un total de partida llega a otro por cambios que suman y restan: un presupuesto de un año al siguiente, o los problemas de una primera sincronización hasta quedar casi limpia. El total final lo calcula la plataforma.
+
+```json
+{
+  "type": "waterfall",
+  "title": "De 24 problemas a 8",
+  "desc": "Cómo bajan los problemas de una primera sincronización",
+  "unit": "problemas",
+  "start": { "name": "Primera sincronización", "value": 24 },
+  "steps": [
+    { "name": "Cabeceras", "delta": -9, "focal": true },
+    { "name": "Enlaces rotos", "delta": -6 },
+    { "name": "Diagramas nuevos", "delta": 3 },
+    { "name": "Menú", "delta": -4 }
+  ],
+  "end": "Tras revisar"
+}
+```
+
+| Clave | Qué es |
+| --- | --- |
+| `start` | Obligatoria. El total de partida: `{ "name", "value" }`. |
+| `steps` | Obligatoria. Los cambios, en orden: `{ "name", "delta" }`, `delta` negativo para lo que resta, y opcionalmente `focal` e `info`. |
+| `end` | Opcional. El nombre del total final; por defecto, «Total». |
+
+Los totales se apoyan en la base; cada cambio flota desde el total que lleva acumulado, con lo que sube y lo que baja en colores distintos, y una línea discontinua lleva el total de una barra a la siguiente. Se avisan más de 10 pasos.
+
+<Diagram id="waterfall-problems" />
+
+## Líneas
+
+Para la evolución de una o varias series a lo largo de puntos en orden: meses, semanas, versiones. Cada serie se nombra junto a su último punto.
+
+```json
+{
+  "type": "line",
+  "title": "Lectores y agentes",
+  "desc": "Las lecturas de la guía al mes, en el lector y por agentes que leen su llm.txt",
+  "unit": "lecturas",
+  "x": ["2026-04", "2026-05", "2026-06", "2026-07", "2026-08", "2026-09"],
+  "series": [
+    { "name": "Lector", "values": [320, 410, 380, 450, 300, 520] },
+    { "name": "Agentes (llm.txt)", "values": [80, 140, 260, 340, 390, 610], "focal": true }
+  ]
+}
+```
+
+| Clave | Qué es |
+| --- | --- |
+| `x` | Obligatoria. Los puntos del eje x, en orden: etiquetas o fechas. |
+| `series` | Obligatoria. Las series: `{ "name", "values" }`, un valor por punto, y opcionalmente `hue`, `focal` e `info`. |
+
+Se avisan más de 24 puntos y más de 4 series (8 con `ridgeline` y `bump`).
+
+<Diagram id="line-reads" />
+
+`variant` cambia cómo se dibujan las series:
+
+| Variante | Qué dibuja |
+| --- | --- |
+| `slope` | Dos columnas, un antes y un después, con cada serie como una línea entre sus dos valores. Pide exactamente dos puntos en `x`; con más se avisa y se dibuja como líneas. |
+| `ridgeline` | Cada serie en su propia fila, como una cresta rellena, para comparar cuándo sube cada una. |
+| `stream` | Las series apiladas alrededor de un eje central, para ver cómo se reparte el total con el tiempo. |
+| `bump` | Puestos en vez de valores: cada valor es un entero desde 1, y el 1 va arriba. Un puesto que no lo sea se avisa. |
+
+<Diagram id="line-slope-sections" />
+
+<Diagram id="line-ridgeline-edits" />
+
+<Diagram id="line-stream-files" />
+
+<Diagram id="line-bump-sections" />
+
+## Dispersión
+
+Para ver si dos medidas van juntas, qué grupos se forman y qué casos se salen. Los puntos se colorean por grupo y solo llevan etiqueta los que tienen nombre o van en el acento, colocadas para no taparse.
+
+```json
+{
+  "type": "scatter",
+  "title": "Largo y lecturas de cada página",
+  "desc": "Cada punto es una página: cuántas palabras tiene y cuántas veces se leyó",
+  "x": { "label": "Palabras" },
+  "y": { "label": "Lecturas" },
+  "points": [
+    { "name": "Componentes", "x": 1400, "y": 220, "group": "Páginas", "focal": true },
+    { "x": 600, "y": 140, "group": "Páginas" },
+    { "x": 500, "y": 60, "group": "Repositorio" }
+  ]
+}
+```
+
+| Clave | Qué es |
+| --- | --- |
+| `x`, `y` | Obligatorias. Cada eje: `{ "label" }`, y opcionalmente `min` y `max`. Con `beeswarm` no hay `y`. |
+| `points` | Obligatoria. Los puntos: `{ "x", "y" }`, y opcionalmente `name` (lleva etiqueta), `group` (su color), `size`, `focal` e `info`. |
+
+Se avisan un punto sin `y`, una etiqueta que no cabe sin tapar otra, más de 60 puntos, más de 6 etiquetas y más de 5 grupos.
+
+<Diagram id="scatter-pages" />
+
+Con `"variant": "bubble"` el área de cada punto es proporcional a su `size`, el tercer valor: una burbuja con `size` cuatro veces mayor tiene el doble de radio, no el cuádruple. Cada punto lleva `size`, mayor que 0.
+
+<Diagram id="scatter-bubble-sections" />
+
+Con `"variant": "beeswarm"` no hay eje `y`: los puntos se tienden a lo largo de `x`, en una fila por grupo, y se apartan lo justo para no taparse, de modo que se ve dónde se agolpan.
+
+<Diagram id="scatter-beeswarm-sync" />

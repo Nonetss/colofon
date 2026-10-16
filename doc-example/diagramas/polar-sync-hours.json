@@ -1,0 +1,10 @@
+{
+  "type": "polar",
+  "title": "Sincronizaciones por franja horaria",
+  "desc": "Cuántos pushes se sincronizaron en cada franja de tres horas durante un mes; el pico es a media mañana",
+  "unit": "sincronizaciones",
+  "categories": ["00–03", "03–06", "06–09", "09–12", "12–15", "15–18", "18–21", "21–24"],
+  "values": [4, 1, 12, 46, 30, 38, 17, 9],
+  "max": 50,
+  "focal": "09–12"
+}

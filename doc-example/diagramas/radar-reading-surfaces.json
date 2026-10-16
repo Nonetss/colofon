@@ -1,0 +1,12 @@
+{
+  "type": "radar",
+  "title": "Tres formas de leer la guía",
+  "desc": "El lector web, llm.txt y el editor puntuados de 0 a 5 en lo que ofrece cada uno; el lector web es el más completo para una persona",
+  "axes": ["Navegación", "Búsqueda", "Diagramas", "Para agentes", "Validación"],
+  "max": 5,
+  "series": [
+    { "name": "Lector web", "values": [5, 4, 5, 2, 2], "focal": true, "info": "La barra lateral, la búsqueda y los diagramas interactivos" },
+    { "name": "llm.txt", "values": [2, 1, 2, 5, 1], "info": "Cada página en Markdown, con los diagramas como texto" },
+    { "name": "Editor", "values": [1, 3, 1, 2, 5], "info": "Los esquemas marcan los errores antes del push" }
+  ]
+}

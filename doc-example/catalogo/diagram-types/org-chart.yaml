@@ -1,0 +1,8 @@
+name: Organigrama
+family: graph
+purpose: "Quién responde de qué: personas, equipos o agentes con su papel y a quién más reportan"
+keys: nodes, direction
+budget: 4 niveles, 16 nodos, 6 hijos por nodo
+page: diagrams/graphs
+fuente: manual
+actualizado: 2026-10-16

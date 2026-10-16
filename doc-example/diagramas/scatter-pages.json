@@ -1,0 +1,18 @@
+{
+  "type": "scatter",
+  "title": "Largo y lecturas de cada página",
+  "desc": "Cada punto es una página: cuántas palabras tiene y cuántas veces se leyó el último mes, por sección",
+  "x": { "label": "Palabras" },
+  "y": { "label": "Lecturas" },
+  "points": [
+    { "name": "Componentes", "x": 1400, "y": 220, "group": "Páginas", "focal": true },
+    { "x": 600, "y": 140, "group": "Páginas" },
+    { "x": 900, "y": 110, "group": "Páginas" },
+    { "x": 500, "y": 60, "group": "Repositorio" },
+    { "x": 750, "y": 95, "group": "Repositorio" },
+    { "name": "Menú", "x": 1100, "y": 180, "group": "Repositorio" },
+    { "x": 800, "y": 70, "group": "Catálogo" },
+    { "x": 1200, "y": 90, "group": "Catálogo" },
+    { "x": 650, "y": 40, "group": "Catálogo" }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "type": "waterfall",
+  "title": "De 24 problemas a 8",
+  "desc": "Cómo bajan los problemas de una primera sincronización: cada arreglo resta y los diagramas nuevos suman algunos",
+  "unit": "problemas",
+  "start": { "name": "Primera sincronización", "value": 24 },
+  "steps": [
+    { "name": "Cabeceras", "delta": -9, "focal": true, "info": "Faltaban descripcion y titulo en nueve páginas" },
+    { "name": "Enlaces rotos", "delta": -6 },
+    { "name": "Diagramas nuevos", "delta": 3, "info": "Textos que no cabían en sus cajas" },
+    { "name": "Menú", "delta": -4 }
+  ],
+  "end": "Tras revisar"
+}

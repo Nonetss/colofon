@@ -1,0 +1,11 @@
+{
+  "type": "line",
+  "title": "Lectores y agentes",
+  "desc": "Las lecturas de la guía al mes, en el lector y por agentes que leen su llm.txt",
+  "unit": "lecturas",
+  "x": ["2026-04", "2026-05", "2026-06", "2026-07", "2026-08", "2026-09"],
+  "series": [
+    { "name": "Lector", "values": [320, 410, 380, 450, 300, 520] },
+    { "name": "Agentes (llm.txt)", "values": [80, 140, 260, 340, 390, 610], "focal": true, "info": "Peticiones a <página>/llm.txt" }
+  ]
+}

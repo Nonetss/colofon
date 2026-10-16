@@ -1,0 +1,9 @@
+name: Dispersión
+family: chart
+purpose: Puntos sobre dos ejes para ver una relación, grupos y casos que se salen
+keys: x, y, points, unit, decimals
+variants: bubble, beeswarm
+budget: 60 puntos, 6 etiquetas, 5 grupos
+page: diagrams/charts
+fuente: manual
+actualizado: 2026-10-16

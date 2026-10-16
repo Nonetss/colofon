@@ -1,0 +1,8 @@
+name: Espina de pescado
+family: concept
+purpose: Las causas de un efecto agrupadas por categoría, con la causa raíz marcada
+keys: effect, categories
+budget: 5 categorías, 3 causas por categoría, 18 causas
+page: diagrams/concepts
+fuente: manual
+actualizado: 2026-10-16

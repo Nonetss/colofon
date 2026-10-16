@@ -1,0 +1,272 @@
+---
+titulo: Tiempo y procesos
+descripcion: Siete tipos de diagrama para lo que pasa en orden, de los mensajes de una secuencia a las etapas de una experiencia, escritos como datos que la plataforma coloca sola
+files: [diagram-file]
+diagram_types: [sequence, timeline, gantt, swimlane, kanban, story-map, journey]
+orden: 3
+actualizado: 2026-10-16
+---
+
+Estos tipos cuentan algo que ocurre en orden: mensajes que van y vuelven, fechas en un calendario, pasos repartidos entre personas o trabajo que avanza de una columna a otra. El fichero da los datos, con `"type"` y las claves de su tipo, y la plataforma calcula cada posición, comprueba el límite de complejidad del tipo y lo dibuja con el mismo aspecto, la misma leyenda y la misma versión en texto que un diagrama dibujado a mano. Como en cualquier diagrama, `title` y `desc` son obligatorias, y una parte puede llevar `entity` o `page` para enlazar a su ficha o a una página, `info` para la tarjeta, `hue` para su color y `focal: true` para ir en el color de acento, dos elementos como mucho.
+
+## Secuencia
+
+Para peticiones y respuestas entre varios actores, protocolos o el rastro de un incidente: quién le dice qué a quién, de arriba abajo.
+
+```json
+{
+  "type": "sequence",
+  "title": "De un push a la versión publicada",
+  "desc": "Qué se dicen quien escribe, el servidor git, la plataforma y el lector",
+  "actors": [
+    { "id": "writer", "name": "Quien escribe" },
+    { "id": "git", "name": "Servidor git" },
+    { "id": "platform", "name": "Plataforma", "page": "publishing", "focal": true },
+    { "id": "reader", "name": "Lector" }
+  ],
+  "messages": [
+    { "from": "writer", "to": "git", "label": "git push" },
+    { "from": "git", "to": "platform", "label": "aviso de push", "kind": "async" },
+    { "from": "platform", "to": "git", "label": "git fetch" },
+    { "from": "git", "to": "platform", "label": "commits nuevos", "kind": "return" },
+    { "from": "platform", "to": "platform", "label": "valida el contrato" },
+    { "from": "platform", "to": "reader", "label": "publica la versión", "kind": "accent" },
+    { "from": "platform", "to": "writer", "label": "problemas en su página" }
+  ],
+  "fragments": [
+    { "kind": "alt", "label": "sin errores de contrato", "first": 5, "last": 6, "else": 6 }
+  ]
+}
+```
+
+| Clave | Qué es |
+| --- | --- |
+| `actors` | Obligatoria. Los actores, de izquierda a derecha, cada uno con `id`; cada uno es una caja con su línea de vida debajo. |
+| `messages` | Obligatoria. Los mensajes, de arriba abajo: `from` y `to` (ids de actores) y `label`. `kind` es `call` (por defecto, una llamada), `return` (una respuesta, a trazos), `async` (sin esperar respuesta, punta hueca) o `accent` (el camino principal). Un mensaje de un actor a sí mismo es un bucle corto. |
+| `fragments` | Opcional. Marcos sobre varios mensajes: `kind` (`alt`, `opt`, `loop` o `par`), `label` (su condición), `first` y `last` (los índices de su primer y último mensaje, desde 0) y, en un `alt`, `else` (el mensaje con el que empieza la otra rama). |
+
+Se reporta un mensaje que nombra un actor que no existe (y se deja fuera), un fragmento que se sale de los mensajes, que se solapa con otro sin ir dentro de él o que se anida más de un nivel, y pasar de 6 actores, 14 mensajes o 3 fragmentos. Al pasar el ratón por un actor se iluminan todos sus mensajes.
+
+<Diagram id="sequence-sync" />
+
+## Línea de tiempo
+
+Para historiales de versiones, hitos de un proyecto o la cronología de un incidente. Las distancias son honestas: si entre dos eventos pasa el quíntuple de tiempo, hay el quíntuple de espacio.
+
+```json
+{
+  "type": "timeline",
+  "title": "La vida de una página",
+  "desc": "Una página de esta guía desde su primer borrador hasta su última revisión",
+  "events": [
+    { "name": "Primer borrador", "date": "2026-09-01", "entity": "files/page" },
+    { "name": "Ronda de preguntas", "date": "2026-09-08" },
+    { "name": "Revisión", "date": "2026-09-22" },
+    { "name": "Publicada", "date": "2026-10-01", "focal": true },
+    { "name": "Revisada", "date": "2026-10-16", "entity": "header-fields/actualizado" }
+  ],
+  "spans": [
+    { "name": "Preguntas abiertas", "start": "2026-09-08", "end": "2026-09-30", "hue": "violet" }
+  ]
+}
+```
+
+| Clave | Qué es |
+| --- | --- |
+| `events` | Obligatoria. Los eventos, cada uno con `date`: `AAAA-MM-DD`, o `AAAA-MM` para un mes. Sus etiquetas se alternan arriba y abajo del eje y suben de nivel si chocarían. |
+| `spans` | Opcional. Periodos: `name`, `start`, `end` y un `hue` opcional, como bandas bajo el eje. |
+| `scale` | Opcional. `time` (por defecto) coloca cada evento en su fecha; `even` los pone a la misma distancia, en orden. |
+
+Se reporta una fecha que no existe (`2026-02-30`), un periodo que termina antes de empezar, una etiqueta que no cabe sin pisar otra y pasar de 12 eventos o 4 periodos.
+
+<Diagram id="timeline-page-life" />
+
+## Gantt
+
+Para planes y hojas de ruta: tareas con inicio y fin, agrupadas en fases, donde importa ver qué se solapa con qué.
+
+```json
+{
+  "type": "gantt",
+  "title": "Montar un repositorio de contenido",
+  "desc": "Un plan de seis semanas para empezar un repositorio de contenido",
+  "today": "2026-10-14",
+  "phases": [
+    {
+      "name": "Preparar",
+      "tasks": [
+        { "name": "doc.config.yaml", "entity": "files/doc-config", "start": "2026-10-05", "end": "2026-10-06" },
+        { "name": "El menú", "entity": "files/menu", "start": "2026-10-06", "end": "2026-10-09" }
+      ]
+    },
+    {
+      "name": "Publicar",
+      "tasks": [
+        { "name": "Primera sincronización", "milestone": "2026-11-02" },
+        { "name": "Repaso de problemas", "start": "2026-11-02", "end": "2026-11-13" }
+      ]
+    }
+  ]
+}
+```
+
+| Clave | Qué es |
+| --- | --- |
+| `phases` | Obligatoria. Las fases, cada una con `name` y sus `tasks`. Una tarea lleva `start` y `end` (su último día, incluido), o `milestone` (una fecha) si es un hito, que se dibuja como un rombo. |
+| `today` | Opcional. Una fecha, dibujada como una línea discontinua con «HOY». |
+
+El eje marca cada lunes si el plan dura hasta diez semanas, y el primero de cada mes si dura más. Se reporta una fecha que no existe (la tarea se deja fuera), una tarea que termina antes de empezar, una que no lleva fechas, un nombre que no cabe en su columna y pasar de 5 fases o 16 tareas.
+
+<Diagram id="gantt-new-site" />
+
+## Carriles
+
+Para procesos en los que intervienen varias personas o equipos: un carril por actor, cada paso en el del actor que lo hace. Los relevos de un carril a otro son lo que el diagrama enseña.
+
+```json
+{
+  "type": "swimlane",
+  "title": "Quién hace qué al publicar",
+  "desc": "Los pasos de publicar un cambio, repartidos entre quien escribe, la plataforma y quien lee",
+  "lanes": [
+    { "id": "writer", "name": "Quien escribe" },
+    { "id": "platform", "name": "Plataforma", "hue": "teal" },
+    { "id": "reader", "name": "Quien lee" }
+  ],
+  "steps": [
+    { "id": "edit", "name": "Escribe la página", "lane": "writer", "entity": "files/page" },
+    { "id": "push", "name": "Hace push", "lane": "writer" },
+    { "id": "sync", "name": "Sincroniza", "lane": "platform" },
+    { "id": "valid", "name": "¿Cumple el contrato?", "lane": "platform", "kind": "decision" },
+    { "id": "publish", "name": "Publica", "lane": "platform", "focal": true },
+    { "id": "report", "name": "Reporta problemas", "lane": "platform" },
+    { "id": "read", "name": "Lee la página", "lane": "reader" }
+  ],
+  "links": [
+    { "from": "edit", "to": "push" },
+    { "from": "push", "to": "sync", "label": "GIT" },
+    { "from": "sync", "to": "valid" },
+    { "from": "valid", "to": "publish", "label": "SÍ" },
+    { "from": "valid", "to": "report", "label": "NO" },
+    { "from": "publish", "to": "read", "kind": "accent" },
+    { "from": "report", "to": "edit", "kind": "dash" }
+  ]
+}
+```
+
+| Clave | Qué es |
+| --- | --- |
+| `lanes` | Obligatoria. Los carriles, de arriba abajo, cada uno con `id`. Un carril es una zona: al pasar por su título se iluminan sus pasos, y su `hue` tiñe los pasos que no llevan uno propio. |
+| `steps` | Obligatoria. Los pasos, cada uno con `id` y `lane`. `kind` es `step` (por defecto) o `decision` (un rombo). Su columna es su mayor distancia desde el primer paso, salvo que dé `col`; dos pasos de un carril nunca comparten columna. |
+| `links` | Opcional. Las flechas: `from`, `to`, `label` y `kind` (`default`, `accent` o `dash`). |
+| `variant` | Opcional. `process` añade bajo cada paso lo que entra (`inputs`), lo que sale (`outputs`) y con qué se hace (`tools`), listas de textos cortos. |
+
+Se reporta un paso en un carril que no existe, `inputs`, `outputs` o `tools` sin la variante `process` y pasar de 5 carriles, 12 pasos o 16 enlaces.
+
+<Diagram id="swimlane-publish" />
+
+Con `"variant": "process"`, cada paso lleva debajo sus fichas:
+
+```json
+{ "id": "body", "name": "Cuerpo", "lane": "author", "inputs": ["la cabecera"], "tools": ["Markdown"] }
+```
+
+<Diagram id="swimlane-process-page" />
+
+## Kanban
+
+Para una foto del trabajo en curso por estado: qué está en cola, qué avanza, qué está atascado y dónde se pasa del límite. No lleva flechas: es un recuento, no un flujo.
+
+```json
+{
+  "type": "kanban",
+  "title": "Las páginas de esta guía",
+  "desc": "En qué estado está cada página de la guía",
+  "columns": [
+    { "name": "Por escribir", "cards": [{ "name": "Plantillas", "sub": "propuesta" }] },
+    {
+      "name": "Escribiendo",
+      "limit": 2,
+      "cards": [
+        { "name": "Tipos de diagrama", "sub": "diagrams", "page": "diagrams" },
+        { "name": "Catálogo en el lector", "page": "catalog/reader", "blocked": true }
+      ]
+    },
+    { "name": "Publicada", "cards": [{ "name": "Componentes", "page": "pages/components" }] }
+  ]
+}
+```
+
+| Clave | Qué es |
+| --- | --- |
+| `columns` | Obligatoria. Las columnas, de izquierda a derecha: `name`, sus `cards` y un `limit` opcional de trabajo en curso. Su cabecera muestra cuántas tarjetas tiene, o «3 / 2» contra su límite, en el color de acento si se pasa. |
+| `cards[].blocked` | Opcional. `true` marca la tarjeta como bloqueada, con una barra de acento. |
+
+Cuentan como acento las tarjetas bloqueadas y las columnas por encima de su límite. Se reporta un nombre que no cabe en su tarjeta y pasar de 5 columnas, 4 tarjetas por columna o 12 en total.
+
+<Diagram id="kanban-guide" />
+
+## Mapa de historias
+
+Para el mapa de historias de usuario: qué hace una persona, de izquierda a derecha, y dónde se corta la primera entrega. El corte es lo que el mapa decide.
+
+```json
+{
+  "type": "story-map",
+  "title": "Lo que necesita quien lee",
+  "desc": "Qué hace quien lee esta documentación y qué sale en la primera entrega",
+  "activities": [
+    { "id": "find", "name": "Encontrar" },
+    { "id": "read", "name": "Leer" },
+    { "id": "reuse", "name": "Reutilizar" }
+  ],
+  "releases": ["Primera entrega", "Después"],
+  "cut": "Primera entrega",
+  "stories": [
+    { "name": "La barra lateral", "activity": "find", "release": "Primera entrega", "entity": "files/menu" },
+    { "name": "Buscar", "activity": "find", "release": "Después" },
+    { "name": "Los diagramas", "activity": "read", "release": "Primera entrega", "entity": "components/diagram" },
+    { "name": "llm.txt para agentes", "activity": "reuse", "release": "Primera entrega", "focal": true }
+  ]
+}
+```
+
+| Clave | Qué es |
+| --- | --- |
+| `activities` | Obligatoria. La columna vertebral: las actividades, de izquierda a derecha, cada una con `id`. |
+| `releases` | Obligatoria. Los nombres de las entregas, de la primera a la última; cada una es una banda. |
+| `stories` | Obligatoria. Las historias, cada una con `activity` (un id) y `release` (un nombre de `releases`). |
+| `cut` | Opcional. La entrega bajo la que va el corte, una línea en el color de acento. |
+
+Se reporta una historia de una actividad o una entrega que no existen (y se deja fuera), un `cut` que no es ninguna entrega y pasar de 5 actividades, 3 entregas, 12 historias o 4 historias en una misma actividad y entrega.
+
+<Diagram id="story-map-reader" />
+
+## Mapa de experiencia
+
+Para lo que vive una persona a lo largo de una experiencia y cómo se siente en cada etapa. La curva del sentimiento es lo que lo distingue de un proceso: si no sabes nombrar cómo se siente en cada etapa, usa otro tipo.
+
+```json
+{
+  "type": "journey",
+  "title": "El primer repositorio de contenido",
+  "desc": "Cómo vive quien escribe su primer repositorio, de descubrir la guía a publicarlo",
+  "stages": [
+    { "name": "Descubre", "sentiment": "bien", "actions": ["Lee la guía"], "page": "getting-started" },
+    { "name": "Configura", "sentiment": "neutral", "actions": ["doc.config.yaml", "menu.yaml"] },
+    { "name": "Primer push", "sentiment": "mal", "thoughts": ["¿Por qué falla?"], "pain": "muchos avisos" },
+    { "name": "Corrige", "sentiment": "bien", "actions": ["Sigue los avisos"] },
+    { "name": "Publica", "sentiment": "muy-bien", "actions": ["Comparte el enlace"] }
+  ]
+}
+```
+
+| Clave | Qué es |
+| --- | --- |
+| `stages` | Obligatoria. Las etapas, de izquierda a derecha. Cada una lleva `sentiment`: `muy-mal`, `mal`, `neutral`, `bien` o `muy-bien`. |
+| `stages[].actions`, `thoughts`, `touchpoints` | Opcionales. Lo que hace, lo que piensa y dónde ocurre, como filas de textos bajo la curva. |
+| `stages[].pain` | Opcional. Lo que le duele en esa etapa, como una etiqueta discontinua en el color de acento. |
+
+La etapa más baja por debajo de `neutral` es el valle, en el color de acento; un recorrido que nunca baja de `neutral` no tiene. Se reporta un sentimiento desconocido (la etapa se deja fuera), un texto que no cabe en su columna y pasar de 6 etapas o 2 puntos de dolor.
+
+<Diagram id="journey-first-repo" />

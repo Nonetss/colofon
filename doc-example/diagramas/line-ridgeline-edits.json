@@ -1,0 +1,14 @@
+{
+  "type": "line",
+  "variant": "ridgeline",
+  "title": "Ediciones por semana",
+  "desc": "Los commits de cada sección semana a semana: cada sección tiene su propia cresta",
+  "unit": "commits",
+  "x": ["S1", "S2", "S3", "S4", "S5", "S6", "S7", "S8"],
+  "series": [
+    { "name": "Páginas", "values": [4, 6, 3, 2, 2, 1, 1, 0] },
+    { "name": "Catálogo", "values": [0, 2, 5, 7, 4, 2, 1, 1] },
+    { "name": "Diagramas", "values": [0, 0, 1, 2, 3, 6, 8, 5], "focal": true },
+    { "name": "Publicar", "values": [1, 1, 1, 2, 1, 2, 2, 3] }
+  ]
+}

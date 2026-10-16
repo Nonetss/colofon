@@ -1,0 +1,29 @@
+{
+  "type": "polar",
+  "title": "Sincronizaciones por franja horaria, en piruleta",
+  "desc": "Los mismos datos con un radio y un punto por franja: la distancia al centro es el número de sincronizaciones",
+  "unit": "sincronizaciones",
+  "categories": [
+    "00–03",
+    "03–06",
+    "06–09",
+    "09–12",
+    "12–15",
+    "15–18",
+    "18–21",
+    "21–24"
+  ],
+  "values": [
+    4,
+    1,
+    12,
+    46,
+    30,
+    38,
+    17,
+    9
+  ],
+  "max": 50,
+  "focal": "09–12",
+  "variant": "lollipop"
+}

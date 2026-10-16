@@ -1,0 +1,24 @@
+{
+  "type": "kanban",
+  "title": "Las páginas de esta guía",
+  "desc": "En qué estado está cada página de la guía: por escribir, escribiéndose, en revisión o publicada",
+  "columns": [
+    { "name": "Por escribir", "cards": [{ "name": "Plantillas", "sub": "propuesta" }] },
+    {
+      "name": "Escribiendo",
+      "limit": 2,
+      "cards": [
+        { "name": "Tipos de diagrama", "sub": "diagrams", "page": "diagrams" },
+        { "name": "Catálogo en el lector", "sub": "catalog/reader", "page": "catalog/reader", "blocked": true, "info": "Espera a que la plataforma publique la nueva vista" }
+      ]
+    },
+    { "name": "Revisión", "limit": 2, "cards": [{ "name": "El menú", "sub": "repository/menu", "page": "repository/menu" }] },
+    {
+      "name": "Publicada",
+      "cards": [
+        { "name": "Componentes", "page": "pages/components" },
+        { "name": "La cabecera", "page": "pages/header" }
+      ]
+    }
+  ]
+}

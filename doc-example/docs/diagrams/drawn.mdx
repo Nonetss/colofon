@@ -1,0 +1,160 @@
+---
+titulo: Dibujados a mano
+descripcion: Un diagrama dibujado coloca cada caja, flecha y zona en su sitio, con formas, curvas, bucles y tablas, y es la forma de las arquitecturas, los despliegues y los modelos de datos
+files: [diagram-file]
+orden: 1
+actualizado: 2026-10-16
+---
+
+## El fichero
+
+Un diagrama sin `type` es un diagrama dibujado: el contenido coloca cada caja, cada flecha y cada zona, y la plataforma no mueve nada. Solo lo dibuja con su aspecto (cajas con etiqueta, una pieza central, zonas de color, flechas con su etiqueta y una leyenda debajo), en claro u oscuro según el lector.
+
+```json
+{
+  "title": "Cómo despliega Komodo",
+  "desc": "Komodo le dice a Periphery, en cada servidor, que levante los stacks",
+  "width": 640,
+  "height": 200,
+  "zones": [
+    { "id": "home", "x": 16, "y": 16, "w": 420, "h": 120, "label": "CASA", "hue": "teal" }
+  ],
+  "nodes": [
+    { "id": "komodo", "entity": "services/komodo", "kind": "focal", "tag": "Núcleo",
+      "x": 24, "y": 40, "w": 160, "h": 72, "zone": "home" },
+    { "id": "periphery", "name": "Periphery", "sub": "agente en cada servidor",
+      "x": 264, "y": 40, "w": 160, "h": 72, "zone": "home", "needs": ["komodo"] },
+    { "id": "stacks", "name": "Stacks", "kind": "store", "shape": "cylinder",
+      "x": 480, "y": 40, "w": 140, "h": 72 }
+  ],
+  "edges": [
+    { "from": "komodo", "to": "periphery", "kind": "accent",
+      "points": [[184, 76], [264, 76]], "label": "DEPLOY", "at": [224, 66] },
+    { "from": "periphery", "to": "stacks",
+      "points": [[424, 76], [480, 76]] }
+  ]
+}
+```
+
+Las coordenadas son píxeles del dibujo, desde su esquina de arriba a la izquierda. Las claves son las de los esquemas de la documentación anterior, en inglés, para poder traer uno casi copiando. Este es el de la portada de este sitio:
+
+<Diagram id="pipeline" />
+
+| Clave | Qué es |
+| --- | --- |
+| `title` | Obligatoria. Su título. |
+| `desc` | Obligatoria. Qué muestra, en una o dos frases: es su texto alternativo y lo que leen los agentes. |
+| `width`, `height` | Obligatorias. El tamaño del dibujo; la leyenda va debajo. |
+| `nodes` | Obligatoria. Las cajas. |
+| `edges` | Opcional. Las flechas y las insignias. |
+| `zones` | Opcional. Rectángulos con título que agrupan cajas. |
+| `notes` | Opcional. Texto suelto: `{ "x", "y", "text", "anchor" }`. |
+| `kindNames`, `edgeNames`, `badgeName` | Opcional. Cómo llama la leyenda a cada tipo de caja, de flecha y a las insignias en este diagrama. |
+| `shapes` | Opcional. La forma de todas las cajas de un tipo: `{ "store": "cylinder" }`. |
+| `colorEdges` | Opcional. `true`: cada flecha toma el color de la caja de la que sale. |
+
+## Cajas
+
+Cada caja lleva `x`, `y`, `w` y `h`, y además lo que necesite:
+
+- `id`: lo que nombran las flechas, las zonas y `needs`. En minúsculas, con dígitos y guiones.
+- `kind`: `focal` (la pieza central), `service` (por defecto), `store` (datos o destino), `input` (usuario u origen), `external` u `optional` (sin uso, a trazos).
+- `tag` (la etiqueta enmarcada arriba), `name` y `sub` (una línea o una lista bajo el nombre).
+- `shape`: `pill` (de dónde llega la gente), `cylinder` (dónde acaban los datos), `diamond` (una decisión, el rombo que toca el centro de cada lado de la caja), `circle` (un inicio, un fin o un estado, el círculo que cabe en la caja) o `rounded` (un estado, con las esquinas muy redondeadas). Sin ella, un rectángulo.
+- `hue`: `rose`, `blue`, `cyan`, `violet`, `green`, `indigo`, `fuchsia`, `slate`, `teal` o `lime`. Sin él, la caja toma el de su zona.
+- `zone`: el `id` de la zona en la que está.
+- `info`: lo que dice la tarjeta al pasar por encima.
+- `trace`: `true` en un origen ilumina todo lo que alcanza por el camino principal (las flechas `accent`).
+- `needs`: los ids de las cajas de las que depende. Al pasar por una caja, la tarjeta lista todo lo que cae con ella.
+- **`entity`**, una entidad del catálogo (`"services/komodo"`): toma su nombre si no lleva `name` y enlaza a su página, y la página de la entidad lista el diagrama. Úsala siempre que la caja exista en el catálogo. O **`page`**, la ruta de una página de este sitio a la que enlaza.
+
+Una **tabla** no lleva `h`: lleva `rows`, una lista de filas `{ "key": "PK", "name": "id", "type": "text" }`, y si quieres `more` ("+ 8 columnas más"). Con **`ops`**, una segunda lista de filas, se dibuja una raya bajo las primeras y después estas: las operaciones de una clase UML. Su alto sale de sus filas. `ops` sin `rows` se reporta.
+
+## Flechas
+
+Cada flecha lleva sus `points` y además:
+
+- `from` y `to` (ids de caja), o `toZone` cuando llega a una zona entera.
+- `route`: `orthogonal` (por defecto), con tramos solo horizontales o verticales y las esquinas redondeadas solas, o `curve`, una curva suave que pasa por sus puntos y puede ir en diagonal.
+- `kind`: `default`, `accent` para el camino principal o `dash` para lo opcional o un aviso.
+- `label` con `at`, el punto de la línea base de la etiqueta, y `anchor` (`middle`, `start` o `end`). La etiqueta dice **qué viaja** por ella, en pocas palabras y en mayúsculas; el detalle va en `info`.
+- `head`: `arrow` (por defecto), `triangle` (hueco, una herencia), `diamond` (relleno, una composición) u `open-diamond` (hueco, una agregación). Con `noHead: true`, sin punta.
+- `hue` e `info`.
+
+Una flecha **de una caja a sí misma** (`from` y `to` iguales) sin `points` es un bucle sobre la esquina de arriba a la derecha de la caja, con su etiqueta al lado y sin necesitar `at`. Una flecha con **`badge`** no tiene línea ni `points`: es una insignia con ese texto en la caja `from`, del color de la caja `to`. Sirve para una conexión con una pieza lejana sin cruzar todo el dibujo.
+
+Aquí están las formas, un bucle y una curva de vuelta:
+
+```json
+{
+  "nodes": [
+    { "id": "push", "name": "Push", "kind": "input", "shape": "circle", "x": 24, "y": 60, "w": 64, "h": 64 },
+    { "id": "sync", "name": "Sincronizando", "shape": "rounded", "x": 128, "y": 64, "w": 140, "h": 56 },
+    { "id": "check", "name": "¿Válido?", "shape": "diamond", "x": 308, "y": 48, "w": 160, "h": 88 }
+  ],
+  "edges": [
+    { "from": "sync", "to": "sync", "label": "CADA 5 MIN", "kind": "dash" },
+    { "from": "check", "to": "sync", "route": "curve", "kind": "dash",
+      "points": [[388, 136], [300, 182], [198, 120]], "label": "NO: SE ARREGLA", "at": [300, 194] }
+  ]
+}
+```
+
+<Diagram id="sync-shapes" />
+
+Y una clase con sus operaciones y las flechas de herencia:
+
+```json
+{ "id": "diagram", "name": "Diagrama", "tag": "Abstracta", "kind": "focal", "x": 260, "y": 24, "w": 200,
+  "rows": [{ "key": "+", "name": "title", "type": "texto" }],
+  "ops": [{ "key": "+", "name": "dibujar()", "type": "svg" }] }
+```
+
+<Diagram id="diagram-forms" />
+
+## Cadenas
+
+Para una fila de cajas unidas de izquierda a derecha no hacen falta coordenadas:
+
+```json
+{
+  "title": "Copias",
+  "desc": "De la máquina al PBS y de ahí a la nube",
+  "items": [
+    { "id": "vm", "name": "VM" },
+    { "id": "pbs", "name": "PBS", "kind": "store" },
+    { "id": "cloud", "name": "Nube", "kind": "external" }
+  ],
+  "links": ["SNAPSHOT", null],
+  "accent": [0]
+}
+```
+
+`items` son cajas sin `x` ni `y`, cada una tan ancha como su línea más larga (o su `w`); `links`, la etiqueta de cada flecha o `null`; `accent` y `dash`, qué flechas son de ese tipo (0 es la primera); `y` y `h`, la altura de la fila (40 y 72 por defecto).
+
+## Arquitecturas, despliegues y modelos de datos
+
+Estas formas de diagram-design no tienen un `type` propio: se dibujan a mano, porque lo que cuentan es dónde está cada pieza.
+
+| Lo que quieres contar | Cómo se dibuja |
+| --- | --- |
+| Arquitectura: componentes y conexiones | Cajas con `kind`, como mucho tres zonas, y el camino principal en `accent`. |
+| Visión general de una plataforma | Una zona por fase (ingesta, almacenamiento, consulta…) y una caja por pieza, de izquierda a derecha. |
+| Estado actual de la informática | Zonas por departamento o fase, y los puntos débiles como cajas `focal` (dos como mucho). |
+| Flujo de datos entre roles | Una zona por rol y flechas con lo que viaja (`label`). |
+| Integración de una plataforma de datos | Las fuentes a la izquierda, la plataforma como zona en el centro y los consumidores a la derecha; cada flecha dice su protocolo. |
+| Despliegue | Zonas por entorno o red, cajas por máquina o servicio, y las réplicas y versiones como insignias (`badge`). |
+| Medallón | Una caja por capa (bronce, plata, oro…), de izquierda a derecha, y la flecha dice qué la promociona. |
+| Anidado | Zonas dentro de zonas: lo de fuera es lo más amplio. |
+| Entidad-relación y esquema de base de datos | Tablas (`rows` con `PK` y `FK`) y flechas entre columnas. |
+| Clase UML | Tablas con `rows` y `ops`, y flechas con `head`: `triangle`, `diamond` u `open-diamond`. |
+
+## Qué se reporta
+
+Además de lo que se reporta en todo diagrama ([Diagramas](index.mdx)): una entidad o una página que no existe, una flecha a una caja que no está, un tramo en diagonal en una flecha sin `route: "curve"`, una etiqueta sin `at` (salvo en un bucle), un id repetido, una caja en una zona que no existe, `ops` sin `rows` y un texto que no cabe en su caja. Lo que sea válido se sigue dibujando.
+
+## Pautas
+
+- **Coloca en una rejilla de 4 px** y deja las etiquetas sobre tramos donde quepan.
+- **Las curvas, para lo que vuelve atrás**; lo que avanza va en ángulo recto.
+- **Si las cajas siguen una regla** (un flujo, un árbol, una línea de tiempo), usa su tipo: la plataforma las coloca sola. Ver [Diagramas](index.mdx).

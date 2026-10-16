@@ -1,0 +1,30 @@
+{
+  "type": "gantt",
+  "title": "Montar un repositorio de contenido",
+  "desc": "Un plan de seis semanas para empezar un repositorio de contenido: prepararlo, escribirlo y publicarlo",
+  "today": "2026-10-14",
+  "phases": [
+    {
+      "name": "Preparar",
+      "tasks": [
+        { "name": "doc.config.yaml", "entity": "files/doc-config", "start": "2026-10-05", "end": "2026-10-06" },
+        { "name": "El menú", "entity": "files/menu", "start": "2026-10-06", "end": "2026-10-09" }
+      ]
+    },
+    {
+      "name": "Escribir",
+      "tasks": [
+        { "name": "Las páginas", "entity": "files/page", "start": "2026-10-08", "end": "2026-10-30", "focal": true },
+        { "name": "Los tipos del catálogo", "entity": "files/type-declaration", "start": "2026-10-12", "end": "2026-10-21" },
+        { "name": "Los diagramas", "entity": "files/diagram-file", "start": "2026-10-19", "end": "2026-10-30" }
+      ]
+    },
+    {
+      "name": "Publicar",
+      "tasks": [
+        { "name": "Primera sincronización", "milestone": "2026-11-02", "page": "publishing" },
+        { "name": "Repaso de problemas", "start": "2026-11-02", "end": "2026-11-13" }
+      ]
+    }
+  ]
+}

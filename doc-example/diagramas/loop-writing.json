@@ -1,0 +1,14 @@
+{
+  "type": "loop",
+  "title": "El ciclo de escribir",
+  "desc": "Escribir, validar, publicar, leer y preguntar, y vuelta a escribir; lo que se escribe y lo que se responde queda en el repositorio",
+  "steps": [
+    { "id": "write", "name": "Escribir", "sub": "una página", "entity": "files/page" },
+    { "id": "validate", "name": "Validar", "sub": "en el editor", "page": "publishing/editor", "focal": true },
+    { "id": "publish", "name": "Publicar", "sub": "push y sincronizar", "page": "publishing" },
+    { "id": "read", "name": "Leer", "sub": "en el lector", "page": "catalog/reader" },
+    { "id": "ask", "name": "Preguntar", "sub": "ronda de preguntas", "info": "Lo que aún no se sabe queda en open_questions hasta la siguiente ronda" }
+  ],
+  "hub": { "id": "repo", "name": "Repositorio", "sub": "la única fuente", "page": "repository" },
+  "writes": [0, 4]
+}

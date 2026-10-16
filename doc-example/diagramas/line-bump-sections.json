@@ -1,0 +1,13 @@
+{
+  "type": "line",
+  "variant": "bump",
+  "title": "Las secciones más leídas",
+  "desc": "El puesto de cada sección entre las más leídas, trimestre a trimestre; Diagramas sube al primero",
+  "x": ["T1", "T2", "T3", "T4"],
+  "series": [
+    { "name": "Páginas", "values": [1, 1, 2, 2] },
+    { "name": "Catálogo", "values": [2, 3, 3, 3] },
+    { "name": "Diagramas", "values": [4, 2, 1, 1], "focal": true },
+    { "name": "Publicar", "values": [3, 4, 4, 4] }
+  ]
+}

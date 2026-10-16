@@ -1,0 +1,15 @@
+{
+  "type": "treemap",
+  "title": "De qué está hecho este repositorio",
+  "desc": "El peso de cada clase de fichero de la guía, agrupado en contenido y configuración; las páginas son casi la mitad",
+  "unit": "KB",
+  "items": [
+    { "entity": "files/page", "name": "Páginas", "value": 96, "group": "Contenido", "focal": true },
+    { "entity": "files/entity", "name": "Entidades", "value": 38, "group": "Contenido" },
+    { "entity": "files/diagram-file", "name": "Diagramas", "value": 31, "group": "Contenido" },
+    { "entity": "files/served-skill", "name": "Skills", "value": 22, "group": "Configuración" },
+    { "entity": "files/type-declaration", "name": "Tipos", "value": 9, "group": "Configuración" },
+    { "entity": "files/menu", "name": "Menú", "value": 3, "group": "Configuración" },
+    { "entity": "files/doc-config", "name": "doc.config.yaml", "value": 2, "group": "Configuración" }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "type": "fishbone",
+  "title": "Por qué una página sale en «Otros»",
+  "desc": "Las causas de que una página acabe en el último grupo de la barra lateral, por categoría; casi siempre es que ninguna entrada del menú la nombra",
+  "effect": { "name": "La página sale en «Otros»", "sub": "y se avisa en ella", "page": "repository/menu" },
+  "categories": [
+    { "name": "Menú", "root": true, "causes": ["Ninguna entrada la nombra", "La ruta tiene una errata", "Su carpeta no está"], "info": "Una página que ninguna entrada muestra se lista en «Otros»" },
+    { "name": "Declaración", "causes": ["menu.yaml mal formado", "Un icono que no existe"], "info": "Con el menú roto se sigue usando la última versión válida" },
+    { "name": "Sincronización", "causes": ["El cambio no se ha subido", "Aún no se ha sincronizado"] }
+  ]
+}

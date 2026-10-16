@@ -1,0 +1,9 @@
+{
+  "type": "bar",
+  "title": "Páginas por sección",
+  "desc": "Cuántas páginas tiene cada sección de esta guía; Páginas es la más larga",
+  "unit": "páginas",
+  "focal": "Páginas",
+  "categories": ["Repositorio", "Páginas", "Catálogo", "Diagramas", "Publicar"],
+  "series": [{ "name": "Páginas", "values": [3, 4, 4, 5, 3] }]
+}

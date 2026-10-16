@@ -1,0 +1,206 @@
+---
+titulo: Proporciones y flujos
+descripcion: Cómo escribir un mapa de calor, un treemap o un marimekko, un radar, un gráfico polar y un Sankey, que la plataforma dibuja a partir de los valores
+files: [diagram-file]
+diagram_types: [heatmap, treemap, radar, polar, sankey]
+orden: 6
+actualizado: 2026-10-16
+---
+
+Estos tipos muestran cómo se reparte una cantidad: en una cuadrícula, en áreas, alrededor de un centro o en bandas que se dividen y se juntan. Se escriben como cualquier diagrama con `type`: das los valores y la plataforma calcula cada posición y cada tamaño. Al pasar el ratón por una celda, un rectángulo, un polígono o una banda, se ilumina su serie y una tarjeta da su valor; en `llm.txt`, cada diagrama es su tabla de valores.
+
+Cómo se escriben los valores (`unit`, `decimals` y los separadores) se explica en [Gráficos de valores](charts.mdx): aquí vale lo mismo.
+
+## Mapa de calor
+
+Una tabla de filas por columnas con cada celda sombreada por su valor, para ver de un vistazo qué cruce destaca. Si lo que importa es comparar valores sueltos, usa barras; si es una tendencia, líneas.
+
+```json
+{
+  "type": "heatmap",
+  "title": "Avisos por fichero y semana",
+  "desc": "Cuántos avisos dejó cada clase de fichero en cinco semanas",
+  "rows": ["Páginas", "Menú", "Catálogo", "Diagramas"],
+  "columns": ["S1", "S2", "S3", "S4", "S5"],
+  "values": [
+    [6, 4, 5, 3, 2],
+    [1, 0, 2, 0, 0],
+    [3, 5, 2, 2, 1],
+    [0, 1, 2, 14, 3]
+  ],
+  "focal": [3, 3]
+}
+```
+
+| Clave | Qué es |
+| --- | --- |
+| `rows` | Obligatoria. El nombre de cada fila. |
+| `columns` | Obligatoria. El nombre de cada columna. |
+| `values` | Obligatoria. Una lista por fila, con un número por columna, o `null` para una celda vacía. |
+| `focal` | Opcional. `[fila, columna]`, desde 0, de la celda destacada: va en el color de acento y queda fuera de la escala de grises. |
+| `unit`, `decimals` | Opcional. Cómo se escribe cada valor. |
+
+Las celdas van de un gris muy claro en el valor más bajo, siempre visible sobre el papel, al más oscuro en el más alto. La celda destacada no cuenta para la escala, así que un valor fuera de lo normal no aplana el resto. Se reporta una fila con más o menos valores que columnas, una celda destacada que no existe y pasar de 12 filas o 12 columnas.
+
+<Diagram id="heatmap-sync-problems" />
+
+## Treemap
+
+Las partes de un todo como rectángulos cuya área es su valor, para ver qué domina y por cuánto. Si importan los valores exactos más que la proporción, usa barras.
+
+```json
+{
+  "type": "treemap",
+  "title": "De qué está hecho este repositorio",
+  "desc": "El peso de cada clase de fichero de la guía",
+  "unit": "KB",
+  "items": [
+    { "entity": "files/page", "name": "Páginas", "value": 96, "group": "Contenido", "focal": true },
+    { "entity": "files/entity", "name": "Entidades", "value": 38, "group": "Contenido" },
+    { "entity": "files/menu", "name": "Menú", "value": 3, "group": "Configuración" }
+  ]
+}
+```
+
+| Clave | Qué es |
+| --- | --- |
+| `items` | Obligatoria. Las partes. Cada una lleva `value`, un número mayor que 0, y puede llevar `group`: las del mismo grupo van juntas dentro de un marco con su nombre. |
+| `unit`, `decimals` | Opcional. Cómo se escribe cada valor. |
+
+Cada parte es un elemento como los de los demás tipos: `name`, `sub`, `info`, `focal` y `entity` o `page`. Con `entity`, el rectángulo enlaza a la página de esa entidad y esa página lista el diagrama. Los rectángulos van de mayor a menor, cada uno con su nombre, su valor y su parte del total cuando caben, y en grises de más a menos contraste según su tamaño. Se reporta un valor que no sea mayor que 0 (esa parte se deja fuera) y pasar de 16 partes.
+
+<Diagram id="treemap-repository-files" />
+
+### Marimekko
+
+Con `"variant": "marimekko"`, el todo se reparte de dos formas a la vez: el ancho de cada columna es su parte del total y cada columna se divide entre sus partes. Sirve cuando las dos divisiones importan, como las lecturas por sección y por cómo se leyeron. Lleva `columns` en lugar de `items`:
+
+```json
+{
+  "type": "treemap",
+  "variant": "marimekko",
+  "unit": "lecturas",
+  "columns": [
+    { "name": "Inicio", "parts": [
+      { "name": "Lector web", "value": 420 },
+      { "name": "llm.txt", "value": 90 }
+    ] },
+    { "name": "Escritura", "parts": [
+      { "name": "Lector web", "value": 610 },
+      { "name": "llm.txt", "value": 260 },
+      { "name": "Editor", "value": 140 }
+    ] }
+  ]
+}
+```
+
+Cada parte es `{ "name", "value", "info" }`. Las partes se apilan en el mismo orden en todas las columnas, la mayor en total arriba, y cada una lleva un gris propio en todo el dibujo. Se reporta escribir `items` en un marimekko (o `columns` sin la variante), pasar de 6 columnas y pasar de 5 partes en una columna.
+
+<Diagram id="treemap-reading-channels" />
+
+## Radar
+
+Unas pocas entidades comparadas en varios criterios medidos sobre la misma escala, de cero a `max`. Compara formas, no valores sueltos: con dos entidades, una tabla se lee mejor.
+
+```json
+{
+  "type": "radar",
+  "title": "Tres formas de leer la guía",
+  "desc": "El lector web, llm.txt y el editor puntuados de 0 a 5",
+  "axes": ["Navegación", "Búsqueda", "Diagramas", "Para agentes", "Validación"],
+  "max": 5,
+  "series": [
+    { "name": "Lector web", "values": [5, 4, 5, 2, 2], "focal": true },
+    { "name": "llm.txt", "values": [2, 1, 2, 5, 1] },
+    { "name": "Editor", "values": [1, 3, 1, 2, 5] }
+  ]
+}
+```
+
+| Clave | Qué es |
+| --- | --- |
+| `axes` | Obligatoria. Los criterios, de 3 a 6, el primero arriba y los demás en el sentido del reloj. |
+| `max` | Obligatoria. El tope de la escala, que siempre empieza en 0. |
+| `series` | Obligatoria. Las entidades, de 1 a 5: `{ "name", "values", "hue", "focal", "info" }`, con un valor por eje. |
+| `unit`, `decimals` | Opcional. Cómo se escribe cada valor. |
+
+Cada serie es un polígono translúcido de su color; la destacada va en el color de acento, con un punto en cada vértice. La escala solo se escribe en el eje de arriba. Se reporta un valor por encima de `max` o por debajo de 0 (se dibuja en el borde), una serie con otro número de valores que de ejes (se deja fuera), menos de 3 ejes y pasar de 6 ejes o de 5 series.
+
+<Diagram id="radar-reading-surfaces" />
+
+## Gráfico polar
+
+Una serie de valores en categorías cuyo orden en el sentido del reloj significa algo: horas, días de la semana, meses. Si el orden circular no aporta nada, usa barras.
+
+```json
+{
+  "type": "polar",
+  "title": "Sincronizaciones por franja horaria",
+  "desc": "Cuántos pushes se sincronizaron en cada franja de tres horas",
+  "unit": "sincronizaciones",
+  "categories": ["00–03", "03–06", "06–09", "09–12", "12–15", "15–18", "18–21", "21–24"],
+  "values": [4, 1, 12, 46, 30, 38, 17, 9],
+  "max": 50,
+  "focal": "09–12"
+}
+```
+
+| Clave | Qué es |
+| --- | --- |
+| `categories` | Obligatoria. De 4 a 8 categorías, la primera arriba y las demás en el sentido del reloj. |
+| `values` | Obligatoria. Un valor por categoría, de 0 al tope. |
+| `max` | Opcional. El tope de la escala; sin él, un número redondo por encima del valor más alto. |
+| `focal` | Opcional. La categoría que va en el color de acento. |
+| `unit`, `decimals` | Opcional. Cómo se escribe cada valor. |
+
+Cada categoría es una cuña que sale del centro, tan larga como su valor; una categoría en 0 no dibuja nada y conserva su nombre y su valor. Se reporta un valor fuera de la escala, un número de valores distinto del de categorías, una `focal` que no es ninguna categoría, menos de 4 categorías y pasar de 8.
+
+<Diagram id="polar-sync-hours" />
+
+### Piruleta
+
+Con `"variant": "lollipop"`, cada categoría es un radio con un punto al final en lugar de una cuña. La longitud es el valor y no hay áreas que la exageren, así que es la forma más honesta cuando las cuñas anchas engañarían:
+
+<Diagram id="polar-sync-hours-lollipop" />
+
+## Sankey
+
+Cómo una cantidad se reparte y se junta de una columna a la siguiente, en dos o tres columnas. El grosor de cada banda es su valor, así que úsalo solo cuando comparar cantidades importe; si no, un diagrama de flujo lo dice con menos tinta.
+
+```json
+{
+  "type": "sankey",
+  "title": "Por dónde llegan las lecturas",
+  "desc": "Las lecturas de un mes por cómo se leyeron y por sección",
+  "unit": "lecturas",
+  "columns": [
+    [{ "id": "readings", "name": "Lecturas" }],
+    [
+      { "id": "web", "name": "Lector web", "page": "catalog/reader" },
+      { "id": "llm", "name": "llm.txt", "page": "publishing/agents" }
+    ],
+    [
+      { "id": "writing", "name": "Escritura", "page": "pages" },
+      { "id": "data", "name": "Datos", "page": "catalog" }
+    ]
+  ],
+  "flows": [
+    { "from": "readings", "to": "web", "value": 940 },
+    { "from": "readings", "to": "llm", "value": 410, "focal": true },
+    { "from": "web", "to": "writing", "value": 610 },
+    { "from": "web", "to": "data", "value": 330 },
+    { "from": "llm", "to": "writing", "value": 260, "focal": true },
+    { "from": "llm", "to": "data", "value": 150 }
+  ]
+}
+```
+
+| Clave | Qué es |
+| --- | --- |
+| `columns` | Obligatoria. De 2 a 3 columnas, de izquierda a derecha, cada una con sus nodos. Cada nodo lleva `id` y es un elemento como los de los demás tipos, así que puede enlazar con `entity` o `page`. |
+| `flows` | Obligatoria. `{ "from", "to", "value", "focal", "info" }`: lo que pasa de un nodo al de la columna siguiente. |
+| `unit`, `decimals` | Opcional. Cómo se escribe cada valor. |
+
+Los nodos y las bandas comparten una sola escala, así que la altura de un nodo es lo que pasa por él. Las bandas salen y llegan en horizontal, sin puntas de flecha: la dirección es el orden de las columnas. Las bandas `focal` forman el camino destacado y van en el color de acento por encima de las demás; ese camino cuenta como un solo acento. Se reporta un nodo de una columna del medio que recibe una cantidad distinta de la que envía, un flujo que salta una columna o va hacia atrás (se deja fuera), un extremo que no es ningún nodo y pasar de 3 columnas, 8 nodos o 12 flujos.
+
+<Diagram id="sankey-guide-readings" />

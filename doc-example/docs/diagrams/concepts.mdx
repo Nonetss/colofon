@@ -1,0 +1,281 @@
+---
+titulo: Conceptos
+descripcion: Cómo escribir cuadrantes, mapas de Wardley, Venn, pirámides y embudos, pilas de capas, ciclos, espinas de pescado y matrices dando solo las ideas, y qué avisa la plataforma de cada uno
+files: [diagram-file]
+diagram_types: [quadrant, wardley, venn, pyramid, layers, loop, fishbone, matrix]
+orden: 4
+actualizado: 2026-10-16
+---
+
+Un diagrama de conceptos coloca ideas en un espacio: dos ejes, unos círculos que se cruzan, unos niveles apilados, un ciclo. El fichero da las ideas y dónde van en ese espacio (una posición de 0 a 100, un orden, un nivel) y la plataforma dibuja el resto. Como en cualquier diagrama, `type` elige la forma, `title` y `desc` son obligatorios, y se muestra con `<Diagram id="…" />` en un bloque propio.
+
+Lo que estos tipos llaman un **elemento** (un paso, una capa, un componente, un conjunto) acepta siempre las mismas claves que una caja de un diagrama dibujado:
+
+| Clave | Qué es |
+| --- | --- |
+| `name` | Obligatoria, salvo que lleve `entity`. Su nombre. |
+| `id` | Opcional, salvo donde otra parte lo nombra. En minúsculas, con dígitos y guiones. |
+| `sub` | Opcional. Una línea, o una lista, bajo el nombre. |
+| `info` | Opcional. Lo que dice la tarjeta al pasar por encima. |
+| `hue` | Opcional. Su color: `rose`, `blue`, `cyan`, `violet`, `green`, `indigo`, `fuchsia`, `slate`, `teal` o `lime`. |
+| `focal` | Opcional. `true`: va en el color de acento. Como mucho dos cosas por diagrama. |
+| `entity` o `page` | Opcional. La entidad del catálogo que es (toma su nombre y enlaza a su página, que lista el diagrama) o la página a la que enlaza. |
+
+Pasar el límite de un tipo se avisa en el fichero, y el diagrama se dibuja entero igualmente.
+
+## Cuadrante
+
+Para repartir cosas en un marco de dos por dos según dos criterios: valor y esfuerzo, alcance y frecuencia. Cada elemento es un punto con su nombre al lado; la plataforma coloca las etiquetas para que no se pisen ni crucen los ejes.
+
+```json
+{
+  "type": "quadrant",
+  "title": "Qué documentar primero",
+  "desc": "Las partes de un repositorio de contenido según lo que le valen al lector y el esfuerzo de escribirlas",
+  "x": { "label": "Esfuerzo de escribirla", "low": "Poco", "high": "Mucho" },
+  "y": { "label": "Valor para el lector", "low": "Bajo", "high": "Alto" },
+  "quadrants": ["Hazlo ya", "Planifícalo", "Si sobra tiempo", "Déjalo"],
+  "items": [
+    { "name": "Primeros pasos", "page": "getting-started", "x": 22, "y": 88, "focal": true },
+    { "entity": "files/menu", "x": 14, "y": 66 },
+    { "name": "Catálogo", "page": "catalog", "x": 76, "y": 82 }
+  ]
+}
+```
+
+| Clave | Qué es |
+| --- | --- |
+| `x`, `y` | Obligatorias. Cada eje: `{ "label", "low", "high" }`, su nombre y una palabra en cada extremo. |
+| `quadrants` | Obligatoria. Los cuatro nombres: arriba a la izquierda, arriba a la derecha, abajo a la izquierda y abajo a la derecha. |
+| `items` | Obligatoria. Los elementos, cada uno con `x` (0 a la izquierda, 100 a la derecha) e `y` (0 abajo, 100 arriba). |
+
+Se avisa una coordenada fuera de 0 a 100 (el elemento se deja fuera), una etiqueta que no cabe sin pisar otra (el punto se dibuja igual) y más de 12 elementos. La versión en texto dice en qué cuadrante cae cada uno.
+
+<Diagram id="quadrant-what-to-write" />
+
+## Mapa de Wardley
+
+Para situar las piezas de una cadena de valor por lo visibles que son para el usuario (arriba lo que ve, abajo lo que no) y lo maduras que están, de izquierda a derecha en cuatro etapas: Génesis, A medida, Producto y Commodity. Las dependencias son líneas rectas, y lo que está cambiando lleva una flecha de acento a trazos hacia donde va.
+
+```json
+{
+  "type": "wardley",
+  "title": "La cadena de publicar documentación",
+  "desc": "Lo que hay entre una página escrita y quien la lee",
+  "components": [
+    { "id": "lector", "name": "Lector", "visibility": 96, "evolution": 62 },
+    { "id": "paginas", "name": "Páginas", "entity": "files/page", "visibility": 78, "evolution": 42 },
+    { "id": "diagramas", "name": "Diagramas tipados", "visibility": 60, "evolution": 18 },
+    { "id": "git", "name": "Git", "visibility": 16, "evolution": 88 }
+  ],
+  "links": [
+    { "from": "lector", "to": "paginas" },
+    { "from": "paginas", "to": "diagramas" },
+    { "from": "diagramas", "to": "git" }
+  ],
+  "moves": [{ "id": "diagramas", "to": 56 }]
+}
+```
+
+| Clave | Qué es |
+| --- | --- |
+| `components` | Obligatoria. Los componentes, cada uno con `id`, `visibility` (0 invisible, 100 lo que ve el usuario) y `evolution` (0 a 100: un cuarto por etapa). |
+| `links` | Opcional. Las dependencias: `{ "from", "to" }`, `from` depende de `to`. |
+| `moves` | Opcional. Hacia qué evolución va un componente: `{ "id", "to" }`. |
+
+Se avisa una coordenada fuera de 0 a 100, una dependencia o un movimiento que nombra un componente que no existe, un movimiento hacia atrás (la evolución solo va hacia commodity) y pasar de 9 componentes, 12 dependencias o 2 movimientos. Cada movimiento cuenta como un acento.
+
+<Diagram id="wardley-publishing" />
+
+## Venn
+
+Para mostrar dónde se cruzan dos o tres ideas y qué hay en cada cruce. Los círculos son del mismo tamaño y cada uno lleva su color, muy suave, así que los cruces se ven más oscuros; los nombres van fuera y la etiqueta de cada cruce, dentro.
+
+```json
+{
+  "type": "venn",
+  "title": "Una buena página de la guía",
+  "desc": "Lo que tiene que ser a la vez una página de esta guía",
+  "sets": [
+    { "id": "useful", "name": "Útil", "sub": "responde a su pregunta" },
+    { "id": "faithful", "name": "Fiel" },
+    { "id": "maintainable", "name": "Mantenible" }
+  ],
+  "regions": [
+    { "sets": ["useful", "faithful"], "label": "Referencia" },
+    { "sets": ["useful", "faithful", "maintainable"], "label": "Guía viva", "focal": true }
+  ]
+}
+```
+
+| Clave | Qué es |
+| --- | --- |
+| `sets` | Obligatoria. Los conjuntos, dos o tres, cada uno con `id`. Sin `hue`, toman azul, violeta y verde azulado, en orden. |
+| `regions` | Opcional. Los cruces: `{ "sets", "label", "focal" }`, con los ids de dos o más conjuntos. |
+
+Se avisa un cruce que nombra un conjunto que no existe (se deja fuera), menos de dos conjuntos y más de tres.
+
+<Diagram id="venn-good-page" />
+
+## Pirámide y embudo
+
+Para ordenar niveles de lo más amplio, abajo, a lo más escaso, arriba: una jerarquía, lo que sostiene a qué. Los niveles se escriben de arriba abajo.
+
+```json
+{
+  "type": "pyramid",
+  "title": "Lo que necesita quien lee",
+  "desc": "De lo que sostiene la guía a lo que el lector viene a buscar",
+  "levels": [
+    { "name": "Su respuesta", "sub": "en una página", "focal": true },
+    { "name": "Ejemplos que copiar" },
+    { "name": "Reglas y claves", "page": "pages/header" },
+    { "name": "Contrato validado", "page": "repository" }
+  ]
+}
+```
+
+| Clave | Qué es |
+| --- | --- |
+| `levels` | Obligatoria. Los niveles, de arriba abajo. Cada uno puede llevar `value`, un número mayor que 0. |
+| `variant` | Opcional. `funnel`: un embudo, que se estrecha hacia abajo. |
+| `unit`, `decimals` | Opcional. El texto tras cada valor y cuántos decimales se muestran. |
+
+<Diagram id="pyramid-reader-needs" />
+
+Con `"variant": "funnel"` los niveles se estrechan hacia abajo. Si todos llevan `value`, cada nivel es tan ancho como su valor y al lado se lee la caída desde el de arriba: de 1.200 a 640 es «−47 %». Si solo algunos lo llevan, se avisa y se dibuja sin valores. Los números de este ejemplo son ilustrativos.
+
+```json
+{
+  "type": "pyramid",
+  "variant": "funnel",
+  "title": "De la visita a la primera página",
+  "desc": "De cuántos visitan la guía a cuántos publican su primera página",
+  "unit": "personas",
+  "levels": [
+    { "name": "Visitan la guía", "value": 1200 },
+    { "name": "Leen Primeros pasos", "value": 640 },
+    { "name": "Crean su repositorio", "value": 180, "focal": true },
+    { "name": "Publican una página", "value": 120 }
+  ]
+}
+```
+
+<Diagram id="pyramid-funnel-first-page" />
+
+Se avisa un nombre que no cabe en el ancho de su nivel y más de 6 niveles.
+
+## Pila de capas
+
+Para capas en las que cada una usa la de debajo: una pila técnica, niveles de abstracción. Cada capa es una banda a todo el ancho con su número a la izquierda, su nombre, sus notas a la derecha y, si las tiene, sus piezas en fichas.
+
+```json
+{
+  "type": "layers",
+  "title": "Las capas de un sitio de documentación",
+  "desc": "Del lector al git en el que vive el contenido",
+  "layers": [
+    { "name": "Lector", "sub": "web y llms.txt", "items": ["páginas", "catálogo", "llm.txt"] },
+    { "name": "Plataforma", "sub": "sincroniza y valida", "focal": true },
+    { "name": "Repositorio de contenido", "page": "repository",
+      "items": ["doc.config.yaml", "menu.yaml", "docs/", "catalogo/", "diagramas/"] },
+    { "name": "Git" }
+  ]
+}
+```
+
+| Clave | Qué es |
+| --- | --- |
+| `layers` | Obligatoria. Las capas, de arriba abajo. Cada una puede llevar `items`, una lista de textos cortos que se dibujan como fichas. |
+
+Se avisa una capa cuyas fichas no caben en su ancho, más de 7 capas y más de 6 fichas en una capa.
+
+<Diagram id="layers-content-stack" />
+
+## Ciclo
+
+Para un ciclo que vuelve a empezar, en el que cada vuelta deja algo en un centro común: el volante de mejora, un ciclo de trabajo. Los pasos van en un anillo en el sentido de las agujas del reloj desde arriba, unidos por flechas curvas, la última de vuelta al primero; los que escriben en el centro lo hacen con una flecha a trazos.
+
+```json
+{
+  "type": "loop",
+  "title": "El ciclo de escribir",
+  "desc": "Escribir, validar, publicar, leer y preguntar, y vuelta a escribir",
+  "steps": [
+    { "id": "write", "name": "Escribir", "entity": "files/page" },
+    { "id": "validate", "name": "Validar", "sub": "en el editor", "focal": true },
+    { "id": "publish", "name": "Publicar" },
+    { "id": "read", "name": "Leer" },
+    { "id": "ask", "name": "Preguntar", "sub": "ronda de preguntas" }
+  ],
+  "hub": { "id": "repo", "name": "Repositorio", "page": "repository" },
+  "writes": [0, 4]
+}
+```
+
+| Clave | Qué es |
+| --- | --- |
+| `steps` | Obligatoria. Los pasos, de 3 a 8, desde arriba en el sentido de las agujas del reloj. |
+| `hub` | Opcional. El elemento del centro: lo que se acumula en cada vuelta. |
+| `writes` | Opcional. Los pasos que escriben en el centro, por su posición (0 el primero). |
+
+Se avisa menos de 3 pasos, más de 8, un `writes` que no es ningún paso y un `writes` sin `hub`.
+
+<Diagram id="loop-writing" />
+
+## Espina de pescado
+
+Para las causas de un efecto agrupadas por categoría, como en un análisis después de un incidente: el efecto va a la derecha, una espina llega a él y de ella salen, alternando arriba y abajo, una espina por categoría con sus causas. La causa raíz confirmada va en el color de acento.
+
+```json
+{
+  "type": "fishbone",
+  "title": "Por qué una página sale en «Otros»",
+  "desc": "Las causas de que una página acabe en el último grupo de la barra lateral",
+  "effect": { "name": "La página sale en «Otros»", "page": "repository/menu" },
+  "categories": [
+    { "name": "Menú", "root": true, "causes": ["Ninguna entrada la nombra", "La ruta tiene una errata"] },
+    { "name": "Declaración", "causes": ["menu.yaml mal formado"] },
+    { "name": "Sincronización", "causes": ["Aún no se ha sincronizado"] }
+  ]
+}
+```
+
+| Clave | Qué es |
+| --- | --- |
+| `effect` | Obligatoria. El efecto observado, un elemento. |
+| `categories` | Obligatoria. Las categorías: `{ "name", "causes", "root", "hue", "info" }`, con `causes` una lista de textos cortos y `root: true` en la causa raíz. |
+
+Se avisa pasar de 5 categorías, de 3 causas en una categoría o de 18 causas en total.
+
+<Diagram id="fishbone-others-group" />
+
+## Matriz
+
+Para filas por columnas en las que cada celda tiene un nivel de una escala ordenada: quién puede qué, qué cubre cada cosa. Cada celda se sombrea más oscura cuanto más permite su nivel y lleva su nombre; la leyenda lista los niveles y, al pasar por uno, ilumina sus celdas.
+
+```json
+{
+  "type": "matrix",
+  "title": "Quién toca cada fichero",
+  "desc": "Qué hace con cada fichero quien escribe, un agente y la plataforma",
+  "rows": [{ "entity": "files/doc-config" }, { "entity": "files/menu" }, { "entity": "files/page" }],
+  "columns": [{ "name": "Quien escribe" }, { "name": "Agente" }, { "name": "Plataforma" }],
+  "levels": ["Lee", "Propone", "Escribe"],
+  "cells": [
+    ["Escribe", "Propone", "Lee"],
+    ["Escribe", "Propone", "Lee"],
+    ["Escribe", "Escribe", "Lee"]
+  ]
+}
+```
+
+| Clave | Qué es |
+| --- | --- |
+| `rows`, `columns` | Obligatorias. Las filas y las columnas, elementos. |
+| `levels` | Obligatoria. Los niveles, de 2 a 5, de menos a más. |
+| `cells` | Obligatoria. Una lista por fila, con el nivel de cada columna o `null` para una celda vacía. |
+
+Se avisa una fila con más o menos celdas que columnas, un nivel que no está en `levels` (la celda se dibuja vacía) y pasar de 10 filas u 8 columnas. La versión en texto es una tabla.
+
+<Diagram id="matrix-who-writes" />

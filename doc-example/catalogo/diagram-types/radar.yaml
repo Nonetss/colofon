@@ -1,0 +1,8 @@
+name: Radar
+family: chart
+purpose: Unas pocas entidades comparadas en varios criterios sobre una misma escala de cero a max
+keys: axes, max, series, unit, decimals
+budget: 6 ejes, 5 series
+page: diagrams/proportions
+fuente: manual
+actualizado: 2026-10-16

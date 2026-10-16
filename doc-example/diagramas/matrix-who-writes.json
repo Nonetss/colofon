@@ -1,0 +1,25 @@
+{
+  "type": "matrix",
+  "title": "Quién toca cada fichero",
+  "desc": "Qué hace con cada fichero de un repositorio de contenido quien escribe, un agente con la skill documentation y la plataforma",
+  "rows": [
+    { "entity": "files/doc-config" },
+    { "entity": "files/menu" },
+    { "entity": "files/page" },
+    { "entity": "files/entity" },
+    { "entity": "files/diagram-file" }
+  ],
+  "columns": [
+    { "name": "Quien escribe" },
+    { "name": "Agente" },
+    { "name": "Plataforma" }
+  ],
+  "levels": ["Lee", "Propone", "Escribe"],
+  "cells": [
+    ["Escribe", "Propone", "Lee"],
+    ["Escribe", "Propone", "Lee"],
+    ["Escribe", "Escribe", "Lee"],
+    ["Escribe", "Escribe", "Lee"],
+    ["Escribe", "Escribe", "Lee"]
+  ]
+}

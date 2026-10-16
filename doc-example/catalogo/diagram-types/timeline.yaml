@@ -1,0 +1,8 @@
+name: Línea de tiempo
+family: time
+purpose: Eventos con fecha en un eje, a distancias honestas, y periodos como bandas
+keys: events, spans, scale
+budget: 12 eventos, 4 periodos
+page: diagrams/time
+fuente: manual
+actualizado: 2026-10-16

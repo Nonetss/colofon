@@ -1,0 +1,191 @@
+---
+titulo: Grafos
+descripcion: Cómo escribir diagramas de flujo, máquinas de estados, árboles, organigramas y grafos de dependencias dando solo las piezas y sus flechas, y qué avisa la plataforma de cada uno
+files: [diagram-file]
+diagram_types: [flowchart, state, tree, org-chart, dependency]
+orden: 2
+actualizado: 2026-10-16
+---
+
+Un grafo son cajas unidas por flechas, como un diagrama dibujado, pero sin coordenadas: el fichero da las piezas y quién va con quién, y la plataforma las coloca en filas y columnas y lleva cada flecha en ángulo recto por los huecos entre ellas, sin cruzar ninguna caja. Como en cualquier diagrama, `type` elige la forma, `title` y `desc` son obligatorios, y se muestra con `<Diagram id="…" />` en un bloque propio. Al pasar el ratón por una caja se iluminan sus flechas y una tarjeta lista sus conexiones; la versión en texto que leen los lectores de pantalla y los agentes en `llm.txt` lista cada flecha.
+
+## Las piezas
+
+Cada pieza de un grafo (un paso, un estado, un nodo) acepta los mismos campos que una caja de un diagrama dibujado, salvo la posición:
+
+| Clave | Qué es |
+| --- | --- |
+| `id` | Obligatoria. Lo que nombran las flechas y los padres: en minúsculas, con dígitos y guiones, y sin repetirse en el diagrama. |
+| `name` | Obligatoria si no lleva `entity`. Su nombre. |
+| `sub` | Opcional. Una línea, o una lista, bajo el nombre. |
+| `info` | Opcional. Lo que dice la tarjeta al pasar por encima. |
+| `hue` | Opcional. Su color: uno de los diez de los diagramas dibujados. |
+| `focal` | Opcional. `true`: va en el color de acento. Como mucho dos cosas por diagrama. |
+| `entity` | Opcional. La entidad del catálogo que es (`"files/menu"`): toma su nombre, enlaza a su ficha y la ficha lista el diagrama. |
+| `page` | Opcional. La página de este sitio a la que enlaza (`"repository/menu"`). |
+
+Las flechas de un diagrama de flujo, una máquina de estados y un grafo de dependencias se escriben igual, `{ "from", "to" }` entre ids, y opcionalmente con `label` (lo que dice la flecha, corto y en mayúsculas), `kind` (`default`, `accent` para el camino principal o `dash` para lo opcional) e `info`. Una flecha que nombra un id que no existe se avisa y se deja fuera.
+
+## Diagrama de flujo
+
+Para la lógica de decisión: qué hacer según la respuesta a cada pregunta. Cada paso cae en la fila de su distancia más larga desde el inicio y, dentro de la fila, en el orden que reduce los cruces; una flecha que vuelve hacia arriba va a trazos por el lateral.
+
+```json
+{
+  "type": "flowchart",
+  "title": "Dónde va cada cosa",
+  "desc": "Qué preguntarse ante algo que contar",
+  "steps": [
+    { "id": "start", "name": "Tengo algo que contar", "kind": "start" },
+    { "id": "repeats", "name": "¿Se repite con los mismos campos?", "kind": "decision" },
+    { "id": "entity", "entity": "files/entity" },
+    { "id": "connects", "name": "¿Cuenta cómo se conectan?", "kind": "decision" },
+    { "id": "diagram", "entity": "files/diagram-file", "focal": true },
+    { "id": "page", "entity": "files/page" }
+  ],
+  "links": [
+    { "from": "start", "to": "repeats" },
+    { "from": "repeats", "to": "entity", "label": "SÍ" },
+    { "from": "repeats", "to": "connects", "label": "NO" },
+    { "from": "connects", "to": "diagram", "label": "SÍ", "kind": "accent" },
+    { "from": "connects", "to": "page", "label": "NO" }
+  ]
+}
+```
+
+| Clave | Qué es |
+| --- | --- |
+| `steps` | Obligatoria. Los pasos. Además de los campos de una pieza, `kind`: `step` (por defecto, un rectángulo), `start` o `end` (una píldora), `decision` (un rombo) o `io` (un paralelogramo, entrada o salida); y `row` y `col` (desde 0) para fijar a mano dónde va uno. |
+| `links` | Opcional. Las flechas entre pasos. |
+
+Se avisa un diagrama con más de 12 pasos o 16 flechas, y una decisión con más de tres salidas; el diagrama se dibuja igual. Si la colocación automática deja algo mal, `row` y `col` lo arreglan.
+
+<Diagram id="flowchart-where-it-goes" />
+
+## Máquina de estados
+
+Para los estados de una cosa y los eventos que la llevan de uno a otro. Se coloca como un diagrama de flujo, desde el estado inicial; cada estado es un rectángulo redondeado, el inicial tiene encima un punto relleno y uno final, debajo, un punto con anillo. Una transición de un estado a sí mismo da una vuelta sobre su esquina.
+
+```json
+{
+  "type": "state",
+  "title": "La vida de una página",
+  "desc": "Cómo pasa una página de tu copia al lector y de vuelta",
+  "states": [
+    { "id": "draft", "name": "Sin publicar", "initial": true },
+    { "id": "published", "name": "Publicada", "focal": true, "page": "publishing" },
+    { "id": "removed", "name": "Retirada", "final": true, "row": 1, "col": 1 },
+    { "id": "warned", "name": "Con avisos" }
+  ],
+  "transitions": [
+    { "from": "draft", "to": "published", "label": "PUSH" },
+    { "from": "published", "to": "published", "label": "PUSH" },
+    { "from": "published", "to": "warned", "label": "PUSH CON ERRORES" },
+    { "from": "warned", "to": "published", "label": "CORRIGES" },
+    { "from": "published", "to": "removed", "label": "BORRAS" }
+  ]
+}
+```
+
+| Clave | Qué es |
+| --- | --- |
+| `states` | Obligatoria. Los estados. Además de los campos de una pieza, `initial` (`true`: en el que empieza), `final` (`true`: uno en el que acaba), `row` y `col`. |
+| `transitions` | Opcional. Las transiciones, con lo que las dispara como `label`: `evento [guarda] / acción`, quitando lo que sobre. |
+
+Se avisa una máquina con más de 8 estados o 14 transiciones: seguramente son dos.
+
+<Diagram id="state-page-lifecycle" />
+
+## Árbol
+
+Para una jerarquía con una sola raíz: una taxonomía, un árbol de ficheros, el desglose de una decisión. Cada nodo nombra a su padre; la plataforma centra cada padre sobre sus hijos y los une con un codo (una bajada, una barra y una bajada a cada hijo).
+
+```json
+{
+  "type": "tree",
+  "title": "Los ficheros de un repositorio",
+  "desc": "Qué hay en la raíz de un repositorio de contenido",
+  "direction": "right",
+  "nodes": [
+    { "id": "root", "name": "Repositorio", "focal": true },
+    { "id": "config", "entity": "files/doc-config", "parent": "root" },
+    { "id": "docs", "name": "docs/", "parent": "root", "page": "pages" },
+    { "id": "pages", "entity": "files/page", "parent": "docs" },
+    { "id": "catalog", "name": "catalogo/", "parent": "root", "page": "catalog" },
+    { "id": "entity", "entity": "files/entity", "parent": "catalog" }
+  ]
+}
+```
+
+| Clave | Qué es |
+| --- | --- |
+| `nodes` | Obligatoria. Los nodos. Además de los campos de una pieza, `parent`: el id de su padre. El único nodo sin `parent` es la raíz. |
+| `direction` | Opcional. `down` (por defecto): la raíz arriba; `right`: la raíz a la izquierda. |
+
+Un árbol sin raíz, con más de una o con padres que forman un ciclo se avisa y en su lugar sale un aviso; un `parent` que no existe se avisa y ese nodo se deja fuera. Se avisa también un árbol de más de 4 niveles, de más de 16 nodos o con más de 6 hijos bajo un mismo nodo. Todas las cajas tienen el mismo tamaño, el de la más larga.
+
+<Diagram id="tree-repository-files" />
+
+## Organigrama
+
+Un árbol de personas, equipos o agentes: dice quién responde de qué. Se escribe como un árbol (`"type": "org-chart"`), y cada nodo admite además su papel y a quién más reporta.
+
+```json
+{
+  "type": "org-chart",
+  "title": "Quién cuida la guía",
+  "desc": "Quién responde del sitio, quién escribe, quién revisa y quién lee",
+  "nodes": [
+    { "id": "owner", "name": "Responsable del sitio", "role": "Persona", "focal": true },
+    { "id": "writer", "name": "Agente que escribe", "role": "Agente", "parent": "owner" },
+    { "id": "reviewer", "name": "Quien revisa", "role": "Persona", "parent": "owner" },
+    { "id": "questions", "name": "Rondas de preguntas", "role": "Comando",
+      "parent": "writer", "dotted": ["reviewer"] }
+  ]
+}
+```
+
+| Clave | Qué es |
+| --- | --- |
+| `nodes` | Obligatoria. Los nodos, como los de un árbol, con dos campos más: `role`, su papel, que va en la etiqueta de arriba, y `dotted`, los ids de a quién más reporta, que se dibujan como curvas a trazos. |
+| `direction` | Opcional. Como en un árbol. |
+
+Se avisa lo mismo que en un árbol, y además un `dotted` que nombra un nodo que no existe. Un `role` o un `dotted` en un árbol se avisa: son de un organigrama.
+
+<Diagram id="org-chart-guide-roles" />
+
+## Grafo de dependencias
+
+Para lo que un árbol no sabe contar: una pieza de la que dependen varias y un ciclo. Va en rangos, de las piezas de las que no depende nada, arriba, a las que no dependen de nada, abajo, que se dibujan en gris. La etiqueta de cada caja cuenta cuántas dependen de ella. Un ciclo es la noticia del diagrama: sus flechas van en el color de acento y la que lo cierra, a trazos por el lateral.
+
+```json
+{
+  "type": "dependency",
+  "title": "Qué fichero depende de cuál",
+  "desc": "Páginas, diagramas, entidades y tipos, y el ciclo entre páginas y diagramas",
+  "nodes": [
+    { "id": "page", "entity": "files/page" },
+    { "id": "config", "entity": "files/doc-config" },
+    { "id": "diagram", "entity": "files/diagram-file" },
+    { "id": "entity", "entity": "files/entity" },
+    { "id": "type", "entity": "files/type-declaration" }
+  ],
+  "deps": [
+    { "from": "page", "to": "config", "label": "CAMPOS" },
+    { "from": "page", "to": "diagram", "label": "MUESTRA" },
+    { "from": "page", "to": "entity", "label": "ENLAZA" },
+    { "from": "diagram", "to": "entity", "label": "ENTITY" },
+    { "from": "diagram", "to": "page", "label": "PAGE" },
+    { "from": "entity", "to": "type", "label": "SU TIPO" }
+  ]
+}
+```
+
+| Clave | Qué es |
+| --- | --- |
+| `nodes` | Obligatoria. Los paquetes, módulos, servicios o ficheros, como piezas con `id`. |
+| `deps` | Opcional. Las dependencias: `from` depende de `to`. |
+
+Se avisa un grafo con más de 9 nodos, 14 dependencias, 4 rangos o más de un ciclo. El ciclo entero cuenta como una sola cosa en el color de acento. La versión en texto dice, nodo a nodo, de qué depende cada uno, y luego cada ciclo.
+
+<Diagram id="dependency-content-files" />

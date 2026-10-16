@@ -1,0 +1,9 @@
+name: Carriles
+family: time
+purpose: Un proceso repartido entre actores, un carril cada uno, con los relevos entre ellos
+keys: lanes, steps, links
+variants: process
+budget: 5 carriles, 12 pasos, 16 enlaces
+page: diagrams/time
+fuente: manual
+actualizado: 2026-10-16

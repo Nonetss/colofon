@@ -1,0 +1,23 @@
+{
+  "type": "sequence",
+  "title": "De un push a la versión publicada",
+  "desc": "Qué se dicen quien escribe, el servidor git, la plataforma y el lector desde un push hasta que la nueva versión se publica o se reportan sus problemas",
+  "actors": [
+    { "id": "writer", "name": "Quien escribe" },
+    { "id": "git", "name": "Servidor git" },
+    { "id": "platform", "name": "Plataforma", "page": "publishing", "focal": true },
+    { "id": "reader", "name": "Lector" }
+  ],
+  "messages": [
+    { "from": "writer", "to": "git", "label": "git push" },
+    { "from": "git", "to": "platform", "label": "aviso de push", "kind": "async", "info": "En un repositorio alojado en la plataforma el aviso es inmediato; en uno externo llega con la sincronización periódica" },
+    { "from": "platform", "to": "git", "label": "git fetch" },
+    { "from": "git", "to": "platform", "label": "commits nuevos", "kind": "return" },
+    { "from": "platform", "to": "platform", "label": "valida el contrato" },
+    { "from": "platform", "to": "reader", "label": "publica la versión", "kind": "accent" },
+    { "from": "platform", "to": "writer", "label": "problemas en su página", "info": "Los ven los administradores en cada página afectada y en la portada" }
+  ],
+  "fragments": [
+    { "kind": "alt", "label": "sin errores de contrato", "first": 5, "last": 6, "else": 6 }
+  ]
+}

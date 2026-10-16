@@ -1,0 +1,83 @@
+---
+titulo: Antes y después
+descripcion: Un diagrama de antes y después pone dos fotos del mismo sistema lado a lado, y la plataforma escribe entre ellas la lista de lo que se añade, se quita, cambia, se mueve o se reconecta
+files: [diagram-file]
+diagram_types: [architecture-delta]
+orden: 7
+actualizado: 2026-10-16
+---
+
+Para contar una migración, una pieza que se saca de otra o una integración que cambia, no basta con dibujar el sistema dos veces: el lector tiene que buscar las diferencias. Un diagrama de antes y después las encuentra él: tú dibujas las dos fotos y la plataforma las compara.
+
+## Antes y después
+
+Úsalo cuando la historia es un cambio de topología entre dos estados: qué piezas siguen, cuáles aparecen, cuáles desaparecen y qué conexiones cambian de extremo. Si solo cambian atributos y no la forma del sistema, una tabla lo cuenta mejor; si hay más de dos estados o importa el orden de los pasos, usa una línea de tiempo.
+
+Cada foto es un diagrama dibujado completo, con sus `width`, `height`, `nodes`, `edges`, `zones` y `notes`, escrito igual que en [Dibujados a mano](drawn.mdx). Lo que une las dos fotos es el id: una caja con el mismo id en `before` y en `after` es la misma pieza.
+
+```json
+{
+  "type": "architecture-delta",
+  "title": "De la barra por carpetas a menu.yaml",
+  "desc": "Qué cambia en un sitio cuando añade menu.yaml",
+  "before": {
+    "width": 392,
+    "height": 312,
+    "nodes": [
+      { "id": "pages", "entity": "files/page", "x": 24, "y": 40, "w": 136, "h": 56 },
+      { "id": "folders", "name": "Carpetas", "sub": "una sección cada una",
+        "x": 24, "y": 140, "w": 136, "h": 56 },
+      { "id": "sidebar", "name": "Barra lateral", "kind": "focal",
+        "x": 232, "y": 140, "w": 136, "h": 56 }
+    ],
+    "edges": [
+      { "from": "folders", "to": "sidebar", "kind": "accent",
+        "points": [[160, 168], [232, 168]], "label": "SECCIONES", "at": [196, 158] }
+    ]
+  },
+  "after": {
+    "width": 392,
+    "height": 312,
+    "nodes": [
+      { "id": "folders", "name": "Carpetas", "sub": "guardan las páginas",
+        "x": 24, "y": 140, "w": 136, "h": 56 },
+      { "id": "menu", "entity": "files/menu", "x": 232, "y": 40, "w": 136, "h": 56 }
+    ]
+  },
+  "changes": [
+    { "id": "menu", "note": "Agrupa carpetas y páginas de cualquier sitio, en el orden que diga" }
+  ]
+}
+```
+
+Este es un recorte; el diagrama completo, el que se ve abajo, es `diagramas/architecture-delta-menu.json`.
+
+| Clave | Qué es |
+| --- | --- |
+| `before` | Obligatoria. El sistema antes: un diagrama dibujado (`width`, `height`, `nodes` y, si hacen falta, `edges`, `zones` y `notes`). |
+| `after` | Obligatoria. El sistema después, con el mismo id para cada pieza que sigue. |
+| `changes` | Opcional. Una nota por pieza, `{ "id": …, "note": … }`: por qué cambia. Va en la lista de cambios, tras la entrada de esa pieza. |
+
+La plataforma compara las dos fotos así:
+
+| Cambio | Cuándo | Cómo se ve |
+| --- | --- | --- |
+| AÑADIDO | Una caja o una conexión que solo está en `after`. | Una marca `+` en la caja. |
+| QUITADO | Una caja o una conexión que solo está en `before`. | La caja y la flecha a trazos en «Antes», con una marca `−`. |
+| CAMBIADO | Una caja que sigue pero cambia su nombre, sus líneas, su `kind`, su `tag`, su forma o su color. | Una marca `Δ`, y en la lista lo de antes y lo de ahora. |
+| MOVIDO | Una caja que sigue pero pasa a otra zona. | Una marca `↦`, y en la lista las dos zonas. |
+| RECONECTADO | Una conexión entre piezas que siguen que cambia uno de sus extremos. | La flecha a trazos, y en la lista los extremos de antes. |
+
+Una conexión hacia una pieza nueva o desde una que se quita no es una reconexión: se cuenta como quitada y añadida. Lo que no cambia no entra en la lista, para que se lea solo lo que importa; la versión en texto del diagrama, la que leen los lectores de pantalla y los agentes en `llm.txt`, termina con las piezas que siguen igual.
+
+Una pieza conserva su id en las dos fotos, así que al pasar el ratón por ella se ilumina a la vez en «Antes» y en «Después». Copia las coordenadas de `before` en `after` y mueve solo lo que la historia necesita: si las dos fotos tienen el mismo tamaño y las piezas que siguen están en el mismo sitio, el ojo encuentra el cambio solo.
+
+### Qué se reporta
+
+- Los problemas de cada foto, como en cualquier diagrama dibujado, con su ruta bajo `before` o `after` (`before.nodes.0.entity`). Sin una de las dos fotos no se dibuja nada.
+- Una clave de una foto que no es de un diagrama dibujado.
+- Una nota de `changes` cuyo id no es ninguna caja de las dos fotos.
+- Más de 8 piezas distintas, 10 conexiones o 8 cambios en total: se avisa y se dibuja igual. Pasado eso, cuenta el cambio por partes, un diagrama por subsistema.
+- En cada foto, más de dos elementos en el color de acento.
+
+<Diagram id="architecture-delta-menu" />

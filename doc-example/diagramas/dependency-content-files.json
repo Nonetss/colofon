@@ -1,0 +1,30 @@
+{
+  "type": "dependency",
+  "title": "Qué fichero depende de cuál",
+  "desc": "Una página usa los campos de doc.config.yaml, enlaza entidades y muestra diagramas; un diagrama nombra entidades y enlaza páginas, así que páginas y diagramas forman un ciclo; cada entidad depende de la declaración de su tipo",
+  "nodes": [
+    { "id": "page", "entity": "files/page" },
+    { "id": "config", "entity": "files/doc-config" },
+    { "id": "diagram", "entity": "files/diagram-file" },
+    { "id": "entity", "entity": "files/entity" },
+    { "id": "type", "entity": "files/type-declaration" }
+  ],
+  "deps": [
+    {
+      "from": "page",
+      "to": "config",
+      "label": "CAMPOS",
+      "info": "Los campos de cabecera que declara el sitio"
+    },
+    { "from": "page", "to": "diagram", "label": "MUESTRA" },
+    { "from": "page", "to": "entity", "label": "ENLAZA" },
+    { "from": "diagram", "to": "entity", "label": "ENTITY" },
+    {
+      "from": "diagram",
+      "to": "page",
+      "label": "PAGE",
+      "info": "Una caja con page enlaza a una página, que a su vez muestra el diagrama"
+    },
+    { "from": "entity", "to": "type", "label": "SU TIPO" }
+  ]
+}

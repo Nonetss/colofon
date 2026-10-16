@@ -1,0 +1,16 @@
+{
+  "type": "scatter",
+  "variant": "beeswarm",
+  "title": "Cuánto tarda una sincronización",
+  "desc": "Cada punto es una sincronización de las últimas semanas, en segundos, según cómo llegó: por un push o a mano desde el panel",
+  "unit": "s",
+  "decimals": 1,
+  "x": { "label": "Segundos" },
+  "points": [
+    { "x": 2.1, "group": "Push" }, { "x": 2.4, "group": "Push" }, { "x": 2.2, "group": "Push" },
+    { "x": 2.8, "group": "Push" }, { "x": 2.3, "group": "Push" }, { "x": 3.1, "group": "Push" },
+    { "x": 2.5, "group": "Push" }, { "name": "Primer clon", "x": 9.4, "group": "Push", "focal": true },
+    { "x": 4.2, "group": "A mano" }, { "x": 3.9, "group": "A mano" }, { "x": 4.6, "group": "A mano" },
+    { "x": 5.1, "group": "A mano" }, { "x": 4.4, "group": "A mano" }
+  ]
+}

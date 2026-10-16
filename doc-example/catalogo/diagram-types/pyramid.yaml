@@ -1,0 +1,9 @@
+name: Pirámide
+family: concept
+purpose: Ordenar niveles de lo más amplio a lo más escaso, o un embudo con la caída de cada paso
+keys: levels, unit, decimals
+variants: funnel
+budget: 6 niveles
+page: diagrams/concepts
+fuente: manual
+actualizado: 2026-10-16

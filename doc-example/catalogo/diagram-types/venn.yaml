@@ -1,0 +1,8 @@
+name: Venn
+family: concept
+purpose: Mostrar dónde se cruzan dos o tres ideas y qué hay en cada cruce
+keys: sets, regions
+budget: 3 conjuntos
+page: diagrams/concepts
+fuente: manual
+actualizado: 2026-10-16

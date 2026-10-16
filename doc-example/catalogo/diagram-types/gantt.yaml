@@ -1,0 +1,8 @@
+name: Gantt
+family: time
+purpose: Tareas con inicio y fin agrupadas en fases, con hitos y el día de hoy
+keys: phases, today
+budget: 5 fases, 16 tareas
+page: diagrams/time
+fuente: manual
+actualizado: 2026-10-16

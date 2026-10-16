@@ -1,0 +1,29 @@
+{
+  "title": "Las formas de un diagrama",
+  "desc": "Todo diagrama tiene título y descripción y sabe dibujarse y dar su versión de texto; cada forma añade lo suyo",
+  "width": 720,
+  "height": 300,
+  "nodes": [
+    { "id": "diagram", "name": "Diagrama", "tag": "Abstracta", "kind": "focal",
+      "x": 260, "y": 24, "w": 200,
+      "rows": [{ "key": "+", "name": "title", "type": "texto" }, { "key": "+", "name": "desc", "type": "texto" }],
+      "ops": [{ "key": "+", "name": "dibujar()", "type": "svg" }, { "key": "+", "name": "texto()", "type": "markdown" }] },
+    { "id": "drawn", "name": "Dibujado", "x": 24, "y": 200, "w": 156,
+      "rows": [{ "name": "width, height", "type": "px" }, { "name": "nodes", "type": "lista" }, { "name": "edges", "type": "lista" }] },
+    { "id": "chain", "name": "Cadena", "x": 196, "y": 200, "w": 156,
+      "rows": [{ "name": "items", "type": "lista" }, { "name": "links", "type": "lista" }] },
+    { "id": "typed", "name": "Por tipo", "x": 368, "y": 200, "w": 156,
+      "rows": [{ "name": "type", "type": "texto" }, { "name": "variant", "type": "texto" }] },
+    { "id": "illustration", "name": "Ilustración", "x": 540, "y": 200, "w": 156,
+      "rows": [{ "name": "viewBox", "type": "svg" }],
+      "more": "sin versión de texto" }
+  ],
+  "edges": [
+    { "from": "drawn", "to": "diagram", "head": "triangle", "points": [[102, 200], [102, 168], [360, 168], [360, 132]] },
+    { "from": "chain", "to": "diagram", "head": "triangle", "points": [[274, 200], [274, 168], [360, 168], [360, 132]] },
+    { "from": "typed", "to": "diagram", "head": "triangle", "points": [[446, 200], [446, 168], [360, 168], [360, 132]] },
+    { "from": "illustration", "to": "diagram", "head": "triangle", "points": [[618, 200], [618, 168], [360, 168], [360, 132]] }
+  ],
+  "kindNames": { "focal": "La forma común", "service": "Una forma" },
+  "edgeNames": { "default": "Es un diagrama" }
+}

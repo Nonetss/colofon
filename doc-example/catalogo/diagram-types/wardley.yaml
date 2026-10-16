@@ -1,0 +1,8 @@
+name: Mapa de Wardley
+family: concept
+purpose: Situar las piezas de una cadena de valor por lo visibles y lo maduras que son, y lo que se mueve
+keys: components, links, moves
+budget: 9 componentes, 12 dependencias, 2 movimientos
+page: diagrams/concepts
+fuente: manual
+actualizado: 2026-10-16

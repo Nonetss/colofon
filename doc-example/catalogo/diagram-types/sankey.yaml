@@ -1,0 +1,8 @@
+name: Sankey
+family: chart
+purpose: Cómo una cantidad se reparte y se junta de una columna a la siguiente, con el grosor de cada banda como su valor
+keys: columns, flows, unit, decimals
+budget: 3 columnas, 8 nodos, 12 flujos
+page: diagrams/proportions
+fuente: manual
+actualizado: 2026-10-16

@@ -1,0 +1,45 @@
+{
+  "type": "org-chart",
+  "title": "Quién cuida la guía",
+  "desc": "Quien responde del sitio, el agente que escribe con la skill documentation y sus rondas de preguntas, quien revisa los cambios y el agente que lee la guía publicada",
+  "nodes": [
+    {
+      "id": "owner",
+      "name": "Responsable del sitio",
+      "role": "Persona",
+      "sub": "decide qué se documenta",
+      "focal": true
+    },
+    {
+      "id": "writer",
+      "name": "Agente que escribe",
+      "role": "Agente",
+      "sub": "skill documentation",
+      "parent": "owner"
+    },
+    {
+      "id": "reviewer",
+      "name": "Quien revisa",
+      "role": "Persona",
+      "sub": "lee cada cambio",
+      "parent": "owner"
+    },
+    {
+      "id": "reader",
+      "name": "Agente que lee",
+      "role": "Agente",
+      "sub": "llm.txt y skills",
+      "parent": "owner",
+      "page": "publishing/agents"
+    },
+    {
+      "id": "questions",
+      "name": "Rondas de preguntas",
+      "role": "Comando",
+      "sub": "/questions",
+      "parent": "writer",
+      "dotted": ["reviewer"],
+      "info": "Las respuestas que cierran una sección también las revisa una persona"
+    }
+  ]
+}

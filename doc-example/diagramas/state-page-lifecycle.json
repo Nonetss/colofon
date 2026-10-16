@@ -1,0 +1,63 @@
+{
+  "type": "state",
+  "title": "La vida de una página",
+  "desc": "Una página se publica con el push que la trae; un push con errores la deja con avisos, pero se sigue leyendo lo que vale, y vuelve a estar limpia cuando se corrige; borrar el fichero la retira",
+  "states": [
+    {
+      "id": "draft",
+      "name": "Sin publicar",
+      "sub": "solo en tu copia",
+      "initial": true
+    },
+    {
+      "id": "published",
+      "name": "Publicada",
+      "sub": "en el lector",
+      "focal": true,
+      "page": "publishing"
+    },
+    {
+      "id": "warned",
+      "name": "Con avisos",
+      "sub": "se lee lo que vale",
+      "info": "Los problemas se avisan en la portada del repositorio y en la propia página",
+      "row": 2,
+      "col": 0
+    },
+    {
+      "id": "removed",
+      "name": "Retirada",
+      "final": true,
+      "row": 1,
+      "col": 1
+    }
+  ],
+  "transitions": [
+    {
+      "from": "draft",
+      "to": "published",
+      "label": "PUSH"
+    },
+    {
+      "from": "published",
+      "to": "published",
+      "label": "PUSH"
+    },
+    {
+      "from": "published",
+      "to": "warned",
+      "label": "PUSH CON ERRORES"
+    },
+    {
+      "from": "warned",
+      "to": "published",
+      "label": "CORRIGES"
+    },
+    {
+      "from": "published",
+      "to": "removed",
+      "label": "BORRAS",
+      "info": "Borras su fichero .mdx y haces push"
+    }
+  ]
+}

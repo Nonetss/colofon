@@ -1,0 +1,16 @@
+{
+  "type": "venn",
+  "title": "Una buena página de la guía",
+  "desc": "Lo que tiene que ser a la vez una página de esta guía: útil para quien la lee, fiel a lo que hace la plataforma y fácil de mantener",
+  "sets": [
+    { "id": "useful", "name": "Útil", "sub": "responde a su pregunta" },
+    { "id": "faithful", "name": "Fiel", "sub": "dice lo que hace la plataforma" },
+    { "id": "maintainable", "name": "Mantenible", "sub": "fácil de cambiar" }
+  ],
+  "regions": [
+    { "sets": ["useful", "faithful"], "label": "Referencia" },
+    { "sets": ["faithful", "maintainable"], "label": "Catálogo" },
+    { "sets": ["useful", "maintainable"], "label": "Ejemplos" },
+    { "sets": ["useful", "faithful", "maintainable"], "label": "Guía viva", "focal": true }
+  ]
+}

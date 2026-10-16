@@ -1,0 +1,13 @@
+{
+  "type": "line",
+  "variant": "slope",
+  "title": "Páginas por sección, de una versión a otra",
+  "desc": "Cuántas páginas tenía cada sección en la primera versión de la guía y cuántas tiene ahora",
+  "x": ["Primera versión", "Ahora"],
+  "series": [
+    { "name": "Repositorio", "values": [2, 3] },
+    { "name": "Páginas", "values": [3, 4] },
+    { "name": "Catálogo", "values": [2, 4] },
+    { "name": "Diagramas", "values": [1, 5], "focal": true }
+  ]
+}

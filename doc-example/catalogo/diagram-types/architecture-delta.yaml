@@ -1,0 +1,8 @@
+name: Antes y después
+family: comparison
+purpose: Dos fotos del mismo sistema y la lista de lo que cambia entre ellas
+keys: before, after, changes
+budget: 8 piezas, 10 conexiones, 8 cambios
+page: diagrams/comparison
+fuente: manual
+actualizado: 2026-10-16

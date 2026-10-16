@@ -1,0 +1,9 @@
+name: Barras
+family: chart
+purpose: Comparar un valor por categoría, o dos series lado a lado
+keys: categories, series, orientation, focal, unit, decimals
+variants: dumbbell
+budget: 12 categorías, 2 series
+page: diagrams/charts
+fuente: manual
+actualizado: 2026-10-16

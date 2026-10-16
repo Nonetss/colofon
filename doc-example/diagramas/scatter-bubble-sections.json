@@ -1,0 +1,15 @@
+{
+  "type": "scatter",
+  "variant": "bubble",
+  "title": "Secciones: tamaño, enlaces y lecturas",
+  "desc": "Cada burbuja es una sección: sus páginas, los enlaces que le llegan de otras páginas y, en su área, sus lecturas",
+  "x": { "label": "Páginas" },
+  "y": { "label": "Enlaces que llegan" },
+  "points": [
+    { "name": "Repositorio", "x": 3, "y": 12, "size": 300 },
+    { "name": "Páginas", "x": 4, "y": 18, "size": 650, "focal": true },
+    { "name": "Catálogo", "x": 4, "y": 9, "size": 260 },
+    { "name": "Diagramas", "x": 5, "y": 6, "size": 410 },
+    { "name": "Publicar", "x": 3, "y": 4, "size": 120 }
+  ]
+}

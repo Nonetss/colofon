@@ -1,0 +1,15 @@
+{
+  "type": "timeline",
+  "title": "La vida de una página",
+  "desc": "Una página de esta guía desde su primer borrador hasta su última revisión contra la plataforma",
+  "events": [
+    { "name": "Primer borrador", "date": "2026-09-01", "entity": "files/page" },
+    { "name": "Ronda de preguntas", "date": "2026-09-08", "info": "Con /questions se apunta lo que aún no se sabe en open_questions" },
+    { "name": "Revisión", "date": "2026-09-22" },
+    { "name": "Publicada", "date": "2026-10-01", "focal": true },
+    { "name": "Revisada", "sub": "contra la plataforma", "date": "2026-10-16", "entity": "header-fields/actualizado" }
+  ],
+  "spans": [
+    { "name": "Preguntas abiertas", "start": "2026-09-08", "end": "2026-09-30", "hue": "violet" }
+  ]
+}

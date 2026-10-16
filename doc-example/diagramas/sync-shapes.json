@@ -1,0 +1,27 @@
+{
+  "title": "Una sincronización, en formas",
+  "desc": "Un push entra, la plataforma sincroniza cada cinco minutos, valida y publica; si algo no es válido vuelve a sincronizar con la versión arreglada",
+  "width": 640,
+  "height": 206,
+  "nodes": [
+    { "id": "push", "name": "Push", "kind": "input", "shape": "circle",
+      "x": 24, "y": 60, "w": 64, "h": 64, "info": "Un git push al repositorio de contenido" },
+    { "id": "sync", "name": "Sincronizando", "shape": "rounded",
+      "x": 128, "y": 64, "w": 140, "h": 56, "page": "publishing" },
+    { "id": "check", "name": "¿Válido?", "shape": "diamond",
+      "x": 308, "y": 48, "w": 160, "h": 88, "info": "Las declaraciones, las páginas, el catálogo y los diagramas" },
+    { "id": "publish", "name": "Publicado", "kind": "focal", "shape": "rounded",
+      "x": 508, "y": 64, "w": 116, "h": 56 }
+  ],
+  "edges": [
+    { "from": "push", "to": "sync", "points": [[88, 92], [128, 92]] },
+    { "from": "sync", "to": "sync", "label": "CADA 5 MIN", "kind": "dash" },
+    { "from": "sync", "to": "check", "points": [[268, 92], [308, 92]] },
+    { "from": "check", "to": "publish", "kind": "accent",
+      "points": [[468, 92], [508, 92]], "label": "SÍ", "at": [488, 84] },
+    { "from": "check", "to": "sync", "route": "curve", "kind": "dash",
+      "points": [[388, 136], [300, 182], [198, 120]],
+      "label": "NO: SE ARREGLA", "at": [300, 194],
+      "info": "Lo roto se reporta; la versión válida anterior sigue publicada" }
+  ]
+}

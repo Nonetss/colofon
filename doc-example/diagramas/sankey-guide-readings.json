@@ -1,0 +1,32 @@
+{
+  "type": "sankey",
+  "title": "Por dónde llegan las lecturas",
+  "desc": "Las lecturas de un mes, repartidas por cómo se leyeron y luego por la sección leída; los agentes leen sobre todo la escritura",
+  "unit": "lecturas",
+  "columns": [
+    [{ "id": "readings", "name": "Lecturas" }],
+    [
+      { "id": "web", "name": "Lector web", "page": "catalog/reader" },
+      { "id": "llm", "name": "llm.txt", "page": "publishing/agents", "info": "Los agentes leen cada página en Markdown" },
+      { "id": "editor", "name": "Editor", "page": "publishing/editor" }
+    ],
+    [
+      { "id": "writing", "name": "Escritura", "page": "pages" },
+      { "id": "data", "name": "Datos", "page": "catalog" },
+      { "id": "publishing", "name": "Publicación", "page": "publishing" }
+    ]
+  ],
+  "flows": [
+    { "from": "readings", "to": "web", "value": 1120 },
+    { "from": "readings", "to": "llm", "value": 560, "focal": true },
+    { "from": "readings", "to": "editor", "value": 260 },
+    { "from": "web", "to": "writing", "value": 610 },
+    { "from": "web", "to": "data", "value": 330 },
+    { "from": "web", "to": "publishing", "value": 180 },
+    { "from": "llm", "to": "writing", "value": 260, "focal": true },
+    { "from": "llm", "to": "data", "value": 150 },
+    { "from": "llm", "to": "publishing", "value": 150 },
+    { "from": "editor", "to": "writing", "value": 140 },
+    { "from": "editor", "to": "data", "value": 120 }
+  ]
+}

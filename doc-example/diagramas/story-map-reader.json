@@ -1,0 +1,21 @@
+{
+  "type": "story-map",
+  "title": "Lo que necesita quien lee",
+  "desc": "Qué hace quien lee esta documentación, de encontrar una página a volver a ella, y qué sale en la primera entrega",
+  "activities": [
+    { "id": "find", "name": "Encontrar" },
+    { "id": "read", "name": "Leer" },
+    { "id": "reuse", "name": "Reutilizar" }
+  ],
+  "releases": ["Primera entrega", "Después"],
+  "cut": "Primera entrega",
+  "stories": [
+    { "name": "La barra lateral", "activity": "find", "release": "Primera entrega", "entity": "files/menu" },
+    { "name": "Buscar", "activity": "find", "release": "Después" },
+    { "name": "La página", "activity": "read", "release": "Primera entrega", "entity": "files/page" },
+    { "name": "Los diagramas", "activity": "read", "release": "Primera entrega", "entity": "components/diagram" },
+    { "name": "Tablas del catálogo", "activity": "read", "release": "Después", "entity": "components/entities" },
+    { "name": "llm.txt para agentes", "activity": "reuse", "release": "Primera entrega", "page": "publishing/agents", "focal": true },
+    { "name": "Copiar un ejemplo", "activity": "reuse", "release": "Después" }
+  ]
+}

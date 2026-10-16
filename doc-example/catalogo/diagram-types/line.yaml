@@ -1,0 +1,9 @@
+name: Líneas
+family: chart
+purpose: La evolución de una o varias series a lo largo de puntos ordenados o fechas
+keys: x, series, unit, decimals
+variants: slope, ridgeline, stream, bump
+budget: 24 puntos por serie, 4 series (8 con ridgeline y bump)
+page: diagrams/charts
+fuente: manual
+actualizado: 2026-10-16

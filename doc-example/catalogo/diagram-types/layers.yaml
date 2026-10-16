@@ -1,0 +1,8 @@
+name: Pila de capas
+family: concept
+purpose: Apilar capas en las que cada una usa la de debajo, con las piezas de cada una
+keys: layers
+budget: 7 capas, 6 piezas por capa
+page: diagrams/concepts
+fuente: manual
+actualizado: 2026-10-16

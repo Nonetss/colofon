@@ -23,6 +23,11 @@ cabecera:
     de: { tipo: ref, a: components }
     opcional: true
     descripcion: Componentes de página que explica la página
+  diagram_types:
+    tipo: lista
+    de: { tipo: ref, a: diagram-types }
+    opcional: true
+    descripcion: Tipos de diagrama que explica la página
   open_questions:
     tipo: lista
     de: { tipo: texto }

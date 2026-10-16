@@ -1,0 +1,8 @@
+name: Ciclo
+family: concept
+purpose: Un ciclo de pasos que vuelve al primero, con un centro que acumula lo que deja cada vuelta
+keys: steps, hub, writes
+budget: 8 pasos
+page: diagrams/concepts
+fuente: manual
+actualizado: 2026-10-16

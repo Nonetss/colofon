@@ -1,0 +1,27 @@
+{
+  "type": "treemap",
+  "variant": "marimekko",
+  "title": "Quién lee cada sección",
+  "desc": "Las lecturas de un mes por sección de la guía y por cómo se leyeron: el ancho de cada columna es el peso de la sección y cada columna se reparte entre el lector, llm.txt y el editor",
+  "unit": "lecturas",
+  "columns": [
+    { "name": "Inicio", "parts": [
+      { "name": "Lector web", "value": 420 },
+      { "name": "llm.txt", "value": 90 }
+    ] },
+    { "name": "Escritura", "parts": [
+      { "name": "Lector web", "value": 610 },
+      { "name": "llm.txt", "value": 260 },
+      { "name": "Editor", "value": 140 }
+    ] },
+    { "name": "Datos", "parts": [
+      { "name": "Lector web", "value": 330 },
+      { "name": "llm.txt", "value": 210 },
+      { "name": "Editor", "value": 120 }
+    ] },
+    { "name": "Publicación", "parts": [
+      { "name": "Lector web", "value": 180 },
+      { "name": "llm.txt", "value": 150 }
+    ] }
+  ]
+}

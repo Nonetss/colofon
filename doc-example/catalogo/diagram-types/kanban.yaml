@@ -1,0 +1,8 @@
+name: Kanban
+family: time
+purpose: El trabajo en curso por estado, con sus límites y lo bloqueado, sin flechas
+keys: columns
+budget: 5 columnas, 4 tarjetas por columna, 12 tarjetas
+page: diagrams/time
+fuente: manual
+actualizado: 2026-10-16

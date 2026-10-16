@@ -1,0 +1,13 @@
+{
+  "type": "pyramid",
+  "variant": "funnel",
+  "title": "De la visita a la primera página",
+  "desc": "Un ejemplo de embudo: de cuántos visitan la guía a cuántos publican su primera página, con la caída de cada paso",
+  "unit": "personas",
+  "levels": [
+    { "name": "Visitan la guía", "value": 1200 },
+    { "name": "Leen Primeros pasos", "value": 640, "page": "getting-started" },
+    { "name": "Crean su repositorio", "value": 180, "focal": true, "info": "La caída más grande: el paso que más merece una página mejor" },
+    { "name": "Publican una página", "value": 120 }
+  ]
+}
