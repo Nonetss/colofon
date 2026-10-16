@@ -13,6 +13,10 @@ A `search` is a sibling of the entity's `list`, not a mode of it. `list` builds 
 
 A one-table match can stay in the relational API, as `organization.search` does (`where: { OR: [{ name: { ilike: pattern } }, { slug: { ilike: pattern } }] }`). An `OR` over columns of the same table is fine: PostgreSQL combines that table's indexes with a BitmapOr.
 
+## Content that isn't in the database
+
+The documentation pages live in the content repositories' clones, not in PostgreSQL, so `v1.docs.search` doesn't follow the rules above. It searches in memory with MiniSearch (`createSiteSearch` and `searchSite` in `packages/content/src/pages/search.ts`): one index per repository, built from the parsed `Site` on the first search and cached in a `WeakMap` keyed by that `Site` inside the docs handler, so a sync (which replaces the `Site`) rebuilds it and nothing has to be invalidated by hand. Fields are weighted (title, then headings, then description, header fields and trail, then body), every word must match, by prefix or with one typo from five letters, and a match in a heading or the body brings an excerpt and the section's anchor. It keeps the `{ query, limit }` input of `#shared/search` and adds `terms` (the typed words, folded) to each result, so the navbar dialog's local filter keeps what the server matched in the body or with a typo. Don't copy pages into a table to search them with `ilike` or `tsvector`: that needs a migration and a sync pipeline for data the clone already holds.
+
 ## Matching across several tables
 
 When the text has to match columns on more than one table (a record's name plus its related address), never write the `OR` across a join. The planner can't use an index for an `OR` whose sides belong to different tables, so the query scans everything. Instead:
