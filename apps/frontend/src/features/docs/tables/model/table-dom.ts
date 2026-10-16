@@ -1,17 +1,17 @@
 import type { SortingState } from "@tanstack/react-table"
-import { cellMarkdown } from "@/features/docs/page/model/table-export"
-import type { QueryTerm } from "@/features/docs/page/model/table-query"
+import { cellMarkdown } from "@/features/docs/tables/model/table-export"
+import type { QueryTerm } from "@/features/docs/tables/model/table-query"
 import {
   bindColumnResize,
   MIN_COLUMN_WIDTH,
   syncColumnWidths,
-} from "@/features/docs/page/model/table-resize"
-import { tableId } from "@/features/docs/page/model/table-url"
+} from "@/features/docs/tables/model/table-resize"
+import { tableId } from "@/features/docs/tables/model/table-url"
 import {
   type TableModel,
   type TableRow,
   tableModel,
-} from "@/features/docs/page/model/table-view"
+} from "@/features/docs/tables/model/table-view"
 import { foldText } from "@/lib/fold-text"
 
 // The server's table, made ready for the island and kept in step with its

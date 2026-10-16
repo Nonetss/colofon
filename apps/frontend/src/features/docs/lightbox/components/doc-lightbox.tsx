@@ -16,7 +16,7 @@ import {
   type ZoomView,
   zoomAt,
   zoomLabel,
-} from "@/features/docs/page/model/zoom"
+} from "@/features/docs/lightbox/model/zoom"
 import { getIcon } from "@/lib/icon-registry"
 
 const CloseIcon = getIcon("controls", "close")

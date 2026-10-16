@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { PAGE_SIZES } from "@/features/docs/page/model/table-view"
+import { PAGE_SIZES } from "@/features/docs/tables/model/table-view"
 
 function PageButton({
   label,

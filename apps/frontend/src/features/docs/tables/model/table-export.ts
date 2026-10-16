@@ -1,4 +1,4 @@
-import { slugOf } from "@/features/docs/page/model/table-view"
+import { slugOf } from "@/features/docs/tables/model/table-view"
 
 // A table's view taken out of the page: as CSV for Excel, or as a GitHub
 // table in Markdown with its links as full addresses. Both hold the visible

@@ -3,7 +3,7 @@ import {
   graphOf,
   setupDiagramHighlights,
   showFor,
-} from "@/features/docs/page/model/diagram-highlights"
+} from "@/features/docs/diagrams/model/diagram-highlights"
 
 // A drawing as `diagram-svg.ts` writes it: two boxes, the arrow between them
 // (line, head, hit band, label) and a zone around the first box.

@@ -7,7 +7,7 @@ import {
   type GraphBox,
   type GraphEdge,
   zoneHighlight,
-} from "@/features/docs/page/model/diagram-graph"
+} from "@/features/docs/diagrams/model/diagram-graph"
 
 function box(id: string, extra: Partial<GraphBox> = {}): GraphBox {
   const name = id.charAt(0).toUpperCase() + id.slice(1)

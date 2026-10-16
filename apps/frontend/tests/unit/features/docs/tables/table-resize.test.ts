@@ -1,10 +1,10 @@
 import { afterEach, describe, expect, test } from "bun:test"
-import { prepareTables } from "@/features/docs/page/model/table-dom"
+import { prepareTables } from "@/features/docs/tables/model/table-dom"
 import {
   applyColumnWidths,
   columnLayout,
   widthsAfterResize,
-} from "@/features/docs/page/model/table-resize"
+} from "@/features/docs/tables/model/table-resize"
 
 function frame(rows: string[][]): string {
   const body = rows

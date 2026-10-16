@@ -3,11 +3,11 @@ import {
   type DocTableState,
   hiddenColumns,
   keptValues,
-} from "@/features/docs/page/model/doc-table"
+} from "@/features/docs/tables/model/doc-table"
 import {
   PAGE_SIZES,
   type TableModel,
-} from "@/features/docs/page/model/table-view"
+} from "@/features/docs/tables/model/table-view"
 
 // A table's view in the page's address, to send it by link:
 // `?tabla=<id>&orden=ip.desc,name&f.kind=vm|physical&q=text&ocultas=notes

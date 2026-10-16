@@ -4,7 +4,7 @@ import {
   detectKind,
   isEmptyCell,
   sortKey,
-} from "@/features/docs/page/model/table-kinds"
+} from "@/features/docs/tables/model/table-kinds"
 
 function sorted(kind: Parameters<typeof sortKey>[0], texts: string[]) {
   return [...texts].sort((a, b) =>

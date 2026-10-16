@@ -20,8 +20,8 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
-import type { TableChip } from "@/features/docs/page/model/doc-table"
-import type { TableColumn } from "@/features/docs/page/model/table-view"
+import type { TableChip } from "@/features/docs/tables/model/doc-table"
+import type { TableColumn } from "@/features/docs/tables/model/table-view"
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard"
 
 function chipKey(chip: TableChip): string {

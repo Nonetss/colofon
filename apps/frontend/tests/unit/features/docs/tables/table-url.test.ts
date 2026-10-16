@@ -2,13 +2,13 @@ import { describe, expect, test } from "bun:test"
 import {
   type DocTableState,
   initialState,
-} from "@/features/docs/page/model/doc-table"
+} from "@/features/docs/tables/model/doc-table"
 import {
   stateFromSearch,
   tableId,
   viewHref,
-} from "@/features/docs/page/model/table-url"
-import { tableModel } from "@/features/docs/page/model/table-view"
+} from "@/features/docs/tables/model/table-url"
+import { tableModel } from "@/features/docs/tables/model/table-view"
 
 const model = tableModel(
   ["Name", "Kind", "IP", "Notes"],

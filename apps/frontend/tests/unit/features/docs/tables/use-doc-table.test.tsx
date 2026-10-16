@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, test } from "bun:test"
 import { act, cleanup, renderHook } from "@testing-library/react"
-import { useDocTable } from "@/features/docs/page/hooks/use-doc-table"
+import { useDocTable } from "@/features/docs/tables/hooks/use-doc-table"
 import {
   type DocTableState,
   facetOptions,
@@ -9,11 +9,11 @@ import {
   keptValues,
   tableChips,
   withoutFilters,
-} from "@/features/docs/page/model/doc-table"
+} from "@/features/docs/tables/model/doc-table"
 import {
   type TableModel,
   tableModel,
-} from "@/features/docs/page/model/table-view"
+} from "@/features/docs/tables/model/table-view"
 
 afterEach(() => {
   cleanup()

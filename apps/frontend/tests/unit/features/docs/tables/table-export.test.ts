@@ -4,7 +4,7 @@ import {
   exportName,
   toCsv,
   toMarkdownTable,
-} from "@/features/docs/page/model/table-export"
+} from "@/features/docs/tables/model/table-export"
 
 function cell(html: string): HTMLTableCellElement {
   const td = document.createElement("td")

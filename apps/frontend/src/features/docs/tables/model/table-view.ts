@@ -4,7 +4,7 @@ import {
   isEmptyCell,
   type SortKey,
   sortKey,
-} from "@/features/docs/page/model/table-kinds"
+} from "@/features/docs/tables/model/table-kinds"
 import { foldText } from "@/lib/fold-text"
 
 // A table of a documentation page as read from the server's HTML: its

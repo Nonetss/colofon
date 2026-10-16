@@ -1784,7 +1784,7 @@ html.theme-transitioning::view-transition-new(root) {
   }
 }
 
-/* The documentation's image viewer (`features/docs/page/components/
+/* The documentation's image viewer (`features/docs/lightbox/components/
    doc-lightbox.tsx`): the whole screen over a dimmed page. */
 .doc-lightbox {
   width: 100vw;
@@ -1930,7 +1930,7 @@ html.theme-transitioning::view-transition-new(root) {
   }
 }
 
-/* Interactive tables of a documentation page (`features/docs/page/
+/* Interactive tables of a documentation page (`features/docs/tables/
    components/doc-tables.tsx` over `model/table-dom.ts`): sortable headers
    and, on the long ones, a toolbar, a filter per column, highlights and
    pages. The controls are the design system's; this styles the server's

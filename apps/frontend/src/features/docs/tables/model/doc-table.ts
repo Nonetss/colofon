@@ -18,19 +18,19 @@ import {
   type SortingState,
   tableFeatures,
 } from "@tanstack/react-table"
-import { compareKeys } from "@/features/docs/page/model/table-kinds"
+import { compareKeys } from "@/features/docs/tables/model/table-kinds"
 import {
   type QueryTerm,
   rowMatches,
   tableTerms,
-} from "@/features/docs/page/model/table-query"
+} from "@/features/docs/tables/model/table-query"
 import {
   facetLabel,
   facetValue,
   PAGE_SIZE,
   type TableModel,
   type TableRow,
-} from "@/features/docs/page/model/table-view"
+} from "@/features/docs/tables/model/table-view"
 
 // The TanStack Table (table-core v9, through its React adapter) behind every
 // table of a documentation page: sorting by one or several columns with the

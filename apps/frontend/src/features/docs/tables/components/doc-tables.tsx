@@ -12,9 +12,9 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import {
   DocTableEmpty,
   DocTablePager,
-} from "@/features/docs/page/components/doc-table-foot"
-import { DocTableToolbar } from "@/features/docs/page/components/doc-table-toolbar"
-import { useDocTable } from "@/features/docs/page/hooks/use-doc-table"
+} from "@/features/docs/tables/components/doc-table-foot"
+import { DocTableToolbar } from "@/features/docs/tables/components/doc-table-toolbar"
+import { useDocTable } from "@/features/docs/tables/hooks/use-doc-table"
 import {
   type DocTableState,
   facetOptions,
@@ -26,25 +26,28 @@ import {
   tableChips,
   termsCache,
   withoutFilters,
-} from "@/features/docs/page/model/doc-table"
+} from "@/features/docs/tables/model/doc-table"
 import {
   applyView,
   type DomTable,
   prepareTables,
   viewCells,
-} from "@/features/docs/page/model/table-dom"
+} from "@/features/docs/tables/model/table-dom"
 import {
   download,
   exportName,
   toCsv,
   toMarkdownTable,
-} from "@/features/docs/page/model/table-export"
-import { stateFromSearch, viewHref } from "@/features/docs/page/model/table-url"
+} from "@/features/docs/tables/model/table-export"
+import {
+  stateFromSearch,
+  viewHref,
+} from "@/features/docs/tables/model/table-url"
 import {
   PAGE_SIZE,
   pageLabel,
   rowsLabel,
-} from "@/features/docs/page/model/table-view"
+} from "@/features/docs/tables/model/table-view"
 
 // The tables of a documentation page, made interactive over the server's
 // HTML. Each one is a TanStack table (`useDocTable`) whose rows are the

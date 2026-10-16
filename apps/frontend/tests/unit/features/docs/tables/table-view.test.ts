@@ -4,7 +4,7 @@ import {
   pageLabel,
   rowsLabel,
   tableModel,
-} from "@/features/docs/page/model/table-view"
+} from "@/features/docs/tables/model/table-view"
 
 const headers = ["Name", "Kind", "IP", "Notes"]
 const cells = Array.from({ length: 8 }, (_, n) => [

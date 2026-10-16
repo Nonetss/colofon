@@ -4,8 +4,8 @@ import {
   markIn,
   prepareTables,
   unmark,
-} from "@/features/docs/page/model/table-dom"
-import { tableTerms } from "@/features/docs/page/model/table-query"
+} from "@/features/docs/tables/model/table-dom"
+import { tableTerms } from "@/features/docs/tables/model/table-query"
 
 function frame(rows: string[][], kv = false): string {
   const body = rows

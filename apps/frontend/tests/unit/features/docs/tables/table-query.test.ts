@@ -1,5 +1,8 @@
 import { describe, expect, test } from "bun:test"
-import { rowMatches, tableTerms } from "@/features/docs/page/model/table-query"
+import {
+  rowMatches,
+  tableTerms,
+} from "@/features/docs/tables/model/table-query"
 
 const headers = ["Nombre", "Estado", "Estación", "IP"]
 

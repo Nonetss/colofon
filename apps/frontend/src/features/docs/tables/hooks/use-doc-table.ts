@@ -7,8 +7,8 @@ import {
   docTableGlobalFilter,
   hiddenColumns,
   termsCache,
-} from "@/features/docs/page/model/doc-table"
-import type { TableModel } from "@/features/docs/page/model/table-view"
+} from "@/features/docs/tables/model/doc-table"
+import type { TableModel } from "@/features/docs/tables/model/table-view"
 
 /** Whether a header press asks to add the column to the sort (Shift). */
 function isShiftPress(event: unknown): boolean {

@@ -4,7 +4,7 @@ import {
   MAX_SCALE,
   zoomAt,
   zoomLabel,
-} from "@/features/docs/page/model/zoom"
+} from "@/features/docs/lightbox/model/zoom"
 
 describe("zoomAt", () => {
   test("the point under the pointer stays still", () => {

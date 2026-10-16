@@ -15,7 +15,7 @@ import {
   type GraphEdge,
   type Highlight,
   zoneHighlight,
-} from "@/features/docs/page/model/diagram-graph"
+} from "@/features/docs/diagrams/model/diagram-graph"
 
 const SVG = "svg.doc-diagram-svg"
 const ARROW = ".doc-diagram-hit, .doc-diagram-badge"
