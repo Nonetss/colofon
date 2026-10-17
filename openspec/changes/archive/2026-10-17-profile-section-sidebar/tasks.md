@@ -17,7 +17,7 @@
 ## 4. Profile pages
 
 - [x] 4.1 Split `features/profile/overview` into the `account`, `api-keys`, `secrets` and `agent-skills` slices, each with its `*-page.tsx` (`QueryProvider` + `PageShell`) and `*-content.tsx`; sub-pages head with `PageHero surface="profile-…"` instead of their `<h2>` label; `features/profile/index.ts` exports the four pages; verify `check-types`, Biome and that no file imports another slice's internals
-- [ ] 4.2 Point `pages/me/index.astro` at `WithSidebar` with the account page and add `pages/me/api-keys.astro`, `pages/me/secrets.astro` and `pages/me/skills.astro`; verify `check-types` and ask the user for a screenshot of `/me` and `/me/secrets` on desktop and phone
+- [x] 4.2 Point `pages/me/index.astro` at `WithSidebar` with the account page and add `pages/me/api-keys.astro`, `pages/me/secrets.astro` and `pages/me/skills.astro`; verify `check-types` and ask the user for a screenshot of `/me` and `/me/secrets` on desktop and phone
 
 ## 5. Addresses in texts
 

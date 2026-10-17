@@ -60,12 +60,12 @@ When a stored value can't be decrypted (the key changed or the data is corrupt),
 
 ### Requirement: Secrets need the encryption key
 
-The secrets feature SHALL be on only when `SECRETS_ENCRYPTION_KEY` is set, and `v1.secret.list` SHALL say whether it is (`enabled`). When it is unset, `v1.secret.list` SHALL answer `enabled: false` with no secrets, every other `v1.secret` procedure SHALL fail with a service-unavailable error saying in Spanish that the secrets are not configured on this server, the Secrets section of `/me` SHALL say so instead of the list, and the MCP SHALL NOT list the `secrets` and `request` tools. The rest of the platform SHALL work as before.
+The secrets feature SHALL be on only when `SECRETS_ENCRYPTION_KEY` is set, and `v1.secret.list` SHALL say whether it is (`enabled`). When it is unset, `v1.secret.list` SHALL answer `enabled: false` with no secrets, every other `v1.secret` procedure SHALL fail with a service-unavailable error saying in Spanish that the secrets are not configured on this server, the secrets page (`/me/secrets`) SHALL say so instead of the list, and the MCP SHALL NOT list the `secrets` and `request` tools. The rest of the platform SHALL work as before.
 
 #### Scenario: Key unset
 
-- **WHEN** the backend runs without `SECRETS_ENCRYPTION_KEY` and a signed-in user opens `/me`
-- **THEN** the Secrets section SHALL say that secrets are not configured on this server, and SHALL offer no way to create one
+- **WHEN** the backend runs without `SECRETS_ENCRYPTION_KEY` and a signed-in user opens `/me/secrets`
+- **THEN** the page SHALL say that secrets are not configured on this server, and SHALL offer no way to create one
 
 #### Scenario: Writing with the key unset
 
@@ -123,7 +123,7 @@ Every MCP `request` that passes its checks and is sent SHALL be recorded with th
 
 ### Requirement: Secrets section on the profile page
 
-The profile page (`/me`) SHALL have a Secrets section listing the signed-in user's secrets with their name, description, field names, origins, flags and last use, and a mark on the unreadable ones. It SHALL offer to:
+The secrets page of the profile section (`/me/secrets`) SHALL list the signed-in user's secrets with their name, description, field names, origins, flags and last use, and a mark on the unreadable ones. It SHALL offer to:
 
 - create a secret, with its name, description, origins (one per line), the three flags and its fields, each with a name and a password-type value input;
 - edit one, showing each stored field's name with an empty value input that keeps the stored value when left empty, and letting the user add and remove fields;

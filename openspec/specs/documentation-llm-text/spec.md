@@ -39,7 +39,7 @@ The web SHALL serve `/<slug>/llm.txt` for a repository's home and `/<slug>/<page
 The web SHALL serve `/llms.txt`, an index following llmstxt.org, as `text/plain; charset=utf-8`. It SHALL start with a level 1 heading with the documentation's name, a quote with a one-line summary, and then the agent guide, in Spanish, for an agent that has only been given the site's address. The guide SHALL say:
 
 - that every page has its Markdown at `<page>/llm.txt`, and that the pages, `/<slug>/llms.txt`, the MCP and the projects' skills need a session or an API key in the `x-api-key` header;
-- that the user creates the key at the full address of `/me`;
+- that the user creates the key at the full address of the API keys page, `/me/api-keys`;
 - how to connect the MCP, with the full address of `/mcp`, a `claude mcp add` command with a placeholder for the key, and the names of its tools;
 - a setup procedure, under a level 2 heading of its own, that an AI follows to configure itself with no further step by the user:
   1. read the skills index at its full address (`agent-skills`), sending the key when the user gave one;
@@ -77,7 +77,7 @@ With a credential, the guide SHALL be followed by one level 2 section per availa
 #### Scenario: Agent without a key
 
 - **WHEN** a request without session or API key asks for `/llms.txt` and the public origin is `https://docs.example.org`
-- **THEN** the response SHALL be status 200 with the guide, holding `https://docs.example.org/me`, `https://docs.example.org/mcp`, `https://docs.example.org/.well-known/agent-skills/index.json`, the setup procedure, a link to `https://docs.example.org/.well-known/agent-skills/colofon/SKILL.md` and a link to `https://docs.example.org/.well-known/agent-skills/colofon-diagrams.tar.gz`, and no repository section
+- **THEN** the response SHALL be status 200 with the guide, holding `https://docs.example.org/me/api-keys`, `https://docs.example.org/mcp`, `https://docs.example.org/.well-known/agent-skills/index.json`, the setup procedure, a link to `https://docs.example.org/.well-known/agent-skills/colofon/SKILL.md` and a link to `https://docs.example.org/.well-known/agent-skills/colofon-diagrams.tar.gz`, and no repository section
 
 #### Scenario: Repository skills
 
