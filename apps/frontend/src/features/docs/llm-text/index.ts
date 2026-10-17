@@ -8,6 +8,7 @@ export {
   textResponse,
 } from "@/features/docs/llm-text/model/response"
 export {
+  skillArchiveResponse,
   skillFileResponse,
   skillNotFound,
   skillsIndexBody,

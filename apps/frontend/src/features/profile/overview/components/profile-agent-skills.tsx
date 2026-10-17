@@ -23,13 +23,15 @@ export function ProfileAgentSkills() {
           Skills para tu IA
         </Text>
         <Text as="p" variant="compact" tone="muted" className="mt-1">
-          La plataforma publica skills que enseñan a tu IA a trabajar con esta
-          documentación: las de la plataforma y las de cada proyecto que puedes
-          leer. Pásale este texto para que las instale, cambiando{" "}
+          Pega este texto en tu IA y se configurará sola: instalará las skills
+          que le enseñan a usar esta documentación, a escribirla y de qué trata
+          cada proyecto que puedes leer, y conectará el MCP si se lo pides.
+          Cambia{" "}
           <Text as="span" variant="data">
             {KEY_PLACEHOLDER}
           </Text>{" "}
-          por una de tus API keys.
+          por una de tus API keys, o copia el texto con la clave ya puesta al
+          crear una.
         </Text>
       </div>
       <div className="flex items-start gap-2">

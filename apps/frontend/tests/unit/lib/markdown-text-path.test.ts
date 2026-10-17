@@ -35,14 +35,27 @@ describe("isOptionalCredentialPath", () => {
     ).toBe(true)
   })
 
+  test("a skill's archive and each of its files need no credential", () => {
+    for (const path of [
+      "/.well-known/agent-skills/colofon-diagrams.tar.gz",
+      "/.well-known/agent-skills/colofon-diagrams/references/type-bar.md",
+      "/.well-known/agent-skills/colofon-docs/notas.md",
+    ])
+      expect(isOptionalCredentialPath(path)).toBe(true)
+  })
+
   test("a repository's index, the pages and look-alikes still do", () => {
     for (const path of [
       "/casa/llms.txt",
       "/casa/red/dns/llm.txt",
       "/.well-known/agent-skills/",
-      "/.well-known/agent-skills/a/b/SKILL.md",
       "/.well-known/agent-skills/../SKILL.md",
-      "/.well-known/agent-skills/casa/skill.md",
+      "/.well-known/agent-skills/casa/../colofon/SKILL.md",
+      "/.well-known/agent-skills/casa/./SKILL.md",
+      "/.well-known/agent-skills/casa//SKILL.md",
+      "/.well-known/agent-skills/casa/",
+      "/.well-known/agent-skills/Casa.tar.gz",
+      "/.well-known/agent-skills/casa.tar.gz/x",
       "/.well-known/other",
     ])
       expect(isOptionalCredentialPath(path)).toBe(false)

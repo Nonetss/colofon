@@ -4,6 +4,7 @@ const ShieldAlert = getIcon("security", "warning")
 
 import { createHighlighter } from "@tanstack/highlight/core"
 import { json } from "@tanstack/highlight/languages/json"
+import { markdown } from "@tanstack/highlight/languages/markdown"
 import { plaintext } from "@tanstack/highlight/languages/plaintext"
 import { shell } from "@tanstack/highlight/languages/shell"
 import { toml } from "@tanstack/highlight/languages/toml"
@@ -115,7 +116,7 @@ export function ApiKeyCreatedDialog({
 
 /** Only the languages the setups are written in. */
 const setupHighlighter = createHighlighter({
-  languages: [shell, toml, json, plaintext],
+  languages: [markdown, shell, toml, json, plaintext],
 })
 
 /** One tab per agent client, each with its text to copy and where it goes. */
