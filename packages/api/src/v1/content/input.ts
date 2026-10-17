@@ -4,6 +4,7 @@ import {
   userRemoteProblem,
 } from "@nonete/content"
 import { z } from "zod"
+import { trustedGitHosts } from "#v1/content/trusted-hosts"
 
 const repository = z
   .string()
@@ -33,9 +34,12 @@ const url = z
 // clones it from inside the platform's network.
 const userUrl = z
   .url({ protocol: /^https$/ })
-  .refine((value) => userRemoteProblem(value) === undefined, {
-    message: "Esa dirección no está permitida: usa una URL https pública",
-  })
+  .refine(
+    (value) => userRemoteProblem(value, trustedGitHosts()) === undefined,
+    {
+      message: "Esa dirección no está permitida: usa una URL https pública",
+    }
+  )
   .describe(
     "HTTPS URL of a public git host; a private repository carries its token (https://user:token@host/owner/repo.git)"
   )

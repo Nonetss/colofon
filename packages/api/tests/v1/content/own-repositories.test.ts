@@ -8,7 +8,7 @@ import {
   userContext,
 } from "#tests/fixtures/context"
 import { fakeDb } from "#tests/fixtures/db"
-import { resetEnv } from "#tests/fixtures/env"
+import { resetEnv, testEnv } from "#tests/fixtures/env"
 import { expectErrorCode } from "#tests/fixtures/errors"
 import {
   audienceFilter,
@@ -452,5 +452,30 @@ describe("user repository input", () => {
       hosted: true,
     })
     expect(parsed).not.toHaveProperty("hosted")
+  })
+})
+
+describe("trusted internal hosts", () => {
+  const input = {
+    slug: "homelab",
+    name: "Homelab",
+    url: "https://10.1.1.10/nonete/homelab",
+  }
+
+  test("an internal address is refused unless the operator lists it", () => {
+    expect(contentInput.createMyRepository.safeParse(input).success).toBe(false)
+
+    testEnv.TRUSTED_GIT_HOSTS = "10.1.1.10"
+    expect(contentInput.createMyRepository.safeParse(input).success).toBe(true)
+  })
+
+  test("plain http stays refused on a listed host", () => {
+    testEnv.TRUSTED_GIT_HOSTS = "git.noneweb.online"
+    expect(
+      contentInput.createMyRepository.safeParse({
+        ...input,
+        url: "http://git.noneweb.online/nonete/homelab",
+      }).success
+    ).toBe(false)
   })
 })

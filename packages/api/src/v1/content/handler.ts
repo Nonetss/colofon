@@ -3,7 +3,6 @@ import path from "node:path"
 import {
   CLONE_DIR,
   CONFIG_SCHEMA,
-  checkUserRemote,
   DIAGRAM_SCHEMA,
   ENTITY_SCHEMA_PREFIX,
   editorSchemas,
@@ -50,6 +49,7 @@ import {
   type RepositoryAudience,
   type RepositoryStore,
 } from "#v1/content/reader"
+import { checkUserRemoteWithTrusted } from "#v1/content/trusted-hosts"
 
 /** Public path of the schema endpoints; each repository's hang from it. */
 export const SCHEMAS_PATH = "/api/v1/content/schemas"
@@ -174,7 +174,7 @@ export function createContentHandler(
   reader: ContentReader,
   options: ContentHandlerOptions
 ) {
-  const { hostedRoot, checkRemote = checkUserRemote } = options
+  const { hostedRoot, checkRemote = checkUserRemoteWithTrusted } = options
 
   /**
    * What `listBranches` reads: the URL sent, or a stored repository's

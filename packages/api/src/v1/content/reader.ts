@@ -2,7 +2,6 @@ import { rm, stat } from "node:fs/promises"
 import path from "node:path"
 import {
   type ContentDeclarations,
-  checkUserRemote,
   cloneFolder,
   createRepoSync,
   describeRepository,
@@ -19,6 +18,7 @@ import {
   type SyncResult,
 } from "@nonete/content"
 import type { Logger } from "pino"
+import { checkUserRemoteWithTrusted } from "#v1/content/trusted-hosts"
 
 // Reads the content repositories' declarations for the content feature. Each
 // repository is a row (looked up through `repositories`, so tests need no
@@ -164,7 +164,7 @@ export function createContentReader(
   options: ContentReaderOptions
 ): ContentReader {
   const { cloneRoot, repositories, resolveSource, logger } = options
-  const { checkRemote = checkUserRemote } = options
+  const { checkRemote = checkUserRemoteWithTrusted } = options
   const lastValid = new Map<string, ContentDeclarations>()
   const reportedProblems = new Map<string, string>()
   // One sync per clone folder, replaced when the URL or ref changes.
