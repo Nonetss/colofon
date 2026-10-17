@@ -1,0 +1,101 @@
+---
+titulo: Repositorios
+descripcion: Qué repositorios lee la plataforma, quién los gestiona, cómo se sincronizan y cómo se aloja uno en la propia plataforma
+orden: 1
+actualizado: 2026-10-17
+---
+
+Los repositorios de contenido se guardan en la base de datos, no en variables
+de entorno. Sin ninguno, el backend arranca y todo lo demás funciona.
+
+| Tipo | Quién lo gestiona | Quién lo lee | Pantalla |
+| --- | --- | --- | --- |
+| De la plataforma | Los administradores | Cualquier usuario con sesión | `/admin/content` («Contenido») |
+| Alojado en la plataforma | Los administradores | Cualquier usuario con sesión | `/admin/content` y `/admin/git` («Git») |
+| De un usuario | Su dueño | **Solo su dueño**, ni siquiera los administradores | `/me/repositories` («Repositorios») |
+
+Un repositorio de usuario no aparece en el lector, la búsqueda, las skills,
+`llm.txt` ni el MCP de nadie más, y tampoco tiene catálogo de schemas para el
+editor. Para el resto de usuarios responde como si no existiera.
+
+## Los datos de un repositorio
+
+| Campo | Qué es |
+| --- | --- |
+| Nombre | Cómo se muestra. |
+| Slug | Su nombre en las URL (`documentacion`, `homelab`…). Minúsculas, números y guiones; no se puede cambiar después de crearlo y no puede ser un nombre que la plataforma ya usa (`admin`, `api`, `rpc`, `git`, `login`, `signup`, `me`, `scalar`…). Es único entre todos los usuarios. |
+| Origen | **URL externa** (GitHub, Gitea…) o **Alojado en la plataforma**. Los usuarios solo pueden usar la URL externa. |
+| URL | La URL `https://` del repositorio git. Para uno privado, las credenciales van en la URL (`https://usuario:token@host/org/repo.git`). La plataforma nunca las muestra, ni las escribe en el log. |
+| Ref | La rama, el tag o el commit que se descarga. Al escribir la URL completa, el formulario lee las ramas del remoto y las ofrece en una lista; si no puede leerlas, se escribe a mano. |
+
+### Límites de los repositorios de usuario
+
+El backend descarga estas URL desde dentro de la red de la plataforma, así
+que las acota:
+
+- Un usuario puede tener **10 repositorios** como máximo.
+- La URL tiene que ser `https://`, y su servidor no puede ser una dirección
+  de loopback, privada o local, ya sea escrita como IP o resuelta desde un
+  nombre. Se comprueba al crear, al editar y antes de cada sincronización.
+- Si un nombre pasa a resolver dentro, la sincronización falla y registra el
+  error, sin intentar clonar.
+
+## Cómo se sincronizan
+
+El backend guarda un clon de cada repositorio en `.content/<id>/` (en Docker,
+el volumen `content_data`) y lo sincroniza:
+
+- al arrancar el backend;
+- cada cinco minutos, con el job `Sincronizar contenido`, declarado en código
+  (sin pantalla; el resultado de cada repositorio se ve en su tarjeta);
+- al crearlo o cambiarle la URL o el ref;
+- cuando pulsas **Sincronizar** en su tarjeta, o un agente usa la herramienta
+  `sync` del MCP (solo administradores).
+
+Cada sincronización deja el clon exactamente como el remoto: los cambios a mano
+en el clon se pierden. Al borrar un repositorio se borra también su clon. No
+hay fuente de carpeta local: para ver un cambio hay que hacer push y
+sincronizar, o esperar a los cinco minutos.
+
+Cada sincronización trae el historial completo, porque la fecha de última
+edición de cada página sale de su último commit.
+
+### Si la sincronización falla
+
+| Síntoma | Qué pasa | Qué hacer |
+| --- | --- | --- |
+| La tarjeta muestra un error de git | Se sigue sirviendo lo último que se descargó. El error sale sin credenciales | Revisa la URL, el token y que el ref exista |
+| El remoto rechaza las credenciales | Igual que arriba | Edita el repositorio y escribe la URL con el token nuevo; si dejas la URL vacía al editar, se conserva la anterior |
+| Un commit deja `doc.config.yaml`, `menu.yaml` o un `_type.yaml` inválidos | Se sigue sirviendo la última versión válida y cada problema se registra con el fichero | Corrige el fichero y haz push |
+| Un repositorio falla | Los demás se sincronizan igualmente | — |
+
+## Repositorios alojados en la plataforma
+
+Con origen **Alojado en la plataforma**, la propia plataforma es el servidor
+git: no hace falta GitHub ni nada más. La tarjeta en `/admin/content` muestra
+la **URL de git**, `<origen de la plataforma>/git/<slug>.git`, para clonarlo y
+hacer push:
+
+```sh
+git remote add origen https://docs.example.com/git/manual.git
+git push origen main
+```
+
+- **Sin credenciales.** Cualquiera que llegue a la plataforma puede clonarlo y
+  hacer push, `--force` incluido. Es a propósito; no lo expongas donde eso sea
+  un problema.
+- Cada push se sincroniza al momento. Se publica la rama del campo Ref; los
+  push a otras ramas se guardan pero no cambian el contenido.
+- Recién creado está vacío, y su última sincronización queda en blanco hasta
+  el primer push.
+- **`/admin/git`** lista los repositorios alojados con un buscador por nombre
+  o slug. Al abrir uno vas a `/admin/git/<slug>`, donde eliges la rama,
+  entras en las carpetas y abres los ficheros como texto. Es solo lectura; los
+  binarios y los ficheros de más de 512 KB no se muestran. La URL guarda lo que
+  estás viendo.
+- Los repositorios bare se guardan en `.hosted/<id>/` (en Docker, el volumen
+  `hosted_data`). Puede que sea la única copia del historial: inclúyelo en las
+  copias de seguridad.
+- Al borrar un repositorio alojado se borra su historial. Si le pones una URL
+  externa, la plataforma deja de leerlo pero conserva su repositorio bare hasta
+  que lo borres.

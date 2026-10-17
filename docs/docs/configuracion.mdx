@@ -1,4 +1,9 @@
-# Configuración
+---
+titulo: Configuración
+descripcion: El único fichero .env, quién lo lee y qué significa cada variable de entorno
+orden: 3
+actualizado: 2026-10-17
+---
 
 ## Un solo `.env`
 
@@ -35,20 +40,21 @@ algo que ya existe.
 | Variable | Significado |
 | --- | --- |
 | `NODE_ENV` | Entorno de ejecución. En `production`, los logs salen como JSON. |
-| `DATABASE_URL` | La única configuración de base de datos que leen las apps. En desarrollo nativo, el PostgreSQL de `bun run postgres:start` (`localhost:5432`); el stack de Docker la sobrescribe para usar su propio `db`. |
+| `DATABASE_URL` | La única configuración de base de datos que leen las apps. En desarrollo nativo, el PostgreSQL de `bun run postgres:start` (`localhost:5432`); los compose de Docker la sobrescriben para usar su propio `db`. |
 | `BETTER_AUTH_URL` | La URL base de Better Auth. Solo la lee el backend, pero tiene que ser el origen público que usa el navegador (el mismo valor que `CORS_ORIGIN`), no la dirección del backend: con ella se construyen las URL de retorno de OAuth/OIDC (`<BETTER_AUTH_URL>/api/auth/callback/oidc`). En desarrollo, `https://localhost:4321` (el gateway de desarrollo). |
 | `BETTER_AUTH_SECRET` | Firma sesiones y cookies. Al menos 32 caracteres (`openssl rand -base64 48`). |
 | `CORS_ORIGIN` | El origen público que usa el navegador. Se usa para CORS y como origen de confianza de Better Auth. |
 | `BACKEND_URL` | Cómo llega el frontend al backend: consultas de sesión en SSR y el proxy de `astro dev`. |
 | `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `ADMIN_NAME` | El administrador que se crea al arrancar el backend si no existe. Los jobs de cron declarados en código se ejecutan como este usuario. |
 | `OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET`, `OIDC_DISCOVERY_URL` | Inicio de sesión con un proveedor OIDC. Solo se activa si están las tres. `OIDC_DISCOVERY_URL` es la URL base del emisor (`https://idp.example.com`); el backend le añade `/.well-known/openid-configuration`. |
+| `SECRETS_ENCRYPTION_KEY` | Opcional. La clave (Base64 de 32 bytes, `openssl rand -base64 32`) con la que se cifran los secretos de los usuarios que el MCP usa. Sin ella la función está apagada. Perderla o cambiarla deja ilegibles los secretos guardados. |
 | `LOG_LEVEL` | Nivel mínimo de log (por defecto `info`). |
 | `SKIP_ENV_VALIDATION` | Desactiva la validación. Solo para builds y tareas de CLI; los Dockerfiles lo usan al compilar. |
 
 ### Trampas habituales
 
 - **`ADMIN_EMAIL` tiene que ser un email válido.** `admin@localhost` no pasa
-  la validación y el backend no arranca. `setup:dev` usa `admin@stack.local`.
+  la validación y el backend no arranca. `setup:dev` usa `admin@colofon.local`.
 - **Las cookies son `Secure`.** Sobre `http` plano el navegador solo las
   guarda en `localhost`. En un servidor hay que servir la web por https o no
   se podrá iniciar sesión.

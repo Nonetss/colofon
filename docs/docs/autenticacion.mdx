@@ -1,4 +1,9 @@
-# Autenticación y permisos
+---
+titulo: Autenticación y permisos
+descripcion: Better Auth, sesiones, roles, organizaciones, API keys y la protección CSRF
+orden: 5
+actualizado: 2026-10-17
+---
 
 La autenticación la hace [Better Auth](https://www.better-auth.com),
 configurado en `packages/auth`. El backend expone sus rutas bajo `/api/auth/*`.
@@ -53,7 +58,10 @@ idempotente: reiniciar no lo duplica ni le cambia la contraseña.
 `apps/frontend/src/middleware.ts` se ejecuta antes de cada página:
 
 - Deja pasar `/login`, `/signup` y `/logo.svg` sin sesión.
-- Si no hay sesión, redirige a `/login`.
+- Si no hay sesión, redirige a `/login`, salvo en las rutas pensadas para
+  agentes: `/llms.txt` y el descubrimiento de skills responden igualmente (con
+  más contenido si hay credencial), y los `llm.txt` de las páginas responden
+  `401` con una línea que explica cómo enviar una API key.
 - Si no puede consultar la sesión (backend caído), responde 503.
 - Si alguien sin rol `admin` entra en `/admin`, lo redirige a `/`.
 - Reenvía las cookies de sesión renovadas.

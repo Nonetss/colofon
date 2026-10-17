@@ -1,51 +1,30 @@
-# Documentación de stack
+---
+titulo: Documentación de colofon
+descripcion: Cómo funciona el proyecto por dentro y dónde encontrar cada pieza, para leerlo de principio a fin o por partes
+actualizado: 2026-10-17
+---
 
-Esta carpeta explica cómo funciona el proyecto por dentro, pensada para leerse
-de principio a fin o por partes. El `README.md` de la raíz es el resumen rápido
-(qué es y cómo arrancarlo). Aquí está el porqué de cada pieza y cómo se trabaja
-con ella.
+Esta documentación explica el porqué de cada pieza del monorepo y cómo se trabaja con ella. El `README.md` de la raíz es el resumen rápido (qué es y cómo arrancarlo).
 
-Las reglas que deben seguir los agentes de código están en `AGENTS.md` y en la
-skill `.agents/skills/stack/`. Estos documentos cuentan lo mismo con más
-contexto y menos jerga. Si alguna vez no coinciden, mandan las specs de
-`openspec/specs/` y el código.
+Las reglas que deben seguir los agentes de código están en `AGENTS.md` y en la skill `.agents/skills/stack/`. Estas páginas cuentan lo mismo con más contexto y menos jerga. Si alguna vez no coinciden, mandan las specs de `openspec/specs/` y el código.
 
-## Índice
+<Diagram id="arquitectura" />
 
-1. [Arquitectura](arquitectura.md): las piezas del sistema y el camino de una petición.
-2. [Desarrollo local](desarrollo.md): arrancar el proyecto, comandos del día a día, base de datos y validación.
-3. [Configuración](configuracion.md): el único `.env`, quién lo lee y qué significa cada variable.
-4. [Backend y API](backend-api.md): cómo está organizado `packages/api`, cómo se añade un procedimiento, métodos HTTP y errores.
-5. [Autenticación y permisos](autenticacion.md): Better Auth, sesiones, roles, organizaciones, API keys y CSRF.
-6. [Frontend](frontend.md): estructura de features, componentes, navegación, layouts y sistema visual.
-7. [Crons](crons.md): el planificador de tareas y cómo convertir un procedimiento en un job.
-8. [Funcionalidades transversales](transversales.md): comentarios e iconos de entidad.
-9. [Docker y despliegue](docker-despliegue.md): los cuatro compose, las imágenes, el CI y el instalador.
-10. [Convenciones](convenciones.md): estilo de código, idiomas, commits, migraciones y el flujo de OpenSpec.
-11. [Contenido](contenido.md): el repositorio de contenido, de dónde lo lee el backend, cómo se escriben y se leen las fichas y el autocompletado en el editor.
+## ¿Dónde encuentro…?
 
-## Diagramas
-
-Los diagramas se ven como SVG en `docs/img/`, con las fuentes del proyecto
-incrustadas para que se vean igual en cualquier visor. Usan el mismo sistema
-visual que el frontend: los colores son los tokens de
-`apps/frontend/src/styles/global.css` (fondo, texto, `card`, bordes y el
-naranja `primary` como único acento), las etiquetas siguen el rol `label` de
-`Text` y cambian a modo oscuro con el sistema.
-
-Cada SVG tiene su original con el mismo nombre en `docs/diagrams/*.html`: se
-edita el HTML y se vuelve a exportar el SVG a `docs/img/`. Los colores van como `var(--token)` en atributos
-`style`, nunca en hexadecimal, y el SVG exportado tiene que conservar el bloque
-de tokens (claro y oscuro) y las fuentes incrustadas. La exportación estándar
-de la skill `diagram-design` no lo hace, así que hay que revisar el resultado.
-
-`architecture.svg` es la versión en inglés de `arquitectura.svg` para el
-`README.md` de la raíz, con más detalle (las rutas que el gateway envía al
-backend, `/health`, `BACKEND_URL` y los paquetes que corre el backend). Si
-cambia una, hay que cambiar la otra.
-
-`project-structure.svg` dibuja el árbol de "Project Structure" del
-`README.md` de la raíz. Si cambia ese bloque, hay que cambiar el diagrama.
+| Si buscas… | Lee |
+| --- | --- |
+| Las piezas del sistema y el camino de una petición | [Arquitectura](arquitectura.mdx) |
+| Arrancar el proyecto, los comandos del día a día y la base de datos | [Desarrollo local](desarrollo.mdx) |
+| El `.env` y el significado de cada variable | [Configuración](configuracion.mdx) |
+| Cómo se organiza `packages/api` y cómo se añade un procedimiento | [Backend y API](backend-api.mdx) |
+| Better Auth, sesiones, roles, organizaciones y API keys | [Autenticación y permisos](autenticacion.mdx) |
+| La estructura de features, los componentes y el sistema visual | [Frontend](frontend.mdx) |
+| El planificador y cómo convertir un procedimiento en un job | [Crons](crons.mdx) |
+| Comentarios e iconos de entidad | [Funcionalidades transversales](transversales.mdx) |
+| Los cuatro compose, las imágenes, el CI y el instalador | [Docker y despliegue](docker-despliegue.mdx) |
+| Estilo de código, idiomas, commits, migraciones y OpenSpec | [Convenciones](convenciones.mdx) |
+| Los repositorios de contenido, el lector, el MCP y las skills para agentes | [Contenido](contenido/index.mdx) |
 
 ## Glosario rápido
 
@@ -59,3 +38,7 @@ cambia una, hay que cambiar la otra.
 | **Superficie** | Cualquier página con identidad propia (título, etiqueta, icono). Se declaran en `app-surfaces.ts`. |
 | **Isla** | Un componente React montado dentro de una página Astro. |
 | **Capability (OpenSpec)** | Un área funcional documentada con requisitos en `openspec/specs/<capability>/spec.md`. |
+
+## Cómo se mantiene esta documentación
+
+Esta carpeta es un repositorio de contenido de colofon: `doc.config.yaml`, `menu.yaml`, las páginas en `docs/` y los diagramas en `diagrams/`. Los diagramas son JSON que la plataforma dibuja con el sistema visual del frontend, así que se editan como datos y no se exportan. Los `.html` y los `.svg` antiguos de `diagrams/` y `img/` siguen ahí como originales de los diagramas del `README.md` de la raíz.

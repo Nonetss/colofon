@@ -1,0 +1,61 @@
+---
+titulo: Contenido
+descripcion: Qué es un repositorio de contenido, cómo lo lee la plataforma y dónde está cada parte, de los repositorios al lector y a los agentes
+actualizado: 2026-10-17
+---
+
+La documentación no vive en este repositorio: vive en **repositorios de
+contenido** aparte, con páginas en MDX y un catálogo de datos en YAML. La
+plataforma los clona, los valida, los muestra en su lector y los sirve a los
+agentes de IA. No sabe nada del dominio: los tipos (máquinas, frutas,
+proveedores…) y sus campos los decide cada repositorio.
+
+Cómo se **escribe** un repositorio de contenido (cabeceras, componentes,
+menú, catálogo, diagramas, estilos) lo explica el sitio de ejemplo
+`doc-example/`, «Escribir documentación», que es a la vez un repositorio de
+contenido. Esta sección cuenta lo que la plataforma hace con él. Las reglas
+exactas están en las specs `content-*` de `openspec/specs/` y en
+`packages/content`.
+
+## Forma de un repositorio de contenido
+
+| Ruta | Qué hay |
+| --- | --- |
+| `doc.config.yaml` | Obligatorio. Nombre del sitio, versión del contrato (`plataforma: "1"`) y los campos extra de la cabecera de las páginas (`cabecera`). |
+| `docs/` | Las páginas `.mdx`. Cada carpeta es una sección con su `index.mdx`. `docs/catalog/` está reservada para las páginas que genera la plataforma. |
+| `catalog/<tipo>/_type.yaml` | El esquema de un tipo: sus campos y cómo se muestra. El nombre de la carpeta es el id del tipo. |
+| `catalog/<tipo>/<id>.yaml` | Una entidad. El nombre del fichero es su id. |
+| `menu.yaml` | Opcional. Los grupos del sidebar y las páginas que muestra cada uno. |
+| `diagrams/<id>.json` | Opcional. Un diagrama, que las páginas muestran con el componente `Diagram`. |
+| `styles/` | Opcional. Los estilos propios del repositorio, un fichero por módulo de la plataforma. |
+| `skills/<nombre>/SKILL.md` | Opcional. Skills que la plataforma sirve a los agentes. |
+
+Dos reglas que se notan a diario:
+
+- **Lo que dice un YAML manda sobre la cabecera de una página.** Si
+  `menu.yaml` le pone a una entrada un título o un icono, ese es el que se ve,
+  diga lo que diga la cabecera; si dice otra cosa se avisa como problema.
+- **Los nombres son en inglés.** Un repositorio con los nombres antiguos
+  (`catalogo/`, `diagramas/`, `estilos/`, `_tipo.yaml`) no se lee: cada uno se
+  avisa con el nombre al que se movió.
+
+Todo `icono` es un nombre de Lucide, el de la versión que dibuja el lector.
+La lista sale de `lucide-react` con `bun run icons:catalog`.
+
+## Cuando algo falla
+
+| Síntoma | Causa | Qué hacer |
+| --- | --- | --- |
+| Un cambio no aparece en el lector | Aún no se ha sincronizado, o el commit dejó el contenido inválido y se sigue sirviendo la última versión válida | Pulsa **Sincronizar** en la tarjeta del repositorio y mira los problemas en la portada del repositorio (solo los ven los administradores) y en el log |
+| Una página sale con un aviso en lugar del texto | Su cuerpo no se pudo leer (`import`, expresiones entre llaves, un componente que no existe) | Corrige la página; el resto del sitio sigue funcionando |
+| Una página aparece en el grupo «Otros» | `menu.yaml` no la muestra | Añádela a su grupo |
+| El repositorio de otra persona no aparece | Los repositorios de usuario son privados | Es lo esperado: solo los lee su dueño |
+
+## ¿Dónde encuentro…?
+
+| Quiero… | Página |
+| --- | --- |
+| Añadir un repositorio, sincronizarlo o alojarlo en la plataforma | [Repositorios](repositorios.mdx) |
+| Saber cómo se muestran las páginas, las tablas y la búsqueda | [El lector](lector.mdx) |
+| Dar la documentación a una IA: `llm.txt`, API keys, MCP, skills y secretos | [Agentes de IA](agentes.mdx) |
+| Autocompletado y validación del YAML en el editor | [Editor](editor.mdx) |

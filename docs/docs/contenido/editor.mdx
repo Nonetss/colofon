@@ -1,0 +1,73 @@
+---
+titulo: Editor
+descripcion: Cómo conseguir autocompletado y validación de los YAML y los diagramas de un repositorio de contenido en VS Code
+orden: 4
+actualizado: 2026-10-17
+---
+
+El backend sirve, sin login, un **catálogo de schemas** por repositorio, con su
+slug al final:
+
+```
+GET /api/v1/content/schemas/<slug>
+```
+
+La extensión YAML de Red Hat (`redhat.vscode-yaml`, en VS Code y Cursor) lo
+usa para autocompletar, validar y documentar cada YAML del contenido: los
+campos de cada tipo con su descripción, los valores de cada `enum`, los ids
+que acepta cada referencia, las rutas de las páginas, lo que puede nombrar una
+entrada de `menu.yaml` y los nombres de los iconos. Basta **un ajuste**; la URL
+exacta de cada repositorio se copia desde su tarjeta en `/admin/content`:
+
+```json
+{
+  "yaml.schemaStore.url": "https://<sitio>/api/v1/content/schemas/<slug>"
+}
+```
+
+Dónde va depende de qué tengas abierto:
+
+- **El repositorio de contenido solo**: en su `.vscode/settings.json`,
+  commiteado y apuntando a producción. Quien lo clone tiene autocompletado sin
+  hacer nada.
+- **Un workspace con varias carpetas** (por ejemplo la plataforma y el
+  contenido): en los ajustes **del workspace**. La extensión YAML solo lee este
+  ajuste del workspace, nunca del `.vscode/` de cada carpeta.
+
+Los diagramas son JSON, que esa extensión no lee: el editor de JSON de VS Code
+(sin extensión) toma su esquema con otro ajuste, en el mismo sitio. También
+vale poner `"$schema"` con esa URL como primera clave de un diagrama.
+
+```json
+{
+  "json.schemas": [
+    {
+      "fileMatch": ["/diagrams/*.json"],
+      "url": "https://<sitio>/api/v1/content/schemas/<slug>/diagram"
+    }
+  ]
+}
+```
+
+Nadie genera ni commitea schemas: un tipo, una entidad o una página nuevos
+salen en el catálogo después de la sincronización que los trae.
+
+## Cuando algo falla
+
+| Síntoma | Causa | Qué hacer |
+| --- | --- | --- |
+| No hay sugerencias y el slug da 404 | El slug no existe, o es de un repositorio de usuario: esos no tienen catálogo de schemas | Copia la URL de la tarjeta en `/admin/content` |
+| El catálogo llega vacío | El repositorio se acaba de crear y no ha terminado su primera sincronización | Espera a que termine |
+| Un id nuevo no sale en las sugerencias | El editor guarda los schemas mientras la sesión está abierta | Reabre el fichero o recarga la ventana (Developer: Reload Window) |
+| En desarrollo no se descarga el catálogo de `https://localhost:4321` | El certificado local no es de confianza para la extensión (`http.proxyStrictSSL` activado) | Apunta al catálogo de producción si solo editas contenido, o pon `"http.proxyStrictSSL": false` en tus ajustes de usuario mientras desarrollas la plataforma |
+
+## Cosas a saber
+
+- **Ese ajuste sustituye el catálogo público de SchemaStore** en esa ventana:
+  ficheros como `compose.yml` o los workflows de GitHub pierden su
+  autocompletado mientras esté puesto. En el repositorio de contenido no
+  importa; en un workspace con la plataforma es el precio de tenerlo.
+- **Lo que expone el catálogo**: los nombres de tipos y campos, sus
+  descripciones, los ids de las entidades y las rutas de las páginas. Nunca el
+  texto de las páginas, los valores de las entidades (una IP, una URL…) ni la
+  URL del repositorio.

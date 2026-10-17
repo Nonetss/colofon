@@ -1,9 +1,14 @@
-# Desarrollo local
+---
+titulo: Desarrollo local
+descripcion: Cómo arrancar el proyecto, los comandos del día a día, la base de datos de desarrollo y cómo se valida un cambio
+orden: 2
+actualizado: 2026-10-17
+---
 
 ## Requisitos
 
 - [Bun](https://bun.sh) 1.4.2 (es a la vez runtime, gestor de paquetes y test runner).
-- Docker con Compose 2.23.1 o superior (para PostgreSQL y el stack en contenedores).
+- Docker con Compose 2.23.1 o superior (para PostgreSQL y la pila de contenedores).
 - `openssl` (lo usan los scripts que generan secretos).
 
 ## Primera vez
@@ -35,7 +40,7 @@ Levanta el frontend (`astro dev`, en `:4320`), el backend (`bun --hot`), el
 gateway (con `Caddyfile.dev`, que sirve la app en `https://localhost:4321`),
 y PostgreSQL con `compose.dev.yml`. Como en producción, **solo el
 gateway publica un puerto** (`https://localhost:4321`). Las apps y PostgreSQL
-quedan en la red interna del stack y se encuentran por nombre de servicio: el
+quedan en la red interna de los contenedores y se encuentran por nombre de servicio: el
 compose sobrescribe `BACKEND_URL` y `DATABASE_URL`, y el resto sale del `.env`
 sin cambios. No se monta el repositorio: `docker compose watch` copia tus cambios
 dentro de los contenedores. Solo hay volúmenes con nombre para la caché de
@@ -49,7 +54,6 @@ Vite (`frontend_vite_cache`), la autoridad de certificación del gateway
 | Los `packages/*/src` que usa el backend | Se sincroniza y el backend se reinicia (`bun --hot` no recarga esos cambios). |
 | `apps/frontend/astro.config.mjs`, `apps/gateway/Caddyfile.dev`, `apps/gateway/routes.caddy` | Se sincroniza y se reinicia ese servicio. |
 | `package.json`, `bun.lock` | Se reconstruyen las imágenes afectadas. |
-
 
 ### En nativo (`bun run dev:local`)
 
@@ -68,10 +72,10 @@ También puedes arrancar una sola app con `bun run dev:frontend` o
 
 ### Dónde está cada cosa
 
-- Web: <https://localhost:4321>, el gateway de desarrollo (HTTPS + HTTP/2) y
+- Web: [https://localhost:4321](https://localhost:4321), el gateway de desarrollo (HTTPS + HTTP/2) y
   el único puerto que se expone. Manda `/rpc`, `/api`, `/scalar` y
   `/openapi.json` al backend y el resto a `astro dev`, igual que en producción.
-- Documentación de la API: <https://localhost:4321/scalar> (requiere sesión de admin)
+- Documentación de la API: [https://localhost:4321/scalar](https://localhost:4321/scalar) (requiere sesión de admin)
 - Detrás del gateway: el backend en `:3000` y `astro dev` en `:4320`. Con
   Docker solo existen en la red interna; en nativo son procesos del host en
   esos puertos, pero el inicio de sesión solo funciona a través de `:4321`.
@@ -79,7 +83,7 @@ También puedes arrancar una sola app con `bun run dev:frontend` o
 ### Confiar en el certificado local (una vez)
 
 El gateway firma `https://localhost:4321` con la autoridad de certificación
-local de Caddy, guardada en el volumen `stack-dev_gateway_data` para que no
+local de Caddy, guardada en el volumen `colofon-dev_gateway_data` para que no
 cambie entre reinicios. Con el gateway arrancado al menos una vez:
 
 ```bash
@@ -135,6 +139,20 @@ para experimentos. Lo que se despliega son las migraciones.
 > Las migraciones las genera y revisa siempre una persona. Los agentes de
 > código tienen prohibido generarlas, aplicarlas o editarlas.
 
+## Cuando algo falla
+
+| Síntoma | Causa | Qué hacer |
+| --- | --- | --- |
+| El navegador avisa de que `https://localhost:4321` no es seguro | No has importado la autoridad de certificación local de Caddy, o has borrado el volumen | `bun run dev:cert` con el gateway arrancado e importa `caddy-local-root.crt` (ver arriba) |
+| El inicio de sesión no funciona en `:4320` o `:3000` | Las cookies son `Secure` y el origen de confianza es el del gateway | Entra siempre por `https://localhost:4321` |
+| La web no carga en nativo | Sin `bun run gateway` nadie sirve `:4321` | Arranca el gateway además de `bun run dev:local` |
+| Un puerto está ocupado al arrancar | `bun run dev` y `bun run dev:local` usan los mismos puertos, así que solo puede estar uno en marcha | Para el otro modo antes de arrancar este |
+| El backend no arranca y habla de una variable | Falta una obligatoria o `ADMIN_EMAIL` no es un email válido | Revisa el `.env` contra [Configuración](configuracion.mdx) |
+| Cambias código y el contenedor no lo recoge | La carpeta no tiene entrada `sync` en `compose.dev.yml` | Añádela (ver [Docker y despliegue](docker-despliegue.mdx)) |
+
+Mientras tanto, PostgreSQL y sus datos siguen intactos: `bun run dev:down` no
+borra el volumen `db_data`.
+
 ## Validar un cambio
 
 | Comando | Qué comprueba |
@@ -152,11 +170,14 @@ No hay git hooks: nada se ejecuta solo al hacer commit.
 
 ## Tests
 
-Hoy solo `packages/api` tiene tests (`bun test`, en `packages/api/tests/`).
+`bun run test` ejecuta `bun test --only-failures` en cada workspace que tiene
+tests: `packages/api`, `packages/content`, `packages/cron` y `apps/frontend`.
+`apps/backend` no tiene, y no hay tests de extremo a extremo.
+
 Son **herméticos**: no se conectan a la base de datos, no hacen peticiones de
 red y no necesitan nada arrancado, ni siquiera un `.env`.
 
-Cómo lo consiguen:
+Cómo lo consiguen en `packages/api`, que es el montaje que se copia en los demás:
 
 - `packages/api/tests/setup.ts` se carga antes que nada y **sobrescribe** las
   variables de entorno con valores de mentira: el `DATABASE_URL` apunta a un
@@ -172,8 +193,9 @@ Cómo lo consiguen:
 La carpeta `tests/` replica la de `src/`: `tests/index.test.ts` prueba los
 builders, `tests/shared/` los helpers y `tests/v1/<feature>/` los handlers.
 
-No hay tests en el frontend, en el backend ni end-to-end. Si se añaden en otro
-paquete, la idea es copiar el montaje de `packages/api`.
+Un procedimiento, helper, hook o componente nuevo o cambiado lleva sus tests
+en el mismo cambio. Cómo se escriben está en la skill `stack`
+(`references/writing-unit-tests.md`).
 
 ## Otros comandos
 
@@ -181,4 +203,4 @@ paquete, la idea es copiar el montaje de `packages/api`.
 | --- | --- |
 | `bun run build` | Compila todas las apps. |
 | `bun run icons:catalog` | Regenera el catálogo de iconos Lucide del selector de iconos y la lista de nombres que `packages/content` acepta en cada `icono` (necesita red; hay que commitear el resultado). Se ejecuta tras actualizar `lucide-react`; si no, falla un test del frontend. |
-| `bun run docker:up` / `docker:down` / `docker:logs` / `docker:build` | El stack tipo producción construido desde el código (ver [Docker y despliegue](docker-despliegue.md)). |
+| `bun run docker:up` / `docker:down` / `docker:logs` / `docker:build` | La pila tipo producción construido desde el código (ver [Docker y despliegue](docker-despliegue.mdx)). |

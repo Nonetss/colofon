@@ -1,4 +1,9 @@
-# Convenciones
+---
+titulo: Convenciones
+descripcion: Estilo de código, idiomas, commits, migraciones y el flujo de OpenSpec
+orden: 10
+actualizado: 2026-10-17
+---
 
 Las reglas normativas están en `AGENTS.md`. Aquí van las que más se notan al
 trabajar, con su porqué.
@@ -58,8 +63,8 @@ el encadenamiento opcional para leer (`user?.role === "admin"`).
 
 Antes de escribir un componente, hook, helper o procedimiento nuevo, se busca
 uno que ya exista y se reutiliza o se extiende (ver dónde mirar en
-[Frontend](frontend.md#antes-de-crear-algo-busca) y en
-[Backend y API](backend-api.md#añadir-un-procedimiento-paso-a-paso)). Lo
+[Frontend](frontend.mdx#antes-de-crear-algo-busca) y en
+[Backend y API](backend-api.mdx#añadir-un-procedimiento-paso-a-paso)). Lo
 nuevo nace dentro de su feature y se promueve a compartido cuando de verdad se
 reutiliza.
 
@@ -83,8 +88,8 @@ una migración, el agente propone el cambio y se para.
 
 ## Procesos y pruebas en vivo
 
-- Nadie (ni agente ni script) mata o reinicia un servidor de desarrollo o el
-  stack de Docker que esté corriendo sin preguntar: se asume que está en uso.
+- Nadie (ni agente ni script) mata o reinicia un servidor de desarrollo o la
+  pila de Docker que esté corriendo sin preguntar: se asume que está en uso.
 - La validación normal es `check-types`, Biome y `bun run test`. Las pruebas
   contra la app en marcha (curl, navegador) se hacen solo cuando se piden,
   porque casi todo requiere sesión.

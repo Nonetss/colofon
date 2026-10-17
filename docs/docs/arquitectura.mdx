@@ -1,11 +1,16 @@
-# Arquitectura
+---
+titulo: Arquitectura
+descripcion: Las piezas del monorepo, el camino de una petición desde el navegador hasta la base de datos y cómo arranca y se apaga el backend
+orden: 1
+actualizado: 2026-10-17
+---
 
-stack es un monorepo de TypeScript que corre sobre Bun. Tiene tres
+colofon es un monorepo de TypeScript que corre sobre Bun. Tiene tres
 aplicaciones y ocho librerías compartidas, y todo se coordina con Turborepo.
 
 ## Las piezas
 
-![El navegador solo habla con el gateway, que envía la API al backend y el resto al frontend](../img/arquitectura.svg)
+<Diagram id="arquitectura" />
 
 ### Aplicaciones (`apps/`)
 
@@ -29,7 +34,7 @@ aplicaciones y ocho librerías compartidas, y todo se coordina con Turborepo.
 | `@nonete/auth` | La configuración de Better Auth (plugins, roles, permisos de organización). |
 | `@nonete/db` | El esquema de la base de datos con Drizzle, las migraciones y el seed del admin. |
 | `@nonete/cron` | El planificador que ejecuta tareas programadas dentro del backend. |
-| `@nonete/content` | La lectura y validación del repositorio de contenido (ver [Contenido](contenido.md)). |
+| `@nonete/content` | La lectura y validación del repositorio de contenido (ver [Contenido](contenido/index.mdx)). |
 | `@nonete/logger` | El logger compartido (pino), que escribe en la salida estándar. |
 | `@nonete/env` | La lectura y validación de variables de entorno. |
 | `@nonete/config` | El `tsconfig` base que heredan todos. |
@@ -56,10 +61,10 @@ Ejemplo: abres `/admin/users` en el navegador.
 6. **El backend** identifica al usuario por la cookie, le asigna un id de
    petición, ejecuta el procedimiento y devuelve el resultado.
 
-Las fichas de documentación (`/`, `/<slug>` y `/<slug>/<ruta>`) se saltan
-los pasos 3 y 4: Astro pide la navegación y la ficha al backend (`v1.docs`) en
+Las páginas de documentación (`/`, `/<slug>` y `/<slug>/<ruta>`) se saltan
+los pasos 3 y 4: Astro pide la navegación y la página al backend (`v1.docs`) en
 el propio servidor, reenviando la cookie de sesión, y envía el texto ya
-renderizado (ver [Contenido](contenido.md#cómo-se-leen-las-fichas)).
+renderizado (ver [El lector](contenido/lector.mdx)).
 
 En desarrollo pasa lo mismo: el gateway de desarrollo sirve
 `https://localhost:4321` (HTTPS con HTTP/2 y un certificado local) con las

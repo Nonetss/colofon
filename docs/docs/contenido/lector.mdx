@@ -1,0 +1,85 @@
+---
+titulo: El lector
+descripcion: Qué rutas sirve el lector de documentación, cómo se navega y se busca en él y cómo se comportan las tablas de las páginas
+orden: 2
+actualizado: 2026-10-17
+---
+
+El lector es la parte de `apps/frontend` que muestra las páginas de los
+repositorios de contenido. Solo lo ven los usuarios con sesión (o una API key
+en `x-api-key`), y el HTML llega ya renderizado desde el servidor.
+
+## Rutas
+
+| Ruta | Qué es |
+| --- | --- |
+| `/` | La portada «Todos»: cada repositorio con su descripción y las entradas de primer nivel. Si el selector está en un solo repositorio que existe, redirige a `/<slug>`. |
+| `/<slug>` | La portada del repositorio (su `docs/index.mdx`, o la lista de sus secciones si no la tiene). |
+| `/<slug>/<ruta>` | Una página: `docs/red/dns.mdx` es `/<slug>/red/dns`. Una sección enseña su `index.mdx`. |
+| `/<slug>/catalog`, `/<slug>/catalog/<tipo>`, `/<slug>/catalog/<tipo>/<id>` | Las páginas del catálogo que genera la plataforma: los tipos, la tabla de un tipo y la ficha de cada entidad (sus campos, las páginas que la citan y los diagramas en que sale). |
+
+Un repositorio o una página que no existen, o que son privados de otra
+persona, muestran la página 404.
+
+## Navegación
+
+- **El sidebar** sigue `menu.yaml`: cada grupo con sus páginas. Sin él, son las
+  carpetas de `docs/` y al final el catálogo. Lo que el menú no muestra cae en
+  un grupo «Otros» y se avisa.
+- **El selector de repositorio** va arriba del sidebar y solo existe si hay dos
+  o más. «Todos» muestra cada repositorio como un grupo; uno solo, sus
+  secciones. La elección se recuerda en la cookie `docs_scope`, sigue a la
+  página que abres y acota también la búsqueda.
+- Cada página lleva sus migas, los campos de la cabecera, la anterior y la
+  siguiente, y en pantallas anchas el índice «En esta página». En el móvil el
+  sidebar se abre desde el navbar.
+- Los estilos propios del repositorio (`styles/`) se aplican solo a sus
+  páginas, después de los de la plataforma.
+
+## Búsqueda
+
+La búsqueda del navbar (`⌘K` o `Ctrl+K`) lista las páginas del ámbito elegido a
+partir de dos letras. Busca en el título, la descripción, los campos de la
+cabecera, los títulos de grupos y secciones, los encabezados y el cuerpo:
+
+- ignora mayúsculas y acentos;
+- cada palabra tiene que aparecer en algún sitio de la página;
+- una palabra a medio escribir coincide como prefijo, y una errata en una
+  palabra larga todavía encuentra la página; en las cortas no se aproxima;
+- el título pesa más que un encabezado, y este más que el cuerpo;
+- si la coincidencia está en un encabezado o en el cuerpo, el resultado enseña
+  un extracto y abre la página en esa sección.
+
+Las páginas generadas de cada tipo del catálogo se buscan; las de cada entidad,
+no.
+
+## Tablas
+
+Las tablas de las páginas (menos las de clave y valor) se ordenan pulsando su
+cabecera, cada columna según lo que lleva (IP, fechas, tamaños, versiones,
+números o texto), y con Mayús por varias columnas a la vez. Desde 2 filas
+tienen encima:
+
+- una caja que filtra (`columna:valor` mira solo esa columna), un filtro por
+  valores en cada cabecera y chips con los filtros activos;
+- un menú de columnas, «Copiar en Markdown», «Descargar CSV», «Copiar enlace a
+  esta vista» (el orden y los filtros van en la URL, `?tabla=…`) y pantalla
+  completa.
+
+Con más de 50 filas se paginan de 25 en 25.
+
+## Diagramas
+
+Al pasar por una caja, una flecha, una insignia o el título de una zona, se
+ilumina lo que toca y una tarjeta dice qué es y cómo se conecta; en el móvil,
+el primer toque la muestra y el segundo sigue el enlace. Para lectores de
+pantalla y para `llm.txt`, el diagrama queda como texto: su título y
+descripción, sus zonas y una línea por conexión.
+
+## Problemas de una página
+
+Una página con problemas se muestra igualmente con lo que se pudo leer. Solo
+los administradores ven la lista (fichero, línea y mensaje) en un aviso sobre
+el cuerpo. Si el cuerpo no se pudo leer, se enseña la cabecera y un aviso de
+que no se puede mostrar. Los problemas también se escriben en el log una vez
+por cada commit sincronizado.

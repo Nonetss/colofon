@@ -1,4 +1,9 @@
-# Backend y API
+---
+titulo: Backend y API
+descripcion: Cómo está organizado packages/api, cómo se añade un procedimiento, qué método HTTP usa y qué error lanza
+orden: 4
+actualizado: 2026-10-17
+---
 
 Toda la API vive en `packages/api`. El backend (`apps/backend`) solo la monta
 en Hono junto a Better Auth y los middlewares.
@@ -17,11 +22,11 @@ usarla de dos formas:
   interactiva en `/scalar` (solo admins).
 
 Se usa oRPC v2, que todavía está en beta y tiene la versión fijada. Ojo con la
-documentación: la válida es la de <https://orpc.dev>; la de v1 no aplica.
+documentación: la válida es la de [https://orpc.dev](https://orpc.dev); la de v1 no aplica.
 
 ## Cómo está organizado `packages/api`
 
-![Estructura de packages/api/src](../img/api-estructura.svg)
+<Diagram id="api-estructura" />
 
 En la base compartida, `index.ts` define los builders de procedimientos y los
 metadatos (`cronMeta`…), `context.ts` lo que recibe cada procedimiento
@@ -30,7 +35,8 @@ Además, `src/router.ts` monta cada versión de la API bajo su clave (`v1`).
 
 Las features de v1 son `health`, `private`, `authConfig`, `apiKey`,
 `organization`, `plugins`, `sessionHistory`, `adminUser`, `cron`, `comment`,
-`entityIcon` y `content`.
+`entityIcon`, `content`, `docs` (lo que lee el lector), `skills`, `secret` y
+`mcp`. `ls packages/api/src/v1` es la lista al día.
 
 ### Separación entre router y handler
 
@@ -100,7 +106,7 @@ Las reglas que hay detrás:
 
 En `/rpc`, el frontend envía las lecturas como `QUERY` y el resto como `POST`
 automáticamente; el servidor rechaza `GET` en `/rpc` (protección CSRF, ver
-[Autenticación](autenticacion.md)).
+[Autenticación](autenticacion.mdx)).
 
 ## Errores
 
