@@ -90,6 +90,13 @@ export {
   redactCredentials,
   type SyncResult,
 } from "#git/source"
+export {
+  checkUserRemote,
+  isInternalAddress,
+  type RemoteCheck,
+  type ResolveHost,
+  userRemoteProblem,
+} from "#git/user-remote"
 export { fieldLabel } from "#pages/entities"
 export { type HeaderSchema, headerSchema, readHeader } from "#pages/header"
 export {

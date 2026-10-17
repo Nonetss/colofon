@@ -95,6 +95,22 @@ describe("credentials", () => {
 })
 
 describe("createRepoSync", () => {
+  test("a remote a user typed is cloned over https only, so a local path fails", async () => {
+    const origin = await remote()
+    await origin.commit({ "doc.config.yaml": "nombre: Uno\n" })
+    const root = await tempFolder()
+
+    const result = await createRepoSync({
+      url: origin.url,
+      ref: "main",
+      root,
+      httpsOnly: true,
+    })()
+
+    expect(result.ok).toBe(false)
+    expect(existsSync(path.join(root, "doc.config.yaml"))).toBe(false)
+  })
+
   test("the first sync clones the ref and later syncs pick up new commits", async () => {
     const origin = await remote()
     await origin.commit({ "doc.config.yaml": "nombre: Uno\n" })

@@ -102,6 +102,8 @@ export type RepoSyncOptions = {
   /** The clone folder; may be a mount point, so it is emptied, never removed. */
   root: string
   timeoutMs?: number | undefined
+  /** Allow only the https transport, for a remote a user typed. */
+  httpsOnly?: boolean | undefined
 }
 
 /**
@@ -198,15 +200,23 @@ export async function readEditDates(
 function gitRunner(options: {
   root: string
   timeoutMs?: number | undefined
+  httpsOnly?: boolean | undefined
 }): Git {
   const { timeoutMs = GIT_TIMEOUT_MS } = options
   const env = {
     ...process.env,
+    ...transportEnv(options.httpsOnly),
     GIT_DIR: path.join(options.root, ".git"),
     GIT_WORK_TREE: options.root,
     GIT_TERMINAL_PROMPT: "0",
   }
   return (args) => spawnGit(args, { cwd: options.root, env, timeoutMs })
+}
+
+/** The environment that limits git to https when `httpsOnly`. */
+function transportEnv(httpsOnly: boolean | undefined) {
+  if (httpsOnly === true) return { GIT_ALLOW_PROTOCOL: "https" }
+  return {}
 }
 
 export type SpawnGitOptions = {
@@ -266,7 +276,8 @@ const SYMREF_PREFIX = `ref: ${BRANCH_PREFIX}`
  */
 export async function listRemoteBranches(
   url: string,
-  timeoutMs: number = GIT_TIMEOUT_MS
+  timeoutMs: number = GIT_TIMEOUT_MS,
+  httpsOnly = false
 ): Promise<RemoteBranches> {
   try {
     // Outside any checkout, so git never reads this platform's own repo.
@@ -274,7 +285,11 @@ export async function listRemoteBranches(
       ["ls-remote", "--symref", url, "HEAD", `${BRANCH_PREFIX}*`],
       {
         cwd: tmpdir(),
-        env: { ...process.env, GIT_TERMINAL_PROMPT: "0" },
+        env: {
+          ...process.env,
+          ...transportEnv(httpsOnly),
+          GIT_TERMINAL_PROMPT: "0",
+        },
         timeoutMs,
       }
     )
