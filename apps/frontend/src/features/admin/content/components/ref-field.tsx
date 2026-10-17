@@ -1,28 +1,12 @@
-import { useEffect } from "react"
-import { textVariants } from "@/components/shared/brand/typography"
-import { FormField } from "@/components/shared/form/field-label"
-import { Input } from "@/components/ui/input"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import { useContentRepositoryBranches } from "@/features/admin/content/hooks/use-content-repositories"
-import {
-  branchesSource,
-  refOptions,
-  suggestedBranch,
-} from "@/features/admin/content/model/branches-source"
+import { branchesSource } from "@/features/admin/content/model/branches-source"
 import type {
   ContentRepository,
   RepositorySource,
 } from "@/features/admin/content/model/types"
+import { BranchRefField } from "@/features/content-repositories/manage"
 import { useDebouncedValue } from "@/hooks/use-debounced-value"
-import { cn } from "@/lib/utils"
 
-const FIELD_ID = "content-repository-ref"
 const URL_DEBOUNCE_MS = 500
 
 interface RefFieldProps {
@@ -43,9 +27,8 @@ interface RefFieldProps {
 }
 
 /**
- * The ref of a content repository: a select of the remote's branches once
- * they can be read, and a text field while they can't (no URL yet, still
- * loading, or the remote refused), where a tag or a commit can be typed.
+ * The ref of a repository in the admin form: the branches come from the typed
+ * URL, the stored repository or the hosted one.
  */
 export function RefField({
   open,
@@ -61,78 +44,22 @@ export function RefField({
   const branches = useContentRepositoryBranches(
     branchesSource(open, repository, source, debouncedUrl)
   )
-  const data = branches.data
-
-  useEffect(() => {
-    if (data === undefined || chosen) return
-    if (data.branches.includes(value)) return
-    const suggested = suggestedBranch(data)
-    if (suggested !== undefined) onSuggest(suggested)
-  }, [data, chosen, value, onSuggest])
-
-  if (data !== undefined && data.branches.length > 0) {
-    const options = refOptions(data.branches, value).map((ref) => ({
-      value: ref,
-      label: ref,
-    }))
-    return (
-      <FormField
-        label="Rama"
-        htmlFor={FIELD_ID}
-        hint="Las ramas del repositorio; se descarga la que elijas."
-      >
-        <Select
-          items={options}
-          value={value}
-          onValueChange={(next) => {
-            if (next !== null) onChange(next)
-          }}
-        >
-          <SelectTrigger
-            id={FIELD_ID}
-            className={cn("w-full", textVariants({ role: "data" }))}
-          >
-            <SelectValue>{value}</SelectValue>
-          </SelectTrigger>
-          <SelectContent>
-            {options.map((option) => (
-              <SelectItem
-                key={option.value}
-                value={option.value}
-                label={option.label}
-              >
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </FormField>
-    )
-  }
-
   return (
-    <FormField label="Ref" htmlFor={FIELD_ID} hint={refHint(source, branches)}>
-      <Input
-        id={FIELD_ID}
-        required
-        maxLength={255}
-        className={textVariants({ role: "data" })}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-      />
-    </FormField>
+    <BranchRefField
+      branches={branches}
+      value={value}
+      onChange={onChange}
+      onSuggest={onSuggest}
+      chosen={chosen}
+      textHint={refHint(source, branches)}
+    />
   )
 }
 
 function refHint(
   source: RepositorySource,
-  branches: {
-    isFetching: boolean
-    isError: boolean
-    error: Error | null
-  }
+  branches: { isError: boolean; error: Error | null }
 ): string {
-  if (branches.isFetching) return "Leyendo las ramas del repositorio…"
   if (source === "hosted") {
     return "Rama que se publica: cada push a ella actualiza el contenido."
   }

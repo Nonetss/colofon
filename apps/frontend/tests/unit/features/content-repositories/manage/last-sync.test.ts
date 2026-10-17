@@ -1,9 +1,9 @@
 import { describe, expect, test } from "bun:test"
+import type { ContentRepository } from "@/features/admin/content/model/types"
 import {
   lastSyncOf,
   shortCommit,
-} from "@/features/admin/content/model/last-sync"
-import type { ContentRepository } from "@/features/admin/content/model/types"
+} from "@/features/content-repositories/manage/model/last-sync"
 
 const AT = "2026-02-01T10:00:00.000Z"
 

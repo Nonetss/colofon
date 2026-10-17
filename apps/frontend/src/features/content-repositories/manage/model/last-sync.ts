@@ -1,6 +1,11 @@
-import type { ContentRepository } from "@/features/admin/content/model/types"
-
 const SHORT_COMMIT_LENGTH = 7
+
+/** The fields of a repository that record its last sync. */
+export type SyncRecord = {
+  lastSyncedAt: string | null
+  lastCommit: string | null
+  lastSyncError: string | null
+}
 
 /** The outcome of a repository's last sync, as the card shows it. */
 export type LastSync =
@@ -8,7 +13,7 @@ export type LastSync =
   | { state: "failed"; at: string; error: string }
   | { state: "ok"; at: string; commit: string | null }
 
-export function lastSyncOf(repository: ContentRepository): LastSync {
+export function lastSyncOf(repository: SyncRecord): LastSync {
   if (repository.lastSyncedAt === null) return { state: "never" }
   if (repository.lastSyncError !== null) {
     return {
