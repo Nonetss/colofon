@@ -36,7 +36,7 @@
       "id": "questions",
       "name": "Rondas de preguntas",
       "role": "Comando",
-      "sub": "/doc:questions",
+      "sub": "/colofon-questions",
       "parent": "writer",
       "dotted": ["reviewer"],
       "info": "Las respuestas que cierran una sección también las revisa una persona"

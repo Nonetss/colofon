@@ -22,7 +22,7 @@ no se compila ni se ejecuta nada.
 | `diagrams/` | Los diagramas de la guía, mostrados con `<Diagram id="…" />`: los dibujados a mano, un ejemplo de cada tipo que la plataforma coloca sola y una ilustración en SVG |
 | `skills/guide/SKILL.md` | Una skill que la plataforma sirve a otros agentes: dónde explica esta guía cada parte del contrato |
 | `AGENTS.md` | Instrucciones para el agente de IA que escribe aquí: las reglas comunes y, en «Este sitio», lo propio de la guía |
-| `.agents/`, `.claude/` | Las skills y los commands `/doc:` del agente que escribe, **comunes a todo repositorio de contenido**: este es su original |
+| `.agents/skills/colofon-*/`, `.claude/` | Las skills de escritura de colofon, **las mismas para todo repositorio de contenido**: este es su original, y la plataforma las sirve desde aquí. Tu repositorio no las copia |
 | `.vscode/settings.json` | Autocompletado y validación de todos los ficheros YAML, a partir de la plataforma |
 
 ## Nombres del contrato frente a los tuyos
@@ -43,8 +43,8 @@ tuyo, en el idioma en que escribas. La tabla completa está en
    catálogo, sus diagramas, sus estilos y su skill servida por los tuyos;
    conserva las claves de `doc.config.yaml` y cambia sus valores. En
    `AGENTS.md`, reescribe solo la sección «Este sitio» con lo propio de tu
-   sitio. **`.agents/` y `.claude/` se copian tal cual y no se editan**:
-   cuando cambien aquí, vuelve a copiarlos enteros.
+   sitio. **No copies `.agents/` ni `.claude/`**: las skills de escritura las
+   sirve la plataforma, y tu agente las instala desde ella.
 2. **Regístralo en la plataforma** en `/admin/content`: un nombre, un slug, y
    o bien la URL `https://` del repositorio y su rama, o bien «alojado en la
    plataforma» para hacer push a la propia plataforma.
@@ -66,15 +66,20 @@ su página «Primeros pasos».
 
 ## Escribir con un agente de IA
 
-`AGENTS.md` (importado por `CLAUDE.md`) y las skills de `.agents/skills/` le
-indican a un agente cómo se escribe un repositorio de contenido:
-`documentation` para el repositorio entero y una skill por carpeta (`docs`,
-`catalog`, `diagrams`, `styles`, `skills`). Las skills y los commands son
-comunes a todos los sitios y leen lo propio de cada uno de sus declaraciones
-y de la sección «Este sitio» de su `AGENTS.md`. `/doc:questions <section>` ejecuta una ronda de preguntas para
-terminar una sección: el agente escribe las preguntas en `questions.md`,
-alguien las responde y, al ejecutar `/doc:questions` de nuevo, pasa las respuestas
-a las páginas.
+La plataforma sirve las **skills de escritura de colofon**: `colofon-documentation`
+para el repositorio entero, una por carpeta (`colofon-docs`, `colofon-catalog`,
+`colofon-diagrams`, `colofon-styles`, `colofon-skills`) y una por tarea
+(`colofon-new-page`, `colofon-new-diagram`, `colofon-check`, `colofon-review`,
+`colofon-pending`, `colofon-questions`). Para instalarlas, copia el texto de
+«Skills para tu IA» en `/me`, o la pestaña «Skills» al crear una API key, y
+pégaselo a tu agente: las instala todas, junto con `colofon` y las skills de
+cada proyecto que puedas leer.
+
+En tu repositorio, `AGENTS.md` (importado por `CLAUDE.md`) le dice al agente
+qué skill cargar y, en «Este sitio», lo propio de tu documentación. Por
+ejemplo, `/colofon-questions <sección>` ejecuta una ronda de preguntas: el
+agente escribe las preguntas en `questions.md`, alguien las responde y, al
+ejecutarla de nuevo, pasa las respuestas a las páginas.
 
 ## La única regla
 

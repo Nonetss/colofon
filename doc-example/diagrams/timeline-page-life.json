@@ -4,7 +4,7 @@
   "desc": "Una página de esta guía desde su primer borrador hasta su última revisión contra la plataforma",
   "events": [
     { "name": "Primer borrador", "date": "2026-09-01", "entity": "files/page" },
-    { "name": "Ronda de preguntas", "date": "2026-09-08", "info": "Con /doc:questions se apunta lo que aún no se sabe en open_questions" },
+    { "name": "Ronda de preguntas", "date": "2026-09-08", "info": "Con /colofon-questions se apunta lo que aún no se sabe en open_questions" },
     { "name": "Revisión", "date": "2026-09-22" },
     { "name": "Publicada", "date": "2026-10-01", "focal": true },
     { "name": "Revisada", "sub": "contra la plataforma", "date": "2026-10-16", "entity": "header-fields/actualizado" }

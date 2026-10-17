@@ -11,25 +11,23 @@ al final, en [«Este sitio»](#este-sitio).
 
 ## Sobre este documento
 
-- Las instrucciones para agentes son este `AGENTS.md` más las skills de
-  `.agents/skills/` y los commands de `.agents/commands/doc/`. `CLAUDE.md` solo
-  importa este fichero (`@AGENTS.md`) para que todos los agentes lean el mismo
-  texto: nunca añadas instrucciones a `CLAUDE.md`.
-- **`.agents/` es común a todos los repositorios de contenido de colofon.**
-  Explica cómo se documenta para la plataforma, nunca qué contiene un sitio.
-  Se copia tal cual de la plantilla (`doc-example`) y no se edita en el
-  repositorio de un sitio: solo se cambia en la plantilla, y cada sitio la
-  vuelve a copiar entera.
+- Las instrucciones para agentes son este `AGENTS.md` más las **skills de
+  escritura de colofon** (`colofon-documentation` y las demás `colofon-*`).
+  `CLAUDE.md` solo importa este fichero (`@AGENTS.md`) para que todos los
+  agentes lean el mismo texto: nunca añadas instrucciones a `CLAUDE.md`.
+- **Las skills de escritura son de la plataforma.** Explican cómo se
+  documenta para colofon, nunca qué contiene un sitio, y son las mismas para
+  todos los repositorios de contenido. La plataforma las sirve en
+  `/.well-known/agent-skills/`, y el agente las instala una vez para todo el
+  usuario con el texto de «Skills para tu IA» de `/me` (o siguiendo
+  «Configurar tu agente» en el `/llms.txt` de la plataforma). Un repositorio
+  de contenido nunca las copia: solo tiene su contenido y este `AGENTS.md`.
 - Todo lo que es propio de este sitio vive en la sección «Este sitio» de este
   fichero, o en sus declaraciones (`doc.config.yaml`, `menu.yaml`,
   `catalog/*/_type.yaml`). Una convención nueva del sitio va a «Este sitio»,
   en el mismo commit que el cambio que la introduce.
 - Todo lo que hay antes de «Este sitio» es igual en todos los repositorios de
   contenido.
-- Las skills viven en `.agents/skills/<name>/`, y `.claude/skills/<name>` es
-  un enlace simbólico a ellas (`../../.agents/skills/<name>`). Los commands
-  viven en `.agents/commands/doc/<name>.md`, se invocan como `/doc:<name>`, y
-  `.claude/commands/doc` enlaza a esa carpeta.
 
 ## Mapa
 
@@ -44,24 +42,30 @@ al final, en [«Este sitio»](#este-sitio).
 | `diagrams/<id>.svg` | Una ilustración dibujada a mano en SVG, filtrada y pintada con los colores del tema |
 | `styles/<módulo>.css` | Los estilos propios del sitio (opcional), un fichero por módulo de la plataforma (`theme.css`, `tables.css`…), aplicados encima de los suyos |
 | `skills/<name>/SKILL.md` | Skills que la plataforma **sirve a los agentes que leen** el sitio: sobre el proyecto documentado, propias de cada sitio |
-| `.agents/skills/` | Las skills **para ti**, el agente que escribe aquí: comunes a todo sitio |
-| `.agents/commands/doc/` | Los commands `/doc:` comunes: `questions`, `pending`, `check`, `review`, `new-page`, `diagram` |
 | `.vscode/settings.json` | El catálogo de esquemas de la plataforma, para el autocompletado en el editor |
 
-## Skills del proyecto
+## Skills de escritura
 
-Antes de escribir o cambiar nada, carga la skill `documentation` (la
-herramienta Skill en Claude Code, o lee `.agents/skills/documentation/SKILL.md`)
-y la skill de la carpeta que vas a tocar:
+Antes de escribir o cambiar nada, carga la skill `colofon-documentation` (la
+herramienta Skill en Claude Code) y la de la carpeta que vas a tocar. Si no
+las tienes instaladas, pide al usuario el texto de «Skills para tu IA» de
+`/me` en la plataforma (su dirección está en «Este sitio»), o sigue
+«Configurar tu agente» en su `/llms.txt`.
 
-| Carpeta | Skill | Qué contiene |
+| Carpeta o tarea | Skill | Qué contiene |
 | --- | --- | --- |
-| La raíz (`doc.config.yaml`, `menu.yaml`) | `documentation` | El modelo mental (lo común frente a lo del sitio, dónde se explica el contrato), las reglas que se aplican siempre, la estructura y el menú, la validación y las rondas de preguntas |
-| `docs/` | `docs` | Dónde va una página y cómo se llama, la cabecera, cómo se lee una página, el MDX sin código, los componentes y los enlaces |
-| `catalog/` | `catalog` | Datos o página, cómo se escriben un `_type.yaml` y una entidad, y cómo se muestran con `<Entities>` |
-| `diagrams/` | `diagrams` | Qué forma elegir, una referencia por tipo, recetas dibujadas a mano y cómo se escriben y se comprueban |
-| `styles/` | `styles` | Variable del tema o regla de un módulo, cómo se escribe un módulo y dónde se reportan sus problemas |
-| `skills/` | `skills` | Las skills que la plataforma sirve a los agentes que leen el sitio |
+| La raíz (`doc.config.yaml`, `menu.yaml`) | `colofon-documentation` | El modelo mental (lo de la plataforma frente a lo del sitio, dónde se explica el contrato), las reglas que se aplican siempre, la estructura y el menú, la validación y las rondas de preguntas |
+| `docs/` | `colofon-docs` | Dónde va una página y cómo se llama, la cabecera, cómo se lee una página, el MDX sin código, los componentes y los enlaces |
+| `catalog/` | `colofon-catalog` | Datos o página, cómo se escriben un `_type.yaml` y una entidad, y cómo se muestran con `<Entities>` |
+| `diagrams/` | `colofon-diagrams` | Qué forma elegir, una referencia por tipo, recetas dibujadas a mano y cómo se escriben y se comprueban |
+| `styles/` | `colofon-styles` | Variable del tema o regla de un módulo, cómo se escribe un módulo y dónde se reportan sus problemas |
+| `skills/` | `colofon-skills` | Las skills que la plataforma sirve a los agentes que leen el sitio |
+| Una página nueva | `colofon-new-page` | La página con su cabecera, su entrada en el menú y su fila en «¿Dónde encuentro…?» |
+| Un diagrama nuevo | `colofon-new-diagram` | Elige la forma, lo escribe en `diagrams/` y lo comprueba |
+| Comprobar el contenido | `colofon-check` | Lo que la plataforma reportaría en la próxima sincronización, sin editar |
+| Revisar un fichero | `colofon-review` | Una página, entidad, diagrama o módulo de estilos contra las convenciones, sin editar |
+| Lo pendiente | `colofon-pending` | Lo que queda por resolver o revisar, por sección |
+| Una ronda de preguntas | `colofon-questions` | Las preguntas para terminar una sección, o pasar a las páginas las respuestas de `questions.md` |
 
 Una tarea que cruza carpetas carga varias. El contrato de la plataforma lo
 explica la guía «Escribir documentación» (repositorio `doc-example` en la
@@ -69,13 +73,13 @@ plataforma); las skills citan sus páginas por ruta.
 
 ## Reglas estrictas
 
-### No edites `.agents/`
+### Las skills de escritura son de la plataforma
 
-Las skills y los commands de `.agents/` son comunes a todos los sitios. Nunca
-los cambies, añadas ni borres en el repositorio de un sitio, aunque no
-encajen con él. Si una skill está mal o le falta algo, díselo al usuario: se
-corrige en la plantilla `doc-example`. Lo que es propio de este sitio va en
-«Este sitio».
+Nunca copies las skills `colofon-*` en el repositorio de un sitio ni edites
+una copia instalada, aunque no encajen con él. Si una está mal o le falta
+algo, díselo al usuario: se corrige en la plataforma, y todo agente la recibe
+al volver a instalar las skills. Lo que es propio de este sitio va en «Este
+sitio».
 
 ### Nunca escribas un secreto
 
@@ -99,7 +103,7 @@ español: las claves de todo fichero YAML, los tipos de campo, la cabecera
 común de página (`titulo`, `descripcion`, `icono`, `orden`, `actualizado`) y
 `fuente`. Cambiarlos rompe la validación. Todo lo demás (ids de tipo, nombres
 de campo, valores, carpetas, prosa) es propio del sitio, y lo que ya existe no
-se renombra. La tabla completa está en la skill `documentation`,
+se renombra. La tabla completa está en la skill `colofon-documentation`,
 `references/contract-names.md`.
 
 ### Declara antes de usar
@@ -160,9 +164,13 @@ Lo único de este fichero que cambia de un repositorio de contenido a otro.
 
 La guía **«Escribir documentación»**: explica cómo escribir un repositorio de
 contenido para la plataforma y **usa cada función que explica**, de modo que
-sus propios ficheros son los ejemplos que copia quien empieza. Es además la
-plantilla: su `.agents/` es el original del que copian todos los sitios.
-Cuando la guía y la plataforma no coinciden, es un error de la guía.
+sus propios ficheros son los ejemplos que copia quien empieza. Además, su
+`.agents/skills/colofon-*/` es el original de las skills de escritura que
+sirve la plataforma: es el único repositorio de contenido que las tiene, y
+el único sitio donde se editan (`.claude/skills/` enlaza a ellas). Cuando la
+guía y la plataforma no coinciden, es un error de la guía.
+
+La plataforma: https://doc.noneweb.online (repositorio `doc-example`).
 
 ### Nombres
 
@@ -230,7 +238,7 @@ páginas modelo son `docs/repository/menu.mdx` y `docs/pages/components.mdx`.
 - Toda entidad lleva `fuente: manual` y como `actualizado` la fecha en que se
   comprobó contra el código de la plataforma.
 - `components.attributes` es la fuente de los atributos que lista la skill
-  `docs` (`references/components.md`, en la plantilla).
+  `colofon-docs` (`references/components.md`).
 
 ### Diagramas
 
@@ -246,9 +254,10 @@ páginas modelo son `docs/repository/menu.mdx` y `docs/pages/components.mdx`.
 - En los diagramas, un fichero del contrato es `"entity": "files/<id>"`, un
   componente `"components/<id>"` y un campo de cabecera
   `"header-fields/<id>"`.
-- Las secciones «Working example» de las referencias de la skill `diagrams`
-  nombran estos ficheros. Renombrar o mover un ejemplo, o la página de su
-  familia, obliga a actualizar esa referencia aquí, en la plantilla.
+- Las secciones «Working example» de las referencias de la skill
+  `colofon-diagrams` (`.agents/skills/colofon-diagrams/references/`) nombran
+  estos ficheros. Renombrar o mover un ejemplo, o la página de su familia,
+  obliga a actualizar esa referencia en el mismo cambio.
 
 ### Estilos
 
@@ -267,14 +276,15 @@ callout.
 agente dónde explica la guía cada parte del contrato. Es corta y apunta a la
 guía en vivo (`/doc-example/llms.txt`, las páginas «Referencia»). Cuando
 cambia una regla que enuncia o se mueve algo a lo que apunta, se actualiza en
-el mismo cambio. Las skills propias de la plataforma (`doc-writing`,
-`colofon`) viven en el repositorio de la plataforma, en `packages/api/skills/`.
+el mismo cambio. Las skills propias de la plataforma son otras: `colofon`
+vive en `packages/api/skills/` del repositorio de la plataforma, y las de
+escritura (`colofon-*`) en `.agents/skills/` de este.
 
 ### Mantener la guía al día con la plataforma
 
 Cuando la plataforma cambia lo que lee, el catálogo, la página que lo explica
-y, si hace falta, las skills comunes de `.agents/` cambian en el mismo
-cambio. El código está en `packages/content/src/` del repositorio de la
+y, si hace falta, las skills de escritura de `.agents/skills/` cambian en el
+mismo cambio. El código está en `packages/content/src/` del repositorio de la
 plataforma (con esta guía dentro como subtree: `../packages/content/src/`).
 Léelo para comprobar hechos; nunca lo edites desde aquí.
 
@@ -288,7 +298,7 @@ Léelo para comprobar hechos; nunca lo edites desde aquí.
 
 | La plataforma… | En `catalog/` | En `docs/` y lo demás |
 | --- | --- | --- |
-| Añade un fichero, tipo de campo, campo de cabecera, componente o tipo de diagrama | Una entidad nueva, `fuente: manual`, `actualizado` de hoy, `page` a su página | La página lo explica y cita la entidad en su cabecera. Un tipo de diagrama recibe además su sección en la página de su familia, su ejemplo `<type>-<topic>` y, en `.agents/skills/diagrams/`, su referencia `type-<type>.md` con su fila en la tabla de formas |
+| Añade un fichero, tipo de campo, campo de cabecera, componente o tipo de diagrama | Una entidad nueva, `fuente: manual`, `actualizado` de hoy, `page` a su página | La página lo explica y cita la entidad en su cabecera. Un tipo de diagrama recibe además su sección en la página de su familia, su ejemplo `<type>-<topic>` y, en `.agents/skills/colofon-diagrams/`, su referencia `type-<type>.md` con su fila en la tabla de formas |
 | Cambia uno (un atributo, un valor de enum, un presupuesto) | Actualiza los campos y `actualizado` | Actualiza el ejemplo, la tabla de claves y «Qué se reporta» de la página, y la skill común que lo cuente |
 | Quita uno | Borra la entidad | Quítalo de la página, de toda cabecera que lo cite y de las skills comunes |
 | Añade una propiedad que toda entidad de un tipo debe mostrar | Un campo nuevo en `_type.yaml` (`opcional: true` hasta rellenarlo), y luego todas las entidades | La columna en los `<Entities>` que la necesiten |
@@ -308,7 +318,7 @@ todos):
 2. **Aplicar, solo cuando el usuario lo diga.** Aplica lo aprobado siguiendo
    la tabla anterior. Sube `actualizado` en toda entidad y página que hayas
    comprobado, haya cambiado o no. Comprueba lo tocado como hace
-   `/doc:check`. Lo que no puedas resolver con el código queda como
+   `colofon-check`. Lo que no puedas resolver con el código queda como
    `open_questions` en su página, no como una suposición.
 
 Cuando una página se mueve o se renombra, actualiza cada `page:` que la
