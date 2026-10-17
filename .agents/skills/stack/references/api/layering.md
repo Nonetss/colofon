@@ -72,3 +72,7 @@ Every new or changed handler method gets its tests in `packages/api/tests/v1/<fe
 - Client calls and HTTP paths always carry the version: `orpc.<version>.<feature>.<method>()`, `/rpc/<version>/<feature>/<method>`, `/api/<version>/<feature>/<method>` — the segment comes from the top-level `appRouter`'s nesting, not a hardcoded prefix in `apps/backend`. A new version is a new `src/<version>/` folder plus one key in the package-root `router.ts`; existing versions are never touched.
 
 Guides (Spanish): `docs/human/backend-api.md`.
+
+## Private content repositories
+
+A `content_repository` row with an `owner_id` belongs to one user. The admin procedures (`listRepositories`, `createRepository`…) act on `audienceFilter("platform")` rows only; a user manages theirs through `v1.content.*My*` (`protectedProcedure`s that scope by `ownerId`, external HTTPS URLs only, at most `MAX_USER_REPOSITORIES`). Anything that reads content for a caller goes through `RepositoryAudience` (`v1/content/reader.ts`); the public editor-schema endpoints use `"platform"`.

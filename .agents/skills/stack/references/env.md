@@ -31,7 +31,7 @@
 - **Gateway variables** (`GATEWAY_HTTP_PORT`, `BACKEND_HTTP_UPSTREAM`, `FRONTEND_HTTP_UPSTREAM`) are read by `apps/gateway/routes.caddy` (imported by `Caddyfile` and `Caddyfile.dev`) and set only in the compose files. Their defaults are the Docker service addresses.
 - **`SKIP_ENV_VALIDATION=1`** bypasses `@nonete/env` in builds/CLI tasks. The Dockerfiles set it in the build stage only.
 - **`LOG_LEVEL`** (default `info`) sets the minimum severity. Logs go to stdout only: pretty-printed in development, JSON lines when `NODE_ENV=production`.
-- **No content variables.** The content repositories are rows of `content_repository`, managed at `/admin/content` (`v1.content.*Repository` procedures), not environment variables. Their clones live under `.content/` at the repo root (`../..` from the backend's workspace, like the `.env`). Content variables left in an old `.env` are ignored.
+- **No content variables.** The content repositories are rows of `content_repository`, managed at `/admin/content` (`v1.content.*Repository` procedures) and, for a user's own private repositories, at `/me/repositories` (`v1.content.*My*` procedures), not environment variables. Their clones live under `.content/` at the repo root (`../..` from the backend's workspace, like the `.env`). Content variables left in an old `.env` are ignored.
 
 ## Request flow and auth
 
