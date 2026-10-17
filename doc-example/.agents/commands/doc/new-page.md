@@ -1,15 +1,15 @@
 ---
-description: Write a new page of the guide with its header, its menu entry and its row in the section's "¿Dónde encuentro…?" table
-argument-hint: <section> <topic> (e.g. publishing "permisos de un repositorio")
+description: Write a new page with its header, its menu entry and its row in the section's "¿Dónde encuentro…?" table
+argument-hint: <section> <topic> (e.g. network "la salida por VPN")
 ---
 
-Write a new page of «Escribir documentación». The rules are in the `docs`
+Write a new page of this repository. The rules are in the `docs`
 skill (`references/sections-and-naming.md`, `references/header.md`,
 `references/writing-a-page.md`, `references/mdx.md`,
 `references/components.md`, `references/links.md`) and in the
 `documentation` skill (`references/menu.md`). Load both skills and read those
-references first: they are the source of truth, and this command only says
-how to run it.
+references first, and the «Este sitio» section of `AGENTS.md`: they are the
+source of truth, and this command only says how to run it.
 
 `$ARGUMENTS` is the section (a folder under `docs/`) and the topic. If either
 is missing, or the topic is already covered by another page, ask me instead
@@ -28,10 +28,12 @@ of it.
 
 1. Read the section's `index.mdx` and its neighbouring pages so the new one
    reads like them.
-2. Write the page in the shape of `writing-a-page.md`: example first, keys
-   table, shown working, "Qué se reporta". `actualizado` is today.
-3. Facts about the platform come from its pages under `docs/` or its code;
-   anything you cannot settle goes in `open_questions`, never invented.
+2. Write the page in the shape of `writing-a-page.md` and of its
+   neighbours: the answer first, then the details and what goes wrong.
+   `actualizado` is today.
+3. Facts come from a source: what I tell you, the existing pages and
+   catalog, or the system the page documents. Anything you cannot settle is
+   an open question (`references/header.md`), never invented.
 4. Add the menu entry in `menu.yaml` and a row in the section's "¿Dónde
    encuentro…?" table.
 5. If it explains a catalog entity, cite it in the header; if the entity's

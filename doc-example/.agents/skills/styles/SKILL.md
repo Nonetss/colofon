@@ -1,6 +1,6 @@
 ---
 name: styles
-description: The styles/ folder of this content repository, the site's own CSS that the doc platform cleans and applies over its own styles on this site's pages, one file per platform module (theme.css, page.css, controls.css, code.css, tables.css, diagrams.css, images.css, callouts.css, sections.css). A decision guide for theme variables vs a module rule, what this site's theme.css holds and why, writing a module (both themes, only the documented classes and variables, resources from docs/ or data:), what the platform removes and where it is reported. Use before adding or changing any file under styles/, before restyling a piece of the reader, and when the platform reports a problem on styles/.
+description: The styles/ folder of a doc platform content repository, the site's own CSS that the platform cleans and applies over its own styles on the site's pages, one file per platform module (theme.css, page.css, controls.css, code.css, tables.css, diagrams.css, images.css, callouts.css, sections.css). A decision guide for theme variables vs a module rule, writing a module (both themes, only the documented classes and variables, resources from docs/ or data:), what the platform removes and where it is reported. Use before adding or changing any file under styles/, before restyling a piece of the reader, and when the platform reports a problem on styles/.
 ---
 
 # Styles (`styles/`)
@@ -8,12 +8,13 @@ description: The styles/ folder of this content repository, the site's own CSS t
 One CSS file per platform style module in `styles/`, named after it
 (`theme.css`, `tables.css`…), all optional. The platform reads them with the
 pages, cleans them (no `@import`, no resource from outside, nothing it cannot
-parse) and applies them **after** its own styles, only on this site's pages.
-Where both set the same thing with the same selector, this site wins. How
-`styles/` works for any site (the modules, the theme variables, the classes
-of each module, what is removed, the limits) is explained in the guide,
-`docs/repository/styles.mdx`. This skill is how **this site's** styles are
-kept. The repository as a whole is in the `documentation` skill.
+parse) and applies them **after** its own styles, only on the site's pages.
+Where both set the same thing with the same selector, the site wins. How
+`styles/` works (the modules, the theme variables, the classes of each
+module, what is removed, the limits) is explained in the guide's
+`repository/styles` page. This skill is how **you** write the site's styles
+well; why the site styles what it does, when it says, is in `AGENTS.md`
+(«Este sitio»). The repository as a whole is in the `documentation` skill.
 
 ## 1. Philosophy
 
@@ -23,12 +24,13 @@ kept. The repository as a whole is in the `documentation` skill.
   one variable in `theme.css` restyles links, bold, the sidebar's current page
   and the focus ring at once, in step. A rule on one class restyles one
   piece and starts drifting from the rest.
-- **The guide is its own example.** This site's `styles/` shows the feature
-  working, so it stays small: a reader copies it to start their own.
+- **Small.** Every module is a rule to keep in step with the platform's
+  classes; add one only when a page needs it, and ask the user before
+  restyling the site on your own initiative.
 - **Readable first.** A style that hurts contrast in either theme is a bug,
   however good it looks in one.
-- **Only the documented names.** The classes and variables listed in
-  `docs/repository/styles.mdx` are the contract. Anything else the platform
+- **Only the documented names.** The classes and variables listed in the
+  guide's `repository/styles` page are the contract. Anything else the platform
   may rename without notice.
 
 ## 2. Variable or rule?
@@ -45,9 +47,9 @@ kept. The repository as a whole is in the `documentation` skill.
 
 | Task | Read |
 | --- | --- |
-| What this site's `styles/` holds, its colours and why | [this-site-styles.md](references/this-site-styles.md) |
+| What the site's `styles/` holds and why | `styles/` itself and `AGENTS.md` («Este sitio») |
 | Writing or changing a module: names, order, both themes, resources, checking | [writing-a-module.md](references/writing-a-module.md) |
-| The modules, the theme variables, each module's classes, what is removed, the limits | The guide: `docs/repository/styles.mdx` |
+| The modules, the theme variables, each module's classes, what is removed, the limits | The guide's `repository/styles` page |
 
 ## 4. Always true
 
@@ -63,10 +65,9 @@ kept. The repository as a whole is in the `documentation` skill.
 - **No `@import` and no URL from outside** (`https://…`, `//…`): the
   platform removes them. Images come from `docs/` (`url(../docs/img/x.png)`,
   written from `styles/`); fonts, as `data:`.
-- **When the platform changes a module, a class or a variable, this site's
-  `styles/` and `docs/repository/styles.mdx` change with it**, in the same
-  change.
-- Comments in Spanish, like the prose. The platform drops them before
+- **When the platform changes a module, a class or a variable, the site's
+  `styles/` changes with it.**
+- Comments in the site's prose language. The platform drops them before
   serving.
 - **No secret**, not even in a comment.
 
@@ -78,7 +79,7 @@ kept. The repository as a whole is in the `documentation` skill.
 | A variable set only in `:root` | The dark theme keeps the platform's colour, or worse, mixes both |
 | `@import url(https://fonts…)` or a background from a CDN | Removed and reported; the page falls back with no warning to the reader |
 | Styling an undocumented class (`.flex`, a Tailwind utility, a React island's internals) | It changes without notice and the style silently stops applying |
-| `!important` everywhere | This site already wins at equal weight. `!important` hides which rule applies and breaks the next override |
+| `!important` everywhere | The site already wins at equal weight. `!important` hides which rule applies and breaks the next override |
 | A whole platform module pasted in and edited | Copies rules that will drift; write only what changes |
 | A file named `tables.css` or a folder `styles/` | Reported as not a module, or never read at all |
 | A colour that only works in one theme | Unreadable text in the other one |
@@ -87,10 +88,9 @@ kept. The repository as a whole is in the `documentation` skill.
 
 - Every file in `styles/` is a module name, and every variable you set is
   in `:root` and `.dark`.
-- Every class and variable you used is in `docs/repository/styles.mdx`.
+- Every class and variable you used is in the guide's `repository/styles`
+  page.
 - After the push and the sync, open the repository's home as an admin: no
   problem on `styles/` (`references/writing-a-module.md`, "Checking").
 - Look at a page with links, bold, code, a table, a callout and a diagram,
   in **both** themes, and check that the text still reads.
-- If the change shows something new about `styles/`, the guide's page says
-  it.

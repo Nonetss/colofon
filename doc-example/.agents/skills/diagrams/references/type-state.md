@@ -102,6 +102,7 @@ en dos diagramas") and the accents. Everything valid is still drawn.
 One line per transition, in order: "Sin publicar → Publicada: PUSH",
 "Publicada → Publicada: PUSH", with the state names linked.
 
-## In this site
+## Working example
 
-`diagrams/state-page-lifecycle.json`, shown in `docs/diagrams/graphs.mdx`.
+The guide shows it working (repository `doc-example`):
+`diagrams/state-page-lifecycle.json`, in its `diagrams/graphs` page.

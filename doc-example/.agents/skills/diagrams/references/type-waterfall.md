@@ -97,6 +97,7 @@ pasos y este tiene 12: pártelo en dos diagramas"), and the accents.
 A table with the columns "Cambio" and "Acumulado": the start, each step with
 its signed change and the running total after it, and the end total.
 
-## In this site
+## Working example
 
-`diagrams/waterfall-problems.json`, shown in `docs/diagrams/charts.mdx`.
+The guide shows it working (repository `doc-example`):
+`diagrams/waterfall-problems.json`, in its `diagrams/charts` page.

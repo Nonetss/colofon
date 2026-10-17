@@ -1,14 +1,14 @@
 # Writing an entity
 
 One YAML file per entity in its type's folder, with only the fields its type
-declares. The contract is `docs/data/entities.mdx`. An entity that fails
+declares. The contract is the guide's `data/entities` page. An entity that fails
 its type is left out of every table and reported; the rest of the catalog is
 published.
 
-## A real entity
+## An entity
 
 ```yaml
-# catalog/header-fields/icono.yaml → id: icono
+# catalog/header-fields/icono.yaml → id: icono (from the guide)
 required: false
 kind: texto
 meaning: El icono de la página, en la barra lateral, la cabecera de la página y su tarjeta
@@ -24,36 +24,40 @@ actualizado: 2026-10-15
   guiones (c11-sonic)".
 - **`.yaml`, never `.yml`** ("La extensión es .yaml, no .yml").
 - A file starting with `_` is not an entity (that is how `_type.yaml` hides).
-- Pick the id the contract uses when there is one (`field-kinds/ref`,
-  `header-fields/titulo`, `diagram-types/org-chart`: the value as written);
-  otherwise a short English name (`files/doc-config`). The id is what
-  `catalog:` links and header `ref` fields name: don't rename it lightly.
+- Pick the name the thing already has when there is one (a hostname, a
+  stack's name, the value as written in a file), following the id rule the
+  type's `descripcion` or `AGENTS.md` («Este sitio») gives; otherwise a short
+  name in the language of the existing ids. The id is what `catalog:` links,
+  `ref` fields and diagrams name: don't rename it lightly.
 
 ## Fields
 
 - **Only the fields the type declares**, and every required one. An unknown
   field fails the entity.
 - **One fact per field, one line per value.** A value is a table cell.
-- Values meant to be read (`purpose`, `meaning`, `value`) are Spanish
-  sentences without a final period; `enum` values are exactly as declared.
+- Values meant to be read (`purpose`, `meaning`) are sentences in the site's
+  prose language, without a final period; `enum` values are exactly as
+  declared.
 - No field the type doesn't have, even "for later": declare it first.
 
 ## Provenance: `fuente` and `actualizado`
 
-Every entity accepts them without declaring them. In this site:
+Every entity accepts them without declaring them:
 
-- `fuente: manual` on every entity (they are written by hand from the
-  platform's behaviour; on other sites it names the panel the data was read
-  from, and the panel wins when they disagree).
-- `actualizado:` the date the entity was **checked against the platform**,
-  `YYYY-MM-DD`. Update it whenever you re-check, even with no change.
+- `fuente`: where the data was read from: the panel, API or command (`komodo`,
+  `proxmox`), or `manual` when it is written by hand. When the entity and its
+  source disagree, the source wins. Which sources a site uses is in
+  `AGENTS.md` («Este sitio»).
+- `actualizado:` the date the entity was **last checked against its
+  source**, `YYYY-MM-DD`. Update it whenever you re-check, even with no
+  change.
 
 ## References: `ref` and `ficha`
 
 | Kind | Write | Must exist |
 | --- | --- | --- |
-| `ref` | The target's id: `kind: texto` (in `header-fields`) | `catalog/<a>/<id>.yaml` |
-| `ficha` | A page path under `docs/`, no `.mdx`, no `docs/`: `page: repository/menu`, `page: diagrams` for a section's `index.mdx` | `docs/repository/menu.mdx`, `docs/diagrams/index.mdx` |
+| `ref` | The target's id: `host: pve-01` | `catalog/<a>/<id>.yaml` |
+| `ficha` | A page path under `docs/`, no `.mdx`, no `docs/`: `page: network/dns`, `page: network` for a section's `index.mdx` | `docs/network/dns.mdx`, `docs/network/index.mdx` |
 
 A `ref` makes the target's page list this entity under its references; a
 `ficha` makes this entity's label link to that page instead of its generated
@@ -64,7 +68,7 @@ catalog page.
 Quote the value when it:
 
 - contains `: ` → `purpose: "La vía de entrada: Pangolin"`;
-- starts with `<` (this site's rule: `tag: "<Callout>"`), or with `[`, `{`,
+- starts with `<` (`tag: "<Callout>"`), or with `[`, `{`,
   `*`, `&`, `!`, `%` or `@`, which YAML reads as syntax; a `<` mid-string
   (`path: diagrams/<id>.json`) needs nothing;
 - reads as `yes`, `no`, `on`, `off`, `null` or a number → `value: "true o
@@ -77,7 +81,7 @@ as you type.
 ## Lists of objects
 
 ```yaml
-# catalog/components/entities.yaml (part)
+# catalog/components/entities.yaml (part, from the guide)
 attributes:
   - name: type
     required: true
@@ -92,6 +96,7 @@ Each item has exactly the `objeto`'s `campos`, all required unless declared
 
 ## Then
 
-- Cite the entity from the page that explains it (header `files`,
-  `components` or `diagram_types`), and point its `page` there.
+- Cite the entity from the page that explains it (a header field the site
+  declares in `doc.config.yaml`, or a `catalog:` link), and point its
+  `ficha` field there when the type has one.
 - No secret in any field, not even provisionally.

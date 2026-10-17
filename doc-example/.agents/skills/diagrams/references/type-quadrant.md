@@ -96,6 +96,7 @@ the dot is still drawn), more than 12 items and more than two accents.
 A list with each item and its quadrant: "Primeros pasos: Hazlo ya",
 "Catálogo: Planifícalo".
 
-## In this site
+## Working example
 
-`diagrams/quadrant-what-to-write.json`, shown in `docs/diagrams/concepts.mdx`.
+The guide shows it working (repository `doc-example`):
+`diagrams/quadrant-what-to-write.json`, in its `diagrams/concepts` page.

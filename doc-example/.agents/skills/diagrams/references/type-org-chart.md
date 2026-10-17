@@ -92,6 +92,7 @@ es ninguno de los nodos"; that line is left out).
 The tree as a nested list, each line "Name (role)", and "· también reporta a
 X" after a node with `dotted`, with names linked.
 
-## In this site
+## Working example
 
-`diagrams/org-chart-guide-roles.json`, shown in `docs/diagrams/graphs.mdx`.
+The guide shows it working (repository `doc-example`):
+`diagrams/org-chart-guide-roles.json`, in its `diagrams/graphs` page.

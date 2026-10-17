@@ -1,79 +1,62 @@
-# Writing a page of this guide
+# Writing a page
 
-How a page of «Escribir documentación» reads. The pages under `docs/` follow
-one shape so a writer who lands on any of them finds the same things in the
-same places. Read `docs/repository/menu.mdx` or `docs/pages/components.mdx`
-as the model.
+How a page reads, so a reader who lands on any of them finds the same things
+in the same places. Before writing, read the section's `index.mdx` and a
+neighbouring page: a new page reads like the ones next to it. Conventions
+particular to this site (a shape its pages share, words it uses) are in the
+«Este sitio» section of `AGENTS.md`.
 
 ## The shape
 
-| Part | What it holds | Example in this guide |
-| --- | --- | --- |
-| Header | `titulo`, a `descripcion` that says what the reader learns, the entities it explains | `docs/repository/config.mdx` |
-| The thing itself | A short, copyable example of the file or block, in a fence | The `menu.yaml` block of `docs/repository/menu.mdx` |
-| Its parts | A keys table, then bullets for the rules a table can't hold | "Las claves" in `docs/repository/config.mdx` |
-| Shown working | The real component or diagram after the block that writes it | The `<Callout>` in `docs/pages/components.mdx` |
-| What gets reported | What happens when it is written wrong, and what still works | "Qué se reporta" in `docs/repository/menu.mdx` |
-| Where next | On a section's `index.mdx`, a "¿Dónde encuentro…?" table | `docs/publishing/index.mdx` |
+| Part | What it holds |
+| --- | --- |
+| Header | `titulo`, a `descripcion` that says what the reader learns or can do, the entities the page is about (`header.md`) |
+| The answer | What the reader came for, first: the fact, the example to copy, the table, or the steps |
+| The details | Why it is so, the options, the rules a table can't hold |
+| Shown, not described | The `<Entities>` table, the `<Diagram>`, the screenshot, right where the text needs it |
+| When it goes wrong | What fails, how it shows, what to do, and what still works meanwhile |
+| Where next | On a section's `index.mdx`, a "¿Dónde encuentro…?" table |
 
 Not every page has every part; none has them in another order.
 
-## Lead with the example
+## Lead with the answer
 
 - **First the thing, then what each part does.** A reader should be able to
-  copy the example and adapt it.
-- Examples use a **realistic domain**, not `foo`: the guide's examples are a
-  homelab (`machines`, `docker-01`, `network/dns`), so they read as a real
-  site. Reuse it rather than inventing a second one.
-- Comment a YAML example inline (`# una carpeta, con todas sus páginas`) when
-  a line needs one word of explanation.
+  stop after the first screen with what they came for.
+- Examples use the **site's real domain**, not `foo`: real names, real
+  paths, real commands (never real secrets).
+- Comment a YAML or shell example inline when a line needs one word of
+  explanation.
 
-## Keys tables
+## Kinds of page
 
-```mdx
-| Clave | Qué es |
-| --- | --- |
-| `nombre` | Obligatoria. El nombre del sitio, tal como lo muestra el lector. |
-| `descripcion` | Opcional. Una frase sobre de qué trata la documentación. |
-```
+| Page | Leads with | Then |
+| --- | --- | --- |
+| A thing (a machine, a service, a file format) | What it is and what it is for, in one or two sentences, then its key facts | How it is set up, what depends on it, where its data lives |
+| A procedure | The steps, numbered, each one action, with the exact command or screen | What to check after, and what to do when a step fails |
+| A reference | The table (an `<Entities>` when it is catalog data) | The rules a table can't hold, as bullets |
+| A section's `index.mdx` | What the topic covers, an overview diagram when it helps | The "¿Dónde encuentro…?" table |
 
-- Header `| Clave | Qué es |`; every key in backticks.
-- The description starts with **"Obligatoria."** or **"Opcional."** (or
-  "Obligatorias." / "Opcionales." for a group), then one or two sentences.
-- After the table, a sentence for what happens with any other key ("Cualquier
-  otra clave se reporta").
-- A table of **reference data** (every file, field kind, header field,
-  component, diagram type) is never a keys table typed by hand: it is
-  `<Entities>` (`components.md`).
+- **A procedure is its own page** with numbered steps, so a person and an
+  agent follow it the same way.
+- **A table of options** that are not catalog data is a Markdown table; when
+  it lists keys, say for each one whether it is required ("Obligatoria." /
+  "Opcional.") and what happens with any other.
+- **A table of repeated data** (every machine, every file, every service) is
+  never typed by hand: it is `<Entities>` of a catalog type (`components.md`).
 
-## Say what gets reported
+## Say what goes wrong
 
-Writers mostly arrive because something was reported. For every way to get it
+Readers often arrive because something failed. For every common way it goes
 wrong, say:
 
-- **what is reported** (and where: on the page, on the repository's home for
-  `menu.yaml` and diagrams, in the log);
-- **what still works** ("el resto del menú se usa", "el resto de la tabla se
-  renderiza igualmente");
-- for a declaration (`doc.config.yaml`, `menu.yaml`, `_type.yaml`), that the
-  platform keeps the last valid one.
+- **what fails and how it shows** (the error as it is printed, the screen,
+  the report: quote messages exactly);
+- **what to do**;
+- **what still works** meanwhile.
 
-Use a `| Escrito | Qué ocurre |` table when there are several cases
-(`docs/pages/markdown.mdx`, "Qué rechaza"), bullets under "Qué se reporta"
-otherwise. Quote the platform's messages as it shows them.
-
-## Show it working
-
-When this site can show the feature, show it **right after the fenced block
-that writes it**, so the reader sees source and result together:
-
-```mdx
-<Entities type="field-kinds" group="family" columns="id,value,takes" />
-```
-
-followed by the same line unfenced. For a diagram, the `<Diagram>` of a real
-file of `diagrams/`; for the catalog, a link to its generated page
-(`[menu.yaml](catalog:files/menu)`).
+Use a `| Síntoma | Causa | Qué hacer |` (or `| Escrito | Qué ocurre |`) table
+when there are several cases, bullets otherwise.
 
 ## "¿Dónde encuentro…?" tables
 
@@ -84,7 +67,7 @@ Section entry pages (and the home) end, or nearly end, with one:
 
 | Quiero… | Página |
 | --- | --- |
-| Autocompletado y validación mientras escribo | [El editor](editor.mdx) |
+| Restaurar una VM desde una copia | [Restaurar](restore.mdx) |
 ```
 
 One row per question a reader brings, phrased as they would ("Quiero…" or
@@ -92,15 +75,13 @@ One row per question a reader brings, phrased as they would ("Quiero…" or
 
 ## Words
 
-- **Prose in Spanish**, direct, one idea per paragraph. The guide says "la
-  plataforma", "una página", "el lector", "un administrador".
+- **Prose in Spanish**, direct, one idea per paragraph.
 - **Platform UI words as the platform shows them**: "Otros", "Catálogo",
-  "Referencia", "Páginas que la citan", "Sincronizar", "Revisar", "Ampliar",
-  "Copiar en Markdown".
-- Contract names (`titulo`, `catalog:`, `_type.yaml`) and this site's ids are
-  code: in backticks.
-- A procedure is its own page with numbered steps, so a person and an agent
-  follow it the same way.
+  "Páginas que la citan", "Sincronizar", "Revisar", "Ampliar",
+  "Copiar en Markdown". The same for the UI words of the systems a page
+  documents: as their screens show them.
+- Contract names (`titulo`, `catalog:`, `_type.yaml`), ids, paths, commands
+  and values are code: in backticks.
 - Repeated facts with the same shape go to the catalog; the page cites them.
 - **Never a secret**, not even in an example: say where it lives and which
   account to use.
@@ -109,9 +90,9 @@ One row per question a reader brings, phrased as they would ("Quiero…" or
 
 | Anti-pattern | Why it fails |
 | --- | --- |
-| Explaining before showing | The reader came to copy; they scroll past the prose |
-| A keys table without "Obligatoria." / "Opcional." | The one thing the reader must know is missing |
-| Describing a feature without its failure | The page doesn't help the writer who was sent by a report |
-| A feature described but not shown, when the site could show it | The guide stops being its own example |
-| Restating another page's rules | Two copies drift; link the page instead |
+| Explaining before answering | The reader came for the answer; they scroll past the prose |
+| A procedure as a paragraph | Steps get skipped; nobody can say which one failed |
+| Describing something without how it fails | The page doesn't help the reader who was sent by a failure |
+| Describing in prose what a table or diagram shows better | Harder to scan, and it drifts from the data |
+| Restating another page's facts | Two copies drift; link the page instead |
 | An unknown buried in the prose | A question round only finds it in `open_questions` (or a "_Pending…_" line) |

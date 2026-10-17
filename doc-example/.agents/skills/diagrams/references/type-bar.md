@@ -114,7 +114,8 @@ than 12 categories, and the accents.
 
 A table: one row per category, one column per series, values with their unit.
 
-## In this site
+## Working example
 
-`diagrams/bar-pages-per-section.json` and `diagrams/bar-dumbbell-problems.json`,
-shown in `docs/diagrams/charts.mdx`.
+The guide shows it working (repository `doc-example`):
+`diagrams/bar-pages-per-section.json` and
+`diagrams/bar-dumbbell-problems.json`, in its `diagrams/charts` page.

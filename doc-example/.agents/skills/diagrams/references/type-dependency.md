@@ -57,7 +57,7 @@ and use `tree`), how pieces talk at runtime (draw it by hand,
 ## What you decide
 
 - **One node per package, module or service**, not per file, unless files are
-  the subject (as in this site's example).
+  the subject (as in the example above).
 - **Labels say what the dependency is for** (`CAMPOS`, `SU TIPO`), short and in
   capitals; drop them when every arrow means the same.
 - **Let the cycle be the accent.** With a cycle there is room for one focal
@@ -102,6 +102,7 @@ One line per node, "Página depende de doc.config.yaml, Diagrama, Entidad" or
 "Tipo no depende de nada", then one line per cycle, "Ciclo: Página → Diagrama
 → Página", with names linked.
 
-## In this site
+## Working example
 
-`diagrams/dependency-content-files.json`, shown in `docs/diagrams/graphs.mdx`.
+The guide shows it working (repository `doc-example`):
+`diagrams/dependency-content-files.json`, in its `diagrams/graphs` page.

@@ -1,8 +1,7 @@
 # The menu (`menu.yaml`)
 
 `menu.yaml` decides what the sidebar shows, grouped and ordered, wherever the
-pages are stored. The contract is `docs/repository/menu.mdx`; the file is the
-`files/menu` entity. It is a **declaration**: while it is broken, the
+pages are stored. The contract is the guide's `repository/menu` page. It is a **declaration**: while it is broken, the
 platform keeps its last valid version.
 
 ## Keys
@@ -39,18 +38,12 @@ Any other key is rejected. **Folders store the pages; the menu decides where
 they show**: a group can gather folders from anywhere, and each page keeps its
 URL.
 
-## This site's menu
+## The site's menu
 
-| Group (`titulo`) | `icono` | Entries |
-| --- | --- | --- |
-| Inicio | `rocket` | `{ ruta: getting-started, icono: compass }`, `{ ruta: repository, icono: folder-tree }` |
-| Escritura | `pen-line` | `{ ruta: pages, icono: file-text }`, `{ ruta: diagrams, icono: workflow }` |
-| Datos | `database` | `{ ruta: data, icono: table }`, `{ ruta: catalog, titulo: Referencia }` |
-| Publicación | `send` | `{ ruta: publishing, icono: git-branch }` |
-
-Every entry is a section folder with its icon, so every page of the guide is
-shown through its folder. The home (`docs/index.mdx`) is never an entry: it
-always shows as «Inicio».
+Read `menu.yaml` before adding a page: its groups, what each shows and how
+its entries are written (with an icon, a folder or a single page) are the
+site's choice. Follow the shape the existing entries already have. The home
+(`docs/index.mdx`) is never an entry: it always shows as «Inicio».
 
 ## Rules
 
@@ -66,9 +59,9 @@ always shows as «Inicio».
 - A menu `titulo` is only for when the sidebar needs a different title, and
   then the page's `titulo` must be the same (it is required in every header
   anyway).
-- The catalog is shown as `{ ruta: catalog, titulo: Referencia }` in
-  "Datos".
-- Group titles and descriptions are Spanish, like the rest of the site.
+- The catalog's generated pages also need an entry (`catalog`, or
+  `catalog/<type>` for one type), or they land in "Otros".
+- Group titles and descriptions are in the site's prose language.
 
 ## The menu wins
 
@@ -92,4 +85,5 @@ All on the repository's home, to admins:
 | An unknown key, a missing title, an icon Lucide lacks | The schema's message | Last valid `menu.yaml` kept |
 
 Without any `menu.yaml`, the sidebar is the folders of `docs/` ordered by
-their `index.mdx`'s `orden`, with the catalog last; this site always has one.
+their `index.mdx`'s `orden`, with the catalog last. Keep one: it is what
+decides the groups.

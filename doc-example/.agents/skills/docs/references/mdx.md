@@ -2,8 +2,8 @@
 
 The platform parses each page as MDX (GitHub Markdown plus MDX syntax) but
 **never runs it**: ESM, expressions and JSX are only recognised so they can be
-reported with their line. The contract is `docs/pages/markdown.mdx` ("Qué
-acepta", "Qué rechaza").
+reported with their line. The contract is the guide's `pages/markdown` page
+("Qué acepta", "Qué rechaza").
 
 ## What a page may hold
 
@@ -21,8 +21,9 @@ acepta", "Qué rechaza").
 
 MDX treats `<` followed by a letter as the start of JSX, and `{` as the start
 of an expression, **anywhere in prose**, including inside a table cell or a
-list item. This guide talks about `<Diagram>`, `catalog/<type>` and
-`{ ruta: … }` constantly, so:
+list item. Pages that mention components, paths with placeholders, YAML
+or shell snippets (`<Diagram>`, `catalog/<type>`, `{ ruta: … }`,
+`docker compose -f <file>`) hit it constantly, so:
 
 | Written in prose | What happens | Write instead |
 | --- | --- | --- |

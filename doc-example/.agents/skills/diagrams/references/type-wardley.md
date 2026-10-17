@@ -102,6 +102,7 @@ tipados: Génesis, visibilidad media; evoluciona hacia Producto"; visibility is
 alta from 67, media from 34, baja below), then one line per link ("Páginas
 depende de Diagramas tipados").
 
-## In this site
+## Working example
 
-`diagrams/wardley-publishing.json`, shown in `docs/diagrams/concepts.mdx`.
+The guide shows it working (repository `doc-example`):
+`diagrams/wardley-publishing.json`, in its `diagrams/concepts` page.

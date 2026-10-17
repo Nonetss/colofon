@@ -104,7 +104,8 @@ the accents.
 A table: one row per point (its name, or "Punto 3"), with the `x` and `y`
 values and, when used, "Tamaño" and "Grupo".
 
-## In this site
+## Working example
 
+The guide shows it working (repository `doc-example`):
 `diagrams/scatter-pages.json`, `scatter-bubble-sections.json` and
-`scatter-beeswarm-sync.json`, shown in `docs/diagrams/charts.mdx`.
+`scatter-beeswarm-sync.json`, in its `diagrams/charts` page.

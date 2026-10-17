@@ -1,45 +1,35 @@
 # Entities on pages
 
-How the guide's pages show this catalog. The component itself (attributes,
-messages) is in the `docs` skill, `references/components.md`; the generated
-catalog pages are explained in `docs/data/reader.mdx`.
+How pages show the catalog. The component itself (attributes, messages) is
+in the `docs` skill, `references/components.md`; the generated catalog pages
+are explained in the guide's `data/reader` page.
 
 ## Three ways a page uses an entity
 
 | Way | Write | Effect |
 | --- | --- | --- |
-| A table of a type | `<Entities type="files" group="kind" columns="path,required,purpose" />` | Rebuilt from the valid entities on every read |
-| Cite in the header | `files: [menu]`, `components: [callout]`, `diagram_types: [flowchart]` | Header links; the entity's page lists the page under "Páginas que la citan" |
-| Link in the text | `[menu.yaml](catalog:files/menu)`, `[Tipos de campo](catalog:field-kinds)` | The entity's page (its `page`) or its catalog page; also cites it |
+| A table of a type | `<Entities type="machines" group="kind" columns="id,role,ip" />` | Rebuilt from the valid entities on every read |
+| Cite in the header | `machines: [pve-01]`, a header field of `ref`s the site declares in `doc.config.yaml` | Header links; the entity's page lists the page under "Páginas que la citan" |
+| Link in the text | `[pve-01](catalog:machines/pve-01)`, `[Máquinas](catalog:machines)` | The entity's page (its `ficha`) or its catalog page; also cites it |
 
-## The tables this guide shows
-
-| Page | Component |
-| --- | --- |
-| `docs/index.mdx` | `<Entities type="files" />` (the type's `vista.columnas`) |
-| `docs/repository/index.mdx` | `<Entities type="files" group="kind" columns="path,required,purpose" />` |
-| `docs/pages/header.mdx` | `<Entities type="header-fields" columns="id,required,kind,meaning,rule" />` |
-| `docs/pages/components.mdx` | `<Entities type="components" columns="tag,purpose,attributes" />`, and `field-kinds` grouped by `family` as the example |
-| `docs/data/types.mdx` | `<Entities type="field-kinds" group="family" columns="id,value,takes,example" />` |
-| `docs/diagrams/index.mdx` | `<Entities type="diagram-types" group="family" columns="id,purpose,variants,budget" />` |
+## Finding the tables
 
 Before changing a field, find every table that names it:
-`grep -rn '<Entities type="<type>"' docs`.
+`grep -rn '<Entities type="<type>"' docs`. Change its `columns` and `group`
+in the same change.
 
 ## Choosing columns and groups
 
 - **`columns` only when the page needs something else than `vista.columnas`**
-  (`rule` on the header page, `attributes` on the components page). Without
-  it the table follows the type, which is what you want on most pages.
-- **Include `id` when the id is what the reader types** (`field-kinds`,
-  `header-fields`, `diagram-types`: the id is the value written in the file).
-  Skip it when the label already says it (`files` by `path`, `components` by
-  `tag`).
-- **`group` on an `enum`** to split long tables by meaning: `files` by `kind`,
-  `field-kinds` by `family`, `diagram-types` by `family`. Blocks follow
-  `valores` order; the group field is not repeated as a column.
-- **Long text columns** (`attributes`, `example`) only where the page is about
-  them.
+  (one more field the page is about). Without it the table follows the
+  type, which is what you want on most pages.
+- **Include `id` when the id is what the reader types** (a hostname, a value
+  written in a file). Skip it when the label (`etiqueta`) already says it.
+- **`group` on an `enum`** to split long tables by meaning (machines by
+  `kind`). Blocks follow `valores` order; the group field is not repeated as
+  a column.
+- **Long text columns** (lists, objects, examples) only where the page is
+  about them.
 - Rows are always sorted by label, and the label links to the entity's
   `page`: keep `page` right so the table leads somewhere useful.
 
@@ -49,9 +39,8 @@ Before changing a field, find every table that names it:
   the entity's page sends readers to it.
 - Link in the text the entity a sentence is **about**; don't link every
   mention.
-- The home and `docs/data/index.mdx` link the type tables
-  (`catalog:files`, `catalog:field-kinds`…) so a reader finds the generated
-  "Referencia" pages.
+- Link the type's generated page (`catalog:<type>`) from the page that
+  introduces the type, so a reader finds the whole table.
 
 ## What breaks a table
 

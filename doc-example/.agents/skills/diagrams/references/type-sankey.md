@@ -112,6 +112,7 @@ accents.
 
 A list with one line per flow: "Lecturas → Lector web: 940 lecturas".
 
-## In this site
+## Working example
 
-`diagrams/sankey-guide-readings.json`, shown in `docs/diagrams/proportions.mdx`.
+The guide shows it working (repository `doc-example`):
+`diagrams/sankey-guide-readings.json`, in its `diagrams/proportions` page.

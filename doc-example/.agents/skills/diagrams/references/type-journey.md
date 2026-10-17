@@ -90,6 +90,7 @@ dolor…") and the accents.
 One entry per stage, "Primer push: Mal", with its rows under it: "hace: …",
 "piensa: ¿Por qué falla?", "dónde: …", "dolor: muchos avisos".
 
-## In this site
+## Working example
 
-`diagrams/journey-first-repo.json`, shown in `docs/diagrams/time.mdx`.
+The guide shows it working (repository `doc-example`):
+`diagrams/journey-first-repo.json`, in its `diagrams/time` page.

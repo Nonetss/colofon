@@ -120,7 +120,8 @@ One line per lane with its steps, "Quien escribe: Escribe la página, Hace
 push", then one line per link, "Hace push → Sincroniza: GIT", with names
 linked.
 
-## In this site
+## Working example
 
+The guide shows it working (repository `doc-example`):
 `diagrams/swimlane-publish.json` and, for the `process` variant,
-`diagrams/swimlane-process-page.json`, both shown in `docs/diagrams/time.mdx`.
+`diagrams/swimlane-process-page.json`, both in its `diagrams/time` page.

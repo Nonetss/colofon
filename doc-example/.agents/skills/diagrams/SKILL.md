@@ -9,9 +9,8 @@ One diagram per file in `diagrams/`, the file name as its id, shown in any
 page with `<Diagram id="…" />` in a block of its own. The platform reads it,
 checks it, lays it out when it has a `type`, and draws it with its own look in
 light or dark. The guide explains the contract for writers in its
-`docs/diagrams/` section; this skill is how **you** pick and write a diagram
-well, and how this site uses them. The repository as a whole is in the
-`documentation` skill.
+`diagrams` section; this skill is how **you** pick and write a diagram well.
+The repository as a whole is in the `documentation` skill.
 
 The typed forms are ported from
 [diagram-design](https://github.com/cathrynlavery/diagram-design) (MIT, Cathryn
@@ -134,7 +133,7 @@ forces out. Skip it only when the request already pins all three.
 | The accent on every important piece | Nothing stands out; the platform warns past two |
 | A box for every file, a line for every relation | Density 9/10; nobody reads it |
 | Labels that are sentences | Labels say what travels or is chosen, in short capitals; the sentence goes in `info` |
-| Retyping catalog data as boxes | Link the entity (`"entity": "files/menu"`): it takes its name and its page lists the diagram |
+| Retyping catalog data as boxes | Link the entity (`"entity": "<type>/<id>"`): it takes its name and its page lists the diagram |
 | A legend written as notes | The platform draws the legend; rename its entries with `kindNames`/`edgeNames` in a drawn diagram |
 | Colour for decoration | Hues group (a zone, a series); one accent focuses |
 | Secrets in names, labels or `info` | Everything here is published and read by agents |
@@ -152,26 +151,22 @@ how the legend and text measurement work: `references/style.md`.
 ## 6. Writing and checking
 
 - One file per diagram, `diagrams/<id>.json` or `.svg`; the id is lowercase
-  with digits and hyphens. This site's examples are `<type>-<topic>.json`.
-- Keys are English; names, tags, labels and `info` are Spanish, like the rest
-  of the site.
+  with digits and hyphens and says what it shows. Follow the naming the
+  site's existing diagrams use, and `AGENTS.md` «Este sitio» when it sets one.
+- Keys are English; names, tags, labels and `info` are in the language of the
+  site's prose.
 - **A piece that exists in the catalog is an entity** (`"entity":
-  "files/menu"`); otherwise `"page"` links it to a page of this site.
+  "<type>/<id>"`); otherwise `"page"` links it to a page of the site.
 - Check it before finishing: `references/checking.md` (the editor, the
   platform's report, what each problem means, a visual check).
 
-## 7. This site's diagrams
+## 7. The site's diagrams
 
-| File | What it shows | Shown in |
-| --- | --- | --- |
-| `diagrams/pipeline.json` | From a push to the reader, the editor and agents | `docs/index.mdx`, `docs/diagrams/index.mdx`, `docs/diagrams/drawn.mdx`, `docs/pages/components.mdx`, `docs/publishing/index.mdx` |
-| `diagrams/repository.json` | The files of a repository and how they relate | `docs/index.mdx`, `docs/repository/index.mdx`, `docs/data/index.mdx` |
-| `diagrams/<type>-<topic>.json` | One working example of each type and of each variant | The page of its family, under its type's section; each reference names its own |
-| `diagrams/sync-shapes.json`, `diagram-forms.json` | The drawn form's shapes, curves, loops, UML heads and `ops` | `docs/diagrams/drawn.mdx` |
-| `diagrams/repository-exploded.svg` | The illustration example | `docs/diagrams/illustrations.mdx` |
-
-- A new type or variant on the platform gets an entity in
-  `catalog/diagram-types/` (`catalog` skill), a section on its family's page,
-  its own `<type>-<topic>` example and a reference here.
+- **Before drawing a new one, look in `diagrams/`** for one that already says
+  it, and at the pages that show it (`grep -rn '<Diagram id="<id>"' docs`).
+  `AGENTS.md` «Este sitio» lists the site's main diagrams and when each must
+  change, when it has such a list.
 - Before reusing a diagram in another page, check it still says what that
   page needs; otherwise write a new one.
+- When what a diagram shows changes (a piece added, removed or moved), update
+  the diagram in the same change as the page or entity that changed.

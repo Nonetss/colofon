@@ -96,6 +96,7 @@ The cycle on one line, back to the first ("Escribir → Validar → Publicar →
 Leer → Preguntar → Escribir"), then "Centro: Repositorio" and "Escriben en
 Repositorio: Escribir, Preguntar", with linked names linked.
 
-## In this site
+## Working example
 
-`diagrams/loop-writing.json`, shown in `docs/diagrams/concepts.mdx`.
+The guide shows it working (repository `doc-example`):
+`diagrams/loop-writing.json`, in its `diagrams/concepts` page.

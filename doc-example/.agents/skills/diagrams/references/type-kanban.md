@@ -95,6 +95,7 @@ One line per column: "Escribiendo (2 / 2): Tipos de diagrama, Catálogo en el
 lector (bloqueada)", with ", por encima del límite" after the count of a
 column over it.
 
-## In this site
+## Working example
 
-`diagrams/kanban-guide.json`, shown in `docs/diagrams/time.mdx`.
+The guide shows it working (repository `doc-example`):
+`diagrams/kanban-guide.json`, in its `diagrams/time` page.

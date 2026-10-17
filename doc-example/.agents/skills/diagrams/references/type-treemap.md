@@ -126,8 +126,9 @@ pártelo en dos diagramas"), and the accents.
 Treemap: a table "Parte", "Valor", "Parte del total", biggest first.
 Marimekko: a table "Columna", "Parte", "Valor", "En su columna".
 
-## In this site
+## Working example
 
+The guide shows it working (repository `doc-example`):
 `diagrams/treemap-repository-files.json` and
-`diagrams/treemap-reading-channels.json` (marimekko), shown in
-`docs/diagrams/proportions.mdx`.
+`diagrams/treemap-reading-channels.json` (marimekko), in its
+`diagrams/proportions` page.

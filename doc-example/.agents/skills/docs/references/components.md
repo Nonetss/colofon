@@ -1,9 +1,9 @@
 # Components
 
 The only JSX the platform reads: `<Callout>`, `<Entities>` and `<Diagram>`.
-Their attributes are the `components` entities in `catalog/components/`
-(the source of truth for this list); the contract page is
-`docs/pages/components.mdx`.
+The contract is the guide's `pages/components` page; the guide's catalog
+also lists them, with every attribute, as its `components` type
+(`catalog:components` in repository `doc-example`).
 
 ## Rules for all three
 
@@ -41,12 +41,12 @@ The table of a catalog type, rebuilt from its entities every time the site is
 read, so it never goes stale.
 
 ```mdx
-<Entities type="files" group="kind" columns="path,required,purpose" />
+<Entities type="machines" group="role" columns="id,ip,os" />
 ```
 
 | Attribute | What it is |
 | --- | --- |
-| `type` | Required. The type, as its folder name in `catalog/` (`files`, `field-kinds`, `header-fields`, `components`, `diagram-types`). |
+| `type` | Required. The type, as its folder name in `catalog/` (`machines` for `catalog/machines/`). |
 | `columns` | Optional. The fields shown, comma-separated, `id` included. Without it, the type's `vista.columnas`; without that, its label and every field. |
 | `group` | Optional. A field that splits the table into one block per value, in `valores` order for an `enum`, entities without it last. The group field is not repeated as a column. |
 
@@ -56,7 +56,7 @@ read, so it never goes stale.
 - Only valid entities appear. An unknown type, column or group field, and
   every entity that fails its type, is reported on the page; the rest of the
   table renders.
-- Picking columns and groups for this site's types: `catalog` skill,
+- Picking columns and groups for a type: `catalog` skill,
   `references/entities-tables.md`.
 
 ## `<Diagram>`
@@ -65,16 +65,16 @@ A diagram written in its own file under `diagrams/`, shown where the page
 needs it.
 
 ```mdx
-<Diagram id="pipeline" />
+<Diagram id="homelab" />
 ```
 
 | Attribute | What it is |
 | --- | --- |
 | `id` | Required. The file name in `diagrams/` without `.json` or `.svg`. |
 
-- The same diagram can be in any number of pages (`pipeline` is on the home,
-  `docs/diagrams/index.mdx`, `docs/publishing/index.mdx`…). Before reusing
-  one, check it still says what this page needs.
+- The same diagram can be in any number of pages (an overview on the home
+  and on its section's page, say). Before reusing one, check it still says
+  what this page needs.
 - A missing or unreadable file is reported ("<Diagram id="…">: no hay ningún
   diagrams/….json ni diagrams/….svg que se pueda leer (hay: …)") and shows a
   notice; the diagram's own problems are reported on the page too.

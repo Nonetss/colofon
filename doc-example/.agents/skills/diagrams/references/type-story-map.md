@@ -99,6 +99,7 @@ doesn't fit its card, the budget and the accents.
 One entry per release with a line per activity that has stories in it,
 "Encontrar: La barra lateral", then "Corte de entrega tras Primera entrega".
 
-## In this site
+## Working example
 
-`diagrams/story-map-reader.json`, shown in `docs/diagrams/time.mdx`.
+The guide shows it working (repository `doc-example`):
+`diagrams/story-map-reader.json`, in its `diagrams/time` page.

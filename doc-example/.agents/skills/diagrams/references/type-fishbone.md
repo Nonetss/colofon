@@ -90,6 +90,7 @@ all, and more than two accents.
 "Efecto: La página sale en «Otros»", then a tree: each category ("Menú (causa
 raíz)") with its causes under it.
 
-## In this site
+## Working example
 
-`diagrams/fishbone-others-group.json`, shown in `docs/diagrams/concepts.mdx`.
+The guide shows it working (repository `doc-example`):
+`diagrams/fishbone-others-group.json`, in its `diagrams/concepts` page.

@@ -91,6 +91,7 @@ de los conjuntos"; the region is left out), and more than two accents.
 A list of the set names, then a list of regions as "Útil ∩ Fiel: Referencia",
 "Útil ∩ Fiel ∩ Mantenible: Guía viva".
 
-## In this site
+## Working example
 
-`diagrams/venn-good-page.json`, shown in `docs/diagrams/concepts.mdx`.
+The guide shows it working (repository `doc-example`):
+`diagrams/venn-good-page.json`, in its `diagrams/concepts` page.

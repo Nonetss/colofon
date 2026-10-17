@@ -2,7 +2,7 @@
 
 Content is checked twice: by the editor while you write, against schemas the
 platform serves, and by the platform on every sync. The contract pages are
-`docs/publishing/editor.mdx` and `docs/publishing/index.mdx`.
+the guide's `publishing/editor` and `publishing` pages.
 
 ## In the editor
 
@@ -13,8 +13,8 @@ platform serves, and by the platform on every sync. The contract pages are
 | `yaml.schemaStore.url` → `https://<platform>/api/v1/content/schemas/<slug>` | `doc.config.yaml`, `menu.yaml`, every `_type.yaml`, every entity | Red Hat's YAML extension (`redhat.vscode-yaml`) |
 | `json.schemas` with `fileMatch: ["/diagrams/*.json"]` → `…/schemas/<slug>/diagram` | Every diagram JSON | Nothing: the editor's own JSON support |
 
-This repository points them at `https://localhost:4321/…/schemas/test`, the
-platform in development. What the editor knows:
+They point at the platform and the slug this repository is registered
+under (`/admin/content` shows the address). What the editor knows:
 
 | File | Completion and checks |
 | --- | --- |

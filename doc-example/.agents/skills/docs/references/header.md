@@ -1,70 +1,68 @@
 # The header
 
 The YAML block every page starts with: the five fields every page of every
-site has, plus the ones this site declares in `doc.config.yaml` under
-`cabecera`. The contract is `docs/pages/header.mdx`; the common fields are the
-`header-fields` entities in `catalog/header-fields/`.
+site has, plus the ones the site declares in `doc.config.yaml` under
+`cabecera`. The contract is the guide's `pages/header` page.
 
-## A real header
-
-`docs/repository/menu.mdx`:
+## An example
 
 ```mdx
 ---
-titulo: El menú
-descripcion: menu.yaml decide qué muestra la barra lateral, agrupado y ordenado, estén donde estén guardadas las páginas
-files: [menu]
-orden: 2
+titulo: El DNS
+descripcion: Qué resuelve cada servidor DNS de casa, cómo se reparten las zonas y dónde se cambia un registro
+machines: [opnsense, adguard-01]
+orden: 3
 actualizado: 2026-10-15
 ---
 ```
 
-`docs/diagrams/graphs.mdx` cites diagram types too:
-
-```mdx
----
-titulo: Grafos
-descripcion: Cómo escribir diagramas de flujo, máquinas de estados, árboles, organigramas y grafos de dependencias dando solo las piezas y sus flechas, y qué avisa la plataforma de cada uno
-files: [diagram-file]
-diagram_types: [flowchart, state, tree, org-chart, dependency]
-orden: 2
-actualizado: 2026-10-16
----
-```
+`machines` here is a header field the site declared under `cabecera`; the
+other five are the common ones.
 
 ## The common fields
 
-| Field | Kind | In this guide |
+| Field | Kind | How to fill it |
 | --- | --- | --- |
-| `titulo` | `texto` | Required. Short, Spanish, a noun phrase ("La cabecera", "El menú"). If the menu sets a title for the page, it must be the same. |
-| `descripcion` | `texto` | Required. One sentence that says **what the reader learns**, not "Esta página explica…". It shows under the title, on the card and in search. |
+| `titulo` | `texto` | Required. Short, Spanish, a noun phrase ("El DNS", "Restaurar una VM"). If the menu sets a title for the page, it must be the same. |
+| `descripcion` | `texto` | Required. One sentence that says **what the reader learns or can do**, not "Esta página explica…". It shows under the title, on the card and in search. |
 | `icono` | `texto` (Lucide name) | **Never.** Icons of the pages the menu shows go in `menu.yaml`; a different header value is reported and never shown. |
 | `orden` | `numero` | On every page that is not a section's `index.mdx`: its place in its folder. |
-| `actualizado` | `fecha` | The date the page was last **checked against the platform** (`YYYY-MM-DD`), not of the last edit. After six months the page shows "Revisar". |
+| `actualizado` | `fecha` | The date the page was last **checked against what it describes** (`YYYY-MM-DD`), not of the last edit. After six months the page shows "Revisar". |
 
-## This site's fields
+## The site's fields
 
-Declared in `doc.config.yaml` under `cabecera` (`documentation` skill,
-`references/doc-config.md`). All optional.
+Read `cabecera` in `doc.config.yaml` before writing a header: it lists every
+extra field the site's pages accept, each with its kind and a `descripcion`
+that says what it is for (`documentation` skill, `references/doc-config.md`).
+The «Este sitio» section of `AGENTS.md` says which pages use which, when it
+is not obvious.
 
-| Field | Declared as | What it says |
-| --- | --- | --- |
-| `files` | `lista` of `ref` to `files` | The files of a content repository the page explains (`[menu]`, `[page, doc-config]`) |
-| `components` | `lista` of `ref` to `components` | The page components it explains (`[callout, entities, diagram]`) |
-| `diagram_types` | `lista` of `ref` to `diagram-types` | The diagram types it explains (`[flowchart, state]`) |
-| `open_questions` | `lista` of `texto` | What is still unknown; a question round answers them (`/doc:questions`) |
-
-- The `ref` fields are **why they exist**: each id is checked against the
-  catalog, the header shows the entities as links, and each entity's page
-  lists this page under "Páginas que la citan". Cite the entities the page
-  **explains**, not every one it mentions.
-- Ids are the entity file names: `files: [doc-config]` for
-  `catalog/files/doc-config.yaml`.
-- `open_questions` are closed by a question round (`documentation` skill,
-  `references/question-rounds.md`), removed completely once answered.
+- A field that is a `ref` (or a `lista` of `ref`) **cites catalog
+  entities**: each id is checked against the catalog, the header shows the
+  entities as links, and each entity's page lists this page under "Páginas
+  que la citan". Cite the entities the page **is about**, not every one it
+  mentions.
+- Ids are the entity file names: `machines: [docker-01]` for
+  `catalog/machines/docker-01.yaml`.
 - A field `doc.config.yaml` doesn't declare is reported ("La cabecera no
   admite `…`: solo titulo, descripcion, icono, orden, actualizado y los campos
   de cabecera de doc.config.yaml"): declare it first, or don't use it.
+
+## Open questions
+
+When the site declares an `open_questions` header field (a `lista` of
+`texto`), what a page can't yet say goes there, one question per item,
+instead of a guess in the prose:
+
+```yaml
+open_questions:
+  - ¿Qué VM usa la IP 192.168.1.40?
+```
+
+A question round closes them (`documentation` skill,
+`references/question-rounds.md`): each answered question is removed
+completely. A site without that field writes a "_Pending: …_" line in the
+text instead, and the round finds those too.
 
 ## What the platform does with a bad header
 

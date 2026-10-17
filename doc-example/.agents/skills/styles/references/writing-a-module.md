@@ -1,6 +1,6 @@
 # Writing a module
 
-The rules behind each step are in the guide, `docs/repository/styles.mdx`.
+The rules behind each step are in the guide's `repository/styles` page.
 Read it first: it lists the modules, the theme variables and the classes of
 each module.
 
@@ -19,7 +19,7 @@ each module.
 | The repeated sections ("¿Dónde busco…?", "Trampas y decisiones") | `sections.css` |
 
 The platform joins the modules in this order, after its own styles. Where two
-of this site's modules set the same thing, the later one wins. Keep each rule
+of the site's modules set the same thing, the later one wins. Keep each rule
 in the module of the piece it styles, so this order never matters.
 
 ## Theme variables
@@ -50,7 +50,7 @@ in the module of the piece it styles, so this order never matters.
 ```
 
 - Start page-body selectors at `.typeset.doc`, like the platform. It gives
-  the same weight as the platform's rule, and this site wins at equal weight
+  the same weight as the platform's rule, and the site wins at equal weight
   because it comes after.
 - Prefer the piece's own variable (`--alert`, `--section`, `--d-accent`) to
   rewriting its borders and backgrounds: the platform builds the tints from
@@ -78,6 +78,5 @@ in the module of the piece it styles, so this order never matters.
   not a module, a file over 64 KiB, or the stylesheet passing 128 KiB.
 - A removed declaration is never an error the reader sees. The piece just
   keeps the platform's look, so check the home after every change.
-- Look at the result in **both** themes, on a page with every piece: this
-  guide's `docs/repository/styles.mdx` has links, bold, code, tables and a
-  callout.
+- Look at the result in **both** themes, on a page with every piece the
+  module touches: links, bold, code, tables, a callout, a diagram.

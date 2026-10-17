@@ -97,6 +97,7 @@ valid is still drawn.
 One line per link, in order: "Tengo algo que contar → ¿Se repite con los
 mismos campos?", "… → Entidad: SÍ", with linked names linked.
 
-## In this site
+## Working example
 
-`diagrams/flowchart-where-it-goes.json`, shown in `docs/diagrams/graphs.mdx`.
+The guide shows it working (repository `doc-example`):
+`diagrams/flowchart-where-it-goes.json`, in its `diagrams/graphs` page.

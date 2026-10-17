@@ -166,7 +166,8 @@ Nothing is checked but the whitelist; this is advice.
 | Labels tilted onto a face, or numbered with a key | Labels stay horizontal, on the part they name |
 | Gradients, shadows, glow | Removed, and not this look |
 
-## In this site
+## Working example
 
+The guide shows it working (repository `doc-example`):
 `diagrams/repository-exploded.svg` (the three folders of a repository as
-layers, `docs/` focal), shown in `docs/diagrams/illustrations.mdx`.
+layers, `docs/` focal), in its `diagrams/illustrations` page.

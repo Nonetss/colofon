@@ -2,7 +2,7 @@
 
 **Best for:** a few entities compared on three to six criteria scored on the
 **same scale**, when the *shape* of each profile is the message: the ways of
-reading the guide scored 0 to 5, tools against a checklist, teams on a
+reading a site scored 0 to 5, tools against a checklist, teams on a
 scorecard. It reads as "which one is all-round, which one is a specialist".
 
 **Not for:** one or two entities (a table or a `bar` with two series says it
@@ -93,6 +93,7 @@ en 0"), more than 6 axes or 5 series, and the accents.
 
 A table: one row per series, one column per axis.
 
-## In this site
+## Working example
 
-`diagrams/radar-reading-surfaces.json`, shown in `docs/diagrams/proportions.mdx`.
+The guide shows it working (repository `doc-example`):
+`diagrams/radar-reading-surfaces.json`, in its `diagrams/proportions` page.

@@ -91,7 +91,7 @@ a detail of one band.
 | A funnel with values on some levels only | Reported, and drawn without values: the widths stop meaning anything |
 | A pyramid for data that isn't ranked | Use a `tree` or a `bar` |
 | The accent on the base | It dilutes the "the top is rare" signal |
-| Made-up funnel numbers presented as real | Say they are illustrative in `desc` or the page, as this site does |
+| Made-up funnel numbers presented as real | Say they are illustrative in `desc` or the page, as the example above does |
 | Seven or more levels | They become slivers the names don't fit in |
 
 ## Reported
@@ -106,8 +106,9 @@ no cabe en 140px: acórtalo`), more than 6 levels and more than two accents.
 A numbered list of the levels, top to bottom, with each value and drop:
 "Leen Primeros pasos: 640 personas (−47 %)".
 
-## In this site
+## Working example
 
+The guide shows it working (repository `doc-example`):
 `diagrams/pyramid-reader-needs.json` (pyramid) and
-`diagrams/pyramid-funnel-first-page.json` (funnel), both shown in
-`docs/diagrams/concepts.mdx`.
+`diagrams/pyramid-funnel-first-page.json` (funnel), both in its
+`diagrams/concepts` page.

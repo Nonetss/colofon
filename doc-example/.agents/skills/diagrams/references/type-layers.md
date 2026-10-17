@@ -85,6 +85,7 @@ A numbered list of the layers, top to bottom, with their `sub` in brackets and
 their chips after a colon: "Lector (web y llms.txt): páginas, catálogo,
 llm.txt".
 
-## In this site
+## Working example
 
-`diagrams/layers-content-stack.json`, shown in `docs/diagrams/concepts.mdx`.
+The guide shows it working (repository `doc-example`):
+`diagrams/layers-content-stack.json`, in its `diagrams/concepts` page.

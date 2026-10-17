@@ -98,6 +98,7 @@ columns.
 A Markdown table: a header with the column names, then one row per row with
 its level in each column, "—" for an empty cell.
 
-## In this site
+## Working example
 
-`diagrams/matrix-who-writes.json`, shown in `docs/diagrams/concepts.mdx`.
+The guide shows it working (repository `doc-example`):
+`diagrams/matrix-who-writes.json`, in its `diagrams/concepts` page.

@@ -1,13 +1,13 @@
 # Question rounds
 
-To finish documenting a whole section (repository, catalog…) in one go, run a
+To finish documenting a whole section (a folder of `docs/`) in one go, run a
 **question round**: whoever writes (a person or an agent) prepares the
 questions, whoever knows the topic answers them roughly, and the writer moves
 the answers into the pages. It closes a section in one sitting instead of open
 question by open question.
 
 With Claude Code, **`/doc:questions <section>`** (for example
-`/doc:questions publishing`) writes the questions. Once they are answered,
+`/doc:questions network`) writes the questions. Once they are answered,
 **`/doc:questions`** again moves the answers into the pages.
 
 ## How it works
@@ -55,16 +55,16 @@ With Claude Code, **`/doc:questions <section>`** (for example
 
 ## What to ask and what not
 
-This guide is for whoever writes documentation next, **not a review of the
-platform**. Ask **what the platform does and how something is done**, not
-whether it is done right.
+The documentation is for whoever uses or runs what it documents, **not a
+review of it**. Ask **what the documented thing does and how something is
+done**, not whether it is done right.
 
 | Ask | Don't ask |
 | --- | --- |
-| What the platform does in a case the page doesn't cover: a broken file, an edge of the format | How the platform's code does it |
-| How something is done: registering a repository, setting up the editor | What can be read in another page or in the catalog |
+| What it does in a case the page doesn't cover: a failure, an edge case | How its code or internals do it |
+| How something is done: restoring a backup, adding a user | What can be read in another page or in the catalog |
 | Where something is: an admin screen, a setting, a file | Plans and features that don't exist yet |
-| What an option is for, when its name doesn't tell | Opinions on how the format should be |
+| What an option is for, when its name doesn't tell | Opinions on how it should be |
 
 Also:
 
@@ -79,8 +79,9 @@ Also:
 
 ## Related
 
-- `open_questions` is a header field this site declares in `doc.config.yaml`
-  (`doc-config.md`); how pages fill it: `docs` skill, `references/header.md`.
+- `open_questions` is a header field the site declares in `doc.config.yaml`
+  (`doc-config.md`); if it doesn't, propose declaring it before a round. How
+  pages fill it: `docs` skill, `references/header.md`.
 - Closing the round means validating what you touched: `validation.md`.
 - `/doc:questions` is `.agents/commands/doc/questions.md` (the folder is
   symlinked from `.claude/commands/doc`); it defers to this file.

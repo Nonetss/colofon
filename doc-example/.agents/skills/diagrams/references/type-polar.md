@@ -95,7 +95,8 @@ categorías"), more than 8 categories, and the accents.
 
 A table "Categoría", "Valor", one row per category in order.
 
-## In this site
+## Working example
 
-`diagrams/polar-sync-hours.json` and `diagrams/polar-sync-hours-lollipop.json`,
-shown in `docs/diagrams/proportions.mdx`.
+The guide shows it working (repository `doc-example`):
+`diagrams/polar-sync-hours.json` and
+`diagrams/polar-sync-hours-lollipop.json`, in its `diagrams/proportions` page.

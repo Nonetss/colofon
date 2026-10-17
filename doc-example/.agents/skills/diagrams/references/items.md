@@ -34,7 +34,7 @@ accepts these fields besides its own:
 | `hue` | Optional. `rose`, `blue`, `cyan`, `violet`, `green`, `indigo`, `fuchsia`, `slate`, `teal` or `lime`. Groups, never decorates. |
 | `focal` | Optional. `true`: drawn in the accent. Counts towards the two accents. |
 | `entity` | Optional. `<type>/<id>` of a catalog entity: the piece takes its label as name (when it has none), links to its page, and the entity's page lists the diagram. |
-| `page` | Optional. A page path of this site (`repository/menu`, without `.mdx`) the piece links to. Never together with `entity`. |
+| `page` | Optional. A page path of the site (`network/dns`, without `.mdx`) the piece links to. Never together with `entity`. |
 
 Reported on the piece's path (`steps.2.entity`): an entity or page that
 doesn't exist (the piece stays, unlinked), a repeated id ("`a` ya es el id de
@@ -43,10 +43,10 @@ nombran por él"), a piece with neither `name` nor `entity`. A reference to an
 id that doesn't exist is reported naming it ("`z` no es ninguna de las partes
 del diagrama") and the part holding it (a link, a message…) is left out.
 
-**Link pieces to the catalog.** In this site, a piece that stands for a file of
-the contract is `"entity": "files/<id>"`, a component `"components/<id>"`, a
-header field `"header-fields/<id>"`. Chart categories and data points are not
-items and take no `entity`.
+**Link pieces to the catalog.** A piece that stands for something the site's
+catalog holds (a machine, a service, a file…) is `"entity": "<type>/<id>"`,
+with the types the site declares in `catalog/*/_type.yaml`. Chart categories
+and data points are not items and take no `entity`.
 
 ## Values
 

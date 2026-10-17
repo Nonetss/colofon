@@ -104,6 +104,7 @@ gantt with no valid task draws nothing.
 One entry per phase with its tasks under it: "Preparar" → "El menú: 6 oct
 2026 – 9 oct 2026", "Primera sincronización: 2 nov 2026".
 
-## In this site
+## Working example
 
-`diagrams/gantt-new-site.json`, shown in `docs/diagrams/time.mdx`.
+The guide shows it working (repository `doc-example`):
+`diagrams/gantt-new-site.json`, in its `diagrams/time` page.

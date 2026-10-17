@@ -95,6 +95,7 @@ on a tree ("`role` es de un organigrama (type: org-chart), no de un árbol"),
 The tree as a nested list, each node's name linked, children indented under
 their parent.
 
-## In this site
+## Working example
 
-`diagrams/tree-repository-files.json`, shown in `docs/diagrams/graphs.mdx`.
+The guide shows it working (repository `doc-example`):
+`diagrams/tree-repository-files.json`, in its `diagrams/graphs` page.

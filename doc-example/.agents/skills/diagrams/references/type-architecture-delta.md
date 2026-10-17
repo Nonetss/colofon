@@ -127,7 +127,7 @@ One line per change, "AÑADIDO: menu.yaml. Agrupa carpetas y páginas…",
 "RECONECTADO: A → B (antes A → C)", ending with "SIN CAMBIOS: …" listing the
 pieces that stay the same.
 
-## In this site
+## Working example
 
-`diagrams/architecture-delta-menu.json`, shown in
-`docs/diagrams/comparison.mdx`.
+The guide shows it working (repository `doc-example`):
+`diagrams/architecture-delta-menu.json`, in its `diagrams/comparison` page.

@@ -1,22 +1,23 @@
 # Writing a type
 
 A type is a folder `catalog/<type>/` with its declaration `_type.yaml`. The
-contract is `docs/data/types.mdx`; the field kinds are the entities of
-`catalog/field-kinds/`. `_type.yaml` is a **declaration**: while it is
+contract is the guide's `data/types` page, whose «Referencia» lists every
+field kind. `_type.yaml` is a **declaration**: while it is
 broken, the platform keeps its last valid version and nothing that depends on
 it changes.
 
 ## Before adding one
 
-- Look for an existing type that fits (`this-site-types.md`); create one only
-  when none does. A missing field is a new field, not a new type.
-- This site's types describe the contract. A new type here means the
-  platform grew a new kind of thing writers need as a table.
+- Look for an existing type that fits (`ls catalog/` and each
+  `_type.yaml`'s `descripcion`); create one only when none does. A missing
+  field is a new field, not a new type.
+- A new type is a new kind of thing the site lists as a table. Ask the user
+  before adding one when the request did not name it.
 
-## A real declaration
+## A declaration
 
 ```yaml
-# catalog/components/_type.yaml
+# catalog/components/_type.yaml (from the guide)
 nombre: Componente
 plural: Componentes
 icono: component
@@ -81,8 +82,7 @@ Field names: lowercase, digits and underscores, starting with a letter
 puede declarar: toda entidad lo admite sin declararlo".
 
 The platform's schema also accepts an `etiqueta` on a field (its display
-name). The guide doesn't document it yet and this site doesn't use it; don't
-introduce it until the guide does.
+name). Use it only once the guide documents it.
 
 ## Field kinds
 
@@ -100,9 +100,9 @@ same kinds declare `doc.config.yaml`'s `cabecera` fields.
 
 | The value is… | Kind |
 | --- | --- |
-| One of a fixed set you will group or filter by | `enum`, values short and English (`declaration`) |
+| One of a fixed set you will group or filter by | `enum`, values short ids (`declaration`, `physical`) |
 | Another entity | `ref`, never its name as `texto` |
-| The page that explains this entity | `ficha`, named `page` in this site |
+| The page that explains this entity | `ficha` (often named `page`) |
 | Several of the same | `lista` with `de` |
 | A small record (an attribute with name, required, meaning) | `objeto`, usually in a `lista` |
 | A date the data was true | `fecha` |

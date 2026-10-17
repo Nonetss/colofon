@@ -1,9 +1,9 @@
-# Contract names and this site's names
+# Contract names and the site's names
 
 The platform reads a fixed set of names: files and folders in English, the
 keys of the YAML files in Spanish, and a diagram's keys in English (those of
 the earlier documentation's schemas). They must be written exactly so, or the content stops validating.
-Everything else is this site's own. The source is `docs/repository/index.mdx`
+Everything else is the site's own. The source is the guide's `repository` page
 ("Nombres del contrato y nombres tuyos").
 
 ## The contract's names
@@ -22,35 +22,42 @@ Everything else is this site's own. The source is `docs/repository/index.mdx`
 | Links | `catalog:` followed by a type, or a type and an id |
 | Component names and attributes | `Callout` (`type`, `title`), `Entities` (`type`, `columns`, `group`), `Diagram` (`id`) |
 
-The field kinds are also the `field-kinds` entities; the header fields the
-`header-fields` entities; the components the `components` entities.
+The guide's "Referencia" pages list them as tables: `catalog/field-kinds`,
+`catalog/header-fields`, `catalog/components`, `catalog/files`,
+`catalog/diagram-types`.
 
-## This site's names
+## The site's names
 
-| What | This site's names | Language |
-| --- | --- | --- |
-| Type ids (folders of `catalog/`) | `files`, `field-kinds`, `header-fields`, `components`, `diagram-types` | English, never renamed |
-| Field names | `path`, `kind`, `required`, `purpose`, `page`, `family`, `value`, `takes`, `example`, `meaning`, `rule`, `tag`, `attributes`, `name`, `keys`, `variants`, `budget` | English, never renamed |
-| Enum values | `declaration`, `content`, `agents`; `scalar`, `choice`, `reference`, `composite`; `graph`, `time`, `concept`, `chart`, `comparison` | English, never renamed |
-| Header fields in `cabecera` | `files`, `components`, `diagram_types`, `open_questions` | English, never renamed |
-| Folders under `docs/` and file names | `repository`, `pages`, `data`, `diagrams`, `publishing`, `getting-started.mdx`… | English, never renamed |
-| Entity ids and diagram ids | `doc-config`, `menu`, `flowchart-where-it-goes`… | English (or the contract's own value as id, like `titulo`, `ref`) |
-| Values meant to be read, titles, prose, menu groups | «Escribir documentación», "Inicio", `purpose: Una línea…` | Spanish |
+Everything the contract doesn't fix belongs to the site, which picks it
+once and keeps it:
+
+| What | Where the site's names are |
+| --- | --- |
+| Type ids (folders of `catalog/`) and their field names | `catalog/*/_type.yaml` |
+| Enum values | The `valores` of each `enum` field |
+| Header fields | `cabecera` in `doc.config.yaml` |
+| Folders under `docs/`, file names, entity and diagram ids | The tree itself |
+| Titles, values meant to be read, prose, menu groups | The pages, entities and `menu.yaml` |
+
+Prose, titles and values meant to be read are Spanish, like the platform's
+own interface. The language of ids, field names and folders is the site's
+choice, written down in `AGENTS.md`, «Este sitio» (often English). Whatever
+it is, an existing name keeps its language.
 
 ## Traps
 
 | Trap | Why |
 | --- | --- |
-| `catalog/` (contract, the data) vs `docs/data/` (this site's section about it) | `docs/catalog/` is reserved for the generated pages: never create it |
+| `catalog/` (contract, the data) vs a section of `docs/` about the data | `docs/catalog/` is reserved for the generated pages: never create it |
 | `descripcion` (contract) vs `description` | Only the Spanish key is read, in every YAML |
 | `titulo` in YAML vs `title` in a diagram JSON | YAML keys are Spanish, diagram keys English |
 | `type` in `<Entities type="…">` and `<Callout type="…">` | Component attributes are English; `tipo` is the field key in YAML |
-| `etiqueta` (the type's label field) vs `tag` (a field of `components`) | One is contract, one is this site's |
-| `page` (this site's `ficha` field) vs `paginas` (a menu key) | Same idea, different owners |
+| `etiqueta` (the type's label field) vs a site field named `label` or `tag` | One is contract, one is the site's |
+| A site field named `page` (a `ficha`) vs `paginas` (a menu key) | Same idea, different owners |
 | `.yml` | Only `.yaml` is read |
 
 ## Rule
 
-Never translate a contract name, and never rename one of this site's
+Never translate a contract name, and never rename one of the site's
 existing names: ids, fields and folders are cited by links, `ref`s, `ficha`s,
 headers, menu entries and diagrams, and every one would break.

@@ -99,6 +99,7 @@ ninguna celda"), and more than 12 rows or columns.
 A table: one row per row, one column per column, each value with its unit and
 "—" for an empty cell.
 
-## In this site
+## Working example
 
-`diagrams/heatmap-sync-problems.json`, shown in `docs/diagrams/proportions.mdx`.
+The guide shows it working (repository `doc-example`):
+`diagrams/heatmap-sync-problems.json`, in its `diagrams/proportions` page.

@@ -15,8 +15,9 @@ repository even when the scope is one file.
 
 ## What to check
 
-1. **Pages** (`docs/**/*.mdx`): `titulo` and `descripcion` present, `orden`
-   unless it is an `index.mdx`, no `icono`, every header field declared under
+1. **Pages** (`docs/**/*.mdx`): the header as the `docs` skill's
+   `references/header.md` asks (`titulo` and `descripcion` present, no
+   `icono` where `menu.yaml` gives one), every header field declared under
    `cabecera` in `doc.config.yaml`, every id it cites present in
    `catalog/<type>/`, every folder with its `index.mdx`, nothing outside
    backticks or code blocks that MDX reads as code (`docs` skill,

@@ -1,12 +1,12 @@
 ---
 description: Run a question round to finish documenting a section, or apply the answers already written in questions.md
-argument-hint: <section> (e.g. repository, pages, data, publishing)
+argument-hint: <section> (a folder under docs/)
 ---
 
 Run a **question round** as described in the `documentation` skill,
 `references/question-rounds.md`. Load the skill and read that reference first:
 it is the source of truth, and this command only says how to run it. Write in
-English, like the rest of the repository.
+the language of the site's prose.
 
 Pick the phase from the state of the repository:
 
@@ -27,11 +27,11 @@ Pick the phase from the state of the repository:
    a `# Questions: <Section>` title, the three lines of instructions, the
    questions grouped by topic under `##` headings with the most common need first, each
    question in bold with just enough context, and an empty `>` line under it.
-4. Follow "What to ask and what not" strictly: this guide is for whoever
-   writes documentation next, not a review of the platform. Ask what the
-   platform does in the cases a page doesn't cover, how something is done and
-   where it is. Do not ask how the platform's code works, what another page or
-   the catalog already answers, or about features that don't exist yet. When a
+4. Follow "What to ask and what not" strictly: the documentation is for
+   whoever uses or runs what it documents, not a review of it. Ask what the
+   documented thing does in the cases a page doesn't cover, how something is
+   done and where it is. Do not ask how its internals are coded, what another
+   page or the catalog already answers, or about plans that don't exist yet. When a
    fact comes out of a command or a screen, ask for its output. Never ask for a
    secret's value.
 5. Keep it short (around 15 questions at most), then tell me in a few lines

@@ -109,6 +109,7 @@ A numbered line per message, "1. Quien escribe → Servidor git: git push",
 with "[alt: sin errores de contrato]" before a fragment's first message and
 "[else]" before its other branch; actor names linked.
 
-## In this site
+## Working example
 
-`diagrams/sequence-sync.json`, shown in `docs/diagrams/time.mdx`.
+The guide shows it working (repository `doc-example`):
+`diagrams/sequence-sync.json`, in its `diagrams/time` page.

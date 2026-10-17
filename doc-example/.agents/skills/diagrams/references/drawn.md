@@ -79,7 +79,7 @@ Every box has `x`, `y`, `w` and `h` (top-left corner, pixels). Then:
 | `trace` | `true` on an origin: hovering lights everything it reaches along `accent` arrows. |
 | `needs` | Ids of the boxes it depends on; hovering a box lists everything that falls with it. |
 | `entity` | `<type>/<id>` of a catalog entity: takes its name, links to its page, and that page lists the diagram. **Use it whenever the piece exists in the catalog.** |
-| `page` | Otherwise, a page path of this site (`publishing`, `diagrams/drawn`) it links to. |
+| `page` | Otherwise, a page path of the site (`publishing`, `network/dns`) it links to. |
 
 **Tables.** A box with `rows` is a table and takes **no `h`**: its height is
 `36 + 14·rows (+14 with more) (+10 + 14·ops) + 6`. Each row is
@@ -233,11 +233,14 @@ sub lines, table rows, notes, `info`, and any box outside every zone with no
 arrow. So give every box a zone or an arrow, and say in `desc` what only the
 picture shows.
 
-## In this site
+## Working example
 
+The guide shows it working (repository `doc-example`):
 `diagrams/pipeline.json` (zones, focal, an accent run, `trace`, `needs`),
 `diagrams/repository.json` (entities as boxes, `kindNames`),
 `diagrams/sync-shapes.json` (shapes, a self-loop, a curve back) and
-`diagrams/diagram-forms.json` (tables with `ops`, `triangle` heads), shown
-in `docs/diagrams/drawn.mdx`. The look of kinds and hues is in
-[style.md](style.md); checking a diagram, in [checking.md](checking.md).
+`diagrams/diagram-forms.json` (tables with `ops`, `triangle` heads), in its
+`diagrams/drawn` page.
+
+The look of kinds and hues is in [style.md](style.md); checking a diagram, in
+[checking.md](checking.md).

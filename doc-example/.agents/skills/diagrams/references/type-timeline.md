@@ -98,6 +98,7 @@ the accents.
 
 One line per event in date order: "1 sep 2026: Primer borrador".
 
-## In this site
+## Working example
 
-`diagrams/timeline-page-life.json`, shown in `docs/diagrams/time.mdx`.
+The guide shows it working (repository `doc-example`):
+`diagrams/timeline-page-life.json`, in its `diagrams/time` page.

@@ -55,15 +55,15 @@ rules with the `x` labels in capitals under them; each series a straight line
 with its name and value printed at both ends. Close labels are spread apart,
 the dots never move. A series without `hue` is grey, so the focal one stands
 out. With more than two points it is reported and drawn as plain lines.
-Example: `diagrams/line-slope-sections.json`.
+The guide's example: `diagrams/line-slope-sections.json`.
 
 ### `ridgeline`: when each series rises
 
 Each series in its own row as a filled ridge, all ridges on **one shared
 height scale**, the name on the left. Use it to compare *when* each series
-peaks (edits per section, week by week), with up to eight series. There is
-no value axis: values are read on hover and in the text version. Negative
-values are drawn at zero. Example: `diagrams/line-ridgeline-edits.json`.
+peaks (edits per section, week by week), with up to eight series. There is no
+value axis: values are read on hover and in the text version. Negative values
+are drawn at zero. The guide's example: `diagrams/line-ridgeline-edits.json`.
 
 ### `stream`: a total and how it splits
 
@@ -71,15 +71,16 @@ The series stacked around a centred baseline: the stream's height at each
 point is the total, each layer its share. Use it for composition over many
 points (files changed per month, by kind), with few layers. No value axis;
 the card gives each layer's total ("120 ficheros en total"). Negative values
-count as zero. Example: `diagrams/line-stream-files.json`.
+count as zero. The guide's example: `diagrams/line-stream-files.json`.
 
 ### `bump`: ranks, not values
 
-Each value is a rank, a whole number from 1, and rank 1 is on top. Each
-point is a dot with its rank inside, names at both ends. Use it when position
-is the story (the most-read sections, quarter by quarter) across three to six
-snapshots. A value that is not a whole number from 1 is reported and the
-chart is drawn as plain lines. Example: `diagrams/line-bump-sections.json`.
+Each value is a rank, a whole number from 1, and rank 1 is on top. Each point
+is a dot with its rank inside, names at both ends. Use it when position is the
+story (the most-read sections, quarter by quarter) across three to six
+snapshots. A value that is not a whole number from 1 is reported and the chart
+is drawn as plain lines. The guide's example:
+`diagrams/line-bump-sections.json`.
 
 ## What you decide
 
@@ -130,8 +131,9 @@ número entero desde 1: se dibuja como líneas"), the budget and the accents.
 
 A table: one row per point of `x`, one column per series (ranks with `bump`).
 
-## In this site
+## Working example
 
+The guide shows it working (repository `doc-example`):
 `diagrams/line-reads.json`, `line-slope-sections.json`,
 `line-ridgeline-edits.json`, `line-stream-files.json` and
-`line-bump-sections.json`, shown in `docs/diagrams/charts.mdx`.
+`line-bump-sections.json`, in its `diagrams/charts` page.
