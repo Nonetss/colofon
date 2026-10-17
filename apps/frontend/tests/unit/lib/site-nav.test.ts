@@ -1,9 +1,12 @@
 import { describe, expect, test } from "bun:test"
 import {
   adminSidebarLinks,
+  currentNavHref,
   getCurrentSearchHref,
   getSearchableSurfaces,
   pageHrefOf,
+  profileSidebarLinks,
+  sectionSidebarLinks,
   siteNavItems,
 } from "@/lib/site-nav"
 
@@ -65,9 +68,46 @@ describe("pageHrefOf", () => {
   })
 })
 
-describe("adminSidebarLinks", () => {
-  test("starts with the section overview followed by its children", () => {
+describe("sectionSidebarLinks", () => {
+  test("starts with the section's own page under the given label", () => {
+    const [overview] = sectionSidebarLinks("profile", "Cuenta")
+    expect(overview?.href).toBe("/me")
+    expect(overview?.label).toBe("Cuenta")
+  })
+
+  test("follows with the section's children in registry order", () => {
+    expect(profileSidebarLinks.map((link) => link.href)).toEqual([
+      "/me",
+      "/me/api-keys",
+      "/me/secrets",
+      "/me/skills",
+    ])
+  })
+
+  test("the admin rows open on Resumen followed by its children", () => {
     expect(adminSidebarLinks[0]?.href).toBe("/admin")
-    expect(adminSidebarLinks.length).toBeGreaterThan(1)
+    expect(adminSidebarLinks[0]?.label).toBe("Resumen")
+    expect(adminSidebarLinks.map((link) => link.href)).toContain("/admin/users")
+  })
+})
+
+describe("currentNavHref", () => {
+  const hrefs = profileSidebarLinks.map((link) => link.href)
+
+  test("marks the sub-page, not the section it is under", () => {
+    expect(currentNavHref("/me/secrets", hrefs)).toBe("/me/secrets")
+  })
+
+  test("marks the section's own page at its path", () => {
+    expect(currentNavHref("/me", hrefs)).toBe("/me")
+  })
+
+  test("marks a row for a route nested under it", () => {
+    const adminHrefs = adminSidebarLinks.map((link) => link.href)
+    expect(currentNavHref("/admin/git/manual", adminHrefs)).toBe("/admin/git")
+  })
+
+  test("marks nothing outside the section", () => {
+    expect(currentNavHref("/casa/red", hrefs)).toBeUndefined()
   })
 })

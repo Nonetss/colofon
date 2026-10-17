@@ -1,0 +1,60 @@
+---
+import { fade } from "astro:transitions"
+import {
+  SECTION_SIDEBAR_ID,
+  SectionSidebarChrome,
+} from "@/features/app-shell/sidebar"
+import Layout from "@/layouts/Layout.astro"
+import { PAGE_SIDEBAR_ATTRIBUTE } from "@/lib/page-sidebar"
+import type { SidebarSection } from "@/lib/site-nav"
+
+interface Props {
+  title: string
+  /** Section whose sidebar rows (`sectionSidebars` in `site-nav.ts`) to show. */
+  section: SidebarSection
+  /** Shows a floating "back to top" button once the page scrolls past its threshold. */
+  scrollToTop?: boolean
+}
+
+const { title, section, scrollToTop = false } = Astro.props
+
+if (Astro.locals.user === null) return Astro.redirect("/login")
+// Mirrors what SidebarProvider writes on toggle, so the sidebar opens in the
+// state the user left it instead of flashing open before collapsing.
+const sidebarOpen = Astro.cookies.get("sidebar_state")?.value !== "false"
+---
+
+<!--
+  A section with sub-pages: the sidebar is a persisted island (one per
+  section, so another section mounts its own) and the page is a sibling
+  that fades on navigation, so moving between the section's pages never
+  remounts the chrome. The window scrolls, as in the reader: the shadcn
+  sidebar is fixed below the navbar and its gap reserves the column.
+  Below `md` the sidebar is a sheet the navbar's menu button opens.
+-->
+<Layout
+  title={title}
+  animateContent={false}
+  footer={false}
+  scrollToTop={scrollToTop}
+  bodyAttributes={{ [PAGE_SIDEBAR_ATTRIBUTE]: SECTION_SIDEBAR_ID }}
+>
+  <div class="flex w-full flex-1">
+    <div
+      class="flex shrink-0"
+      transition:persist={`section-sidebar-${section}`}
+    >
+      <SectionSidebarChrome
+        client:only="react"
+        section={section}
+        defaultOpen={sidebarOpen}
+      />
+    </div>
+    <div
+      class="flex min-w-0 flex-1 flex-col"
+      transition:animate={fade({ duration: "0.2s" })}
+    >
+      <slot />
+    </div>
+  </div>
+</Layout>

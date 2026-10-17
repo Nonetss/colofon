@@ -1,6 +1,6 @@
 ---
-import { ProfilePage } from "@/features/profile"
-import Layout from "@/layouts/Layout.astro"
+import { ProfileAccountPage } from "@/features/profile"
+import WithSidebar from "@/layouts/WithSidebar.astro"
 import { appSurfaces } from "@/lib/app-surfaces"
 
 const { user, session } = Astro.locals
@@ -8,6 +8,6 @@ const { user, session } = Astro.locals
 if (!user || !session) return Astro.redirect("/login")
 ---
 
-<Layout title={appSurfaces.profile.title}>
-  <ProfilePage user={user} session={session} client:only="react" />
-</Layout>
+<WithSidebar title={appSurfaces.profile.title} section="profile">
+  <ProfileAccountPage user={user} session={session} client:only="react" />
+</WithSidebar>

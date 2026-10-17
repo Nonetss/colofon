@@ -1,7 +1,7 @@
 import type { SyntheticEvent } from "react"
 import type { DialogFieldDescriptor } from "@/components/shared/form/dialog-fields"
 import { FormDialog } from "@/components/shared/form/form-dialog"
-import { useChangePassword } from "@/features/profile/overview/hooks/use-profile-mutations"
+import { useChangePassword } from "@/features/profile/account/hooks/use-profile-mutations"
 import { useDialogForm } from "@/hooks/use-dialog-form"
 
 interface ChangePasswordFormValues {

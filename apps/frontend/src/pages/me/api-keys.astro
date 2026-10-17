@@ -1,0 +1,9 @@
+---
+import { ProfileApiKeysPage } from "@/features/profile"
+import WithSidebar from "@/layouts/WithSidebar.astro"
+import { appSurfaces } from "@/lib/app-surfaces"
+---
+
+<WithSidebar title={appSurfaces["profile-api-keys"].title} section="profile">
+  <ProfileApiKeysPage client:only="react" />
+</WithSidebar>

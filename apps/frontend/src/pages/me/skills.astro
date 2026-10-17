@@ -1,0 +1,9 @@
+---
+import { ProfileAgentSkillsPage } from "@/features/profile"
+import WithSidebar from "@/layouts/WithSidebar.astro"
+import { appSurfaces } from "@/lib/app-surfaces"
+---
+
+<WithSidebar title={appSurfaces["profile-skills"].title} section="profile">
+  <ProfileAgentSkillsPage client:only="react" />
+</WithSidebar>

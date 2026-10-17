@@ -10,21 +10,20 @@ import { StatusTag } from "@/components/shared/data-display/status-dot"
 import { Hint } from "@/components/shared/feedback/hint"
 import { UserAvatar } from "@/components/shared/user/avatar"
 import { Button } from "@/components/ui/button"
-import { ChangePasswordDialog } from "@/features/profile/overview/components/change-password-dialog"
-import { EditNameDialog } from "@/features/profile/overview/components/edit-name-dialog"
-import { ProfileAgentSkills } from "@/features/profile/overview/components/profile-agent-skills"
-import { ProfileApiKeys } from "@/features/profile/overview/components/profile-api-keys"
-import { ProfileSecrets } from "@/features/profile/overview/components/profile-secrets"
+import { ChangePasswordDialog } from "@/features/profile/account/components/change-password-dialog"
+import { EditNameDialog } from "@/features/profile/account/components/edit-name-dialog"
 import { authClient } from "@/lib/auth-client"
 import { formatDate } from "@/lib/format"
 import { userDisplayName } from "@/lib/user-display"
 
-export type ProfilePageProps = {
+export type ProfileAccountPageProps = {
   user: User
   session: Session
 }
 
-export function ProfileContent({ user: initialUser }: ProfilePageProps) {
+export function ProfileAccountContent({
+  user: initialUser,
+}: ProfileAccountPageProps) {
   const { data: session } = authClient.useSession()
   const user = session?.user ?? initialUser
 
@@ -143,12 +142,6 @@ export function ProfileContent({ user: initialUser }: ProfilePageProps) {
           },
         ]}
       />
-
-      <ProfileApiKeys />
-
-      <ProfileSecrets />
-
-      <ProfileAgentSkills />
 
       <EditNameDialog
         open={editNameOpen}

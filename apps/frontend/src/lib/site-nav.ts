@@ -5,6 +5,7 @@ import {
   appSurfaces,
   getChildSurfaces,
   isSurfacePathActive,
+  type SurfaceId,
 } from "@/lib/app-surfaces"
 import { resolveIconRef } from "@/lib/icon-registry"
 
@@ -42,7 +43,7 @@ export const isNavLinkActive = isSurfacePathActive
  * `/admin/users` wins over its parent `/admin`, so only one
  * row in a section is current at a time.
  */
-function getCurrentNavHref(pathname: string, hrefs: readonly string[]) {
+export function currentNavHref(pathname: string, hrefs: readonly string[]) {
   let current: string | undefined
   for (const href of hrefs) {
     if (!isNavLinkActive(href, pathname)) continue
@@ -187,7 +188,7 @@ export function getCurrentSearchHref(
   pathname: string,
   groups: readonly SiteNavSearchGroup[]
 ) {
-  return getCurrentNavHref(
+  return currentNavHref(
     pathname,
     groups.flatMap((group) => group.items.map((item) => pageHrefOf(item.href)))
   )
@@ -200,24 +201,42 @@ export function pageHrefOf(href: string): string {
   return href.slice(0, hash)
 }
 
-export interface AdminSidebarLink {
+export interface SectionSidebarLink {
   href: string
   label: string
   icon: SiteNavIconComponent
 }
 
 /**
- * Links for the `/admin` section's own sidebar
- * (`features/admin/shell/components/app-sidebar.tsx`). Reuses the `/admin`
- * surface's children so routes/labels/icons aren't duplicated; only
- * "Resumen" (the section's own overview page) is added on top, since it
- * isn't a child surface.
+ * Rows of a section's sidebar (the admin shell, `WithSidebar.astro`): the
+ * section's own page under `overviewLabel`, since it isn't a child surface,
+ * followed by its child surfaces in registry order. Routes, labels and icons
+ * come from `app-surfaces.ts`, so a new page is only a new child there.
  */
-export const adminSidebarLinks: AdminSidebarLink[] = [
-  {
-    href: "/admin",
-    label: "Resumen",
-    icon: resolveIconRef(appSurfaces.admin.icon),
-  },
-  ...getChildSurfaces("admin").map(toSubItem),
-]
+export function sectionSidebarLinks(
+  id: SurfaceId,
+  overviewLabel: string
+): SectionSidebarLink[] {
+  const section = appSurfaces[id]
+  return [
+    {
+      href: section.path,
+      label: overviewLabel,
+      icon: resolveIconRef(section.icon),
+    },
+    ...getChildSurfaces(id).map(toSubItem),
+  ]
+}
+
+/** Rows of the `/admin` shell's sidebar (`features/admin/shell`). */
+export const adminSidebarLinks = sectionSidebarLinks("admin", "Resumen")
+
+/** Rows of the profile's sidebar (`/me`, `features/app-shell/sidebar`). */
+export const profileSidebarLinks = sectionSidebarLinks("profile", "Cuenta")
+
+/** Sections shown with `WithSidebar.astro`, each with its sidebar's rows. */
+export const sectionSidebars = {
+  profile: profileSidebarLinks,
+} satisfies Partial<Record<SurfaceId, SectionSidebarLink[]>>
+
+export type SidebarSection = keyof typeof sectionSidebars

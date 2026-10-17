@@ -23,6 +23,14 @@ describe("surface registry", () => {
     )
   })
 
+  test("the profile section lists its pages in order", () => {
+    expect(getChildSurfaces("profile").map((surface) => surface.path)).toEqual([
+      "/me/api-keys",
+      "/me/secrets",
+      "/me/skills",
+    ])
+  })
+
   test("detail surfaces list their records through a search source", () => {
     expect(getAppSurface("doc-page").searchSource).toBe("doc-pages")
   })

@@ -2,12 +2,14 @@ import { useState } from "react"
 import { Text } from "@/components/shared/brand/typography"
 import { SoftCardList } from "@/components/shared/data-display/soft-card-list"
 import { Hint } from "@/components/shared/feedback/hint"
+import { PageHero } from "@/components/shared/layout/page-hero"
 import { Button } from "@/components/ui/button"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 import {
   ApiKeyCreatedDialog,
   ApiKeyFormModal,
   type ApiKeyListItem,
+  ApiKeyRenameDialog,
   useApiKeyDelete,
   useApiKeysList,
 } from "@/features/api-keys/manage"
@@ -17,6 +19,7 @@ import { formatDate } from "@/lib/format"
 import { getIcon } from "@/lib/icon-registry"
 
 const Plus = getIcon("actions", "add")
+const Pencil = getIcon("actions", "edit")
 const Trash = getIcon("actions", "delete")
 const KeyRound = getIcon("entities", "apiKey")
 
@@ -60,12 +63,13 @@ function listNotice(
  * reads the documentation (`/llms.txt`) as them, and revoke the ones no
  * longer needed.
  */
-export function ProfileApiKeys() {
+export function ProfileApiKeysContent() {
   const { data: apiKeys = [], isPending, isError } = useApiKeysList()
   const deleteApiKey = useApiKeyDelete()
   const notice = listNotice(isPending, isError, apiKeys.length)
   const [createOpen, setCreateOpen] = useState(false)
   const createdKeyDialog = useTargetDialog<string>()
+  const renameDialog = useTargetDialog<ApiKeyListItem>()
   const deleteDialog = useTargetConfirmDialog<ApiKeyListItem>({
     title: "Revocar API key",
     description: (key) =>
@@ -75,21 +79,16 @@ export function ProfileApiKeys() {
   })
 
   return (
-    <section className="flex flex-col gap-3" aria-labelledby="api-keys">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div className="min-w-0">
-          <Text as="h2" id="api-keys" variant="label" tone="muted">
-            API keys
-          </Text>
-          <Text as="p" variant="compact" tone="muted" className="mt-1">
-            Crea una clave para que tu IA lea la documentación con tu cuenta.
-          </Text>
-        </div>
-        <Button variant="outline" onClick={() => setCreateOpen(true)}>
-          <Plus className="size-4" />
-          Nueva API key
-        </Button>
-      </div>
+    <div className="flex flex-col gap-6">
+      <PageHero
+        surface="profile-api-keys"
+        action={
+          <Button variant="outline" onClick={() => setCreateOpen(true)}>
+            <Plus className="size-4" />
+            Nueva API key
+          </Button>
+        }
+      />
 
       {notice !== null && (
         <Text as="p" variant="compact" tone={notice.tone}>
@@ -117,6 +116,16 @@ export function ProfileApiKeys() {
                   {keyStart(key)}
                 </Text>
               )}
+              <Hint label="Cambiar nombre">
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label={`Cambiar el nombre de ${keyName(key)}`}
+                  onClick={() => renameDialog.open(key)}
+                >
+                  <Pencil className="size-3.5" />
+                </Button>
+              </Hint>
               <Hint label="Revocar">
                 <Button
                   variant="ghost"
@@ -145,7 +154,11 @@ export function ProfileApiKeys() {
         {...createdKeyDialog.dialogProps}
         fullKey={createdKeyDialog.target}
       />
+      <ApiKeyRenameDialog
+        {...renameDialog.dialogProps}
+        apiKey={renameDialog.target}
+      />
       <ConfirmDialog {...deleteDialog.confirmDialogProps} />
-    </section>
+    </div>
   )
 }

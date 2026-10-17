@@ -1,6 +1,7 @@
 import { Text } from "@/components/shared/brand/typography"
 import { SoftCardList } from "@/components/shared/data-display/soft-card-list"
 import { Hint } from "@/components/shared/feedback/hint"
+import { PageHero } from "@/components/shared/layout/page-hero"
 import { Button } from "@/components/ui/button"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 import {
@@ -65,7 +66,7 @@ function lastUseLabel(secret: SecretListItem): string {
  * AI connected to the MCP uses through `request` without ever seeing them.
  * Values are write-only.
  */
-export function ProfileSecrets() {
+export function ProfileSecretsContent() {
   const { data, isPending, isError } = useSecretsList()
   const secrets = data?.secrets ?? []
   const enabled = data?.enabled === true
@@ -82,24 +83,18 @@ export function ProfileSecrets() {
   })
 
   return (
-    <section className="flex flex-col gap-3" aria-labelledby="secrets">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div className="min-w-0">
-          <Text as="h2" id="secrets" variant="label" tone="muted">
-            Secretos
-          </Text>
-          <Text as="p" variant="compact" tone="muted" className="mt-1">
-            Credenciales de tus servicios que tu IA usa a través del MCP sin ver
-            sus valores.
-          </Text>
-        </div>
-        {enabled && (
-          <Button variant="outline" onClick={formDialog.openCreate}>
-            <Plus className="size-4" />
-            Nuevo secreto
-          </Button>
-        )}
-      </div>
+    <div className="flex flex-col gap-6">
+      <PageHero
+        surface="profile-secrets"
+        action={
+          enabled && (
+            <Button variant="outline" onClick={formDialog.openCreate}>
+              <Plus className="size-4" />
+              Nuevo secreto
+            </Button>
+          )
+        }
+      />
 
       {notice !== null && (
         <Text as="p" variant="compact" tone={notice.tone}>
@@ -183,6 +178,6 @@ export function ProfileSecrets() {
         secret={usageSheet.target}
       />
       <ConfirmDialog {...deleteDialog.confirmDialogProps} />
-    </section>
+    </div>
   )
 }

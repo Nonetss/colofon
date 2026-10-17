@@ -29,14 +29,10 @@ import {
 } from "@/components/ui/sidebar"
 import { authClient } from "@/lib/auth-client"
 import { navigate } from "@/lib/navigate"
-import { adminSidebarLinks } from "@/lib/site-nav"
+import { adminSidebarLinks, currentNavHref } from "@/lib/site-nav"
 import { userDisplayName } from "@/lib/user-display"
 
-function isLinkActive(href: string, currentPath: string) {
-  return href === "/admin"
-    ? currentPath === "/admin"
-    : currentPath.startsWith(href)
-}
+const adminHrefs = adminSidebarLinks.map((link) => link.href)
 
 interface AppSidebarProps {
   nameApp: string
@@ -46,6 +42,7 @@ interface AppSidebarProps {
 
 export function AppSidebar({ nameApp, currentPath, user }: AppSidebarProps) {
   const displayName = userDisplayName(user)
+  const currentHref = currentNavHref(currentPath, adminHrefs)
   const email = typeof user.email === "string" ? user.email : null
 
   const handleSignOut = async () => {
@@ -84,7 +81,7 @@ export function AppSidebar({ nameApp, currentPath, user }: AppSidebarProps) {
               {adminSidebarLinks.map(({ href, label, icon: Icon }) => (
                 <SidebarMenuItem key={href}>
                   <SidebarMenuButton
-                    isActive={isLinkActive(href, currentPath)}
+                    isActive={href === currentHref}
                     tooltip={label}
                     render={<AppLink href={href} />}
                   >

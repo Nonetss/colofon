@@ -16,6 +16,9 @@ export type SurfaceId =
   | "admin-git-repository"
   | "config-api-keys"
   | "profile"
+  | "profile-api-keys"
+  | "profile-secrets"
+  | "profile-skills"
   | "login"
   | "signup"
   | "not-found"
@@ -189,6 +192,32 @@ const appSurfaceDefinitions: Partial<Record<SurfaceId, SurfaceDefinition>> = {
     label: "Mi perfil",
     description: "Gestiona tu nombre, correo y contraseña.",
     icon: iconRef("identity", "userCircle"),
+    children: {
+      "profile-api-keys": {
+        path: "/me/api-keys",
+        title: "Mi perfil · API keys",
+        label: "API keys",
+        description:
+          "Crea las claves con las que tu IA lee la documentación y usa el MCP.",
+        icon: iconRef("entities", "apiKey"),
+      },
+      "profile-secrets": {
+        path: "/me/secrets",
+        title: "Mi perfil · Secretos",
+        label: "Secretos",
+        description:
+          "Guarda las credenciales que el MCP usa para llamar a tus servicios sin que tu IA vea sus valores.",
+        icon: iconRef("entities", "secret"),
+      },
+      "profile-skills": {
+        path: "/me/skills",
+        title: "Mi perfil · Skills para tu IA",
+        label: "Skills para tu IA",
+        description:
+          "Instala en tu IA las skills que le enseñan a usar y escribir esta documentación.",
+        icon: iconRef("admin", "sparkle"),
+      },
+    },
   },
   login: {
     id: "login",
