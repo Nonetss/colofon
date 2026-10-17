@@ -1,9 +1,11 @@
 export { ApiKeyCreatedDialog } from "@/features/api-keys/manage/components/api-key-created-dialog"
 export { ApiKeyFormModal } from "@/features/api-keys/manage/components/api-key-form-modal"
+export { ApiKeyRenameDialog } from "@/features/api-keys/manage/components/api-key-rename-dialog"
 export {
   useApiKeyCreate,
   useApiKeyDelete,
   useApiKeysList,
+  useApiKeyUpdate,
 } from "@/features/api-keys/manage/hooks/use-api-keys"
 export {
   KEY_PLACEHOLDER,

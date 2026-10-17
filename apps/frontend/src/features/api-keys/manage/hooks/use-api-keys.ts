@@ -18,6 +18,8 @@ type ApiKeyCreateInput = {
   expiresIn: number | null
 }
 
+type ApiKeyUpdateInput = { id: string; name: string }
+
 type ApiKeyDeleteOutput = { id: string; success: boolean }
 
 function expiryOf(now: Date, expiresIn: number | null): string | null {
@@ -44,6 +46,17 @@ function applyCreateOptimistic(
   return [...current, optimistic]
 }
 
+function applyUpdateOptimistic(
+  current: ApiKeyListItem[] | undefined,
+  input: ApiKeyUpdateInput
+) {
+  if (!current) return current
+  return current.map((apiKey) => {
+    if (apiKey.id !== input.id) return apiKey
+    return { ...apiKey, name: input.name }
+  })
+}
+
 function applyDeleteOptimistic(
   current: ApiKeyListItem[] | undefined,
   input: { id: string }
@@ -60,6 +73,17 @@ export const useApiKeyCreate = () =>
     messages: {
       success: "API key creada",
       error: "No se pudo crear la API key",
+    },
+  })
+
+export const useApiKeyUpdate = () =>
+  useResourceMutation<ApiKeyUpdateInput, ApiKeyListItem, ApiKeyListItem[]>({
+    mutationFn: (input) => orpc.v1.apiKey.update.call(input),
+    listKey,
+    applyOptimistic: applyUpdateOptimistic,
+    messages: {
+      success: "Nombre de la API key cambiado",
+      error: "No se pudo cambiar el nombre de la API key",
     },
   })
 
