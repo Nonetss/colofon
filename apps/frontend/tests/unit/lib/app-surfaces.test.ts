@@ -27,6 +27,7 @@ describe("surface registry", () => {
     expect(getChildSurfaces("profile").map((surface) => surface.path)).toEqual([
       "/me/api-keys",
       "/me/secrets",
+      "/me/repositories",
       "/me/skills",
     ])
   })

@@ -18,6 +18,7 @@ export type SurfaceId =
   | "profile"
   | "profile-api-keys"
   | "profile-secrets"
+  | "profile-repositories"
   | "profile-skills"
   | "login"
   | "signup"
@@ -208,6 +209,14 @@ const appSurfaceDefinitions: Partial<Record<SurfaceId, SurfaceDefinition>> = {
         description:
           "Guarda las credenciales que el MCP usa para llamar a tus servicios sin que tu IA vea sus valores.",
         icon: iconRef("entities", "secret"),
+      },
+      "profile-repositories": {
+        path: "/me/repositories",
+        title: "Mi perfil · Repositorios",
+        label: "Repositorios",
+        description:
+          "Añade tus propios repositorios git de documentación: solo tú los lees.",
+        icon: iconRef("entities", "contentRepository"),
       },
       "profile-skills": {
         path: "/me/skills",

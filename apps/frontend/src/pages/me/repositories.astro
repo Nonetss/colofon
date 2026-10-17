@@ -1,0 +1,12 @@
+---
+import { ProfileRepositoriesPage } from "@/features/profile"
+import WithSidebar from "@/layouts/WithSidebar.astro"
+import { appSurfaces } from "@/lib/app-surfaces"
+---
+
+<WithSidebar
+  title={appSurfaces["profile-repositories"].title}
+  section="profile"
+>
+  <ProfileRepositoriesPage client:only="react" />
+</WithSidebar>

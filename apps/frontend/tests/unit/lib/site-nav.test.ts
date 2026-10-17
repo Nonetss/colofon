@@ -80,6 +80,7 @@ describe("sectionSidebarLinks", () => {
       "/me",
       "/me/api-keys",
       "/me/secrets",
+      "/me/repositories",
       "/me/skills",
     ])
   })
