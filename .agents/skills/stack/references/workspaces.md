@@ -24,6 +24,14 @@ Bun workspaces are `apps/*` and `packages/*` (root `package.json`). `bunfig.toml
 - Routers `src/routers/{auth,docs,rpc}.ts` (+ `handler-plugins.ts`), middlewares `src/middlewares/{auth,request-logger,no-store}.ts` (`no-store` marks the content schema endpoints `Cache-Control: no-store`) (request logger first; `sessionMiddleware` skips `/api/auth/*`, where Better Auth resolves the session itself), cron wiring `src/cron/{index,run-as}.ts`. `GET /` returns `OK` for healthchecks.
 - Dev `bun run --hot src/index.ts`. Build `tsdown` → `dist/index.mjs`; `deps.alwaysBundle` inlines every dependency because the runtime image ships no `node_modules`. Check `tsc -b`.
 
+### `apps/site`
+
+- The project website, a static Astro 7 build (`output: "static"`, Tailwind v4, no React, no API) published to GitHub Pages at `https://nonetss.github.io/colofon/` by `.github/workflows/pages.yml`. It has nothing to do with the running app: no auth, no backend, no Docker image, and the gateway never serves it. Its `package.json` is still copied by every app Dockerfile, since `bun install --frozen-lockfile` needs all workspace manifests.
+- `base: "/colofon"` with `trailingSlash: "always"`; every internal link goes through `href()` / `localized()` in `src/lib/url.ts`. English at the root, Spanish under `/es/` (`src/i18n/ui.ts` holds every landing string for both).
+- Landing (`src/components/Landing.astro`: hero, screenshot tour, architecture, install) plus a docs collection, one Markdown file per page and language in `src/content/docs/<lang>/<slug>.md` (frontmatter `title`, `description`, `order`).
+- The tour shows captures of the running app reading `doc-example`, in `src/assets/screenshots/` (`src/lib/screens.ts`). Every screen ships as a pair, `<name>.webp` and `<name>-dark.webp` (its `dark` field), 2400×1500; the frame and the lightbox show the one for the site's `.dark` theme. The site opens in the dark theme unless the visitor picked light. The design tokens and faces mirror `apps/frontend/src/styles/theme.css`, and `src/components/Logo.astro` is the app's mark.
+- Dev `astro dev --port 4322` (`bun run dev:site`). Check `astro check`.
+
 ### `apps/gateway` (not a workspace)
 
 - Docker assets only: `routes.caddy`, `Caddyfile`, `Caddyfile.dev`, `Dockerfile` (`caddy:2-alpine`, copies the three into `/etc/caddy`, runs `Caddyfile`), and a dev `compose.yml` (host network for the native apps, `localhost` upstreams, runs `Caddyfile.dev`) started by `bun run gateway`. `routes.caddy` is the only place that maps requests to apps.
