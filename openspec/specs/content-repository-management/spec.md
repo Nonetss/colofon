@@ -171,3 +171,89 @@ Non-admin users SHALL NOT reach the screen; the request SHALL be redirected to t
 
 - **WHEN** an authenticated user without the `admin` role requests `/admin/content`
 - **THEN** the request SHALL be redirected to the home page
+
+### Requirement: Content folder of a repository
+
+A content repository SHALL have a `path`, the folder inside its git repository where its content lives, empty by default (the root of the repository). It SHALL be a relative path with `/` separators, at most 255 characters, whose segments are neither empty, `.`, `..` nor start with a dot, and that does not start with `/`; anything else SHALL fail input validation with a Spanish message and store nothing. Unlike the `slug`, it SHALL be editable.
+
+The create and edit procedures, both the admin's and the owner's (`user-content-repositories`), SHALL accept `path`, edit keeping it when omitted, and every repository in a response SHALL carry it. Editing only the `path` SHALL NOT start a sync, since the clone is the same; it SHALL make the next read use the new folder. Creating SHALL start a sync as before.
+
+The admin screen's form and the profile's repositories form SHALL offer it as an optional “Carpeta del contenido” field, empty meaning the root, and both cards SHALL show it when it is not empty.
+
+#### Scenario: Site in a docs folder
+
+- **WHEN** an admin creates a repository for this monorepo with the path `docs`
+- **THEN** it SHALL be stored with the path `docs`, and its declarations and pages SHALL be read from that folder of the clone
+
+#### Scenario: Default
+
+- **WHEN** an admin creates a repository without a path
+- **THEN** its path SHALL be empty and its content SHALL be read from the root, as before
+
+#### Scenario: Path that climbs
+
+- **WHEN** a user creates a repository with the path `../fuera` or `/etc`
+- **THEN** the request SHALL fail input validation and nothing SHALL be stored
+
+#### Scenario: Moving the content
+
+- **WHEN** an owner edits only the path of their repository from empty to `documentacion`
+- **THEN** no sync SHALL start and the next read SHALL use `documentacion` of the existing clone
+
+#### Scenario: Form
+
+- **WHEN** a user opens the creation form
+- **THEN** it SHALL offer an optional “Carpeta del contenido” field, empty by default
+
+### Requirement: Content folders of a repository
+
+The backend SHALL expose to admins a procedure that lists the content folders of a git repository at a ref, and to every signed-in user an equivalent one limited to their own repositories (`user-content-repositories`). A content folder is a folder of the repository that contains a `doc.config.yaml`; the root counts as the empty path. It SHALL take the repository as in the branches procedure (a typed URL or the slug of a stored repository, one of the two) and an optional `ref`, defaulting to the remote's HEAD, and SHALL read only the repository's tree at that ref, never file contents. The answer SHALL list the folders as paths that are valid content paths, root first and then in alphabetical order, at most 50. Its input SHALL travel in the request body, never in the query string. An unknown slug SHALL answer `NOT_FOUND`, a remote or ref that can't be read `BAD_GATEWAY` with the git error without credentials, and a repository with no `doc.config.yaml` an empty list. A hosted repository SHALL be read from its bare repository on disk. The user's procedure SHALL refuse the URLs the user rules refuse (`BAD_REQUEST`) before any read.
+
+#### Scenario: Site inside docs
+
+- **WHEN** an admin lists the folders of a repository whose only `doc.config.yaml` is at `docs/doc.config.yaml`
+- **THEN** the answer SHALL be `docs`
+
+#### Scenario: Root and subfolder
+
+- **WHEN** a repository has `doc.config.yaml` at its root and at `ejemplo/doc.config.yaml`
+- **THEN** the answer SHALL list the root first and then `ejemplo`
+
+#### Scenario: Other branch
+
+- **WHEN** the branch `produccion` holds the site in `sitio` and `main` holds it in `docs`, and the folders are listed for `produccion`
+- **THEN** the answer SHALL be `sitio`
+
+#### Scenario: Remote that can't be read
+
+- **WHEN** a remote rejects the credentials
+- **THEN** the procedure SHALL answer `BAD_GATEWAY` with git's error and no credential in it
+
+#### Scenario: A user asks for an internal address
+
+- **WHEN** a user lists the folders of `https://192.168.1.10/x.git`
+- **THEN** the backend SHALL answer `BAD_REQUEST` and read nothing
+
+### Requirement: Content folder select
+
+The “Carpeta del contenido” field of the admin form and of the profile's form SHALL be a select of the repository's content folders once they can be read: from the typed URL and the chosen ref once the URL is complete, from the stored repository while editing with the URL left empty, or from the platform's own bare repository for a hosted one. The root SHALL show as “Raíz del repositorio”. The options SHALL include the current value even when it isn't among the folders found, and SHALL refresh when the chosen branch changes. While the folders can't be read, or none is found, the field SHALL be a text field, with the reason as its hint when the read failed. Choosing the only folder found while creating SHALL NOT be automatic: the field starts at the root until the user chooses.
+
+#### Scenario: Choosing the folder
+
+- **WHEN** a user types the URL of a repository whose site is in `docs`
+- **THEN** the field SHALL become a select offering “Raíz del repositorio” and `docs`
+
+#### Scenario: Changing the branch
+
+- **WHEN** the user picks another branch in the same form
+- **THEN** the folders SHALL be read again for that branch
+
+#### Scenario: Folder typed before
+
+- **WHEN** an edited repository has the folder `antiguo`, which the listing doesn't find
+- **THEN** the select SHALL still offer `antiguo`, selected
+
+#### Scenario: Unreadable remote
+
+- **WHEN** the folders can't be read
+- **THEN** the field SHALL stay a text field and say why
