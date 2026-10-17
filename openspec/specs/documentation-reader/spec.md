@@ -6,11 +6,11 @@ Defines how signed-in users read the content repositories on the web: the reader
 ### Requirement: Reader procedures
 
 The backend SHALL expose, under `v1.docs` and to every signed-in user, procedures to:
-- read the navigation of every stored repository, ordered by name: its slug, its display name, the `nombre` and `descripcion` of its `doc.config.yaml`, whether it has readable content, and its navigation tree (`content-pages`);
+- read the navigation of every repository the caller can read (the platform's and their own, `user-content-repositories`), ordered by name: its slug, its display name, the `nombre` and `descripcion` of its `doc.config.yaml`, whether it has readable content, and its navigation tree (`content-pages`);
 - read one page by repository slug and page path (the empty path being the repository's home): its header, render tree, headings, breadcrumbs, previous and next pages, its problems and the repository's cleaned stylesheet (`content-styles`), or `null` when the repository has none;
 - read one image file of a repository's `docs/` folder by path, with its content type.
 
-All three SHALL be `GET` procedures. An unknown repository, a page that does not exist, or a file that does not exist or is not an allowed image SHALL answer `NOT_FOUND`. Users without a session SHALL get `UNAUTHORIZED`. Problems SHALL be returned in full only to users with the `admin` role; other users SHALL only learn whether the page has problems. A repository whose content has never been read or synced SHALL be listed without a tree and marked as having no readable content.
+All three SHALL be `GET` procedures. An unknown repository, one the caller cannot read, a page that does not exist, or a file that does not exist or is not an allowed image SHALL answer `NOT_FOUND`. Users without a session SHALL get `UNAUTHORIZED`. Problems SHALL be returned in full only to users with the `admin` role; other users SHALL only learn whether the page has problems. A repository whose content has never been read or synced SHALL be listed without a tree and marked as having no readable content.
 
 #### Scenario: Navigation of two repositories
 
@@ -21,6 +21,11 @@ All three SHALL be `GET` procedures. An unknown repository, a page that does not
 
 - **WHEN** a hosted repository has had nothing pushed
 - **THEN** it SHALL be listed without a tree and marked as having no readable content
+
+#### Scenario: Someone else's repository
+
+- **WHEN** a user reads a page of a repository that belongs to another user
+- **THEN** the procedure SHALL answer `NOT_FOUND`
 
 #### Scenario: Page of an unknown repository
 
