@@ -8,11 +8,8 @@ export type GitCredential = GitCredentials["credentials"][number]
 
 export type SaveGitCredentialInput = Parameters<GitCredentialClient["save"]>[0]
 
-/** What the form clones with: no login, a saved one, or one typed now. */
-export type CredentialChoice =
-  | { kind: "none" }
-  | { kind: "saved"; id: string }
-  | { kind: "new" }
+/** What the form clones with: no login, or a saved one. */
+export type CredentialChoice = { kind: "none" } | { kind: "saved"; id: string }
 
 /** The host (with its port) of a typed URL, or `undefined` while it isn't one. */
 export function hostOfUrl(url: string): string | undefined {
@@ -58,10 +55,9 @@ export function choiceValue(choice: CredentialChoice): string {
   return choice.kind
 }
 
-/** The choice of a select value: `none`, `new` or a credential id. */
+/** The choice of a select value: `none` or a credential id. */
 export function choiceOfValue(value: string): CredentialChoice {
   if (value === "none") return { kind: "none" }
-  if (value === "new") return { kind: "new" }
   return { kind: "saved", id: value }
 }
 
@@ -72,4 +68,14 @@ export function choiceOfValue(value: string): CredentialChoice {
 export function readCredentialId(choice: CredentialChoice): string | undefined {
   if (choice.kind === "saved") return choice.id
   return undefined
+}
+
+/**
+ * The host (with its port) a typed server names: a bare host or a pasted URL,
+ * lowercase; empty when it names none.
+ */
+export function hostOfServer(server: string): string {
+  const trimmed = server.trim().toLowerCase()
+  if (!trimmed.includes("://")) return trimmed
+  return hostOfUrl(trimmed) ?? ""
 }

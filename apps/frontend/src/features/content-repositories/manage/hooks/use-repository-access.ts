@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react"
-import { useGitCredentialSave } from "@/features/content-repositories/manage/hooks/use-git-credentials"
 import { urlWithAccess } from "@/features/content-repositories/manage/model/access"
 import {
   type CredentialChoice,
@@ -28,9 +27,9 @@ export type PreparedAccess = {
 }
 
 /**
- * The login of a repository form: which saved credential it clones with, or
- * the username and token to save as a new one. Without a server that can
- * store credentials, those go inside the URL.
+ * The login of a repository form: which saved credential it clones with.
+ * Without a server that can store credentials, a username and token go
+ * inside the URL instead.
  */
 export function useRepositoryAccess({
   open,
@@ -38,7 +37,6 @@ export function useRepositoryAccess({
   credentials,
   url,
 }: RepositoryAccessOptions) {
-  const save = useGitCredentialSave()
   const [picked, setPicked] = useState<CredentialChoice | null>(null)
   const [user, setUser] = useState("")
   const [token, setToken] = useState("")
@@ -56,12 +54,11 @@ export function useRepositoryAccess({
   const matching = credentialsForUrl(credentials?.credentials ?? [], hostUrl)
   const current = repository?.credentialId ?? null
   const choice = picked ?? defaultChoice(matching, current)
-  const typing = !saving || choice.kind === "new"
 
   /** The URL as the branches and folders reads take it. */
-  const readUrl = typing
-    ? urlWithAccess(url.trim(), user.trim(), token)
-    : url.trim()
+  const readUrl = saving
+    ? url.trim()
+    : urlWithAccess(url.trim(), user.trim(), token)
 
   async function prepare(): Promise<PreparedAccess> {
     const trimmed = url.trim()
@@ -74,31 +71,24 @@ export function useRepositoryAccess({
     if (choice.kind === "saved") {
       return { url: trimmed, credentialId: choice.id }
     }
-    if (choice.kind === "none") return { url: trimmed, credentialId: null }
-    const host = hostOfUrl(trimmed)
-    if (host === undefined) return { url: trimmed, credentialId: undefined }
-    const saved = await save.mutateAsync({
-      host,
-      username: user.trim(),
-      token,
-    })
-    return { url: trimmed, credentialId: saved.id }
+    return { url: trimmed, credentialId: null }
   }
 
   return {
     saving,
     matching,
+    /** The server the URL (or the stored repository) points at. */
+    host: hostOfUrl(hostUrl) ?? "",
     choice,
     choose: setPicked,
     user,
     setUser,
     token,
     setToken,
-    /** Whether the form must be given a URL: a new login needs its host. */
-    needsUrl: token !== "" || choice.kind === "new",
+    /** Whether the form must be given a URL: a typed token needs its host. */
+    needsUrl: token !== "",
     readUrl,
     readCredentialId: readCredentialId(choice),
     prepare,
-    isPending: save.isPending,
   }
 }

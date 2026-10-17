@@ -9,6 +9,7 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 import { Input } from "@/components/ui/input"
 import {
   type GitCredential,
+  GitCredentialDialog,
   useGitCredentialDelete,
   useGitCredentialReplace,
   useGitCredentials,
@@ -121,12 +122,13 @@ function CredentialRow({
 
 /**
  * The git logins the user saved, with a way to change a token or remove one.
- * Hidden while there are none or the server can't store them.
+ * Hidden while the server can't store them.
  */
 export function GitCredentialsSection() {
   const list = useGitCredentials()
   const remove = useGitCredentialDelete()
   const replaceDialog = useTargetDialog<GitCredential>()
+  const [adding, setAdding] = useState(false)
   const deleteDialog = useTargetConfirmDialog<GitCredential>({
     title: "Eliminar credencial",
     description: (credential) =>
@@ -136,27 +138,45 @@ export function GitCredentialsSection() {
   })
 
   const data = list.data
-  if (data === undefined || !data.enabled || data.credentials.length === 0) {
-    return null
-  }
+  if (data === undefined || !data.enabled) return null
 
   return (
     <section className="mt-8 space-y-2">
-      <SectionHeading title="Credenciales" count={data.credentials.length} />
+      <SectionHeading
+        title="Credenciales"
+        count={data.credentials.length}
+        action={
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setAdding(true)}
+          >
+            Añadir credencial
+          </Button>
+        }
+      />
       <Text as="p" variant="meta" tone="muted">
         Los usuarios y tokens que guardaste para descargar repositorios
         privados. Se guardan cifrados y solo se usan con su servidor.
       </Text>
-      <ul aria-label="Tus credenciales" className="divide-y border-y">
-        {data.credentials.map((credential) => (
-          <CredentialRow
-            key={credential.id}
-            credential={credential}
-            onReplace={replaceDialog.open}
-            onDelete={deleteDialog.open}
-          />
-        ))}
-      </ul>
+      {data.credentials.length > 0 && (
+        <ul aria-label="Tus credenciales" className="divide-y border-y">
+          {data.credentials.map((credential) => (
+            <CredentialRow
+              key={credential.id}
+              credential={credential}
+              onReplace={replaceDialog.open}
+              onDelete={deleteDialog.open}
+            />
+          ))}
+        </ul>
+      )}
+      <GitCredentialDialog
+        open={adding}
+        onOpenChange={setAdding}
+        initialHost=""
+      />
       <ReplaceTokenDialog
         credential={replaceDialog.target}
         {...replaceDialog.dialogProps}

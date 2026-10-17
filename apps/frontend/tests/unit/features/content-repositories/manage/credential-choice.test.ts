@@ -5,6 +5,7 @@ import {
   credentialsForUrl,
   defaultChoice,
   type GitCredential,
+  hostOfServer,
   hostOfUrl,
   readCredentialId,
 } from "@/features/content-repositories/manage/model/credential-choice"
@@ -83,10 +84,9 @@ describe("defaultChoice", () => {
 })
 
 describe("select values", () => {
-  test("round-trip none, new and a credential id", () => {
+  test("round-trip none and a credential id", () => {
     for (const choice of [
       { kind: "none" as const },
-      { kind: "new" as const },
       { kind: "saved" as const, id: "abc" },
     ]) {
       expect(choiceOfValue(choiceValue(choice))).toEqual(choice)
@@ -95,7 +95,16 @@ describe("select values", () => {
 
   test("only a saved choice is sent with a read", () => {
     expect(readCredentialId({ kind: "saved", id: "abc" })).toBe("abc")
-    expect(readCredentialId({ kind: "new" })).toBe(undefined)
     expect(readCredentialId({ kind: "none" })).toBe(undefined)
+  })
+})
+
+describe("hostOfServer", () => {
+  test("takes a bare host or a pasted URL, lowercase", () => {
+    expect(hostOfServer(" Git.Example.com ")).toBe("git.example.com")
+    expect(hostOfServer("https://Git.Example.com:8443/org/docs")).toBe(
+      "git.example.com:8443"
+    )
+    expect(hostOfServer("https://")).toBe("")
   })
 })

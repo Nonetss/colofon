@@ -8,6 +8,7 @@ export {
   type FoldersListing,
 } from "@/features/content-repositories/manage/components/content-path-field"
 export { CredentialField } from "@/features/content-repositories/manage/components/credential-field"
+export { GitCredentialDialog } from "@/features/content-repositories/manage/components/git-credential-dialog"
 export {
   RepositorySyncError,
   RepositorySyncStatus,

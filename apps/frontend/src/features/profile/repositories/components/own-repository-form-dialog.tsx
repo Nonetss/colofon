@@ -102,8 +102,7 @@ export function OwnRepositoryFormDialog({
     setRef(value)
   }
 
-  const isPending =
-    createRepository.isPending || updateRepository.isPending || access.isPending
+  const isPending = createRepository.isPending || updateRepository.isPending
 
   const handleOpenChange = (next: boolean) => {
     if (isPending) return

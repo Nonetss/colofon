@@ -9,17 +9,13 @@ interface AccessTokenFieldsProps {
   onTokenChange: (token: string) => void
   /** Whether an empty URL keeps the stored one. */
   editing: boolean
-  /** Whether the login is saved for the user's other repositories. */
-  saved: boolean
 }
 
-function TokenHint({ editing, saved }: { editing: boolean; saved: boolean }) {
+function TokenHint({ editing }: { editing: boolean }) {
   return (
     <Text as="p" variant="meta" tone="muted">
       Solo para repositorios privados: un token de acceso de tu servidor git con
       permiso de lectura sobre el repositorio.{" "}
-      {saved &&
-        "Se guarda cifrado y se reutiliza en tus otros repositorios de este servidor. "}
       {editing && "Un token nuevo necesita también la URL."}
     </Text>
   )
@@ -31,7 +27,6 @@ export function AccessTokenFields({
   onUserChange,
   onTokenChange,
   editing,
-  saved,
 }: AccessTokenFieldsProps) {
   return (
     <div className="@container space-y-2">
@@ -39,7 +34,7 @@ export function AccessTokenFields({
         <FormField label="Usuario" htmlFor="repository-access-user">
           <Input
             id="repository-access-user"
-            required={saved || token !== ""}
+            required={token !== ""}
             className={textVariants({ role: "data" })}
             autoComplete="off"
             value={user}
@@ -50,7 +45,6 @@ export function AccessTokenFields({
           <Input
             id="repository-access-token"
             type="password"
-            required={saved}
             className={textVariants({ role: "data" })}
             autoComplete="new-password"
             value={token}
@@ -58,7 +52,7 @@ export function AccessTokenFields({
           />
         </FormField>
       </div>
-      <TokenHint editing={editing} saved={saved} />
+      <TokenHint editing={editing} />
     </div>
   )
 }

@@ -17,6 +17,7 @@ export const useGitCredentialSave = () =>
   useOrpcMutation({
     mutationFn: (input: SaveGitCredentialInput) =>
       orpc.v1.gitCredential.save.call(input),
+    success: "Credencial guardada",
     error: "No se pudo guardar la credencial",
     invalidate: [credentialsKey],
   })
