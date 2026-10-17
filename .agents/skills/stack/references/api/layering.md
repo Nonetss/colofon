@@ -76,3 +76,7 @@ Guides (Spanish): `docs/human/backend-api.md`.
 ## Private content repositories
 
 A `content_repository` row with an `owner_id` belongs to one user. The admin procedures (`listRepositories`, `createRepository`…) act on `audienceFilter("platform")` rows only; a user manages theirs through `v1.content.*My*` (`protectedProcedure`s that scope by `ownerId`, external HTTPS URLs only, at most `MAX_USER_REPOSITORIES`). Anything that reads content for a caller goes through `RepositoryAudience` (`v1/content/reader.ts`); the public editor-schema endpoints use `"platform"`.
+
+A repository's content folder (`content_path`, `path` in the procedures) is validated by `contentPathProblem` (`@nonete/content`) on input and resolved, symlinks followed and kept inside the clone, by `resolveContentRoot` on every read; code that reads a site's files uses the reader's `contentRoot`, never the clone folder.
+
+The form's folder select reads `listContentFolders` / `listMyContentFolders` (`QUERY`, tree-only fetch, at most 50 folders holding a `doc.config.yaml`); the owner's version applies the same URL rules and `checkRemote` as the branches before fetching.
