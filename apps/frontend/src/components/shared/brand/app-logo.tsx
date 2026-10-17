@@ -10,8 +10,8 @@ export interface AppLogoProps {
  * Application mark, independent from navigation, session and page state.
  * An empty `alt` marks it as decoration, hidden from assistive tech.
  *
- * Drawn inline so the ink layers follow the active theme (`foreground`) and
- * the top layer keeps the brand accent (`primary`). The geometry mirrors
+ * Drawn inline so the letter follows the active theme (`foreground`) and
+ * the full stop keeps the brand accent (`primary`). The geometry mirrors
  * `src/assets/logo.svg`, which stays the standalone file for the favicon.
  */
 export function AppLogo({ alt, className, size = 32 }: AppLogoProps) {
@@ -25,30 +25,11 @@ export function AppLogo({ alt, className, size = 32 }: AppLogoProps) {
       aria-label={alt}
       aria-hidden={alt === ""}
     >
-      <rect
-        x="6"
-        y="42"
-        width="36"
-        height="12"
-        rx="3"
+      <path
+        d="M42.55 19.14A19 20 0 1 0 42.55 44.86L36.43 42.29A11 16 0 1 1 36.43 21.71L42.55 19.14ZM36.43 21.71L42.55 19.14L45 26.5L39.5 26.5Z"
         className="fill-foreground"
       />
-      <rect
-        x="14"
-        y="26"
-        width="36"
-        height="12"
-        rx="3"
-        className="fill-foreground"
-      />
-      <rect
-        x="22"
-        y="10"
-        width="36"
-        height="12"
-        rx="3"
-        className="fill-primary"
-      />
+      <circle cx="50" cy="44" r="4.5" className="fill-primary" />
     </svg>
   )
 }
