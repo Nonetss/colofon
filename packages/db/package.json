@@ -1,5 +1,6 @@
 {
   "name": "@nonete/db",
+  "license": "AGPL-3.0-only",
   "type": "module",
   "imports": {
     "#schema": "./src/schema/index.ts",

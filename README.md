@@ -530,3 +530,10 @@ expected behavior before changing code in an area you're unfamiliar with;
 - `AGENTS.md`: normative conventions for contributors and coding agents
 - `.agents/skills/stack/`: the project skill (workspaces, commands, env, Docker, API layering and frontend structure)
 - `DESIGN.md` / `PRODUCT.md`: visual system and product context, used by the `impeccable` design skill
+
+## License
+
+Copyright (C) 2026 Nonete.
+
+Licensed under the [GNU Affero General Public License v3.0](LICENSE)
+(`AGPL-3.0-only`). See [`NOTICE`](NOTICE).
