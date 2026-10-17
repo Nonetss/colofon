@@ -56,8 +56,8 @@ their source.
 
 - The `colofon-*` skills are the platform's: it serves them at
   `/.well-known/agent-skills/` (the ones with `references/` as `.tar.gz`
-  archives), and the setup prompt on its `/me` page installs them for the
-  whole user. Never copy them into a site's repository or edit an installed
+  archives), and the setup prompt on its `/me/skills` page installs them for
+  the whole user. Never copy them into a site's repository or edit an installed
   copy; a problem with one goes to the user, to be fixed in
   `doc-example/.agents/skills/`.
 - Running the setup again refreshes them when the platform's index shows

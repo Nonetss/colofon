@@ -17,7 +17,7 @@ Nothing here is built or run.
 the same for every colofon content repository: they say how to write
 documentation for the platform, never what one site holds. The platform
 serves them at `/.well-known/agent-skills/`, and you install them for the
-whole user with the setup prompt on the platform's `/me` page (or the
+whole user with the setup prompt on the platform's `/me/skills` page (or the
 "Configurar tu agente" procedure of its `/llms.txt`). A content repository
 **never copies or edits them**: it holds only its content and its
 `AGENTS.md`. Their only source is `doc-example/.agents/skills/`, inside the
