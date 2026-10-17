@@ -1,0 +1,28 @@
+# La barra lateral. Cada grupo lista, en orden, las páginas de docs/ que muestra.
+
+secciones:
+  - titulo: Empezar
+    icono: rocket
+    descripcion: Las piezas del sistema, cómo arrancarlo y cómo se configura
+    paginas:
+      - { ruta: arquitectura, icono: blocks }
+      - { ruta: desarrollo, icono: terminal }
+      - { ruta: configuracion, icono: settings }
+
+  - titulo: Código
+    icono: code
+    descripcion: El backend, la autenticación, el frontend y las piezas que comparten
+    paginas:
+      - { ruta: backend-api, icono: server }
+      - { ruta: autenticacion, icono: shield-check }
+      - { ruta: frontend, icono: layout-dashboard }
+      - { ruta: crons, icono: clock }
+      - { ruta: transversales, icono: puzzle }
+
+  - titulo: Operación
+    icono: package
+    descripcion: El despliegue, las reglas del repositorio y el contenido que publica
+    paginas:
+      - { ruta: docker-despliegue, icono: container }
+      - { ruta: convenciones, icono: scroll-text }
+      - { ruta: contenido, icono: book-open }

@@ -1,0 +1,6 @@
+# Configuración del sitio. El menú está en menu.yaml, las páginas en docs/
+# y los diagramas en diagrams/.
+
+nombre: Documentación de colofon
+descripcion: Cómo funciona el monorepo colofon por dentro, desde la arquitectura y el desarrollo local hasta el despliegue y las convenciones
+plataforma: "1"

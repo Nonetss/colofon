@@ -1,0 +1,17 @@
+{
+  "type": "tree",
+  "title": "Estructura de features/admin",
+  "desc": "El árbol de features/admin: los slices shell, shared y users, y dentro de users sus carpetas components, definitions, hooks y model y su index.ts público",
+  "direction": "down",
+  "nodes": [
+    { "id": "root", "name": "admin/", "sub": "un dominio", "focal": true },
+    { "id": "shell", "name": "shell/", "sub": "marco de /admin", "parent": "root" },
+    { "id": "shared", "name": "shared/", "sub": "común a los slices", "parent": "root" },
+    { "id": "users", "name": "users/", "sub": "página /admin/users", "parent": "root" },
+    { "id": "components", "name": "components/", "sub": "page y content", "parent": "users" },
+    { "id": "definitions", "name": "definitions/", "sub": "columnas de tabla", "parent": "users" },
+    { "id": "hooks", "name": "hooks/", "sub": "estado y datos", "parent": "users" },
+    { "id": "model", "name": "model/", "sub": "tipos sin React", "parent": "users" },
+    { "id": "index", "name": "index.ts", "sub": "lo que expone", "parent": "users", "focal": true }
+  ]
+}
