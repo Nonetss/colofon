@@ -24,8 +24,8 @@ export function ProfileAgentSkillsContent() {
         <Text as="p" variant="compact" tone="muted">
           Pega este texto en tu IA y se configurará sola: instalará las skills
           que le enseñan a usar esta documentación, a escribirla y de qué trata
-          cada proyecto que puedes leer, y conectará el MCP si se lo pides.
-          Cambia{" "}
+          cada proyecto que puedes leer, y te preguntará si quieres que instale
+          también el MCP. Cambia{" "}
           <Text as="span" variant="data">
             {KEY_PLACEHOLDER}
           </Text>{" "}

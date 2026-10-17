@@ -41,11 +41,11 @@ The web SHALL serve `/llms.txt`, an index following llmstxt.org, as `text/plain;
 - that every page has its Markdown at `<page>/llm.txt`, and that the pages, `/<slug>/llms.txt`, the MCP and the projects' skills need a session or an API key in the `x-api-key` header;
 - that the user creates the key at the full address of the API keys page, `/me/api-keys`;
 - how to connect the MCP, with the full address of `/mcp`, a `claude mcp add` command with a placeholder for the key, and the names of its tools;
-- a setup procedure, under a level 2 heading of its own, that an AI follows to configure itself with no further step by the user:
+- a setup procedure, under a level 2 heading of its own, that an AI follows to configure itself with no further step by the user beyond the question of step 4:
   1. read the skills index at its full address (`agent-skills`), sending the key when the user gave one;
   2. install every skill it lists in the AI's personal skills folder (in Claude Code, `~/.claude/skills/`), replacing an earlier copy: a `skill-md` entry by saving its `url` as `<name>/SKILL.md`, an `archive` entry by downloading its `url` and extracting it into `<name>/`; in both cases checking that the downloaded bytes match the entry's `digest` before saving, and skipping an entry that doesn't;
   3. tell the user which skills were installed, and that repeating the procedure refreshes them when the index shows another digest;
-  4. only if the user wants the AI to use the documentation's tools, connect the MCP as the guide explains;
+  4. ask the user whether they want the MCP installed too and wait for the answer, connecting it as the guide explains only if they say yes;
   
   with example commands, the key as a placeholder, that download the index and one skill of each type;
 - each platform skill as a Markdown link to its `url` with its description.

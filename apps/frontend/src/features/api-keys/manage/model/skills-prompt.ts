@@ -14,7 +14,7 @@ export function skillsPrompt(origin: string, key = KEY_PLACEHOLDER): string {
   return [
     `Configúrate para usar y escribir la documentación de ${origin}.`,
     "",
-    `- Sigue los pasos de «Configurar tu agente» en \`${origin}/llms.txt\`: instalan sus skills (cómo usar el sitio, cómo escribir documentación y las de cada proyecto) y, si te lo pido, conectan su MCP.`,
+    `- Sigue los pasos de «Configurar tu agente» en \`${origin}/llms.txt\`: instalan sus skills (cómo usar el sitio, cómo escribir documentación y las de cada proyecto) y, al terminar, te dicen que me preguntes si quiero que instales también su MCP: no lo instales sin que te lo confirme.`,
     `- Envía en cada petición la cabecera \`x-api-key: ${key}\`. Sin ella solo instalarás las skills de la plataforma, no las de cada proyecto.`,
     "- No guardes la clave en ningún fichero salvo la configuración de tu agente.",
   ].join("\n")

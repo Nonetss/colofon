@@ -206,7 +206,7 @@ describe("agentGuide", () => {
     expect(guide).not.toContain("a un administrador")
   })
 
-  test("has the setup procedure: index, both install types with digests, optional MCP", () => {
+  test("has the setup procedure: index, both install types with digests, asking before the MCP", () => {
     expect(guide).toContain("## Configurar tu agente")
     expect(guide).toContain(
       'curl -fsS -H "x-api-key: <tu API key>" https://docs.example.org/.well-known/agent-skills/index.json'
@@ -221,7 +221,9 @@ describe("agentGuide", () => {
       "tar -xzf /tmp/colofon-docs.tar.gz -C ~/.claude/skills/colofon-docs"
     )
     expect(guide).toContain("`digest`")
-    expect(guide).toContain("Solo si el usuario quiere")
+    expect(guide).toContain(
+      "Pregúntale al usuario si quiere que instales también el MCP"
+    )
     expect(guide.indexOf("## Configurar tu agente")).toBeLessThan(
       guide.indexOf("## El MCP")
     )

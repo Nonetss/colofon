@@ -14,6 +14,12 @@ describe("skillsPrompt", () => {
     expect(text).toContain("Configurar tu agente")
   })
 
+  test("has the AI ask before installing the MCP", () => {
+    const text = skillsPrompt(origin)
+    expect(text).toContain("me preguntes si quiero")
+    expect(text).toContain("MCP")
+  })
+
   test("is short: the steps live in llms.txt, not here", () => {
     const text = skillsPrompt(origin)
     expect(text.split("\n").length).toBeLessThanOrEqual(8)

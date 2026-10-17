@@ -32,7 +32,7 @@ export function agentSetups(origin: string, key: string): AgentSetup[] {
       label: "Skills",
       text: skillsPrompt(origin, key),
       language: "markdown",
-      hint: "Pégaselo a tu IA: instala sola las skills de la documentación y, si se lo pides, conecta el MCP.",
+      hint: "Pégaselo a tu IA: instala sola las skills de la documentación y te pregunta si quieres que instale también el MCP.",
     },
     {
       id: "claude-code",
