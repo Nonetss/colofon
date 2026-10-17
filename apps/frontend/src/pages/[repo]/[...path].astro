@@ -13,6 +13,7 @@ import {
   scopeToStore,
 } from "@/features/docs/shared"
 import Docs from "@/layouts/Docs.astro"
+import { isAdminUser } from "@/lib/auth"
 import { createServerClient } from "@/lib/orpc-server"
 
 // A page of a content repository: `/<slug>` is its home and `/<slug>/<path>`
@@ -70,5 +71,5 @@ const title = `${page.header.title} · ${page.repository.name}`
   <DocBody page={page} />
   <DocChildren page={page} />
   <DocPager page={page} />
-  <DocToc slot="aside" page={page} />
+  <DocToc slot="aside" page={page} canSync={isAdminUser(Astro.locals.user)} />
 </Docs>

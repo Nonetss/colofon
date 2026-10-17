@@ -4,6 +4,8 @@
 
 import { withOrigin } from "@nonete/api/v1/docs/full-links"
 import { setupDiagramHighlights } from "@/features/docs/diagrams"
+import { navigate } from "@/lib/navigate"
+import { client } from "@/lib/orpc"
 
 const COPIED_MS = 1500
 
@@ -98,6 +100,46 @@ function setupWidthToggle() {
   })
 }
 
+const SYNC_LABEL = "Sincronizar repositorio"
+
+function syncedLabel(done: boolean): string {
+  if (done) return "Sincronizado"
+  return "No se pudo sincronizar"
+}
+
+/**
+ * The admins' sync button fetches the page's repository now; once synced the
+ * router reloads the page so it shows the new content.
+ */
+function setupSyncButton() {
+  document.addEventListener("click", async (event) => {
+    if (!(event.target instanceof Element)) return
+    const button = event.target.closest("[data-sync-repository]")
+    if (!(button instanceof HTMLButtonElement)) return
+    const slug = button.dataset.syncRepository
+    if (slug === undefined || button.disabled) return
+    const label = button.querySelector("[data-sync-label]")
+    button.disabled = true
+    if (label !== null) label.textContent = "Sincronizando…"
+    let done = true
+    try {
+      await client.v1.content.syncRepository({ slug })
+    } catch {
+      done = false
+    }
+    button.disabled = false
+    if (label !== null) label.textContent = syncedLabel(done)
+    button.toggleAttribute("data-done", done)
+    button.toggleAttribute("data-failed", !done)
+    if (done) navigate(`${window.location.pathname}${window.location.search}`)
+    setTimeout(() => {
+      if (label !== null) label.textContent = SYNC_LABEL
+      button.removeAttribute("data-done")
+      button.removeAttribute("data-failed")
+    }, COPIED_MS)
+  })
+}
+
 /** Pixels from the top of the window where reading happens. */
 function readingLine(): number {
   const navbar = Number.parseFloat(
@@ -167,6 +209,7 @@ export function onDocsPageLoad() {
   setupCopyButtons()
   setupCopyMarkdown()
   setupWidthToggle()
+  setupSyncButton()
   setupTableOfContents()
   setupDiagramHighlights()
 }

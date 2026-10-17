@@ -6,9 +6,11 @@ import { getIcon } from "@/lib/icon-registry"
 
 interface Props {
   page: DocsPage
+  /** Admins get a button that syncs the page's repository now. */
+  canSync?: boolean
 }
 
-const { page } = Astro.props
+const { page, canSync = false } = Astro.props
 const { headings } = page
 const markdown = pageMarkdown({
   title: page.header.title,
@@ -21,6 +23,7 @@ const CopyIcon = getIcon("actions", "copy")
 const CheckIcon = getIcon("controls", "check")
 const FullWidthIcon = getIcon("views", "fullWidth")
 const ReadingWidthIcon = getIcon("views", "readingWidth")
+const SyncIcon = getIcon("actions", "refresh")
 const tool = textVariants({ role: "compact", tone: "muted" })
 const toolButton =
   "group/tool inline-flex h-8 w-full items-center gap-2 rounded-md border border-input bg-background px-2.5 outline-none transition-colors hover:border-foreground/15 hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50"
@@ -54,7 +57,7 @@ const link =
   <button
     type="button"
     data-width-toggle
-    class:list={[tool, toolButton, "mb-6"]}
+    class:list={[tool, toolButton, canSync ? "mb-2" : "mb-6"]}
   >
     <FullWidthIcon
       aria-hidden
@@ -67,6 +70,23 @@ const link =
     <span class="reading-full:hidden">Ancho completo</span>
     <span class="hidden reading-full:inline">Ancho de lectura</span>
   </button>
+  {canSync && (
+    <button
+      type="button"
+      data-sync-repository={page.repository.slug}
+      class:list={[
+        tool,
+        toolButton,
+        "mb-6 disabled:opacity-60 data-done:border-primary/40 data-done:text-primary data-failed:border-destructive/40 data-failed:text-destructive",
+      ]}
+    >
+      <SyncIcon
+        aria-hidden
+        className="size-3.5 shrink-0 group-disabled/tool:animate-spin"
+      />
+      <span data-sync-label>Sincronizar repositorio</span>
+    </button>
+  )}
   {headings.length > 2 && (
     <nav id="toc" aria-label="En esta página">
       <p class:list={["mb-3", textVariants({ role: "label", tone: "muted" })]}>
