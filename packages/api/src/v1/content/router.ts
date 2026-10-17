@@ -3,6 +3,7 @@ import {
   adminProcedure,
   cronMeta,
   cronProcedure,
+  protectedProcedure,
   publicProcedure,
 } from "#index"
 import { contentHandler } from "#v1/content/handler"
@@ -205,12 +206,12 @@ export const contentRouter = {
     .output(contentOutput.readFile)
     .handler(({ input }) => contentHandler.readFile({ input })),
 
-  syncRepository: adminProcedure
+  syncRepository: protectedProcedure
     .meta(
       openapi({
         summary: "Sync a content repository now",
         description:
-          "Fetches the repository and checks out its ref, answering once done with the stored outcome. BAD_GATEWAY with the git error, without credentials, when it fails.",
+          "Open to every signed-in user, since all of them read every repository. Fetches the repository and checks out its ref, answering once done with the stored outcome. BAD_GATEWAY with the git error, without credentials, when it fails.",
         tags,
         method: "POST",
       })

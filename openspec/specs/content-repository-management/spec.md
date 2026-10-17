@@ -52,7 +52,7 @@ The backend SHALL expose, under the `v1.content` procedures and only to users wi
 
 Create and edit SHALL refuse a request that sends both a `url` and asks for a hosted repository; create SHALL also refuse one that sends neither. Editing a hosted repository with a `url` SHALL make it external. Every repository in a response SHALL say whether it is hosted and, for a hosted one, carry its push URL, `<platform origin>/git/<slug>.git`; an external one SHALL carry no push URL.
 
-A request without a session SHALL answer `UNAUTHORIZED` and one from a non-admin `FORBIDDEN`. Creating a repository with a slug already in use SHALL answer `CONFLICT` and store nothing. Editing, deleting or syncing an unknown repository SHALL answer `NOT_FOUND`. A sync that fails SHALL answer `BAD_GATEWAY` with the git error, without credentials, and SHALL store that failure as the repository's last sync.
+A request without a session SHALL answer `UNAUTHORIZED` and one from a non-admin `FORBIDDEN`, except syncing a repository, which any signed-in user may do since every signed-in user reads every repository. Creating a repository with a slug already in use SHALL answer `CONFLICT` and store nothing. Editing, deleting or syncing an unknown repository SHALL answer `NOT_FOUND`. A sync that fails SHALL answer `BAD_GATEWAY` with the git error, without credentials, and SHALL store that failure as the repository's last sync.
 
 #### Scenario: Duplicate slug
 

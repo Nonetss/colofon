@@ -83,6 +83,28 @@ describe("access", () => {
     )
     expect(fakeDb.calls()).toEqual([])
   })
+
+  test("syncing a repository needs a session but not an admin", async () => {
+    await expectErrorCode(
+      call(
+        contentRouter.syncRepository,
+        { slug: "documentacion" },
+        { context: anonymousContext() }
+      ),
+      "UNAUTHORIZED"
+    )
+    expect(fakeDb.calls()).toEqual([])
+
+    fakeDb.queue("query.contentRepository.findFirst", undefined)
+    await expectErrorCode(
+      call(
+        contentRouter.syncRepository,
+        { slug: "nada" },
+        { context: userContext() }
+      ),
+      "NOT_FOUND"
+    )
+  })
 })
 
 describe("content input", () => {

@@ -6,11 +6,9 @@ import { getIcon } from "@/lib/icon-registry"
 
 interface Props {
   page: DocsPage
-  /** Admins get a button that syncs the page's repository now. */
-  canSync?: boolean
 }
 
-const { page, canSync = false } = Astro.props
+const { page } = Astro.props
 const { headings } = page
 const markdown = pageMarkdown({
   title: page.header.title,
@@ -57,7 +55,7 @@ const link =
   <button
     type="button"
     data-width-toggle
-    class:list={[tool, toolButton, canSync ? "mb-2" : "mb-6"]}
+    class:list={[tool, toolButton, "mb-2"]}
   >
     <FullWidthIcon
       aria-hidden
@@ -70,23 +68,21 @@ const link =
     <span class="reading-full:hidden">Ancho completo</span>
     <span class="hidden reading-full:inline">Ancho de lectura</span>
   </button>
-  {canSync && (
-    <button
-      type="button"
-      data-sync-repository={page.repository.slug}
-      class:list={[
-        tool,
-        toolButton,
-        "mb-6 disabled:opacity-60 data-done:border-primary/40 data-done:text-primary data-failed:border-destructive/40 data-failed:text-destructive",
-      ]}
-    >
-      <SyncIcon
-        aria-hidden
-        className="size-3.5 shrink-0 group-disabled/tool:animate-spin"
-      />
-      <span data-sync-label>Sincronizar repositorio</span>
-    </button>
-  )}
+  <button
+    type="button"
+    data-sync-repository={page.repository.slug}
+    class:list={[
+      tool,
+      toolButton,
+      "mb-6 disabled:opacity-60 data-done:border-primary/40 data-done:text-primary data-failed:border-destructive/40 data-failed:text-destructive",
+    ]}
+  >
+    <SyncIcon
+      aria-hidden
+      className="size-3.5 shrink-0 group-disabled/tool:animate-spin"
+    />
+    <span data-sync-label>Sincronizar repositorio</span>
+  </button>
   {headings.length > 2 && (
     <nav id="toc" aria-label="En esta página">
       <p class:list={["mb-3", textVariants({ role: "label", tone: "muted" })]}>
