@@ -13,6 +13,10 @@ const repository = z.object({
     .describe(
       "URL of the git repository, with any credentials replaced by ***; /git/<slug>.git for a hosted one"
     ),
+  credentialId: z
+    .string()
+    .nullable()
+    .describe("The saved git credential the repository clones with, if any"),
   hosted: z.boolean().describe("Whether the platform hosts the repository"),
   pushUrl: z
     .string()

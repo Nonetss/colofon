@@ -371,6 +371,7 @@ describe("admin procedures leave the users' repositories alone", () => {
 
     await expectErrorCode(
       handler.createRepository({
+        context: adminContext(),
         input: {
           slug: "apuntes",
           name: "Apuntes",

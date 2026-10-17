@@ -62,7 +62,12 @@ beforeEach(() => {
 describe("content.listContentFolders", () => {
   test("a typed URL lists the folders holding a site", async () => {
     const url = await remote()
-    expect(await handler.listContentFolders({ input: { url } })).toEqual({
+    expect(
+      await handler.listContentFolders({
+        context: adminContext(),
+        input: { url },
+      })
+    ).toEqual({
       folders: ["docs"],
     })
   })
@@ -74,14 +79,20 @@ describe("content.listContentFolders", () => {
       contentRepositoryRow({ url })
     )
     expect(
-      await handler.listContentFolders({ input: { slug: "documentacion" } })
+      await handler.listContentFolders({
+        context: adminContext(),
+        input: { slug: "documentacion" },
+      })
     ).toEqual({ folders: ["docs"] })
   })
 
   test("an unknown repository is NOT_FOUND", async () => {
     fakeDb.queue("query.contentRepository.findFirst", undefined)
     await expectErrorCode(
-      handler.listContentFolders({ input: { slug: "nada" } }),
+      handler.listContentFolders({
+        context: adminContext(),
+        input: { slug: "nada" },
+      }),
       "NOT_FOUND"
     )
   })
@@ -89,7 +100,10 @@ describe("content.listContentFolders", () => {
   test("a ref the remote lacks is BAD_GATEWAY", async () => {
     const url = await remote()
     await expectErrorCode(
-      handler.listContentFolders({ input: { url, ref: "nada" } }),
+      handler.listContentFolders({
+        context: adminContext(),
+        input: { url, ref: "nada" },
+      }),
       "BAD_GATEWAY"
     )
   })
@@ -97,13 +111,17 @@ describe("content.listContentFolders", () => {
   test("the folders follow the ref sent", async () => {
     const url = await remote()
     expect(
-      await handler.listContentFolders({ input: { url, ref: "main" } })
+      await handler.listContentFolders({
+        context: adminContext(),
+        input: { url, ref: "main" },
+      })
     ).toEqual({ folders: ["docs"] })
   })
 
   test("an error never carries the credentials", async () => {
     const error = await handler
       .listContentFolders({
+        context: adminContext(),
         input: { url: "https://ana:secreto@127.0.0.1:9/x.git" },
       })
       .then(

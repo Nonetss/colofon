@@ -37,6 +37,8 @@ export type StoredRepository = {
   contentPath: string
   /** The user it is private to; `null` for a platform repository. */
   ownerId: string | null
+  /** The saved git credential its clone uses, if any. */
+  credentialId: string | null
 }
 
 /**
@@ -86,6 +88,11 @@ export type ContentReaderOptions = {
    * replace it so they need no network.
    */
   checkRemote?: (url: string) => Promise<RemoteCheck>
+  /**
+   * The repository with a saved credential put in its URL, run just before a
+   * sync; it throws when the credential can't be used. None by default.
+   */
+  withAccess?: (repository: StoredRepository) => Promise<StoredRepository>
 }
 
 /** A repository and its declarations, `undefined` without valid content. */
@@ -160,11 +167,16 @@ export type ContentReader = {
 
 type RepoSync = { key: string; run: () => Promise<SyncResult> }
 
+function keepAsIs(repository: StoredRepository): Promise<StoredRepository> {
+  return Promise.resolve(repository)
+}
+
 export function createContentReader(
   options: ContentReaderOptions
 ): ContentReader {
   const { cloneRoot, repositories, resolveSource, logger } = options
-  const { checkRemote = checkUserRemoteWithTrusted } = options
+  const { checkRemote = checkUserRemoteWithTrusted, withAccess = keepAsIs } =
+    options
   const lastValid = new Map<string, ContentDeclarations>()
   const reportedProblems = new Map<string, string>()
   // One sync per clone folder, replaced when the URL or ref changes.
@@ -349,11 +361,27 @@ export function createContentReader(
 
   /** Runs the sync, after vetting the remote of a user's repository. */
   async function runSync(repository: StoredRepository): Promise<SyncResult> {
+    const accessible = await accessibleOrError(repository)
+    if (!accessible.ok) return accessible
     if (repository.ownerId !== null) {
-      const checked = await checkRemote(repository.url)
+      const checked = await checkRemote(accessible.repository.url)
       if (!checked.ok) return { ok: false, error: checked.error }
     }
-    return repoSyncFor(repository).run()
+    return repoSyncFor(accessible.repository).run()
+  }
+
+  /** `repository` ready to clone, or why its credential can't be used. */
+  async function accessibleOrError(
+    repository: StoredRepository
+  ): Promise<
+    { ok: true; repository: StoredRepository } | { ok: false; error: string }
+  > {
+    try {
+      return { ok: true, repository: await withAccess(repository) }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
+      return { ok: false, error: message }
+    }
   }
 
   async function sync(repository: StoredRepository) {

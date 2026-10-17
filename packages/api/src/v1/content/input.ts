@@ -62,6 +62,12 @@ const contentPath = z
     "Folder of the git repository where the content lives, with / separators; empty for the root"
   )
 
+const credentialId = z
+  .uuid()
+  .describe(
+    "One of the caller's saved git credentials, for the host of the URL; the repository clones with its username and token"
+  )
+
 const hosted = z
   .literal(true)
   .describe(
@@ -120,6 +126,7 @@ export const contentInput = {
       slug: newRepository,
       name,
       url: url.optional(),
+      credentialId: credentialId.optional(),
       hosted: hosted.optional(),
       ref: ref.default("main"),
       path: contentPath.default(""),
@@ -134,6 +141,10 @@ export const contentInput = {
       url: url
         .optional()
         .describe("A new URL; makes a hosted repository external"),
+      credentialId: credentialId
+        .nullable()
+        .optional()
+        .describe("A credential to clone with; null removes the current one"),
       hosted: hosted.optional(),
       ref: ref.optional(),
       path: contentPath.optional(),
@@ -146,6 +157,7 @@ export const contentInput = {
         .describe(
           "URL of a git repository to read; with credentials if private"
         ),
+      credentialId: credentialId.optional(),
       slug: repository
         .optional()
         .describe("A stored repository, read at its stored URL"),
@@ -163,6 +175,7 @@ export const contentInput = {
         .describe(
           "URL of a git repository to read; with credentials if private"
         ),
+      credentialId: credentialId.optional(),
       slug: repository
         .optional()
         .describe("A stored repository, read at its stored URL"),
@@ -183,6 +196,7 @@ export const contentInput = {
       url: userUrl
         .optional()
         .describe("URL of a git repository to read; with its token if private"),
+      credentialId: credentialId.optional(),
       slug: repository
         .optional()
         .describe("One of the caller's repositories, read at its stored URL"),
@@ -213,6 +227,7 @@ export const contentInput = {
     slug: newRepository,
     name,
     url: userUrl,
+    credentialId: credentialId.optional(),
     ref: ref.default("main"),
     path: contentPath.default(""),
   }),
@@ -220,6 +235,10 @@ export const contentInput = {
     slug: repository.describe("Slug of the repository to edit; never changes"),
     name: name.optional(),
     url: userUrl.optional(),
+    credentialId: credentialId
+      .nullable()
+      .optional()
+      .describe("A credential to clone with; null removes the current one"),
     ref: ref.optional(),
     path: contentPath.optional(),
   }),
@@ -228,6 +247,7 @@ export const contentInput = {
       url: userUrl
         .optional()
         .describe("URL of a git repository to read; with its token if private"),
+      credentialId: credentialId.optional(),
       slug: repository
         .optional()
         .describe("One of the caller's repositories, read at its stored URL"),

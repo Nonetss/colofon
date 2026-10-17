@@ -134,7 +134,9 @@ export const contentRouter = {
     )
     .input(contentInput.createRepository)
     .output(contentOutput.createRepository)
-    .handler(({ input }) => contentHandler.createRepository({ input })),
+    .handler(({ context, input }) =>
+      contentHandler.createRepository({ context, input })
+    ),
 
   updateRepository: adminProcedure
     .meta(
@@ -148,7 +150,9 @@ export const contentRouter = {
     )
     .input(contentInput.updateRepository)
     .output(contentOutput.updateRepository)
-    .handler(({ input }) => contentHandler.updateRepository({ input })),
+    .handler(({ context, input }) =>
+      contentHandler.updateRepository({ context, input })
+    ),
 
   listBranches: adminProcedure
     .meta(
@@ -162,7 +166,9 @@ export const contentRouter = {
     )
     .input(contentInput.listBranches)
     .output(contentOutput.listBranches)
-    .handler(({ input }) => contentHandler.listBranches({ input })),
+    .handler(({ context, input }) =>
+      contentHandler.listBranches({ context, input })
+    ),
 
   listContentFolders: adminProcedure
     .meta(
@@ -176,7 +182,9 @@ export const contentRouter = {
     )
     .input(contentInput.listContentFolders)
     .output(contentOutput.listContentFolders)
-    .handler(({ input }) => contentHandler.listContentFolders({ input })),
+    .handler(({ context, input }) =>
+      contentHandler.listContentFolders({ context, input })
+    ),
 
   deleteRepository: adminProcedure
     .meta(

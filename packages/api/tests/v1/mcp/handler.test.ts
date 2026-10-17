@@ -80,6 +80,7 @@ const content: ContentClient = {
       slug: input.slug,
       name: "Casa",
       url: "https://github.com/nonete/casa.git",
+      credentialId: null,
       hosted: false,
       pushUrl: null,
       ref: "main",

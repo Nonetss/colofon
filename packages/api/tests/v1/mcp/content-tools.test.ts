@@ -11,6 +11,7 @@ const casa: ContentRepositoryOutput = {
   slug: "casa",
   name: "Casa",
   url: "https://***@github.com/nonete/casa.git",
+  credentialId: null,
   hosted: false,
   pushUrl: null,
   ref: "main",

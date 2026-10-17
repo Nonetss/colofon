@@ -50,6 +50,14 @@ import {
   type RepositoryStore,
 } from "#v1/content/reader"
 import { checkUserRemoteWithTrusted } from "#v1/content/trusted-hosts"
+import {
+  assertHostMatches,
+  credentialById,
+  credentialOwnedBy,
+  UNREADABLE_MESSAGE,
+  urlWithSavedCredential,
+  withSavedAccess,
+} from "#v1/git-credential/access"
 
 /** Public path of the schema endpoints; each repository's hang from it. */
 export const SCHEMAS_PATH = "/api/v1/content/schemas"
@@ -87,6 +95,7 @@ function toRepository(row: ContentRepository): ContentRepositoryOutput {
     slug: row.slug,
     name: row.name,
     url: publicUrl(row.url),
+    credentialId: row.credentialId,
     hosted: isHosted(row),
     pushUrl: pushUrlOf(row),
     ref: row.ref,
@@ -106,6 +115,7 @@ function toOwnRepository(row: ContentRepository): OwnRepositoryOutput {
     slug: row.slug,
     name: row.name,
     url: publicUrl(row.url),
+    credentialId: row.credentialId,
     ref: row.ref,
     path: row.contentPath,
     lastSyncedAt: toIsoOrNull(row.lastSyncedAt),
@@ -141,6 +151,107 @@ function findOwned(slug: string, userId: string) {
   return db.query.contentRepository.findFirst({
     where: { slug, ownerId: userId },
   })
+}
+
+/** `message` of a credential that can't be used, as a client error. */
+function unusable(error: unknown): never {
+  if (error instanceof Error && error.message === UNREADABLE_MESSAGE) {
+    throw errors.PRECONDITION_FAILED({ message: UNREADABLE_MESSAGE })
+  }
+  throw error
+}
+
+/**
+ * `url` with the caller's saved credential in it when one is chosen, else as
+ * sent. The credential must be for the host of `url`.
+ */
+async function urlWithChosenCredential(
+  userId: string,
+  url: string,
+  credentialId: string | undefined
+): Promise<string> {
+  if (credentialId === undefined) return url
+  const credential = await credentialOwnedBy(userId, credentialId)
+  assertHostMatches(credential, url)
+  try {
+    return urlWithSavedCredential(credential, url)
+  } catch (error) {
+    return unusable(error)
+  }
+}
+
+/** `row` with the credential it references put in its `url`. */
+async function accessibleRow(
+  row: ContentRepository
+): Promise<ContentRepository> {
+  try {
+    return await withSavedAccess(row)
+  } catch (error) {
+    return unusable(error)
+  }
+}
+
+/** The credential `credentialId`, checked as the caller's and for `url`'s host. */
+async function chosenCredential(
+  userId: string,
+  url: string,
+  credentialId: string
+): Promise<string> {
+  const credential = await credentialOwnedBy(userId, credentialId)
+  assertHostMatches(credential, url)
+  return credential.id
+}
+
+/** The `credentialId` column a create writes: none unless one is chosen. */
+async function createdCredential(
+  userId: string,
+  url: string,
+  credentialId: string | undefined
+): Promise<{ credentialId?: string }> {
+  if (credentialId === undefined) return {}
+  return { credentialId: await chosenCredential(userId, url, credentialId) }
+}
+
+/**
+ * The `credentialId` column an edit writes: nothing when the edit leaves the
+ * credential alone and the URL's host. A chosen credential must be the
+ * caller's and for the URL's host; a kept one must still match a new URL.
+ */
+async function credentialPatch(
+  userId: string,
+  row: ContentRepository,
+  input: { url?: string; credentialId?: string | null }
+): Promise<{ credentialId?: string | null }> {
+  if (input.credentialId === null) return { credentialId: null }
+  const url = input.url ?? row.url
+  if (input.credentialId !== undefined) {
+    return {
+      credentialId: await chosenCredential(userId, url, input.credentialId),
+    }
+  }
+  if (row.credentialId !== null && input.url !== undefined) {
+    assertHostMatches(await credentialById(row.credentialId), url)
+  }
+  return {}
+}
+
+/** Whether `saved` clones from somewhere other than `before` did. */
+function changesClone(before: ContentRepository, saved: ContentRepository) {
+  return (
+    saved.url !== before.url ||
+    saved.ref !== before.ref ||
+    saved.credentialId !== before.credentialId
+  )
+}
+
+/** The credential column an admin edit writes; a hosted repository has none. */
+function editedCredential(
+  userId: string,
+  row: ContentRepository,
+  input: z.infer<typeof contentInput.updateRepository>
+): Promise<{ credentialId?: string | null }> {
+  if (input.hosted === true) return Promise.resolve({ credentialId: null })
+  return credentialPatch(userId, row, input)
 }
 
 /** The `url` a new repository stores: the one sent, or the hosted marker. */
@@ -179,9 +290,12 @@ export function createContentHandler(
    * source, credentials included, which the client never sees.
    */
   async function branchesSourceOf(
+    userId: string,
     input: z.infer<typeof contentInput.listBranches>
   ): Promise<string> {
-    if (input.url !== undefined) return input.url
+    if (input.url !== undefined) {
+      return urlWithChosenCredential(userId, input.url, input.credentialId)
+    }
     if (input.slug === undefined) {
       throw errors.BAD_REQUEST({ message: "Send either url or slug" })
     }
@@ -189,7 +303,7 @@ export function createContentHandler(
       await findRow(input.slug, "platform"),
       NOT_FOUND_MESSAGE
     )
-    return gitSourceOf(row, hostedRoot)
+    return gitSourceOf(await accessibleRow(row), hostedRoot)
   }
 
   /**
@@ -197,9 +311,17 @@ export function createContentHandler(
    * source, credentials included, and whether that is a bare repository.
    */
   async function foldersSourceOf(
+    userId: string,
     input: z.infer<typeof contentInput.listContentFolders>
   ): Promise<{ source: string; bare: boolean }> {
-    if (input.url !== undefined) return { source: input.url, bare: false }
+    if (input.url !== undefined) {
+      const source = await urlWithChosenCredential(
+        userId,
+        input.url,
+        input.credentialId
+      )
+      return { source, bare: false }
+    }
     if (input.slug === undefined) {
       throw errors.BAD_REQUEST({ message: "Send either url or slug" })
     }
@@ -207,7 +329,10 @@ export function createContentHandler(
       await findRow(input.slug, "platform"),
       NOT_FOUND_MESSAGE
     )
-    return { source: gitSourceOf(row, hostedRoot), bare: isHosted(row) }
+    return {
+      source: gitSourceOf(await accessibleRow(row), hostedRoot),
+      bare: isHosted(row),
+    }
   }
 
   /**
@@ -228,7 +353,9 @@ export function createContentHandler(
     userId: string,
     input: z.infer<typeof contentInput.listMyBranches>
   ): Promise<string> {
-    if (input.url !== undefined) return input.url
+    if (input.url !== undefined) {
+      return urlWithChosenCredential(userId, input.url, input.credentialId)
+    }
     if (input.slug === undefined) {
       throw errors.BAD_REQUEST({ message: "Send either url or slug" })
     }
@@ -236,7 +363,7 @@ export function createContentHandler(
       await findOwned(input.slug, userId),
       NOT_FOUND_MESSAGE
     )
-    return row.url
+    return (await accessibleRow(row)).url
   }
 
   async function schemasOf(slug: string) {
@@ -322,14 +449,21 @@ export function createContentHandler(
     },
 
     async createRepository({
+      context,
       input,
     }: {
+      context: Context
       input: z.infer<typeof contentInput.createRepository>
     }): Promise<z.infer<typeof contentOutput.createRepository>> {
       const conflict = errors.CONFLICT({
         message: "Ya existe un repositorio de contenido con ese slug",
       })
       const url = createdUrlOf(input)
+      const credential = await createdCredential(
+        ownerOf(context),
+        url,
+        input.credentialId
+      )
       if (await findRow(input.slug, "all")) throw conflict
       // A concurrent create with the same slug loses here, on the unique index.
       const [row] = await db
@@ -338,6 +472,7 @@ export function createContentHandler(
           slug: input.slug,
           name: input.name,
           url,
+          ...credential,
           ref: input.ref,
           contentPath: input.path,
         })
@@ -354,8 +489,10 @@ export function createContentHandler(
     },
 
     async updateRepository({
+      context,
       input,
     }: {
+      context: Context
       input: z.infer<typeof contentInput.updateRepository>
     }): Promise<z.infer<typeof contentOutput.updateRepository>> {
       const row = assertFound(
@@ -363,9 +500,11 @@ export function createContentHandler(
         NOT_FOUND_MESSAGE
       )
       const url = editedUrlOf(input)
+      const credential = await editedCredential(ownerOf(context), row, input)
       const patch = {
         ...(input.name !== undefined && { name: input.name }),
         ...(url !== undefined && { url }),
+        ...credential,
         ...(input.ref !== undefined && { ref: input.ref }),
         ...(input.path !== undefined && { contentPath: input.path }),
       }
@@ -377,28 +516,33 @@ export function createContentHandler(
         .returning()
       const saved = assertFound(updated, NOT_FOUND_MESSAGE)
       if (isHosted(saved)) await ensureHostedRepo(saved, hostedRoot)
-      if (saved.url !== row.url || saved.ref !== row.ref) {
+      if (changesClone(row, saved)) {
         reader.syncInBackground(saved)
       }
       return toRepository(saved)
     },
 
     async listBranches({
+      context,
       input,
     }: {
+      context: Context
       input: z.infer<typeof contentInput.listBranches>
     }): Promise<z.infer<typeof contentOutput.listBranches>> {
-      const result = await listRemoteBranches(await branchesSourceOf(input))
+      const source = await branchesSourceOf(ownerOf(context), input)
+      const result = await listRemoteBranches(source)
       if (!result.ok) throw errors.BAD_GATEWAY({ message: result.error })
       return { branches: result.branches, defaultBranch: result.defaultBranch }
     },
 
     async listContentFolders({
+      context,
       input,
     }: {
+      context: Context
       input: z.infer<typeof contentInput.listContentFolders>
     }): Promise<z.infer<typeof contentOutput.listContentFolders>> {
-      const { source, bare } = await foldersSourceOf(input)
+      const { source, bare } = await foldersSourceOf(ownerOf(context), input)
       const result = await listContentFolders(source, { ref: input.ref, bare })
       if (!result.ok) throw errors.BAD_GATEWAY({ message: result.error })
       return { folders: result.folders }
@@ -525,6 +669,11 @@ export function createContentHandler(
       const conflict = errors.CONFLICT({
         message: "Ya existe un repositorio con ese slug",
       })
+      const credential = await createdCredential(
+        ownerId,
+        input.url,
+        input.credentialId
+      )
       if (await findRow(input.slug, "all")) throw conflict
       // A concurrent create with the same slug loses here, on the unique index.
       const [row] = await db
@@ -533,6 +682,7 @@ export function createContentHandler(
           slug: input.slug,
           name: input.name,
           url: input.url,
+          ...credential,
           ref: input.ref,
           contentPath: input.path,
           ownerId,
@@ -551,13 +701,16 @@ export function createContentHandler(
       context: Context
       input: z.infer<typeof contentInput.updateMyRepository>
     }): Promise<z.infer<typeof contentOutput.updateMyRepository>> {
+      const ownerId = ownerOf(context)
       const row = assertFound(
-        await findOwned(input.slug, ownerOf(context)),
+        await findOwned(input.slug, ownerId),
         NOT_FOUND_MESSAGE
       )
+      const credential = await credentialPatch(ownerId, row, input)
       const patch = {
         ...(input.name !== undefined && { name: input.name }),
         ...(input.url !== undefined && { url: input.url }),
+        ...credential,
         ...(input.ref !== undefined && { ref: input.ref }),
         ...(input.path !== undefined && { contentPath: input.path }),
       }
@@ -568,9 +721,7 @@ export function createContentHandler(
         .where(eq(contentRepository.id, row.id))
         .returning()
       const saved = assertFound(updated, NOT_FOUND_MESSAGE)
-      if (saved.url !== row.url || saved.ref !== row.ref) {
-        reader.syncInBackground(saved)
-      }
+      if (changesClone(row, saved)) reader.syncInBackground(saved)
       return toOwnRepository(saved)
     },
 
@@ -658,6 +809,7 @@ export const contentReader = createContentReader({
   cloneRoot,
   repositories: repositoryStore,
   resolveSource: (repository) => gitSourceOf(repository, hostedRoot),
+  withAccess: withSavedAccess,
   logger: contentLogger,
 })
 

@@ -88,6 +88,7 @@ export function storedRepository(
     ref: "main",
     contentPath: "",
     ownerId: null,
+    credentialId: null,
     ...overrides,
   }
 }

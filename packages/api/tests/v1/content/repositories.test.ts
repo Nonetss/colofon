@@ -228,7 +228,10 @@ describe("content.createRepository", () => {
   test("a taken slug is CONFLICT and nothing is inserted", async () => {
     fakeDb.queue("query.contentRepository.findFirst", row)
 
-    await expectErrorCode(handler.createRepository({ input }), "CONFLICT")
+    await expectErrorCode(
+      handler.createRepository({ context: adminContext(), input }),
+      "CONFLICT"
+    )
     expect(fakeDb.calls("insert")).toEqual([])
     expect(reader.syncInBackground).not.toHaveBeenCalled()
   })
@@ -237,7 +240,10 @@ describe("content.createRepository", () => {
     fakeDb.queue("query.contentRepository.findFirst", undefined)
     fakeDb.queue("insert", [])
 
-    await expectErrorCode(handler.createRepository({ input }), "CONFLICT")
+    await expectErrorCode(
+      handler.createRepository({ context: adminContext(), input }),
+      "CONFLICT"
+    )
     expect(reader.syncInBackground).not.toHaveBeenCalled()
   })
 
@@ -245,7 +251,10 @@ describe("content.createRepository", () => {
     fakeDb.queue("query.contentRepository.findFirst", undefined)
     fakeDb.queue("insert", [privateRow])
 
-    const created = await handler.createRepository({ input })
+    const created = await handler.createRepository({
+      context: adminContext(),
+      input,
+    })
 
     const [insert] = fakeDb.calls("insert")
     if (!insert) throw new Error("no insert recorded")
@@ -265,6 +274,7 @@ describe("content.createRepository", () => {
     fakeDb.queue("insert", [hostedRow])
 
     const created = await handler.createRepository({
+      context: adminContext(),
       input: {
         slug: "manual",
         name: "Manual",
@@ -291,6 +301,7 @@ describe("content.createRepository", () => {
   test("neither a URL nor hosted is BAD_REQUEST and nothing is inserted", async () => {
     await expectErrorCode(
       handler.createRepository({
+        context: adminContext(),
         input: { slug: "manual", name: "Manual", ref: "main", path: "" },
       }),
       "BAD_REQUEST"
@@ -305,6 +316,7 @@ describe("the content folder of a repository", () => {
     fakeDb.queue("insert", [{ ...row, contentPath: "docs" }])
 
     const created = await handler.createRepository({
+      context: adminContext(),
       input: {
         slug: "documentacion",
         name: "Documentación",
@@ -325,6 +337,7 @@ describe("the content folder of a repository", () => {
     fakeDb.queue("update", [{ ...row, contentPath: "sitio" }])
 
     await handler.updateRepository({
+      context: adminContext(),
       input: { slug: "documentacion", path: "sitio" },
     })
 
@@ -354,7 +367,10 @@ describe("content.updateRepository", () => {
     fakeDb.queue("query.contentRepository.findFirst", undefined)
 
     await expectErrorCode(
-      handler.updateRepository({ input: { slug: "nada", name: "X" } }),
+      handler.updateRepository({
+        context: adminContext(),
+        input: { slug: "nada", name: "X" },
+      }),
       "NOT_FOUND"
     )
     expect(fakeDb.calls("update")).toEqual([])
@@ -366,6 +382,7 @@ describe("content.updateRepository", () => {
     fakeDb.queue("update", [updated])
 
     const result = await handler.updateRepository({
+      context: adminContext(),
       input: { slug: "documentacion", ref: "produccion" },
     })
 
@@ -381,6 +398,7 @@ describe("content.updateRepository", () => {
     fakeDb.queue("update", [{ ...privateRow, name: "Docs" }])
 
     await handler.updateRepository({
+      context: adminContext(),
       input: { slug: "documentacion", name: "Docs" },
     })
 
@@ -396,6 +414,7 @@ describe("content.updateRepository", () => {
     fakeDb.queue("update", [updated])
 
     const result = await handler.updateRepository({
+      context: adminContext(),
       input: { slug: "documentacion", hosted: true },
     })
 
@@ -403,6 +422,7 @@ describe("content.updateRepository", () => {
     if (!update) throw new Error("no update recorded")
     expect(stepArgs(update, "set")[0]).toEqual({
       url: "/git/documentacion.git",
+      credentialId: null,
     })
     expect(hasBareRepo(row.id)).toBe(true)
     expect(reader.syncInBackground).toHaveBeenCalledWith(updated)
@@ -416,6 +436,7 @@ describe("content.updateRepository", () => {
     fakeDb.queue("update", [{ ...hostedRow, url }])
 
     const result = await handler.updateRepository({
+      context: adminContext(),
       input: { slug: "manual", url },
     })
 
@@ -427,6 +448,7 @@ describe("content.updateRepository", () => {
     fakeDb.queue("query.contentRepository.findFirst", row)
 
     const result = await handler.updateRepository({
+      context: adminContext(),
       input: { slug: "documentacion" },
     })
 
@@ -554,7 +576,10 @@ describe("content.listBranches", () => {
     const remote = await createContentRemote()
     try {
       expect(
-        await handler.listBranches({ input: { url: remote.url } })
+        await handler.listBranches({
+          context: adminContext(),
+          input: { url: remote.url },
+        })
       ).toEqual({ branches: ["main"], defaultBranch: "main" })
       expect(fakeDb.calls()).toEqual([])
     } finally {
@@ -570,7 +595,10 @@ describe("content.listBranches", () => {
         contentRepositoryRow({ url: remote.url })
       )
       expect(
-        await handler.listBranches({ input: { slug: "documentacion" } })
+        await handler.listBranches({
+          context: adminContext(),
+          input: { slug: "documentacion" },
+        })
       ).toEqual({ branches: ["main"], defaultBranch: "main" })
     } finally {
       await remote.remove()
@@ -581,7 +609,12 @@ describe("content.listBranches", () => {
     await ensureBareRepo(hostedFolder(HOSTED_ROOT, hostedRow.id), "main")
     fakeDb.queue("query.contentRepository.findFirst", hostedRow)
 
-    expect(await handler.listBranches({ input: { slug: "manual" } })).toEqual({
+    expect(
+      await handler.listBranches({
+        context: adminContext(),
+        input: { slug: "manual" },
+      })
+    ).toEqual({
       branches: [],
       defaultBranch: null,
     })
@@ -590,7 +623,10 @@ describe("content.listBranches", () => {
   test("an unknown stored repository is NOT_FOUND", async () => {
     fakeDb.queue("query.contentRepository.findFirst", undefined)
     await expectErrorCode(
-      handler.listBranches({ input: { slug: "nada" } }),
+      handler.listBranches({
+        context: adminContext(),
+        input: { slug: "nada" },
+      }),
       "NOT_FOUND"
     )
   })
@@ -598,6 +634,7 @@ describe("content.listBranches", () => {
   test("an unreachable remote is BAD_GATEWAY and the error has no credentials", async () => {
     const error = await handler
       .listBranches({
+        context: adminContext(),
         input: { url: "https://user:s3cret@127.0.0.1:1/doc.git" },
       })
       .then(
