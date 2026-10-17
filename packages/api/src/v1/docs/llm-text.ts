@@ -115,22 +115,94 @@ function text(lines: string[]): string {
   return `${lines.join("\n")}\n`
 }
 
+/** The address that installs `skill`: its archive, or its SKILL.md. */
+function installPath(skill: DocsSkill): string {
+  if (skill.archivePath !== null) return skill.archivePath
+  return skill.path
+}
+
 function skillLine(skill: DocsSkill, origin: string): string {
-  return `- [${skill.name}](${origin}${skill.path}): ${skill.description}`
+  return `- [${skill.name}](${origin}${installPath(skill)}): ${skill.description}`
 }
 
 function skillsIndexUrl(origin: string): string {
   return `${origin}/.well-known/agent-skills/index.json`
 }
 
-/** An example that installs `skill` in Claude Code's personal skills. */
-function installCommand(skill: DocsSkill, origin: string): string {
-  const folder = `~/.claude/skills/${skill.name}`
-  return `mkdir -p ${folder} && curl -fsS -H "x-api-key: ${KEY_PLACEHOLDER}" ${origin}${skill.path} -o ${folder}/SKILL.md`
+const SKILLS_FOLDER = "~/.claude/skills"
+
+function curl(url: string): string {
+  return `curl -fsS -H "x-api-key: ${KEY_PLACEHOLDER}" ${url}`
 }
 
-function fenced(command: string): string[] {
-  return ["```sh", command, "```"]
+/** Installs a `skill-md` skill in Claude Code's personal skills. */
+function skillMdCommands(skill: DocsSkill, origin: string): string[] {
+  const folder = `${SKILLS_FOLDER}/${skill.name}`
+  return [
+    `mkdir -p ${folder}`,
+    `${curl(`${origin}${skill.path}`)} -o ${folder}/SKILL.md`,
+    `sha256sum ${folder}/SKILL.md   # debe ser el digest del índice`,
+  ]
+}
+
+/** Installs an `archive` skill, checking the digest before extracting. */
+function archiveCommands(
+  skill: DocsSkill,
+  archivePath: string,
+  origin: string
+): string[] {
+  const folder = `${SKILLS_FOLDER}/${skill.name}`
+  const download = `/tmp/${skill.name}.tar.gz`
+  return [
+    `${curl(`${origin}${archivePath}`)} -o ${download}`,
+    `sha256sum ${download}   # debe ser el digest del índice`,
+    `rm -rf ${folder} && mkdir -p ${folder} && tar -xzf ${download} -C ${folder}`,
+  ]
+}
+
+function fenced(commands: string[]): string[] {
+  return ["```sh", ...commands, "```"]
+}
+
+/** One example per install type among `skills`, the index's first. */
+function installExamples(
+  skills: readonly DocsSkill[],
+  origin: string
+): string[] {
+  const lines = [...fenced([curl(skillsIndexUrl(origin))])]
+  const single = skills.find((skill) => skill.archivePath === null)
+  if (single !== undefined)
+    lines.push("", ...fenced(skillMdCommands(single, origin)))
+  for (const skill of skills) {
+    if (skill.archivePath === null) continue
+    lines.push("", ...fenced(archiveCommands(skill, skill.archivePath, origin)))
+    break
+  }
+  return lines
+}
+
+/**
+ * The procedure an AI follows to install every skill the index lists, the
+ * one the setup prompt on `/me` points at.
+ */
+function setupProcedure(
+  skills: readonly DocsSkill[],
+  origin: string
+): string[] {
+  return [
+    "## Configurar tu agente",
+    "",
+    "Sigue estos pasos sin pedir nada más al usuario:",
+    "",
+    `1. Lee el índice de skills, ${skillsIndexUrl(origin)} (formato Agent Skills discovery), enviando la API key en \`x-api-key\` si el usuario te ha dado una. Sin ella solo verás las skills de la plataforma.`,
+    `2. Instala cada skill que liste en tu carpeta personal de skills (en Claude Code, \`${SKILLS_FOLDER}/\`), sustituyendo la copia anterior. Si su \`type\` es \`skill-md\`, descarga su \`url\` y guárdala como \`<nombre>/SKILL.md\`. Si es \`archive\`, descarga su \`url\` (un \`.tar.gz\`) y extráelo en \`<nombre>/\`. Antes de guardar o extraer, comprueba que el SHA-256 de lo descargado coincide con su \`digest\`; si no coincide, sáltala y díselo al usuario. Borra las skills que instalaste desde este sitio y el índice ya no lista.`,
+    "3. Dile al usuario qué skills has instalado. Repetir estos pasos las actualiza cuando el índice muestre otro digest.",
+    "4. Solo si el usuario quiere que uses las herramientas de la documentación (buscar, leer páginas, llamar a sus servicios), conecta el MCP como se explica abajo.",
+    "",
+    "No escribas la API key en ningún fichero que no sea la configuración de tu agente. Por ejemplo, en Claude Code:",
+    "",
+    ...installExamples(skills, origin),
+  ]
 }
 
 /**
@@ -157,19 +229,20 @@ export function agentGuide(
     "",
     "Cada página tiene su texto en Markdown en `<página>/llm.txt`, con sus enlaces como direcciones completas.",
     "",
+    "Las skills de la plataforma enseñan a usar el sitio (`colofon`) y a escribir documentación para él (`colofon-*`); las de cada proyecto se llaman `<repositorio>-<nombre>` y solo aparecen con la key.",
+    "",
+    ...setupProcedure(platform, origin),
+    "",
+    "## El MCP",
+    "",
     `El MCP de la documentación está en ${mcpUrl(origin)}, con la key en \`x-api-key\`. Sus herramientas: ${tools}; si el servidor tiene activados los secretos, también ${secretTools}, para llamar a las APIs de tus servicios con los secretos que guardes en ${origin}/me sin que el agente vea sus valores; y a un administrador, ${adminTools}, para sincronizar un repositorio con su remoto al momento. En Claude Code:`,
     "",
-    ...fenced(claudeCodeCommand(origin, KEY_PLACEHOLDER)),
-    "",
-    `Las skills están en ${skillsIndexUrl(origin)} (el formato Agent Skills discovery), cada una con su dirección y el digest SHA-256 de su texto. Las de cada proyecto se llaman \`<repositorio>-<nombre>\` y solo aparecen con la key. Para instalar una, guarda su \`SKILL.md\` como \`<nombre>/SKILL.md\` en la carpeta de skills de tu agente (en Claude Code, \`~/.claude/skills/\`).`,
+    ...fenced([claudeCodeCommand(origin, KEY_PLACEHOLDER)]),
   ]
-  const [first] = platform
-  if (first === undefined) return lines
+  if (platform.length === 0) return lines
   lines.push(
     "",
-    ...fenced(installCommand(first, origin)),
-    "",
-    "Skills de la plataforma:",
+    "## Skills de la plataforma",
     "",
     ...platform.map((skill) => skillLine(skill, origin))
   )

@@ -130,30 +130,56 @@ const colofon: DocsSkill = {
   name: "colofon",
   repository: null,
   description: "Cómo usar el sitio.",
+  type: "skill-md",
   path: "/.well-known/agent-skills/colofon/SKILL.md",
+  archivePath: null,
+  files: [],
   digest: "sha256:0",
+}
+
+const colofonDocs: DocsSkill = {
+  name: "colofon-docs",
+  repository: null,
+  description: "Cómo escribir páginas.",
+  type: "archive",
+  path: "/.well-known/agent-skills/colofon-docs/SKILL.md",
+  archivePath: "/.well-known/agent-skills/colofon-docs.tar.gz",
+  files: ["references/header.md"],
+  digest: "sha256:2",
 }
 
 const casaDeploy: DocsSkill = {
   name: "casa-deploy",
   repository: { slug: "casa", name: "Casa" },
   description: "Cómo se despliega.",
+  type: "skill-md",
   path: "/.well-known/agent-skills/casa-deploy/SKILL.md",
+  archivePath: null,
+  files: [],
   digest: "sha256:1",
 }
+
+const GUIDE_HEADINGS = new Set([
+  "## Para agentes",
+  "## Configurar tu agente",
+  "## El MCP",
+  "## Skills de la plataforma",
+])
 
 /** The lines of the repository sections, after the guide. */
 function afterGuide(text: string): string[] {
   const lines = text.split("\n")
   const start = lines.findIndex(
-    (line, at) => at > 0 && line.startsWith("## ") && line !== "## Para agentes"
+    (line, at) => at > 0 && line.startsWith("## ") && !GUIDE_HEADINGS.has(line)
   )
   if (start === -1) return []
   return lines.slice(start)
 }
 
 describe("agentGuide", () => {
-  const guide = agentGuide([colofon, casaDeploy], origin).join("\n")
+  const guide = agentGuide([colofon, colofonDocs, casaDeploy], origin).join(
+    "\n"
+  )
 
   test("says where to get the key and how to send it", () => {
     expect(guide).toContain("https://docs.example.org/me")
@@ -181,15 +207,33 @@ describe("agentGuide", () => {
     expect(guide).toContain("a un administrador")
   })
 
-  test("gives the skills index, how to install one and only the platform's skills", () => {
+  test("has the setup procedure: index, both install types with digests, optional MCP", () => {
+    expect(guide).toContain("## Configurar tu agente")
     expect(guide).toContain(
-      "https://docs.example.org/.well-known/agent-skills/index.json"
+      'curl -fsS -H "x-api-key: <tu API key>" https://docs.example.org/.well-known/agent-skills/index.json'
     )
     expect(guide).toContain(
       'curl -fsS -H "x-api-key: <tu API key>" https://docs.example.org/.well-known/agent-skills/colofon/SKILL.md -o ~/.claude/skills/colofon/SKILL.md'
     )
     expect(guide).toContain(
+      'curl -fsS -H "x-api-key: <tu API key>" https://docs.example.org/.well-known/agent-skills/colofon-docs.tar.gz -o /tmp/colofon-docs.tar.gz'
+    )
+    expect(guide).toContain(
+      "tar -xzf /tmp/colofon-docs.tar.gz -C ~/.claude/skills/colofon-docs"
+    )
+    expect(guide).toContain("`digest`")
+    expect(guide).toContain("Solo si el usuario quiere")
+    expect(guide.indexOf("## Configurar tu agente")).toBeLessThan(
+      guide.indexOf("## El MCP")
+    )
+  })
+
+  test("lists only the platform's skills, an archive by its archive", () => {
+    expect(guide).toContain(
       "- [colofon](https://docs.example.org/.well-known/agent-skills/colofon/SKILL.md): Cómo usar el sitio."
+    )
+    expect(guide).toContain(
+      "- [colofon-docs](https://docs.example.org/.well-known/agent-skills/colofon-docs.tar.gz): Cómo escribir páginas."
     )
     expect(guide).not.toContain("casa-deploy")
   })
