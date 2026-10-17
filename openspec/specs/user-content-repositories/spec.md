@@ -57,14 +57,14 @@ The backend SHALL expose to every signed-in user procedures, under `v1.content`,
 - **WHEN** a user asks for a hosted repository
 - **THEN** the request SHALL fail input validation
 
-### Requirement: Limits and restricted remotes
+### Requirement: Restricted remotes
 
-A user SHALL NOT own more than 10 repositories; creating one beyond the limit SHALL answer `BAD_REQUEST` with a Spanish message. The URL of a user's repository SHALL use `https://` and its host SHALL NOT be a loopback, private, link-local or unspecified address, whether typed as an IP literal or resolved from a name; the check SHALL run on create, on edit and before every sync. A URL that fails it SHALL be refused on create and edit (input validation) and make the sync fail with an error that does not reveal the resolved address. Admin-created repositories SHALL keep the URL rules of `content-repository-management`.
+A user MAY own any number of repositories. The URL of a user's repository SHALL use `https://` and its host SHALL NOT be a loopback, private, link-local or unspecified address, whether typed as an IP literal or resolved from a name; the check SHALL run on create, on edit and before every sync. A URL that fails it SHALL be refused on create and edit (input validation) and make the sync fail with an error that does not reveal the resolved address. Admin-created repositories SHALL keep the URL rules of `content-repository-management`.
 
 #### Scenario: Eleventh repository
 
 - **WHEN** a user who owns 10 repositories creates another
-- **THEN** the backend SHALL answer `BAD_REQUEST` and store nothing
+- **THEN** it SHALL be stored and its first sync SHALL start, as the first one was
 
 #### Scenario: Internal address
 
@@ -92,7 +92,7 @@ The public editor schema endpoints of `content-contract` SHALL answer `NOT_FOUND
 
 ### Requirement: Repositories screen in the profile
 
-The profile section SHALL provide a “Repositorios” page at `/me/repositories`, listed in the profile sidebar for every signed-in user, that shows the user's own repositories as cards (name, slug, URL without credentials, ref and last sync with its time and short commit or its full error, a sync button and a menu to edit or delete) and an empty state with a button to add one. Creating and editing SHALL use a form with name, slug (editable only on creation), URL, an empty URL on edit keeping the stored one, and a ref chosen from the remote's branches once they can be read, as in `content-repository-management`; deleting SHALL ask for a confirmation. The page SHALL show how many of the allowed repositories are used. All copy SHALL be in Spanish. A request without a session SHALL be redirected to the login.
+The profile section SHALL provide a “Repositorios” page at `/me/repositories`, listed in the profile sidebar for every signed-in user, that shows the user's own repositories as cards (name, slug, URL without credentials, ref and last sync with its time and short commit or its full error, a sync button and a menu to edit or delete) and an empty state with a button to add one. Creating and editing SHALL use a form with name, slug (editable only on creation), URL, an empty URL on edit keeping the stored one, and a ref chosen from the remote's branches once they can be read, as in `content-repository-management`; deleting SHALL ask for a confirmation. All copy SHALL be in Spanish. A request without a session SHALL be redirected to the login.
 
 #### Scenario: Empty state
 
@@ -111,7 +111,7 @@ The profile section SHALL provide a “Repositorios” page at `/me/repositories
 
 ### Requirement: Trusted internal hosts
 
-The server MAY list host names in `TRUSTED_GIT_HOSTS` (`environment-configuration`). A user's repository whose URL host equals a listed name SHALL be exempt from the internal-address rules of `Limits and restricted remotes`: it SHALL be accepted on create and edit and in the branch and folder listings, and its syncs SHALL NOT be refused for resolving to a private address. The URL SHALL still use `https://`, clones SHALL still use the https transport only, and the repository limit SHALL still apply. Hosts not listed SHALL stay blocked, and with the variable unset nothing SHALL change.
+The server MAY list host names in `TRUSTED_GIT_HOSTS` (`environment-configuration`). A user's repository whose URL host equals a listed name SHALL be exempt from the internal-address rules of `Restricted remotes`: it SHALL be accepted on create and edit and in the branch and folder listings, and its syncs SHALL NOT be refused for resolving to a private address. The URL SHALL still use `https://`, and clones SHALL still use the https transport only. Hosts not listed SHALL stay blocked, and with the variable unset nothing SHALL change.
 
 #### Scenario: Internal host that is listed
 
