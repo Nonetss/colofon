@@ -8,6 +8,7 @@ import { Select as SelectPrimitive } from "@base-ui/react/select"
 import type * as React from "react"
 import { Children, isValidElement, type ReactNode } from "react"
 
+import { useDocumentBody } from "@/hooks/use-document-body"
 import { cn } from "@/lib/utils"
 
 function SelectGroup({ ...props }: SelectPrimitive.Group.Props) {
@@ -58,8 +59,12 @@ function SelectContent({
     SelectPrimitive.Positioner.Props,
     "align" | "alignOffset" | "side" | "sideOffset" | "alignItemWithTrigger"
   >) {
+  // Base UI keeps the portal mounted once the trigger is focused; following
+  // the live body keeps a select in a persisted island usable after the
+  // router swaps pages.
+  const body = useDocumentBody()
   return (
-    <SelectPrimitive.Portal>
+    <SelectPrimitive.Portal container={body}>
       <SelectPrimitive.Positioner
         side={side}
         sideOffset={sideOffset}
