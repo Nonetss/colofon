@@ -1,5 +1,5 @@
 import { openapi } from "@orpc/openapi"
-import { sessionProcedure } from "#index"
+import { protectedProcedure, sessionProcedure } from "#index"
 import { gitCredentialHandler } from "#v1/git-credential/handler"
 import { gitCredentialInput } from "#v1/git-credential/input"
 import { gitCredentialOutput } from "#v1/git-credential/output"
@@ -7,12 +7,13 @@ import { gitCredentialOutput } from "#v1/git-credential/output"
 const tags = ["Git credentials"]
 
 export const gitCredentialRouter = {
-  list: sessionProcedure
+  // Readable with an API key, so the MCP can name a credential by username.
+  list: protectedProcedure
     .meta(
       openapi({
         summary: "List the caller's git credentials",
         description:
-          "Returns the caller's saved git logins by host and username, never their tokens, and whether a repository uses each. Without SECRETS_ENCRYPTION_KEY it answers enabled: false and none; saving is then SERVICE_UNAVAILABLE. Only from a browser session.",
+          "Returns the caller's saved git logins by host and username, never their tokens, and whether a repository uses each. Without SECRETS_ENCRYPTION_KEY it answers enabled: false and none; saving is then SERVICE_UNAVAILABLE.",
         tags,
         method: "GET",
       })

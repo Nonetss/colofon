@@ -5,13 +5,15 @@ import {
   gitCredentialRow,
   stepArgs,
 } from "@nonete/db/testing"
+import { call } from "@orpc/server"
 import { z } from "zod"
-import { userContext } from "#tests/fixtures/context"
+import { apiKeyContext, userContext } from "#tests/fixtures/context"
 import { fakeDb } from "#tests/fixtures/db"
 import { resetEnv, testEnv } from "#tests/fixtures/env"
 import { expectErrorCode } from "#tests/fixtures/errors"
 import { gitCredentialHandler } from "#v1/git-credential/handler"
 import { gitCredentialInput } from "#v1/git-credential/input"
+import { gitCredentialRouter } from "#v1/git-credential/router"
 import { decryptValues, encryptValues } from "#v1/secret/cipher"
 
 const KEY = Buffer.alloc(32, 7).toString("base64")
@@ -195,5 +197,45 @@ describe("gitCredential.delete", () => {
       })
     ).toEqual({ id: CREDENTIAL_ID, success: true })
     expect(fakeDb.calls("delete")).toHaveLength(1)
+  })
+})
+
+describe("gitCredential access with an API key", () => {
+  const options = { context: apiKeyContext() }
+
+  test("list answers the caller's hosts and usernames, without tokens", async () => {
+    fakeDb.queue("select", [storedRow()])
+    fakeDb.queue("select", [])
+
+    const { credentials } = await call(
+      gitCredentialRouter.list,
+      undefined,
+      options
+    )
+
+    expect(
+      credentials.map(({ host, username }) => ({ host, username }))
+    ).toEqual([{ host: "git.example.com", username: "ana" }])
+    expect(JSON.stringify(credentials)).not.toContain(TOKEN)
+  })
+
+  test("save is FORBIDDEN and writes nothing", async () => {
+    await expectErrorCode(
+      call(
+        gitCredentialRouter.save,
+        { host: "git.example.com", username: "ana", token: "new-token" },
+        options
+      ),
+      "FORBIDDEN"
+    )
+    expect(fakeDb.calls()).toEqual([])
+  })
+
+  test("delete is FORBIDDEN and deletes nothing", async () => {
+    await expectErrorCode(
+      call(gitCredentialRouter.delete, { id: CREDENTIAL_ID }, options),
+      "FORBIDDEN"
+    )
+    expect(fakeDb.calls()).toEqual([])
   })
 })
