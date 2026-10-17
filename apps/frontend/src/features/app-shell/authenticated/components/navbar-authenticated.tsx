@@ -8,10 +8,11 @@ import { AppLink } from "@/components/ui/app-link"
 import { NavbarSearchTrigger } from "@/features/app-shell/authenticated/components/navbar-search-trigger"
 import { SurfaceSearchDialog } from "@/features/app-shell/authenticated/components/surface-search-dialog"
 import { UserNav } from "@/features/app-shell/authenticated/components/user-nav"
-import { toggleDocsSidebar, useHasDocsSidebar } from "@/features/docs/shared"
+import { usePageSidebarId } from "@/hooks/use-page-sidebar"
 import { usePathname } from "@/hooks/use-pathname"
 import { useScrolled } from "@/hooks/use-scrolled"
 import { getIcon } from "@/lib/icon-registry"
+import { togglePageSidebar } from "@/lib/page-sidebar"
 import { cn } from "@/lib/utils"
 import { QueryProvider } from "@/providers/query-provider"
 
@@ -23,17 +24,17 @@ export interface NavbarAuthenticatedProps {
   isAdmin?: boolean
 }
 
-/** Opens the documentation sidebar's sheet on phones; hidden elsewhere. */
-function DocsMenuButton() {
-  const hasSidebar = useHasDocsSidebar()
-  if (!hasSidebar) return null
+/** Opens the page sidebar's sheet on phones; hidden on pages without one. */
+function PageSidebarMenuButton() {
+  const sidebarId = usePageSidebarId()
+  if (sidebarId === null) return null
   return (
     <Hint label="Abrir menú" side="bottom">
       <NavbarAction
         aria-label="Abrir menú"
-        aria-controls="docs-sidebar"
+        aria-controls={sidebarId}
         className="-ml-1 md:hidden"
-        onClick={toggleDocsSidebar}
+        onClick={togglePageSidebar}
       >
         <MenuIcon className="size-4 shrink-0" aria-hidden />
       </NavbarAction>
@@ -63,7 +64,7 @@ export function NavbarAuthenticated({
         className="flex h-navbar w-full items-center justify-between gap-3 px-4 md:gap-4 md:px-6"
       >
         <div className="flex shrink-0 items-center gap-2">
-          <DocsMenuButton />
+          <PageSidebarMenuButton />
           <AppLink
             href="/"
             className="group flex shrink-0 items-center gap-2 font-semibold text-foreground text-sm tracking-tight"

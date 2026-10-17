@@ -26,7 +26,6 @@ import {
   resolveScope,
   scopeCookie,
 } from "@/features/docs/shared/model/scope"
-import { DOCS_SIDEBAR_TOGGLE_EVENT } from "@/features/docs/shared/model/sidebar-toggle"
 import { DocsNavTree } from "@/features/docs/sidebar/components/docs-nav-tree"
 import { RepositorySelect } from "@/features/docs/sidebar/components/repository-select"
 import {
@@ -39,6 +38,7 @@ import { usePathname } from "@/hooks/use-pathname"
 import { getIcon } from "@/lib/icon-registry"
 import { navigate } from "@/lib/navigate"
 import { orpc } from "@/lib/orpc"
+import { PAGE_SIDEBAR_TOGGLE_EVENT } from "@/lib/page-sidebar"
 import { cn } from "@/lib/utils"
 import { QueryProvider } from "@/providers/query-provider"
 
@@ -73,8 +73,8 @@ function useMobileSheet(pathname: string) {
   const { setOpenMobile, toggleSidebar } = useSidebar()
   useEffect(() => {
     const onToggle = () => toggleSidebar()
-    window.addEventListener(DOCS_SIDEBAR_TOGGLE_EVENT, onToggle)
-    return () => window.removeEventListener(DOCS_SIDEBAR_TOGGLE_EVENT, onToggle)
+    window.addEventListener(PAGE_SIDEBAR_TOGGLE_EVENT, onToggle)
+    return () => window.removeEventListener(PAGE_SIDEBAR_TOGGLE_EVENT, onToggle)
   }, [toggleSidebar])
   useEffect(() => {
     if (pathname !== "") setOpenMobile(false)

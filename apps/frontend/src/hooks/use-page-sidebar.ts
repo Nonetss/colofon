@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from "react"
-import { hasDocsSidebar } from "@/features/docs/shared/model/sidebar-toggle"
+import { pageSidebarId } from "@/lib/page-sidebar"
 
 // The navbar is a persisted island: it rereads <body>'s mark after every
 // client-side navigation instead of trusting what it saw on mount.
@@ -12,7 +12,7 @@ function subscribe(onChange: () => void) {
   }
 }
 
-/** Whether the page on screen has the documentation sidebar. */
-export function useHasDocsSidebar(): boolean {
-  return useSyncExternalStore(subscribe, hasDocsSidebar, () => false)
+/** The element id of the sidebar of the page on screen, or null. */
+export function usePageSidebarId(): string | null {
+  return useSyncExternalStore(subscribe, pageSidebarId, () => null)
 }
