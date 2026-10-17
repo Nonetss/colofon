@@ -228,6 +228,12 @@ function fakeDocs({
       if (found === undefined) throw new ORPCError("NOT_FOUND")
       return { name: found.name, text: `text of ${found.name}` }
     },
+    file: async (input) => {
+      const found = skillList.find((skill) => skill.name === input.name)
+      if (found === undefined || !found.files.includes(input.path))
+        throw new ORPCError("NOT_FOUND")
+      return { name: found.name, path: input.path, text: `${input.path} text` }
+    },
   }
   const docs: DocsClient = {
     nav: async () => ({ repositories }),
@@ -791,28 +797,49 @@ const colofon: DocsSkill = {
   name: "colofon",
   repository: null,
   description: "Cómo usar el sitio.",
+  type: "skill-md",
   path: "/.well-known/agent-skills/colofon/SKILL.md",
+  archivePath: null,
+  files: [],
   digest: "sha256:0",
+}
+
+const colofonDiagrams: DocsSkill = {
+  name: "colofon-diagrams",
+  repository: null,
+  description: "Cómo dibujar diagramas.",
+  type: "archive",
+  path: "/.well-known/agent-skills/colofon-diagrams/SKILL.md",
+  archivePath: "/.well-known/agent-skills/colofon-diagrams.tar.gz",
+  files: ["references/type-bar.md", "references/type-line.md"],
+  digest: "sha256:2",
 }
 
 const casaDeploy: DocsSkill = {
   name: "casa-deploy",
   repository: { slug: "casa", name: "Casa" },
   description: "Cómo se despliega.",
+  type: "skill-md",
   path: "/.well-known/agent-skills/casa-deploy/SKILL.md",
+  archivePath: null,
+  files: [],
   digest: "sha256:1",
 }
 
 describe("skillsTool", () => {
-  test("lists each skill with its owner, description and address", async () => {
-    const { docs, skills } = fakeDocs({ skillList: [colofon, casaDeploy] })
+  test("lists each skill with its owner, description, address and files", async () => {
+    const { docs, skills } = fakeDocs({
+      skillList: [colofon, colofonDiagrams, casaDeploy],
+    })
     const result = await skillsTool({ docs, skills, origin })
     expect(text(result)).toBe(
       [
         "- `colofon` (the platform's): Cómo usar el sitio. https://docs.example.org/.well-known/agent-skills/colofon/SKILL.md",
+        "- `colofon-diagrams` (the platform's): Cómo dibujar diagramas. https://docs.example.org/.well-known/agent-skills/colofon-diagrams/SKILL.md",
+        "  Files: `references/type-bar.md`, `references/type-line.md`",
         "- `casa-deploy` (Casa's): Cómo se despliega. https://docs.example.org/.well-known/agent-skills/casa-deploy/SKILL.md",
         "",
-        "Call skill with a name for its SKILL.md, or save it as <skills folder>/<name>/SKILL.md to install it.",
+        "Call skill with a name for its SKILL.md, or with a name and one of its files' paths for that file. To install them all, follow the setup procedure in the site's /llms.txt.",
       ].join("\n")
     )
     expect(result.structuredContent).toEqual({
@@ -822,12 +849,21 @@ describe("skillsTool", () => {
           repository: null,
           description: "Cómo usar el sitio.",
           url: "https://docs.example.org/.well-known/agent-skills/colofon/SKILL.md",
+          files: [],
+        },
+        {
+          name: "colofon-diagrams",
+          repository: null,
+          description: "Cómo dibujar diagramas.",
+          url: "https://docs.example.org/.well-known/agent-skills/colofon-diagrams/SKILL.md",
+          files: ["references/type-bar.md", "references/type-line.md"],
         },
         {
           name: "casa-deploy",
           repository: "casa",
           description: "Cómo se despliega.",
           url: "https://docs.example.org/.well-known/agent-skills/casa-deploy/SKILL.md",
+          files: [],
         },
       ],
     })
@@ -859,6 +895,44 @@ describe("skillTool", () => {
     expect(text(result)).toBe(
       'There is no skill "no-existe" you can read. Call skills to list them.'
     )
+  })
+
+  test("with a path, is that file's text", async () => {
+    const { docs, skills } = fakeDocs({ skillList: [colofonDiagrams] })
+    const result = await skillTool({
+      docs,
+      skills,
+      origin,
+      input: { name: "colofon-diagrams", path: "references/type-bar.md" },
+    })
+    expect(result.isError).toBeUndefined()
+    expect(text(result)).toBe("references/type-bar.md text")
+  })
+
+  test("an unknown path is an error listing the skill's files", async () => {
+    const { docs, skills } = fakeDocs({ skillList: [colofonDiagrams] })
+    const result = await skillTool({
+      docs,
+      skills,
+      origin,
+      input: { name: "colofon-diagrams", path: "references/no.md" },
+    })
+    expect(result.isError).toBe(true)
+    expect(text(result)).toBe(
+      'The skill "colofon-diagrams" has no file "references/no.md". Its files: `SKILL.md`, `references/type-bar.md`, `references/type-line.md`.'
+    )
+  })
+
+  test("a path on an unknown skill is an error pointing at skills", async () => {
+    const { docs, skills } = fakeDocs({ skillList: [colofon] })
+    const result = await skillTool({
+      docs,
+      skills,
+      origin,
+      input: { name: "no-existe", path: "references/x.md" },
+    })
+    expect(result.isError).toBe(true)
+    expect(text(result)).toContain("Call skills to list them.")
   })
 
   test("other failures are not hidden", async () => {

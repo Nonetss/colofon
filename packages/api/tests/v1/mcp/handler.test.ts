@@ -41,6 +41,9 @@ const skills: SkillsClient = {
   get: async () => {
     throw new Error("not used")
   },
+  file: async () => {
+    throw new Error("not used")
+  },
 }
 
 const requested: unknown[] = []
