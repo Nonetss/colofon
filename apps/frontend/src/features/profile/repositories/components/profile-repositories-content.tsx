@@ -11,7 +11,6 @@ import {
   useOwnRepositoryDelete,
   useOwnRepositorySync,
 } from "@/features/profile/repositories/hooks/use-own-repositories"
-import { remainingOf } from "@/features/profile/repositories/model/repository-form"
 import type { OwnRepository } from "@/features/profile/repositories/model/types"
 import { useEditDialog } from "@/hooks/use-edit-dialog"
 import { useTargetConfirmDialog } from "@/hooks/use-target-confirm-dialog"
@@ -50,10 +49,7 @@ export function ProfileRepositoriesContent() {
       deleteRepository.mutateAsync({ slug: repository.slug }),
   })
 
-  const repositories = list.data?.repositories ?? []
-  const limit = list.data?.limit ?? 0
-  const remaining = remainingOf(repositories.length, limit)
-  const full = list.data !== undefined && remaining === 0
+  const repositories = list.data ?? []
   const syncingSlug = pendingSlugOf(syncRepository)
   const busySlug = pendingSlugOf(deleteRepository, syncRepository)
   const cardContext: OwnRepositoryCardContext = {
@@ -70,12 +66,16 @@ export function ProfileRepositoriesContent() {
         heroMeta={
           <HeroCount
             segments={[
-              { count: repositories.length, label: `de ${limit} permitidos` },
+              {
+                count: repositories.length,
+                label:
+                  repositories.length === 1 ? "repositorio" : "repositorios",
+              },
             ]}
           />
         }
         heroAction={
-          <Button disabled={full} onClick={editDialog.openCreate}>
+          <Button onClick={editDialog.openCreate}>
             <Plus className="size-4" />
             Añadir repositorio
           </Button>
@@ -105,7 +105,7 @@ export function ProfileRepositoriesContent() {
           description:
             "Comprueba tu conexión; si el problema continúa, inténtalo de nuevo más tarde.",
         }}
-        isEmpty={(data) => data.repositories.length === 0}
+        isEmpty={(data) => data.length === 0}
         empty={{
           icon: <FolderGit className="size-6" />,
           title: "Aún no has añadido ninguno",
@@ -122,7 +122,7 @@ export function ProfileRepositoriesContent() {
               aria-label="Tus repositorios"
               className="grid gap-4 @3xl:grid-cols-2"
             >
-              {data.repositories.map((repository) => (
+              {data.map((repository) => (
                 <li key={repository.id} className="flex min-w-0">
                   <OwnRepositoryCard
                     repository={repository}

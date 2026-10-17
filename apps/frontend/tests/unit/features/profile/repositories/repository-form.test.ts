@@ -3,7 +3,6 @@ import { skipToken } from "@tanstack/react-query"
 import {
   createInput,
   ownBranchesSource,
-  remainingOf,
   updateInput,
 } from "@/features/profile/repositories/model/repository-form"
 import type { OwnRepository } from "@/features/profile/repositories/model/types"
@@ -106,13 +105,5 @@ describe("ownBranchesSource", () => {
 
   test("editing with the URL left empty reads the stored repository", () => {
     expect(ownBranchesSource(true, stored, "")).toEqual({ slug: "apuntes" })
-  })
-})
-
-describe("remainingOf", () => {
-  test("counts what is left and never goes below zero", () => {
-    expect(remainingOf(3, 10)).toBe(7)
-    expect(remainingOf(10, 10)).toBe(0)
-    expect(remainingOf(12, 10)).toBe(0)
   })
 })

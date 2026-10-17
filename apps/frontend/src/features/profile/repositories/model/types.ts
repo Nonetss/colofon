@@ -6,7 +6,7 @@ export type OwnRepositories = Awaited<
   ReturnType<ContentClient["listMyRepositories"]>
 >
 
-export type OwnRepository = OwnRepositories["repositories"][number]
+export type OwnRepository = OwnRepositories[number]
 
 export type CreateOwnRepositoryInput = Parameters<
   ContentClient["createMyRepository"]

@@ -71,8 +71,3 @@ export function ownBranchesSource(
   if (repository !== null && url === "") return { slug: repository.slug }
   return skipToken
 }
-
-/** How many more repositories the user may add. */
-export function remainingOf(used: number, limit: number): number {
-  return Math.max(limit - used, 0)
-}

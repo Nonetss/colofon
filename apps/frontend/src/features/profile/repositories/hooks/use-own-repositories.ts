@@ -32,12 +32,7 @@ function applyDeleteOptimistic(
   input: { slug: string }
 ) {
   if (!current) return current
-  return {
-    ...current,
-    repositories: current.repositories.filter(
-      (repository) => repository.slug !== input.slug
-    ),
-  }
+  return current.filter((repository) => repository.slug !== input.slug)
 }
 
 export const useOwnRepositoryCreate = () =>
