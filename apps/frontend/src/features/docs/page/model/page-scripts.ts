@@ -5,7 +5,8 @@
 import { withOrigin } from "@nonete/api/v1/docs/full-links"
 import { setupDiagramHighlights } from "@/features/docs/diagrams"
 import { navigate } from "@/lib/navigate"
-import { client } from "@/lib/orpc"
+import { client, orpc } from "@/lib/orpc"
+import { getQueryClient } from "@/lib/query-client"
 
 const COPIED_MS = 1500
 
@@ -109,7 +110,8 @@ function syncedLabel(done: boolean): string {
 
 /**
  * The admins' sync button fetches the page's repository now; once synced the
- * router reloads the page so it shows the new content.
+ * router reloads the page so it shows the new content, and the persisted
+ * sidebar refetches its navigation (it keeps the one it was rendered with).
  */
 function setupSyncButton() {
   document.addEventListener("click", async (event) => {
@@ -131,7 +133,12 @@ function setupSyncButton() {
     if (label !== null) label.textContent = syncedLabel(done)
     button.toggleAttribute("data-done", done)
     button.toggleAttribute("data-failed", !done)
-    if (done) navigate(`${window.location.pathname}${window.location.search}`)
+    if (done) {
+      void getQueryClient().invalidateQueries({
+        queryKey: orpc.v1.docs.key(),
+      })
+      navigate(`${window.location.pathname}${window.location.search}`)
+    }
     setTimeout(() => {
       if (label !== null) label.textContent = SYNC_LABEL
       button.removeAttribute("data-done")
