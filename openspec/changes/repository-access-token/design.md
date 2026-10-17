@@ -28,11 +28,10 @@ See proposal.md for the motivation. Today the forms send one `url` that may carr
 
 **API shape.** A `git-credential` feature (`list`, `save`, `delete`) under `v1`, all `protectedProcedure` scoped by the caller. `save` is a `PUT`-style upsert by host and username, so replacing a token is the same call. `list` returns `{ enabled, credentials: [{ id, host, username, inUse }] }`. The repository create and edit inputs gain `credentialId` (uuid, `null` on edit to remove). The admin and user procedures both accept it, always against the caller's own credentials.
 
-**Form.** A shared `CredentialField` in the manage slice replaces the inline fields: a select of the user's credentials for the typed URL's host with "Ninguna" and "Nueva credencial", the latter showing username and masked token. On submit a new credential is saved first, then the repository is sent with its id. With the feature off, the previous inline fields compose the URL (`urlWithAccess`). Credentials with replace and delete live in a section of `/me/repositories`.
+**Form.** A shared `CredentialField` in the manage slice: a select of the user's credentials for the typed URL's host ("Ninguna" and the matching ones) and an "Añadir credencial" button that opens `GitCredentialDialog` (server, username, masked token) and selects what it saves. The same dialog is opened from the credentials section of `/me/repositories`, which also lists, replaces and deletes. Saving is its own step, so the repository submit only sends `credentialId`. With the feature off, the inline username and token compose the URL (`urlWithAccess`).
 
 ## Risks / Trade-offs
 
-- [Saving the credential and then the repository are two calls] → a failed second call leaves a reusable credential, not a leak.
 - [Losing or changing the encryption key makes every credential undecryptable] → the sync error says to save it again; the same trade-off as the secrets.
 - [Legacy repositories keep tokens inside their URL] → unchanged; editing one and choosing a credential replaces them.
 - [The migration is the user's] → the schema change is delivered and the migration is left to generate.

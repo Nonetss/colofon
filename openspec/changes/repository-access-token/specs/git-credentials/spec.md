@@ -47,19 +47,24 @@ An external repository SHALL optionally reference one of the caller's credential
 - **WHEN** a repository was stored with credentials inside its URL and no `credentialId`
 - **THEN** it SHALL keep syncing with them
 
-### Requirement: Credential picker in the repository form
+### Requirement: Credential picker and dialog
 
-In the repository form the user SHALL be able to choose, for the URL's host, one of their saved credentials, none, or a new one entered as a username and a masked token, which is saved on submit and referenced by the repository. Typing a URL whose host has a saved credential SHALL preselect it (the only one, or the most recently used). While the feature is off the form SHALL offer the username and token only to be put in the URL as typed. The profile's “Repositorios” page SHALL list the user's credentials by host and username, with replace-token and delete actions, a delete refused while in use showing why. The copy SHALL describe the token as created in the user's own git server with read access, naming no git product. All copy SHALL be in Spanish.
+The repository form SHALL let the user choose, for the URL's host, one of their saved credentials or none, in a select, and SHALL offer an “Añadir credencial” button that opens a dialog to save a new one (server, username and masked token, the server starting as the URL's host) and selects it once saved. Typing a URL whose host has a saved credential SHALL preselect it (the one the repository uses, else the most recently saved). While the feature is off the form SHALL offer the username and token only, to be put in the URL as typed. The profile's “Repositorios” page SHALL list the user's credentials by host and username, with an “Añadir credencial” button that opens the same dialog, and replace-token and delete actions, a delete refused while in use being disabled. The copy SHALL describe the token as created in the user's own git server with read access, naming no git product. All copy SHALL be in Spanish.
 
 #### Scenario: Second repository on the same server
 
 - **WHEN** a user who saved a credential for `git.example.com` types the URL of another repository on that host
 - **THEN** the form SHALL preselect the credential and ask for no username or token
 
-#### Scenario: New credential saved once
+#### Scenario: Saving a credential from the form
 
-- **WHEN** a user enters a username and a token for a host without credentials and submits
-- **THEN** the credential SHALL be saved and the repository SHALL reference it
+- **WHEN** a user presses “Añadir credencial” in the form, fills the dialog and saves
+- **THEN** the credential SHALL be saved and selected in the form
+
+#### Scenario: Saving a credential from the page
+
+- **WHEN** a user presses “Añadir credencial” on the repositories page and saves
+- **THEN** it SHALL appear in the credentials list
 
 #### Scenario: Feature off
 
