@@ -97,7 +97,7 @@ async function setup(
 describe("docs.nav", () => {
   test("lists every repository with its config and tree, and one without content as unavailable", async () => {
     const { handler } = await setup([casa, trabajo], inClone(casa, SITE))
-    const { repositories } = await handler.nav()
+    const { repositories } = await handler.nav({ context: userContext() })
     expect(repositories.map((repository) => repository.slug)).toEqual([
       "casa",
       "trabajo",
@@ -328,7 +328,7 @@ describe("docs with menu.yaml and the catalog", () => {
       [casa],
       inClone(casa, { ...SITE, "menu.yaml": MENU })
     )
-    const { repositories } = await handler.nav()
+    const { repositories } = await handler.nav({ context: userContext() })
     const [group] = repositories[0]?.nodes ?? []
     expect(group).toMatchObject({
       kind: "group",
@@ -461,7 +461,10 @@ describe("docs.search", () => {
 
   test("a named repository is the only one searched", async () => {
     const { handler } = await bothRepositories()
-    const answer = await handler.search({ input: search("dns", "casa") })
+    const answer = await handler.search({
+      context: userContext(),
+      input: search("dns", "casa"),
+    })
     expect(answer.allRepositories).toBe(false)
     expect(answer.results.map((result) => result.repository.slug)).toEqual([
       "casa",
@@ -471,7 +474,10 @@ describe("docs.search", () => {
   test("without a repository, or with one that names none, every readable repository is searched together", async () => {
     const { handler } = await bothRepositories()
     for (const repository of [undefined, "nadie"]) {
-      const answer = await handler.search({ input: search("dns", repository) })
+      const answer = await handler.search({
+        context: userContext(),
+        input: search("dns", repository),
+      })
       expect(answer.allRepositories).toBe(true)
       const slugs = new Set(
         answer.results.map((result) => result.repository.slug)
@@ -482,7 +488,10 @@ describe("docs.search", () => {
 
   test("a repository without content is skipped", async () => {
     const { handler } = await setup([casa, trabajo], inClone(casa, CASA))
-    const answer = await handler.search({ input: search("dns") })
+    const answer = await handler.search({
+      context: userContext(),
+      input: search("dns"),
+    })
     expect(answer.allRepositories).toBe(false)
     expect(answer.results.map((result) => result.repository.slug)).toEqual([
       "casa",
@@ -491,8 +500,12 @@ describe("docs.search", () => {
 
   test("a body match carries its excerpt and a route to its section", async () => {
     const { handler } = await setup([casa], inClone(casa, CASA))
-    const [result] = (await handler.search({ input: search("consulta") }))
-      .results
+    const [result] = (
+      await handler.search({
+        context: userContext(),
+        input: search("consulta"),
+      })
+    ).results
     expect(result).toEqual({
       repository: { slug: "casa", name: "Casa" },
       path: "red/dns",
@@ -510,20 +523,27 @@ describe("docs.search", () => {
 
   test("a title match routes to the page with no excerpt", async () => {
     const { handler } = await setup([casa], inClone(casa, CASA))
-    const [result] = (await handler.search({ input: search("dns") })).results
+    const [result] = (
+      await handler.search({ context: userContext(), input: search("dns") })
+    ).results
     expect(result?.href).toBe("/casa/red/dns")
     expect(result?.excerpt).toBeNull()
   })
 
   test("the home routes to the repository", async () => {
     const { handler } = await setup([casa], inClone(casa, CASA))
-    const [result] = (await handler.search({ input: search("inicio") })).results
+    const [result] = (
+      await handler.search({ context: userContext(), input: search("inicio") })
+    ).results
     expect(result?.href).toBe("/casa")
   })
 
   test("results are cut to the limit, the most relevant first", async () => {
     const { handler } = await bothRepositories()
-    const answer = await handler.search({ input: search("dns", undefined, 1) })
+    const answer = await handler.search({
+      context: userContext(),
+      input: search("dns", undefined, 1),
+    })
     expect(answer.results).toHaveLength(1)
     expect(answer.results[0]?.title).toBe("DNS")
   })
@@ -539,12 +559,20 @@ describe("docs.search", () => {
     const first = { ...casa, url: before.url }
     const { reader, handler } = await setup([first], {})
     await reader.sync(first)
-    expect((await handler.search({ input: search("pihole") })).results).toEqual(
-      []
-    )
+    expect(
+      (
+        await handler.search({
+          context: userContext(),
+          input: search("pihole"),
+        })
+      ).results
+    ).toEqual([])
 
     await reader.sync({ ...casa, url: after.url })
-    const answer = await handler.search({ input: search("pihole") })
+    const answer = await handler.search({
+      context: userContext(),
+      input: search("pihole"),
+    })
     expect(answer.results.map((result) => result.title)).toEqual(["DNS"])
   })
 })
@@ -569,5 +597,74 @@ describe("docs input", () => {
       docsInput.page.safeParse({ repository: "casa", path: "red/../.." })
         .success
     ).toBe(false)
+  })
+})
+
+describe("docs of a user's repository", () => {
+  const apuntes = storedRepository({
+    id: "repo-apuntes",
+    slug: "apuntes",
+    name: "Apuntes",
+    ownerId: "user-id",
+  })
+  const strangerContext = adminContext()
+
+  async function withPrivateRepository() {
+    return setup([casa, apuntes], {
+      ...inClone(casa, SITE),
+      ...inClone(apuntes, SITE),
+    })
+  }
+
+  test("the owner's navigation lists it beside the platform's", async () => {
+    const { handler } = await withPrivateRepository()
+    const { repositories } = await handler.nav({ context: userContext() })
+    expect(
+      repositories.map((repository) => repository.slug).toSorted()
+    ).toEqual(["apuntes", "casa"])
+  })
+
+  test("another user's navigation does not list it, an admin's included", async () => {
+    const { handler } = await withPrivateRepository()
+    const { repositories } = await handler.nav({ context: strangerContext })
+    expect(repositories.map((repository) => repository.slug)).toEqual(["casa"])
+  })
+
+  test("a page of someone else's repository is NOT_FOUND", async () => {
+    const { handler } = await withPrivateRepository()
+    await expectErrorCode(
+      handler.page({
+        context: strangerContext,
+        input: { repository: "apuntes", path: "red/dns" },
+      }),
+      "NOT_FOUND"
+    )
+    const own = await handler.page({
+      context: userContext(),
+      input: { repository: "apuntes", path: "red/dns" },
+    })
+    expect(own.repository.slug).toBe("apuntes")
+  })
+
+  test("an image of someone else's repository is NOT_FOUND", async () => {
+    const { handler } = await withPrivateRepository()
+    await expectErrorCode(
+      handler.file({
+        context: strangerContext,
+        input: { repository: "apuntes", path: "red/img/zonas.svg" },
+      }),
+      "NOT_FOUND"
+    )
+  })
+
+  test("search finds its pages for the owner only", async () => {
+    const { handler } = await withPrivateRepository()
+    const input = docsInput.search.parse({ query: "dns" })
+    const owner = await handler.search({ context: userContext(), input })
+    const stranger = await handler.search({ context: strangerContext, input })
+    const slugs = (answer: typeof owner) =>
+      answer.results.map((result) => result.repository.slug)
+    expect(slugs(owner)).toContain("apuntes")
+    expect(slugs(stranger)).not.toContain("apuntes")
   })
 })

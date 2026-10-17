@@ -24,7 +24,9 @@ import type { z } from "zod"
 import type { Context } from "#context"
 import { errors } from "#errors"
 import {
+  audienceOfUser,
   type ContentReader,
+  type RepositoryAudience,
   type RepositoryStore,
   readerRoutesOf,
   type StoredRepository,
@@ -84,10 +86,10 @@ export function createDocsHandler({
     return built
   }
 
-  async function readableSites() {
+  async function readableSites(audience: RepositoryAudience) {
     const readable: { repository: StoredRepository; site: Site }[] = []
-    for (const stored of await repositories.list()) {
-      const read = await reader.site(stored.slug)
+    for (const stored of await repositories.list(audience)) {
+      const read = await reader.site(stored.slug, audience)
       if (read?.site !== undefined)
         readable.push({ repository: read.repository, site: read.site })
     }
@@ -95,11 +97,12 @@ export function createDocsHandler({
   }
 
   return {
-    async nav(): Promise<NavOutput> {
-      const stored = await repositories.list()
+    async nav({ context }: { context: Context }): Promise<NavOutput> {
+      const audience = audienceOfUser(context.user)
+      const stored = await repositories.list(audience)
       const answer: NavOutput["repositories"] = []
       for (const repository of stored) {
-        answer.push(await navOf(reader, repository))
+        answer.push(await navOf(reader, repository, audience))
       }
       return { repositories: answer }
     },
@@ -111,7 +114,10 @@ export function createDocsHandler({
       context: Context
       input: z.infer<typeof docsInput.page>
     }): Promise<PageOutput> {
-      const read = await reader.site(input.repository)
+      const read = await reader.site(
+        input.repository,
+        audienceOfUser(context.user)
+      )
       if (read === undefined || read.site === undefined)
         throw errors.NOT_FOUND({ message: PAGE_NOT_FOUND })
       const found = read.site.pages.get(input.path)
@@ -150,11 +156,13 @@ export function createDocsHandler({
     },
 
     async search({
+      context,
       input,
     }: {
+      context: Context
       input: z.infer<typeof docsInput.search>
     }): Promise<SearchOutput> {
-      const readable = await readableSites()
+      const readable = await readableSites(audienceOfUser(context.user))
       const scoped = readable.filter(
         ({ repository }) => repository.slug === input.repository
       )
@@ -178,7 +186,10 @@ export function createDocsHandler({
       context: Context
       input: z.infer<typeof docsInput.file>
     }): Promise<File> {
-      const repository = await repositories.find(input.repository)
+      const repository = await repositories.find(
+        input.repository,
+        audienceOfUser(context.user)
+      )
       if (repository === undefined || !isImageFile(input.path))
         throw errors.NOT_FOUND({ message: FILE_NOT_FOUND })
       const target = await insideDocs(reader.folderOf(repository), input.path)
@@ -197,9 +208,10 @@ export function createDocsHandler({
 
 async function navOf(
   reader: ContentReader,
-  repository: StoredRepository
+  repository: StoredRepository,
+  audience: RepositoryAudience
 ): Promise<NavOutput["repositories"][number]> {
-  const read = await reader.site(repository.slug)
+  const read = await reader.site(repository.slug, audience)
   const base = { slug: repository.slug, name: repository.name }
   if (
     read === undefined ||

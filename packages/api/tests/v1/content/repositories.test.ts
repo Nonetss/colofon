@@ -421,7 +421,10 @@ describe("content.syncRepository", () => {
     fakeDb.queue("query.contentRepository.findFirst", undefined)
 
     await expectErrorCode(
-      handler.syncRepository({ input: { slug: "nada" } }),
+      handler.syncRepository({
+        context: userContext(),
+        input: { slug: "nada" },
+      }),
       "NOT_FOUND"
     )
     expect(reader.sync).not.toHaveBeenCalled()
@@ -432,7 +435,10 @@ describe("content.syncRepository", () => {
     fakeDb.queue("query.contentRepository.findFirst", privateRow)
 
     const error = await handler
-      .syncRepository({ input: { slug: "documentacion" } })
+      .syncRepository({
+        context: userContext(),
+        input: { slug: "documentacion" },
+      })
       .then(
         () => undefined,
         (caught: unknown) => caught
@@ -452,6 +458,7 @@ describe("content.syncRepository", () => {
     )
 
     const result = await handler.syncRepository({
+      context: userContext(),
       input: { slug: "documentacion" },
     })
 

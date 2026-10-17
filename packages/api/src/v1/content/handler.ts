@@ -3,6 +3,7 @@ import path from "node:path"
 import {
   CLONE_DIR,
   CONFIG_SCHEMA,
+  checkUserRemote,
   DIAGRAM_SCHEMA,
   ENTITY_SCHEMA_PREFIX,
   editorSchemas,
@@ -11,6 +12,7 @@ import {
   listRemoteBranches,
   MENU_SCHEMA,
   publicUrl,
+  type RemoteCheck,
   readFile,
   readFolder,
   type SyncResult,
@@ -21,8 +23,9 @@ import { db } from "@nonete/db"
 import { type ContentRepository, contentRepository } from "@nonete/db/schema"
 import { env } from "@nonete/env/server"
 import { child } from "@nonete/logger"
-import { eq } from "drizzle-orm"
+import { count, eq } from "drizzle-orm"
 import type { z } from "zod"
+import type { Context } from "#context"
 import { errors } from "#errors"
 import { toIso, toIsoOrNull } from "#shared/dates"
 import { assertFound } from "#shared/not-found"
@@ -34,10 +37,16 @@ import {
   isHosted,
 } from "#v1/content/hosting"
 import type { contentInput } from "#v1/content/input"
-import type { ContentRepositoryOutput, contentOutput } from "#v1/content/output"
+import type {
+  ContentRepositoryOutput,
+  contentOutput,
+  OwnRepositoryOutput,
+} from "#v1/content/output"
 import {
+  audienceOfUser,
   type ContentReader,
   createContentReader,
+  type RepositoryAudience,
   type RepositoryStore,
 } from "#v1/content/reader"
 
@@ -45,6 +54,9 @@ import {
 export const SCHEMAS_PATH = "/api/v1/content/schemas"
 
 const NOT_FOUND_MESSAGE = "Repositorio de contenido no encontrado"
+/** How many repositories a user may own. */
+export const MAX_USER_REPOSITORIES = 10
+
 const NOT_IN_REPOSITORY_MESSAGE = "No existe esa rama o ruta en el repositorio"
 
 /** The absolute URL of a repository's schema catalog. */
@@ -88,8 +100,46 @@ function toRepository(row: ContentRepository): ContentRepositoryOutput {
   }
 }
 
-function findRow(slug: string) {
-  return db.query.contentRepository.findFirst({ where: { slug } })
+function toOwnRepository(row: ContentRepository): OwnRepositoryOutput {
+  return {
+    id: row.id,
+    slug: row.slug,
+    name: row.name,
+    url: publicUrl(row.url),
+    ref: row.ref,
+    lastSyncedAt: toIsoOrNull(row.lastSyncedAt),
+    lastCommit: row.lastCommit,
+    lastSyncError: row.lastSyncError,
+    createdAt: toIso(row.createdAt),
+    updatedAt: toIso(row.updatedAt),
+  }
+}
+
+/** The relational `where` that keeps the rows within `audience`. */
+export function audienceFilter(audience: RepositoryAudience) {
+  if (audience === "all") return {}
+  if (audience === "platform") return { ownerId: { isNull: true as const } }
+  return {
+    OR: [{ ownerId: { isNull: true as const } }, { ownerId: audience.userId }],
+  }
+}
+
+function findRow(slug: string, audience: RepositoryAudience) {
+  return db.query.contentRepository.findFirst({
+    where: { slug, ...audienceFilter(audience) },
+  })
+}
+
+/** The signed-in user a `protectedProcedure` always has. */
+function ownerOf(context: Context): string {
+  if (context.user === null) throw errors.UNAUTHORIZED()
+  return context.user.id
+}
+
+function findOwned(slug: string, userId: string) {
+  return db.query.contentRepository.findFirst({
+    where: { slug, ownerId: userId },
+  })
 }
 
 /** The `url` a new repository stores: the one sent, or the hosted marker. */
@@ -112,6 +162,8 @@ function editedUrlOf(
 export type ContentHandlerOptions = {
   /** Folder holding the bare repository of each hosted repository. */
   hostedRoot: string
+  /** Vets a user's remote before its branches are read; tests replace it. */
+  checkRemote?: (url: string) => Promise<RemoteCheck>
 }
 
 /** The content handler over `reader`; tests build one with fakes. */
@@ -119,7 +171,7 @@ export function createContentHandler(
   reader: ContentReader,
   options: ContentHandlerOptions
 ) {
-  const { hostedRoot } = options
+  const { hostedRoot, checkRemote = checkUserRemote } = options
 
   /**
    * What `listBranches` reads: the URL sent, or a stored repository's
@@ -132,7 +184,10 @@ export function createContentHandler(
     if (input.slug === undefined) {
       throw errors.BAD_REQUEST({ message: "Send either url or slug" })
     }
-    const row = assertFound(await findRow(input.slug), NOT_FOUND_MESSAGE)
+    const row = assertFound(
+      await findRow(input.slug, "platform"),
+      NOT_FOUND_MESSAGE
+    )
     return gitSourceOf(row, hostedRoot)
   }
 
@@ -142,15 +197,31 @@ export function createContentHandler(
    * write.
    */
   async function hostedFolderOf(slug: string): Promise<string> {
-    const row = await findRow(slug)
+    const row = await findRow(slug, "platform")
     if (row === undefined || !isHosted(row)) {
       throw errors.NOT_FOUND({ message: NOT_FOUND_MESSAGE })
     }
     return gitSourceOf(row, hostedRoot)
   }
 
+  /** The URL `listMyBranches` reads: the one sent, or an owned repository's. */
+  async function ownBranchesUrlOf(
+    userId: string,
+    input: z.infer<typeof contentInput.listMyBranches>
+  ): Promise<string> {
+    if (input.url !== undefined) return input.url
+    if (input.slug === undefined) {
+      throw errors.BAD_REQUEST({ message: "Send either url or slug" })
+    }
+    const row = assertFound(
+      await findOwned(input.slug, userId),
+      NOT_FOUND_MESSAGE
+    )
+    return row.url
+  }
+
   async function schemasOf(slug: string) {
-    const content = await reader.content(slug)
+    const content = await reader.content(slug, "platform")
     if (content === undefined) {
       throw errors.NOT_FOUND({ message: `No content repository named ${slug}` })
     }
@@ -225,6 +296,7 @@ export function createContentHandler(
       z.infer<typeof contentOutput.listRepositories>
     > {
       const rows = await db.query.contentRepository.findMany({
+        where: audienceFilter("platform"),
         orderBy: { name: "asc" },
       })
       return rows.map(toRepository)
@@ -239,7 +311,7 @@ export function createContentHandler(
         message: "Ya existe un repositorio de contenido con ese slug",
       })
       const url = createdUrlOf(input)
-      if (await findRow(input.slug)) throw conflict
+      if (await findRow(input.slug, "all")) throw conflict
       // A concurrent create with the same slug loses here, on the unique index.
       const [row] = await db
         .insert(contentRepository)
@@ -261,7 +333,10 @@ export function createContentHandler(
     }: {
       input: z.infer<typeof contentInput.updateRepository>
     }): Promise<z.infer<typeof contentOutput.updateRepository>> {
-      const row = assertFound(await findRow(input.slug), NOT_FOUND_MESSAGE)
+      const row = assertFound(
+        await findRow(input.slug, "platform"),
+        NOT_FOUND_MESSAGE
+      )
       const url = editedUrlOf(input)
       const patch = {
         ...(input.name !== undefined && { name: input.name }),
@@ -336,7 +411,10 @@ export function createContentHandler(
     }: {
       input: z.infer<typeof contentInput.deleteRepository>
     }): Promise<z.infer<typeof contentOutput.deleteRepository>> {
-      const row = assertFound(await findRow(input.slug), NOT_FOUND_MESSAGE)
+      const row = assertFound(
+        await findRow(input.slug, "platform"),
+        NOT_FOUND_MESSAGE
+      )
       await db.delete(contentRepository).where(eq(contentRepository.id, row.id))
       await reader.remove(row)
       if (isHosted(row)) {
@@ -349,16 +427,137 @@ export function createContentHandler(
     },
 
     async syncRepository({
+      context,
       input,
     }: {
+      context: Context
       input: z.infer<typeof contentInput.syncRepository>
     }): Promise<z.infer<typeof contentOutput.syncRepository>> {
-      const row = assertFound(await findRow(input.slug), NOT_FOUND_MESSAGE)
+      const audience = audienceOfUser(context.user)
+      const row = assertFound(
+        await findRow(input.slug, audience),
+        NOT_FOUND_MESSAGE
+      )
       const result = await reader.sync(row)
       if (!result.ok) throw errors.BAD_GATEWAY({ message: result.error })
       return toRepository(
-        assertFound(await findRow(input.slug), NOT_FOUND_MESSAGE)
+        assertFound(await findRow(input.slug, audience), NOT_FOUND_MESSAGE)
       )
+    },
+
+    async listMyRepositories({
+      context,
+    }: {
+      context: Context
+    }): Promise<z.infer<typeof contentOutput.listMyRepositories>> {
+      const rows = await db.query.contentRepository.findMany({
+        where: { ownerId: ownerOf(context) },
+        orderBy: { name: "asc" },
+      })
+      return {
+        limit: MAX_USER_REPOSITORIES,
+        repositories: rows.map(toOwnRepository),
+      }
+    },
+
+    async createMyRepository({
+      context,
+      input,
+    }: {
+      context: Context
+      input: z.infer<typeof contentInput.createMyRepository>
+    }): Promise<z.infer<typeof contentOutput.createMyRepository>> {
+      const ownerId = ownerOf(context)
+      const [owned] = await db
+        .select({ total: count() })
+        .from(contentRepository)
+        .where(eq(contentRepository.ownerId, ownerId))
+      if ((owned?.total ?? 0) >= MAX_USER_REPOSITORIES) {
+        throw errors.BAD_REQUEST({
+          message: `Solo puedes tener ${MAX_USER_REPOSITORIES} repositorios`,
+        })
+      }
+      const conflict = errors.CONFLICT({
+        message: "Ya existe un repositorio con ese slug",
+      })
+      if (await findRow(input.slug, "all")) throw conflict
+      // A concurrent create with the same slug loses here, on the unique index.
+      const [row] = await db
+        .insert(contentRepository)
+        .values({
+          slug: input.slug,
+          name: input.name,
+          url: input.url,
+          ref: input.ref,
+          ownerId,
+        })
+        .onConflictDoNothing({ target: contentRepository.slug })
+        .returning()
+      if (!row) throw conflict
+      reader.syncInBackground(row)
+      return toOwnRepository(row)
+    },
+
+    async updateMyRepository({
+      context,
+      input,
+    }: {
+      context: Context
+      input: z.infer<typeof contentInput.updateMyRepository>
+    }): Promise<z.infer<typeof contentOutput.updateMyRepository>> {
+      const row = assertFound(
+        await findOwned(input.slug, ownerOf(context)),
+        NOT_FOUND_MESSAGE
+      )
+      const patch = {
+        ...(input.name !== undefined && { name: input.name }),
+        ...(input.url !== undefined && { url: input.url }),
+        ...(input.ref !== undefined && { ref: input.ref }),
+      }
+      if (Object.keys(patch).length === 0) return toOwnRepository(row)
+      const [updated] = await db
+        .update(contentRepository)
+        .set(patch)
+        .where(eq(contentRepository.id, row.id))
+        .returning()
+      const saved = assertFound(updated, NOT_FOUND_MESSAGE)
+      if (saved.url !== row.url || saved.ref !== row.ref) {
+        reader.syncInBackground(saved)
+      }
+      return toOwnRepository(saved)
+    },
+
+    async deleteMyRepository({
+      context,
+      input,
+    }: {
+      context: Context
+      input: z.infer<typeof contentInput.deleteMyRepository>
+    }): Promise<z.infer<typeof contentOutput.deleteMyRepository>> {
+      const row = assertFound(
+        await findOwned(input.slug, ownerOf(context)),
+        NOT_FOUND_MESSAGE
+      )
+      await db.delete(contentRepository).where(eq(contentRepository.id, row.id))
+      await reader.remove(row)
+      return { id: row.id, success: true }
+    },
+
+    async listMyBranches({
+      context,
+      input,
+    }: {
+      context: Context
+      input: z.infer<typeof contentInput.listMyBranches>
+    }): Promise<z.infer<typeof contentOutput.listBranches>> {
+      const url = await ownBranchesUrlOf(ownerOf(context), input)
+      const checked = await checkRemote(url)
+      if (!checked.ok) {
+        throw errors.BAD_REQUEST({ message: "Esa dirección no está permitida" })
+      }
+      const result = await listRemoteBranches(url, undefined, true)
+      if (!result.ok) throw errors.BAD_GATEWAY({ message: result.error })
+      return { branches: result.branches, defaultBranch: result.defaultBranch }
     },
 
     async sync(): Promise<z.infer<typeof contentOutput.sync>> {
@@ -386,7 +585,11 @@ export function createContentHandler(
 /** The stored repositories, read and updated through Drizzle. */
 export const repositoryStore: RepositoryStore = {
   find: findRow,
-  list: () => db.query.contentRepository.findMany({ orderBy: { name: "asc" } }),
+  list: (audience) =>
+    db.query.contentRepository.findMany({
+      where: audienceFilter(audience),
+      orderBy: { name: "asc" },
+    }),
   recordSync: async (id, result) => {
     await db
       .update(contentRepository)

@@ -44,6 +44,15 @@ const repository = z.object({
 
 export type ContentRepositoryOutput = z.infer<typeof repository>
 
+// A user's repository: external and not in the editor's schema catalog.
+const ownRepository = repository.omit({
+  hosted: true,
+  pushUrl: true,
+  catalogUrl: true,
+})
+
+export type OwnRepositoryOutput = z.infer<typeof ownRepository>
+
 const folderEntry = z.object({
   name: z.string(),
   path: z.string().describe("Path from the repository root"),
@@ -75,6 +84,13 @@ export const contentOutput = {
   typeSchema: jsonSchema,
   entitySchema: jsonSchema,
   listRepositories: z.array(repository),
+  listMyRepositories: z.object({
+    limit: z.number().int().describe("How many repositories a user may own"),
+    repositories: z.array(ownRepository),
+  }),
+  createMyRepository: ownRepository,
+  updateMyRepository: ownRepository,
+  deleteMyRepository: z.object({ id: z.uuid(), success: z.boolean() }),
   createRepository: repository,
   updateRepository: repository,
   listBranches: z.object({

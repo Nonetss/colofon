@@ -2,7 +2,11 @@ import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import path from "node:path"
 import type { SyncResult } from "@nonete/content"
-import type { RepositoryStore, StoredRepository } from "#v1/content/reader"
+import {
+  isVisibleTo,
+  type RepositoryStore,
+  type StoredRepository,
+} from "#v1/content/reader"
 
 /** A small valid content repository: two types, one pointing at the other. */
 export const CONTENT_SITE: Record<string, string> = {
@@ -63,8 +67,9 @@ export function memoryRepositoryStore(
   return {
     rows,
     recorded,
-    find: async (slug) => rows.find((row) => row.slug === slug),
-    list: async () => [...rows],
+    find: async (slug, audience) =>
+      rows.find((row) => row.slug === slug && isVisibleTo(row, audience)),
+    list: async (audience) => rows.filter((row) => isVisibleTo(row, audience)),
     recordSync: async (id, result) => {
       recorded.push({ id, result })
     },
@@ -81,6 +86,7 @@ export function storedRepository(
     name: "Documentación",
     url: "https://git.example/documentacion.git",
     ref: "main",
+    ownerId: null,
     ...overrides,
   }
 }

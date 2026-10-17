@@ -1,4 +1,4 @@
-import { isReservedSlug } from "@nonete/content"
+import { isReservedSlug, userRemoteProblem } from "@nonete/content"
 import { z } from "zod"
 
 const repository = z
@@ -23,6 +23,17 @@ const url = z
   .url({ protocol: /^https?$/ })
   .describe(
     "HTTP(S) URL of the git repository; a private one carries its credentials (https://user:token@host/owner/repo.git)"
+  )
+
+// A user's remote is held to a stricter rule than an admin's: the backend
+// clones it from inside the platform's network.
+const userUrl = z
+  .url({ protocol: /^https$/ })
+  .refine((value) => userRemoteProblem(value) === undefined, {
+    message: "Esa dirección no está permitida: usa una URL https pública",
+  })
+  .describe(
+    "HTTPS URL of a public git host; a private repository carries its token (https://user:token@host/owner/repo.git)"
   )
 
 const ref = z
@@ -135,6 +146,34 @@ export const contentInput = {
       ),
   }),
   readFile: z.object({ slug: repository, branch, path: filePath }),
+  createMyRepository: z.object({
+    slug: newRepository,
+    name,
+    url: userUrl,
+    ref: ref.default("main"),
+  }),
+  updateMyRepository: z.object({
+    slug: repository.describe("Slug of the repository to edit; never changes"),
+    name: name.optional(),
+    url: userUrl.optional(),
+    ref: ref.optional(),
+  }),
+  listMyBranches: z
+    .object({
+      url: userUrl
+        .optional()
+        .describe("URL of a git repository to read; with its token if private"),
+      slug: repository
+        .optional()
+        .describe("One of the caller's repositories, read at its stored URL"),
+    })
+    .refine(
+      (input) => (input.url === undefined) !== (input.slug === undefined),
+      {
+        message: "Send either url or slug",
+      }
+    ),
+  deleteMyRepository: z.object({ slug: repository }),
   deleteRepository: z.object({ slug: repository }),
   syncRepository: z.object({ slug: repository }),
 }

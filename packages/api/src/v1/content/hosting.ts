@@ -67,7 +67,7 @@ export function createGitHosting(options: GitHostingOptions): GitHttpHandler {
   const { hostedRoot, repositories, reader, logger } = options
 
   async function hostedNamed(slug: string) {
-    const repository = await repositories.find(slug)
+    const repository = await repositories.find(slug, "all")
     if (repository === undefined || !isHosted(repository)) return undefined
     return repository
   }

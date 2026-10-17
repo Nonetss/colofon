@@ -1,11 +1,13 @@
 import { rm, stat } from "node:fs/promises"
 import {
   type ContentDeclarations,
+  checkUserRemote,
   cloneFolder,
   createRepoSync,
   describeRepository,
   loadContent,
   pruneClones,
+  type RemoteCheck,
   readCatalog,
   readEditDates,
   readSite,
@@ -29,12 +31,43 @@ export type StoredRepository = {
   name: string
   url: string
   ref: string
+  /** The user it is private to; `null` for a platform repository. */
+  ownerId: string | null
+}
+
+/**
+ * Whose repositories a read may see: `platform` the ones without an owner,
+ * `{ userId }` those and that user's own, `all` every one (syncs, git
+ * hosting).
+ */
+export type RepositoryAudience = "all" | "platform" | { userId: string }
+
+/** What a signed-in user reads; the platform's alone without a session. */
+export function audienceOfUser(
+  user: { id: string } | null
+): RepositoryAudience {
+  if (user === null) return "platform"
+  return { userId: user.id }
+}
+
+/** Whether `repository` is within `audience`. */
+export function isVisibleTo(
+  repository: Pick<StoredRepository, "ownerId">,
+  audience: RepositoryAudience
+): boolean {
+  if (audience === "all") return true
+  if (repository.ownerId === null) return true
+  if (audience === "platform") return false
+  return repository.ownerId === audience.userId
 }
 
 /** Where the reader finds the repositories and records their syncs. */
 export type RepositoryStore = {
-  find: (slug: string) => Promise<StoredRepository | undefined>
-  list: () => Promise<StoredRepository[]>
+  find: (
+    slug: string,
+    audience: RepositoryAudience
+  ) => Promise<StoredRepository | undefined>
+  list: (audience: RepositoryAudience) => Promise<StoredRepository[]>
   recordSync: (id: string, result: SyncResult) => Promise<void>
 }
 
@@ -44,6 +77,11 @@ export type ContentReaderOptions = {
   /** What git clones a repository from: its URL, or a hosted one's folder. */
   resolveSource: (repository: StoredRepository) => string
   logger: Pick<Logger, "info" | "warn">
+  /**
+   * Vets the URL of a user's repository before each of its syncs; tests
+   * replace it so they need no network.
+   */
+  checkRemote?: (url: string) => Promise<RemoteCheck>
 }
 
 /** A repository and its declarations, `undefined` without valid content. */
@@ -81,13 +119,19 @@ export type ContentReader = {
    * The repository with `slug` and its current declarations, the last valid
    * ones when its content is now invalid; `undefined` for an unknown slug.
    */
-  content: (slug: string) => Promise<RepositoryContent | undefined>
+  content: (
+    slug: string,
+    audience: RepositoryAudience
+  ) => Promise<RepositoryContent | undefined>
   /**
    * The repository with `slug`, its declarations and its pages, read once
    * per checkout: a successful sync or a removal drops them. `undefined` for
    * an unknown slug.
    */
-  site: (slug: string) => Promise<RepositorySite | undefined>
+  site: (
+    slug: string,
+    audience: RepositoryAudience
+  ) => Promise<RepositorySite | undefined>
   /** The repository's clone folder, where its files are read. */
   folderOf: (repository: StoredRepository) => string
   /** Brings the repository's clone to its ref and records the outcome. */
@@ -112,6 +156,7 @@ export function createContentReader(
   options: ContentReaderOptions
 ): ContentReader {
   const { cloneRoot, repositories, resolveSource, logger } = options
+  const { checkRemote = checkUserRemote } = options
   const lastValid = new Map<string, ContentDeclarations>()
   const reportedProblems = new Map<string, string>()
   // One sync per clone folder, replaced when the URL or ref changes.
@@ -119,8 +164,8 @@ export function createContentReader(
   // The pages of each clone folder, built on first read after a sync.
   const sites = new Map<string, Promise<Site>>()
 
-  async function content(slug: string) {
-    const repository = await repositories.find(slug)
+  async function content(slug: string, audience: RepositoryAudience) {
+    const repository = await repositories.find(slug, audience)
     if (repository === undefined) return undefined
     return { repository, declarations: await declarationsOf(repository) }
   }
@@ -150,8 +195,8 @@ export function createContentReader(
     return lastValid.get(folder)
   }
 
-  async function site(slug: string) {
-    const repository = await repositories.find(slug)
+  async function site(slug: string, audience: RepositoryAudience) {
+    const repository = await repositories.find(slug, audience)
     if (repository === undefined) return undefined
     const declarations = await declarationsOf(repository)
     if (declarations === undefined)
@@ -243,8 +288,17 @@ export function createContentReader(
     return cloneFolder(cloneRoot, repository.id)
   }
 
+  /** Runs the sync, after vetting the remote of a user's repository. */
+  async function runSync(repository: StoredRepository): Promise<SyncResult> {
+    if (repository.ownerId !== null) {
+      const checked = await checkRemote(repository.url)
+      if (!checked.ok) return { ok: false, error: checked.error }
+    }
+    return repoSyncFor(repository).run()
+  }
+
   async function sync(repository: StoredRepository) {
-    const result = await repoSyncFor(repository).run()
+    const result = await runSync(repository)
     if (result.ok) {
       sites.delete(cloneFolder(cloneRoot, repository.id))
       logger.info(
@@ -272,6 +326,7 @@ export function createContentReader(
         url: resolveSource(repository),
         ref: repository.ref,
         root,
+        httpsOnly: repository.ownerId !== null,
       }),
     }
     repoSyncs.set(root, created)
@@ -279,7 +334,7 @@ export function createContentReader(
   }
 
   async function syncAll() {
-    const stored = await repositories.list()
+    const stored = await repositories.list("all")
     const outcomes: RepositorySyncOutcome[] = []
     for (const repository of stored) {
       outcomes.push({ repository, result: await syncIsolated(repository) })

@@ -206,19 +206,99 @@ export const contentRouter = {
     .output(contentOutput.readFile)
     .handler(({ input }) => contentHandler.readFile({ input })),
 
+  listMyRepositories: protectedProcedure
+    .meta(
+      openapi({
+        summary: "List the caller's own repositories",
+        description:
+          "The git repositories the caller added, ordered by name, private to them, with the most they may own. Their URLs are stripped of credentials.",
+        tags,
+        method: "GET",
+      })
+    )
+    .output(contentOutput.listMyRepositories)
+    .handler(({ context }) => contentHandler.listMyRepositories({ context })),
+
+  createMyRepository: protectedProcedure
+    .meta(
+      openapi({
+        summary: "Add one of the caller's own repositories",
+        description:
+          "Stores an external git repository private to the caller and starts its first sync without waiting for it. The URL must be a public https one. CONFLICT when the slug is taken by any repository; BAD_REQUEST past the limit.",
+        tags,
+        method: "POST",
+        successStatus: 201,
+      })
+    )
+    .input(contentInput.createMyRepository)
+    .output(contentOutput.createMyRepository)
+    .handler(({ context, input }) =>
+      contentHandler.createMyRepository({ context, input })
+    ),
+
+  updateMyRepository: protectedProcedure
+    .meta(
+      openapi({
+        summary: "Edit one of the caller's own repositories",
+        description:
+          "Changes the name, URL or ref of a repository the caller owns, keeping the fields not sent. A new URL or ref starts a sync. NOT_FOUND for any other repository.",
+        tags,
+        method: "PATCH",
+      })
+    )
+    .input(contentInput.updateMyRepository)
+    .output(contentOutput.updateMyRepository)
+    .handler(({ context, input }) =>
+      contentHandler.updateMyRepository({ context, input })
+    ),
+
+  deleteMyRepository: protectedProcedure
+    .meta(
+      openapi({
+        summary: "Delete one of the caller's own repositories",
+        description:
+          "Deletes a repository the caller owns and its clone. NOT_FOUND for any other repository.",
+        tags,
+        method: "DELETE",
+      })
+    )
+    .input(contentInput.deleteMyRepository)
+    .output(contentOutput.deleteMyRepository)
+    .handler(({ context, input }) =>
+      contentHandler.deleteMyRepository({ context, input })
+    ),
+
+  listMyBranches: protectedProcedure
+    .meta(
+      openapi({
+        summary: "List the branches of a user's git repository",
+        description:
+          "Branches of the public https git repository at `url`, or of one of the caller's own repositories by `slug`, and the one its HEAD points at. QUERY rather than GET: the URL may carry a token. BAD_REQUEST for an address that is not allowed; BAD_GATEWAY with the git error, without credentials, when the remote can't be read.",
+        tags,
+        method: "QUERY",
+      })
+    )
+    .input(contentInput.listMyBranches)
+    .output(contentOutput.listBranches)
+    .handler(({ context, input }) =>
+      contentHandler.listMyBranches({ context, input })
+    ),
+
   syncRepository: protectedProcedure
     .meta(
       openapi({
         summary: "Sync a content repository now",
         description:
-          "Open to every signed-in user, since all of them read every repository. Fetches the repository and checks out its ref, answering once done with the stored outcome. BAD_GATEWAY with the git error, without credentials, when it fails.",
+          "Open to every signed-in user for the repositories they read: the platform's and their own. Fetches the repository and checks out its ref, answering once done with the stored outcome. BAD_GATEWAY with the git error, without credentials, when it fails.",
         tags,
         method: "POST",
       })
     )
     .input(contentInput.syncRepository)
     .output(contentOutput.syncRepository)
-    .handler(({ input }) => contentHandler.syncRepository({ input })),
+    .handler(({ context, input }) =>
+      contentHandler.syncRepository({ context, input })
+    ),
 
   // The handler key `v1.content.sync` is stored in cron_job: never rename it.
   sync: cronProcedure

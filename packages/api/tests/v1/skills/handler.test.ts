@@ -6,7 +6,11 @@ import {
   memoryRepositoryStore,
   storedRepository,
 } from "#tests/fixtures/content"
-import { anonymousContext, userContext } from "#tests/fixtures/context"
+import {
+  adminContext,
+  anonymousContext,
+  userContext,
+} from "#tests/fixtures/context"
 import { expectErrorCode } from "#tests/fixtures/errors"
 import { gitSourceOf } from "#v1/content/hosting"
 import { createContentReader, type StoredRepository } from "#v1/content/reader"
@@ -279,6 +283,37 @@ describe("platform skills with files", () => {
     })
     await expect(handler.list({ context: anonymousContext() })).rejects.toThrow(
       "colofon"
+    )
+  })
+})
+
+describe("skills of a user's repository", () => {
+  const apuntes = storedRepository({
+    id: "repo-apuntes",
+    slug: "apuntes",
+    name: "Apuntes",
+    ownerId: "user-id",
+  })
+  const files = inClone(apuntes, {
+    "skills/notas/SKILL.md": skill("notas", "Mis notas."),
+  })
+
+  test("the owner is served it, as <slug>-<name>", async () => {
+    const handler = await setup([apuntes], files)
+    const { skills } = await handler.list({ context: userContext() })
+    expect(skills.map((entry) => entry.name)).toContain("apuntes-notas")
+  })
+
+  test("another user is neither listed nor served it", async () => {
+    const handler = await setup([apuntes], files)
+    const { skills } = await handler.list({ context: adminContext() })
+    expect(skills.map((entry) => entry.name)).not.toContain("apuntes-notas")
+    await expectErrorCode(
+      handler.file({
+        context: adminContext(),
+        input: { name: "apuntes-notas", path: "SKILL.md" },
+      }),
+      "NOT_FOUND"
     )
   })
 })

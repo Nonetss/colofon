@@ -24,7 +24,7 @@ export const docsRouter = {
       })
     )
     .output(docsOutput.nav)
-    .handler(() => docsHandler.nav()),
+    .handler(({ context }) => docsHandler.nav({ context })),
 
   page: protectedProcedure
     .meta(
@@ -52,7 +52,7 @@ export const docsRouter = {
     )
     .input(docsInput.search)
     .output(docsOutput.search)
-    .handler(({ input }) => docsHandler.search({ input })),
+    .handler(({ context, input }) => docsHandler.search({ context, input })),
 
   file: protectedProcedure
     .meta(

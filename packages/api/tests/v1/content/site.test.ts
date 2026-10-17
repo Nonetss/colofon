@@ -51,12 +51,12 @@ async function remote(files: Record<string, string>, date?: string) {
 describe("contentReader.site", () => {
   test("an unknown slug is undefined", async () => {
     const { reader } = await readerWith()
-    expect(await reader.site("inexistente")).toBeUndefined()
+    expect(await reader.site("inexistente", "all")).toBeUndefined()
   })
 
   test("a repository not cloned yet has no pages", async () => {
     const { reader } = await readerWith()
-    const read = await reader.site("documentacion")
+    const read = await reader.site("documentacion", "all")
     expect(read?.site).toBeUndefined()
   })
 
@@ -66,8 +66,8 @@ describe("contentReader.site", () => {
       [repository],
       inClone(repository.id, CONTENT_SITE)
     )
-    const first = await reader.site("documentacion")
-    const second = await reader.site("documentacion")
+    const first = await reader.site("documentacion", "all")
+    const second = await reader.site("documentacion", "all")
     expect(first?.site).toBeDefined()
     expect(second?.site).toBe(first?.site)
   })
@@ -82,11 +82,11 @@ describe("contentReader.site", () => {
     const { reader } = await readerWith([repository])
 
     await reader.sync(repository)
-    const first = await reader.site("documentacion")
+    const first = await reader.site("documentacion", "all")
     expect(first?.site?.pages.has("red/vpn")).toBe(false)
 
     await reader.sync({ ...repository, url: after })
-    const second = await reader.site("documentacion")
+    const second = await reader.site("documentacion", "all")
     expect(second?.site?.pages.has("red/vpn")).toBe(true)
   })
 
@@ -96,8 +96,8 @@ describe("contentReader.site", () => {
       [repository],
       inClone(repository.id, CONTENT_SITE)
     )
-    await reader.site("documentacion")
-    await reader.site("documentacion")
+    await reader.site("documentacion", "all")
+    await reader.site("documentacion", "all")
     const pageWarnings = logger.warn.mock.calls.filter((args: unknown[]) =>
       args.includes("Content pages have problems")
     )
@@ -114,8 +114,8 @@ describe("contentReader.site", () => {
         "diagrams/red.json": '{ "title": "Red" "desc": "x" }',
       })
     )
-    await reader.site("documentacion")
-    await reader.site("documentacion")
+    await reader.site("documentacion", "all")
+    await reader.site("documentacion", "all")
     const pageWarnings = logger.warn.mock.calls.filter((args: unknown[]) =>
       args.includes("Content pages have problems")
     )
@@ -131,7 +131,7 @@ describe("contentReader edit dates", () => {
     const { reader, logger } = await readerWith([repository])
 
     await reader.sync(repository)
-    const read = await reader.site("documentacion")
+    const read = await reader.site("documentacion", "all")
     expect(read?.site?.pages.get("red/dns")?.header.editado).toBe("2026-03-02")
     const dateWarnings = logger.warn.mock.calls.filter((args: unknown[]) =>
       args.includes("Edit dates could not be read; pages have none")
@@ -145,7 +145,7 @@ describe("contentReader edit dates", () => {
       [repository],
       inClone(repository.id, CONTENT_SITE)
     )
-    const read = await reader.site("documentacion")
+    const read = await reader.site("documentacion", "all")
     expect(read?.site?.pages.get("red/dns")?.header.editado).toBeNull()
     const dateWarnings = logger.warn.mock.calls.filter((args: unknown[]) =>
       args.includes("Edit dates could not be read; pages have none")

@@ -10,7 +10,12 @@ import {
 import type { z } from "zod"
 import type { Context } from "#context"
 import { errors } from "#errors"
-import type { ContentReader, RepositoryStore } from "#v1/content/reader"
+import {
+  audienceOfUser,
+  type ContentReader,
+  type RepositoryAudience,
+  type RepositoryStore,
+} from "#v1/content/reader"
 import { buildTarGz } from "#v1/skills/archive"
 import type { skillsInput } from "#v1/skills/input"
 import type { skillsOutput } from "#v1/skills/output"
@@ -171,10 +176,13 @@ export function createSkillsHandler({
   const platform = readPlatform(platformRoots)
 
   /** The content repositories' skills, in the reader's repository order. */
-  async function contentSkills(taken: ReadonlySet<string>) {
+  async function contentSkills(
+    taken: ReadonlySet<string>,
+    audience: RepositoryAudience
+  ) {
     const skills: ServedSkill[] = []
-    for (const stored of await repositories.list()) {
-      const read = await reader.site(stored.slug)
+    for (const stored of await repositories.list(audience)) {
+      const read = await reader.site(stored.slug, audience)
       if (read?.site === undefined) continue
       const repository = { slug: stored.slug, name: stored.name }
       for (const skill of read.site.skills) {
@@ -191,7 +199,10 @@ export function createSkillsHandler({
     const own = await platform
     if (context.user === null) return own
     const names = new Set(own.map((skill) => skill.name))
-    return [...own, ...(await contentSkills(names))]
+    return [
+      ...own,
+      ...(await contentSkills(names, audienceOfUser(context.user))),
+    ]
   }
 
   /** The skill named `name` that `context`'s caller can see. */
