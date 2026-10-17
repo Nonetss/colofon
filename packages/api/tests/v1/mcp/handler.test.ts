@@ -5,15 +5,11 @@ import {
 } from "@modelcontextprotocol/client"
 import type { CallToolResult } from "@modelcontextprotocol/server"
 import { resetEnv, testEnv } from "#tests/fixtures/env"
-import type { ContentClient } from "#v1/mcp/content-tools"
+import type { ContentClient, CredentialClient } from "#v1/mcp/content-tools"
 import { serveMcp } from "#v1/mcp/handler"
 import type { SecretsAccess } from "#v1/mcp/secret-tools"
 import type { McpScope } from "#v1/mcp/server"
-import {
-  MCP_ADMIN_TOOL_NAMES,
-  MCP_SECRET_TOOL_NAMES,
-  MCP_TOOL_NAMES,
-} from "#v1/mcp/setup"
+import { MCP_SECRET_TOOL_NAMES, MCP_TOOL_NAMES } from "#v1/mcp/setup"
 import type { DocsClient, SkillsClient } from "#v1/mcp/tools"
 
 // The real handler and server, driven by the SDK's own client over a fetch
@@ -93,11 +89,41 @@ const content: ContentClient = {
       updatedAt: "2026-10-16T10:00:00.000Z",
     }
   },
+  listMyRepositories: async () => [],
+  createMyRepository: async (input) => {
+    added.push(input)
+    return {
+      id: "00000000-0000-4000-8000-000000000002",
+      slug: input.slug,
+      name: input.name,
+      url: input.url,
+      credentialId: null,
+      ref: "main",
+      path: "",
+      lastSyncedAt: null,
+      lastCommit: null,
+      lastSyncError: null,
+      createdAt: "2026-10-17T10:00:00.000Z",
+      updatedAt: "2026-10-17T10:00:00.000Z",
+    }
+  },
 }
 
-/** A user's scope; an admin's also carries the content client. */
-const scope: McpScope = { docs, skills, secrets, content: null, origin }
-const adminScope: McpScope = { ...scope, content }
+const added: unknown[] = []
+
+const credentials: CredentialClient = {
+  list: async () => ({ enabled: true, credentials: [] }),
+}
+
+/** Every caller's scope, an admin's included. */
+const scope: McpScope = {
+  docs,
+  skills,
+  secrets,
+  content,
+  credentials,
+  origin,
+}
 
 function fetchWith(
   requestScope: McpScope
@@ -128,6 +154,7 @@ afterEach(async () => {
   searched.length = 0
   requested.length = 0
   synced.length = 0
+  added.length = 0
 })
 
 /** Turns the secrets feature on for the rest of the test. */
@@ -142,21 +169,48 @@ function text(result: CallToolResult): string {
 }
 
 describe("serveMcp", () => {
-  test("with secrets off, serves exactly the seven read-only tools /llms.txt names", async () => {
+  test("with secrets off, serves exactly the tools /llms.txt names", async () => {
     const client = await connect()
     const { tools } = await client.listTools()
     const names = tools.map((tool) => tool.name).sort()
     expect(names).toEqual([
+      "add_repository",
       "entity",
       "index",
+      "my_repositories",
       "read",
       "repositories",
       "search",
       "skill",
       "skills",
+      "sync",
     ])
     expect(names).toEqual([...MCP_TOOL_NAMES].sort())
+  })
+
+  test("annotates every tool but sync and add_repository as read-only and idempotent", async () => {
+    const client = await connect()
+    const { tools } = await client.listTools()
+
     for (const tool of tools) {
+      if (tool.name === "sync") {
+        expect(tool.annotations).toEqual({
+          readOnlyHint: false,
+          destructiveHint: false,
+          idempotentHint: true,
+          openWorldHint: true,
+        })
+        continue
+      }
+      if (tool.name === "add_repository") {
+        expect(tool.annotations).toEqual({
+          readOnlyHint: false,
+          destructiveHint: false,
+          idempotentHint: false,
+          openWorldHint: true,
+        })
+        continue
+      }
       expect(tool.annotations?.readOnlyHint).toBe(true)
       expect(tool.annotations?.idempotentHint).toBe(true)
     }
@@ -180,8 +234,10 @@ describe("serveMcp", () => {
         })
         continue
       }
-      expect(tool.annotations?.readOnlyHint).toBe(true)
-      expect(tool.annotations?.idempotentHint).toBe(true)
+      if (tool.name === "secrets") {
+        expect(tool.annotations?.readOnlyHint).toBe(true)
+        expect(tool.annotations?.idempotentHint).toBe(true)
+      }
     }
     expect(client.getInstructions()).toContain("`request`")
   })
@@ -216,30 +272,53 @@ describe("serveMcp", () => {
     ])
   })
 
-  test("for an admin, adds sync (writes, idempotent, open-world) and mentions it", async () => {
-    const client = await connect(adminScope)
-    const { tools } = await client.listTools()
+  test("the instructions mention the repository tools and sync", async () => {
+    const client = await connect()
 
-    expect(tools.map((tool) => tool.name).sort()).toEqual(
-      [...MCP_TOOL_NAMES, ...MCP_ADMIN_TOOL_NAMES].sort()
-    )
-    expect(tools.find((tool) => tool.name === "sync")?.annotations).toEqual({
-      readOnlyHint: false,
-      destructiveHint: false,
-      idempotentHint: true,
-      openWorldHint: true,
-    })
+    expect(client.getInstructions()).toContain("`my_repositories`")
+    expect(client.getInstructions()).toContain("`add_repository`")
     expect(client.getInstructions()).toContain("`sync`")
   })
 
-  test("for anyone else, the instructions don't mention sync", async () => {
+  test("add_repository reaches the caller's content client with the defaults", async () => {
     const client = await connect()
+    const result = await client.callTool({
+      name: "add_repository",
+      arguments: {
+        slug: "apuntes",
+        name: "Apuntes",
+        url: "https://github.com/ana/apuntes.git",
+      },
+    })
 
-    expect(client.getInstructions()).not.toContain("`sync`")
+    expect(result.isError).toBeFalsy()
+    expect(text(result)).toContain("Added Apuntes (apuntes) at main.")
+    expect(added).toEqual([
+      {
+        slug: "apuntes",
+        name: "Apuntes",
+        url: "https://github.com/ana/apuntes.git",
+        ref: "main",
+        path: "",
+        credentialId: undefined,
+      },
+    ])
   })
 
-  test("sync reaches the admin's content client with the slug", async () => {
-    const client = await connect(adminScope)
+  test("add_repository without a url is a tool error naming it", async () => {
+    const client = await connect()
+    const result = await client.callTool({
+      name: "add_repository",
+      arguments: { slug: "apuntes", name: "Apuntes" },
+    })
+
+    expect(result.isError).toBe(true)
+    expect(text(result)).toContain("url")
+    expect(added).toEqual([])
+  })
+
+  test("sync reaches the caller's content client with the slug", async () => {
+    const client = await connect()
     const result = await client.callTool({
       name: "sync",
       arguments: { repository: "casa" },

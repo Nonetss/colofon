@@ -1,7 +1,6 @@
 import { originValidationResponse } from "@modelcontextprotocol/server"
 import { createContext } from "@nonete/api/context"
 import { appRouter } from "@nonete/api/router"
-import type { ContentClient } from "@nonete/api/v1/mcp/content-tools"
 import { serveMcp } from "@nonete/api/v1/mcp/handler"
 import { executeRequest } from "@nonete/api/v1/secret/request/execute"
 import { env } from "@nonete/env/server"
@@ -12,8 +11,9 @@ import type { AuthVariables } from "@/middlewares/auth"
 // The documentation MCP (`/mcp`), for agents. The session middleware has
 // already turned an `x-api-key` header (or a session cookie) into the user;
 // the tools then call the API's procedures as that user, so they see what the
-// reader shows them, and `request` sends with that user's secrets. Outside
-// oRPC: MCP speaks its own JSON-RPC.
+// reader shows them and manage that user's repositories as the profile page
+// does, and `request` sends with that user's secrets. Outside oRPC: MCP speaks
+// its own JSON-RPC.
 
 const publicUrl = new URL(env.CORS_ORIGIN)
 
@@ -32,15 +32,6 @@ function apiKeyIdOf(
 ): string | null {
   if (!request.headers.has("x-api-key") || session === null) return null
   return session.id
-}
-
-/** The content client for `sync`, which only an admin's server lists. */
-function contentFor(
-  user: NonNullable<AuthVariables["user"]>,
-  content: ContentClient
-): ContentClient | null {
-  if (user.role !== "admin") return null
-  return content
 }
 
 const router = new Hono<{ Variables: AuthVariables }>()
@@ -73,8 +64,8 @@ router.all("/mcp", async (c) => {
           input
         ),
     },
-    // Only an admin's server lists `sync`; the procedure checks it again.
-    content: contentFor(user, client.v1.content),
+    content: client.v1.content,
+    credentials: client.v1.gitCredential,
     origin: publicUrl.origin,
   })
 })

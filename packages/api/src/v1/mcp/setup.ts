@@ -17,6 +17,9 @@ export const MCP_TOOL_NAMES = [
   "entity",
   "skills",
   "skill",
+  "my_repositories",
+  "add_repository",
+  "sync",
 ] as const
 
 /**
@@ -24,9 +27,6 @@ export const MCP_TOOL_NAMES = [
  * (`SECRETS_ENCRYPTION_KEY` set), which the frontend can't tell.
  */
 export const MCP_SECRET_TOOL_NAMES = ["secrets", "request"] as const
-
-/** The tools the server adds for an admin only. */
-export const MCP_ADMIN_TOOL_NAMES = ["sync"] as const
 
 /** The name every client lists the server under. */
 const SERVER_NAME = "colofon"

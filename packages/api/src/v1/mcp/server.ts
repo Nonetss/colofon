@@ -1,7 +1,16 @@
 import { McpServer } from "@modelcontextprotocol/server"
 import { z } from "zod"
 import { docsInput } from "#v1/docs/input"
-import { type ContentClient, syncInput, syncTool } from "#v1/mcp/content-tools"
+import {
+  addRepositoryInput,
+  addRepositoryTool,
+  type ContentClient,
+  type CredentialClient,
+  myRepositoriesOutput,
+  myRepositoriesTool,
+  syncInput,
+  syncTool,
+} from "#v1/mcp/content-tools"
 import {
   requestTool,
   type SecretsAccess,
@@ -29,13 +38,13 @@ import { REQUEST_METHODS } from "#v1/secret/request/plan"
 
 /**
  * What the server is built with: the documentation tools' scope, the
- * caller's secrets (whose tools are listed only when secrets are on) and,
- * for an admin only, the content client (null for anyone else, whose server
- * doesn't list `sync`).
+ * caller's secrets (whose tools are listed only when secrets are on) and the
+ * content and credential clients of the repository tools.
  */
 export type McpScope = ToolScope & {
   secrets: SecretsAccess
-  content: ContentClient | null
+  content: ContentClient
+  credentials: CredentialClient
 }
 
 const INSTRUCTIONS = [
@@ -44,20 +53,18 @@ const INSTRUCTIONS = [
   "`index` lists every page of a repository (or of all of them) with its route; `read` returns one page as Markdown, or only one section when the route ends in `#section` as search results do.",
   "`entity` looks up a catalog entity by repository, type and id: its fields, the pages that cite it and the entities that point at it.",
   "`skills` lists the Agent Skills you can install (the platform's, how to use the site and how to write documentation, and each project's) and `skill` returns one's SKILL.md or one of its files; `/llms.txt` has the procedure that installs them all.",
+  "`my_repositories` lists the user's own repositories, with how their last sync went, and the git credentials the user saved; `add_repository` adds one of the user's repositories from its git URL, cloning a private one with a saved credential named by its username (never pass a token).",
+  "`sync` fetches a repository from its git remote now, instead of waiting for the periodic sync: call it after pushing to an external repository, or after adding one, so the site serves your changes.",
   "Every link in the texts is a full address on this site; pass a page's route to `read` to follow it.",
 ]
 
 const SECRETS_INSTRUCTIONS =
   "`secrets` lists the user's secrets by name (never their values) and `request` calls a service's HTTP API with them: write the request as the documentation describes that API, with placeholders such as {{<secret>.<field>}} that the platform fills in and masks in the response."
 
-const SYNC_INSTRUCTIONS =
-  "`sync` fetches a repository from its git remote now, instead of waiting for the periodic sync: call it after pushing to an external repository so the site serves your changes."
-
-/** The instructions, mentioning only the optional tools that are served. */
-function instructions(withSecrets: boolean, withSync: boolean): string {
+/** The instructions, mentioning the secrets tools only when they are served. */
+function instructions(withSecrets: boolean): string {
   const lines = [...INSTRUCTIONS]
   if (withSecrets) lines.push(SECRETS_INSTRUCTIONS)
-  if (withSync) lines.push(SYNC_INSTRUCTIONS)
   return lines.join(" ")
 }
 
@@ -156,11 +163,22 @@ const syncAnnotations = {
   openWorldHint: true,
 }
 
+/**
+ * The `add_repository` tool stores a repository and reaches its git remote;
+ * adding the same slug again is refused.
+ */
+const addRepositoryAnnotations = {
+  readOnlyHint: false,
+  destructiveHint: false,
+  idempotentHint: false,
+  openWorldHint: true,
+}
+
 /** The MCP server for one request, its tools reading as that request's user. */
 export function createDocsMcpServer(scope: McpScope): McpServer {
   const server = new McpServer(
     { name: "colofon", version: "1.0.0" },
-    { instructions: instructions(secretsEnabled(), scope.content !== null) }
+    { instructions: instructions(secretsEnabled()) }
   )
 
   server.registerTool(
@@ -248,28 +266,48 @@ export function createDocsMcpServer(scope: McpScope): McpServer {
     (input) => skillTool({ ...scope, input })
   )
 
+  registerRepositoryTools(server, scope)
   if (secretsEnabled()) registerSecretTools(server, scope)
-  if (scope.content !== null) registerSyncTool(server, scope.content, scope)
 
   return server
 }
 
-/** `sync`, on an admin's server. */
-function registerSyncTool(
-  server: McpServer,
-  content: ContentClient,
-  scope: McpScope
-): void {
+/** `my_repositories`, `add_repository` and `sync`, on every user's server. */
+function registerRepositoryTools(server: McpServer, scope: McpScope): void {
+  server.registerTool(
+    "my_repositories",
+    {
+      title: "My repositories",
+      description:
+        "List the user's own repositories (slug, URL without credentials, ref, folder, the credential it clones with, how its last sync went and its address) and the git credentials the user saved, by host and username, never their tokens. Call it before add_repository to pick a credential, or after it to see whether the first sync worked.",
+      outputSchema: myRepositoriesOutput,
+      annotations,
+    },
+    () => myRepositoriesTool(scope)
+  )
+
+  server.registerTool(
+    "add_repository",
+    {
+      title: "Add repository",
+      description:
+        "Add a git repository of the user's, readable only by them, and start its first sync without waiting for it. The URL is a public https one without credentials; for a private repository, pass as credential the username of a saved credential for that host (my_repositories lists them; tokens are saved only on the profile page). The slug names it on the site and can't change. A slug in use, an address that isn't allowed or an unknown credential is an error with the reason.",
+      inputSchema: addRepositoryInput,
+      annotations: addRepositoryAnnotations,
+    },
+    (input) => addRepositoryTool({ ...scope, input })
+  )
+
   server.registerTool(
     "sync",
     {
       title: "Sync repository",
       description:
-        "Fetch one content repository from its git remote now and check out its ref, waiting until it's done, instead of waiting for the periodic sync (every five minutes). Use it after pushing to an external repository (a push to one the platform hosts already syncs it). Returns the commit checked out; an unknown repository or a git failure is an error with the reason.",
+        "Fetch one content repository you can read from its git remote now and check out its ref, waiting until it's done, instead of waiting for the periodic sync (every five minutes). Use it after pushing to an external repository (a push to one the platform hosts already syncs it) or after add_repository. Returns the commit checked out; an unknown repository or a git failure is an error with the reason.",
       inputSchema: syncInput,
       annotations: syncAnnotations,
     },
-    (input) => syncTool({ content, origin: scope.origin, input })
+    (input) => syncTool({ ...scope, input })
   )
 }
 
