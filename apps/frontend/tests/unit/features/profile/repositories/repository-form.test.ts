@@ -14,6 +14,7 @@ const stored: OwnRepository = {
   slug: "apuntes",
   name: "Apuntes",
   url: "https://***@github.com/ana/apuntes.git",
+  credentialId: null,
   ref: "main",
   path: "",
   lastSyncedAt: null,
@@ -105,5 +106,54 @@ describe("ownBranchesSource", () => {
 
   test("editing with the URL left empty reads the stored repository", () => {
     expect(ownBranchesSource(true, stored, "")).toEqual({ slug: "apuntes" })
+  })
+})
+
+describe("the saved login", () => {
+  const values = {
+    name: "Apuntes",
+    url: "",
+    ref: "main",
+    path: "",
+  }
+
+  test("a create sends the credential id when one is chosen", () => {
+    expect(
+      createInput("apuntes", {
+        ...values,
+        url: "https://h/x",
+        credentialId: "c1",
+      })
+    ).toMatchObject({ credentialId: "c1" })
+    expect(
+      createInput("apuntes", {
+        ...values,
+        url: "https://h/x",
+        credentialId: null,
+      })
+    ).not.toHaveProperty("credentialId")
+  })
+
+  test("an edit sends it only when it changes", () => {
+    const withCredential = { ...stored, credentialId: "c1" }
+    expect(
+      updateInput(withCredential, { ...values, credentialId: "c1" })
+    ).not.toHaveProperty("credentialId")
+    expect(
+      updateInput(withCredential, { ...values, credentialId: null })
+    ).toMatchObject({ credentialId: null })
+    expect(
+      updateInput(stored, { ...values, credentialId: "c2" })
+    ).toMatchObject({ credentialId: "c2" })
+    expect(updateInput(stored, values)).not.toHaveProperty("credentialId")
+  })
+
+  test("a read of a typed URL carries the chosen credential", () => {
+    expect(
+      ownBranchesSource(true, null, "https://git.example.com/x", "c1")
+    ).toEqual({ url: "https://git.example.com/x", credentialId: "c1" })
+    expect(ownBranchesSource(true, null, "https://git.example.com/x")).toEqual({
+      url: "https://git.example.com/x",
+    })
   })
 })

@@ -8,6 +8,7 @@ const stored: ContentRepository = {
   slug: "documentacion",
   name: "Documentación",
   url: "https://***@git.example/docs.git",
+  credentialId: null,
   hosted: false,
   pushUrl: null,
   ref: "main",
@@ -92,5 +93,13 @@ describe("branchesSource for a hosted repository", () => {
     expect(
       branchesSource(true, hosted, "url", "https://git.example/docs.git")
     ).toEqual({ url: "https://git.example/docs.git" })
+  })
+})
+
+describe("branchesSource with a saved credential", () => {
+  test("a typed URL is read with the chosen credential", () => {
+    expect(
+      branchesSource(true, null, "url", "https://git.example/docs.git", "c1")
+    ).toEqual({ url: "https://git.example/docs.git", credentialId: "c1" })
   })
 })

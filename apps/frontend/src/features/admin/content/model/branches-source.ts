@@ -5,7 +5,9 @@ import type {
 } from "@/features/admin/content/model/types"
 
 /** What `listBranches` reads: a typed URL or a stored repository. */
-export type BranchesSource = { url: string } | { slug: string }
+export type BranchesSource =
+  | { url: string; credentialId?: string }
+  | { slug: string }
 
 function isHttpUrl(value: string): boolean {
   try {
@@ -28,14 +30,18 @@ export function branchesSource(
   open: boolean,
   repository: ContentRepository | null,
   source: RepositorySource,
-  url: string
+  url: string,
+  credentialId?: string
 ): BranchesSource | typeof skipToken {
   if (!open) return skipToken
   if (source === "hosted") {
     if (repository?.hosted === true) return { slug: repository.slug }
     return skipToken
   }
-  if (isHttpUrl(url)) return { url }
+  if (isHttpUrl(url)) {
+    if (credentialId === undefined) return { url }
+    return { url, credentialId }
+  }
   if (repository !== null && !repository.hosted && url === "") {
     return { slug: repository.slug }
   }

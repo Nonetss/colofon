@@ -15,6 +15,7 @@ const external: ContentRepository = {
   slug: "documentacion",
   name: "Documentación",
   url: "https://***@git.example/docs.git",
+  credentialId: null,
   hosted: false,
   pushUrl: null,
   ref: "main",
@@ -148,5 +149,38 @@ describe("updateInput", () => {
     expect(
       updateInput(hosted, values({ url: "https://git.example/manual.git" }))
     ).toEqual({ slug: "manual", url: "https://git.example/manual.git" })
+  })
+})
+
+describe("the saved login", () => {
+  test("a create of an external repository sends the chosen credential", () => {
+    expect(
+      createInput(
+        "docs",
+        values({ url: "https://git.example/docs.git", credentialId: "c1" })
+      )
+    ).toMatchObject({ credentialId: "c1" })
+    expect(
+      createInput(
+        "docs",
+        values({ url: "https://git.example/docs.git", credentialId: null })
+      )
+    ).not.toHaveProperty("credentialId")
+  })
+
+  test("an edit sends it only when it changes, and never for a hosted source", () => {
+    const withCredential = { ...external, credentialId: "c1" }
+    expect(
+      updateInput(withCredential, values({ credentialId: "c1" }))
+    ).not.toHaveProperty("credentialId")
+    expect(
+      updateInput(withCredential, values({ credentialId: null }))
+    ).toMatchObject({ credentialId: null })
+    expect(updateInput(external, values({ credentialId: "c2" }))).toMatchObject(
+      { credentialId: "c2" }
+    )
+    expect(
+      updateInput(external, values({ source: "hosted", credentialId: "c2" }))
+    ).not.toHaveProperty("credentialId")
   })
 })

@@ -13,6 +13,8 @@ export type RepositoryFormValues = {
   ref: string
   /** The content folder of the git repository; empty is its root. */
   path: string
+  /** The saved login: `null` removes it, `undefined` leaves it. */
+  credentialId?: string | null
 }
 
 /** The source the form starts with: the edited repository's, else a URL. */
@@ -48,7 +50,13 @@ export function createInput(
     path: values.path,
   }
   if (values.source === "hosted") return { ...fields, hosted: true }
-  return { ...fields, url: values.url }
+  return {
+    ...fields,
+    url: values.url,
+    ...(typeof values.credentialId === "string" && {
+      credentialId: values.credentialId,
+    }),
+  }
 }
 
 /**
@@ -66,7 +74,18 @@ export function updateInput(
     ...sourceChange(repository, values),
     ...(values.ref !== repository.ref && { ref: values.ref }),
     ...(values.path !== repository.path && { path: values.path }),
+    ...credentialChange(repository, values),
   }
+}
+
+function credentialChange(
+  repository: ContentRepository,
+  values: RepositoryFormValues
+): { credentialId?: string | null } {
+  if (values.source === "hosted") return {}
+  if (values.credentialId === undefined) return {}
+  if (values.credentialId === repository.credentialId) return {}
+  return { credentialId: values.credentialId }
 }
 
 function sourceChange(

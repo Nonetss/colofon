@@ -17,6 +17,8 @@ interface RefFieldProps {
   source: RepositorySource
   /** The URL field as typed; its branches are read once it is complete. */
   url: string
+  /** The saved credential chosen for the typed URL, if any. */
+  credentialId: string | undefined
   value: string
   /** The user picked or typed a ref. */
   onChange: (ref: string) => void
@@ -35,6 +37,7 @@ export function RefField({
   repository,
   source,
   url,
+  credentialId,
   value,
   onChange,
   onSuggest,
@@ -42,7 +45,7 @@ export function RefField({
 }: RefFieldProps) {
   const debouncedUrl = useDebouncedValue(url.trim(), URL_DEBOUNCE_MS)
   const branches = useContentRepositoryBranches(
-    branchesSource(open, repository, source, debouncedUrl)
+    branchesSource(open, repository, source, debouncedUrl, credentialId)
   )
   return (
     <BranchRefField

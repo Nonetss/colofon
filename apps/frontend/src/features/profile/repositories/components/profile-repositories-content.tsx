@@ -3,6 +3,7 @@ import { HeroCount } from "@/components/shared/layout/page-hero"
 import { ResourceOverview } from "@/components/shared/resource/resource-overview"
 import { Button } from "@/components/ui/button"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
+import { GitCredentialsSection } from "@/features/profile/repositories/components/git-credentials-section"
 import { OwnRepositoryCard } from "@/features/profile/repositories/components/own-repository-card"
 import { OwnRepositoryFormDialog } from "@/features/profile/repositories/components/own-repository-form-dialog"
 import type { OwnRepositoryCardContext } from "@/features/profile/repositories/definitions/own-repository-actions.definition"
@@ -139,6 +140,8 @@ export function ProfileRepositoriesContent() {
           </div>
         )}
       </ResourceOverview>
+
+      <GitCredentialsSection />
 
       <OwnRepositoryFormDialog
         repository={editDialog.editing}

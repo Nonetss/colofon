@@ -32,4 +32,4 @@ Search the codebase first, and reuse or extend what exists. Look, in this order:
 
 A new or changed `src/lib` helper, `src/hooks` hook or `components/shared` component gets its unit test under `apps/frontend/tests/unit/` in the same change (`references/writing-unit-tests.md`).
 
-`features/content-repositories/manage` holds what the admin content screen (`features/admin/content`) and the profile's repositories page (`features/profile/repositories`) share: the last-sync status, the branch/ref field and their pure helpers.
+`features/content-repositories/manage` holds what the admin content screen (`features/admin/content`) and the profile's repositories page (`features/profile/repositories`) share: the last-sync status, the branch/ref field, the login of a repository (`CredentialField` and `useRepositoryAccess`: a saved git credential, or a new one saved on submit) and their pure helpers.

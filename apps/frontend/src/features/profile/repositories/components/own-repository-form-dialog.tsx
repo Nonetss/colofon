@@ -6,7 +6,10 @@ import { Input } from "@/components/ui/input"
 import {
   BranchRefField,
   ContentPathField,
+  CredentialField,
   foldersInput,
+  useGitCredentials,
+  useRepositoryAccess,
 } from "@/features/content-repositories/manage"
 import {
   useOwnRepositoryBranches,
@@ -34,7 +37,7 @@ interface OwnRepositoryFormDialogProps {
 
 function urlHintOf(repository: OwnRepository | null): string {
   if (repository === null) {
-    return "Una URL https pública. Para uno privado, pon tu token en la URL: https://usuario:token@host/org/repo.git"
+    return "La dirección https del repositorio, sin credenciales: https://host/org/repo.git"
   }
   return "Déjala vacía para mantener la actual, token incluido."
 }
@@ -69,15 +72,27 @@ export function OwnRepositoryFormDialog({
     setRefChosen(repository !== null)
   }, [open, repository])
 
-  const debouncedUrl = useDebouncedValue(url.trim(), URL_DEBOUNCE_MS)
+  const credentials = useGitCredentials()
+  const access = useRepositoryAccess({
+    open,
+    repository,
+    credentials: credentials.data,
+    url,
+  })
+  const debouncedUrl = useDebouncedValue(access.readUrl, URL_DEBOUNCE_MS)
   const branches = useOwnRepositoryBranches(
-    ownBranchesSource(open, repository, debouncedUrl)
+    ownBranchesSource(open, repository, debouncedUrl, access.readCredentialId)
   )
 
   const debouncedRef = useDebouncedValue(ref, URL_DEBOUNCE_MS)
   const folders = useOwnRepositoryFolders(
     foldersInput(
-      ownBranchesSource(open, repository, debouncedUrl),
+      ownBranchesSource(
+        open,
+        repository,
+        debouncedUrl,
+        access.readCredentialId
+      ),
       debouncedRef
     )
   )
@@ -87,7 +102,8 @@ export function OwnRepositoryFormDialog({
     setRef(value)
   }
 
-  const isPending = createRepository.isPending || updateRepository.isPending
+  const isPending =
+    createRepository.isPending || updateRepository.isPending || access.isPending
 
   const handleOpenChange = (next: boolean) => {
     if (isPending) return
@@ -101,11 +117,13 @@ export function OwnRepositoryFormDialog({
 
   const handleSubmit = async (e: SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault()
+    const prepared = await access.prepare()
     const values = {
       name: name.trim(),
-      url: url.trim(),
+      url: prepared.url,
       ref: ref.trim(),
       path: contentPath.trim(),
+      credentialId: prepared.credentialId,
     }
     if (repository !== null) {
       await updateRepository.mutateAsync(updateInput(repository, values))
@@ -128,6 +146,7 @@ export function OwnRepositoryFormDialog({
       onSubmit={handleSubmit}
       isPending={isPending}
       submitLabel={isEditing ? "Guardar" : "Añadir"}
+      className="sm:max-w-2xl"
     >
       <FormField label="Nombre" htmlFor="own-repository-name">
         <Input
@@ -166,7 +185,7 @@ export function OwnRepositoryFormDialog({
         <Input
           id="own-repository-url"
           type="url"
-          required={!isEditing}
+          required={!isEditing || access.needsUrl}
           placeholder={repository?.url ?? "https://github.com/usuario/docs.git"}
           className={textVariants({ role: "data" })}
           autoComplete="off"
@@ -174,6 +193,7 @@ export function OwnRepositoryFormDialog({
           onChange={(e) => setUrl(e.target.value)}
         />
       </FormField>
+      <CredentialField access={access} editing={isEditing} />
       <BranchRefField
         branches={branches}
         value={ref}

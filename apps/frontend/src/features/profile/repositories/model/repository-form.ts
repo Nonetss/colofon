@@ -12,6 +12,8 @@ export type OwnRepositoryFormValues = {
   ref: string
   /** The content folder of the git repository; empty is its root. */
   path: string
+  /** The saved login: `null` removes it, `undefined` leaves it. */
+  credentialId?: string | null
 }
 
 /** What a create sends. */
@@ -25,6 +27,9 @@ export function createInput(
     url: values.url,
     ref: values.ref,
     path: values.path,
+    ...(typeof values.credentialId === "string" && {
+      credentialId: values.credentialId,
+    }),
   }
 }
 
@@ -42,11 +47,17 @@ export function updateInput(
     ...(values.url !== "" && { url: values.url }),
     ...(values.ref !== repository.ref && { ref: values.ref }),
     ...(values.path !== repository.path && { path: values.path }),
+    ...(values.credentialId !== undefined &&
+      values.credentialId !== repository.credentialId && {
+        credentialId: values.credentialId,
+      }),
   }
 }
 
 /** What `listMyBranches` reads: a typed URL or one of the user's own. */
-export type OwnBranchesSource = { url: string } | { slug: string }
+export type OwnBranchesSource =
+  | { url: string; credentialId?: string }
+  | { slug: string }
 
 function isHttpsUrl(value: string): boolean {
   try {
@@ -64,10 +75,14 @@ function isHttpsUrl(value: string): boolean {
 export function ownBranchesSource(
   open: boolean,
   repository: OwnRepository | null,
-  url: string
+  url: string,
+  credentialId?: string
 ): OwnBranchesSource | typeof skipToken {
   if (!open) return skipToken
-  if (isHttpsUrl(url)) return { url }
+  if (isHttpsUrl(url)) {
+    if (credentialId === undefined) return { url }
+    return { url, credentialId }
+  }
   if (repository !== null && url === "") return { slug: repository.slug }
   return skipToken
 }

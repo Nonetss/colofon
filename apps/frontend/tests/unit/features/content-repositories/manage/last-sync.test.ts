@@ -15,6 +15,7 @@ function repository(
     slug: "documentacion",
     name: "Documentación",
     url: "https://git.example/docs.git",
+    credentialId: null,
     hosted: false,
     pushUrl: null,
     ref: "main",

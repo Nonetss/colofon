@@ -23,8 +23,12 @@ import type {
 } from "@/features/admin/content/model/types"
 import {
   ContentPathField,
+  CredentialField,
   foldersInput,
+  useGitCredentials,
+  useRepositoryAccess,
 } from "@/features/content-repositories/manage"
+import type { PreparedAccess } from "@/features/content-repositories/manage/hooks/use-repository-access"
 import { useDebouncedValue } from "@/hooks/use-debounced-value"
 import { slugify } from "@/lib/slugify"
 
@@ -46,7 +50,7 @@ const SOURCE_OPTIONS = [
 
 function urlHintOf(repository: ContentRepository | null): string {
   if (repository === null || repository.hosted) {
-    return "Para uno privado, pon las credenciales en la URL: https://usuario:token@host/org/repo.git"
+    return "La dirección del repositorio, sin credenciales: https://host/org/repo.git"
   }
   return "Déjala vacía para mantener la actual, credenciales incluidas."
 }
@@ -88,6 +92,16 @@ function startingSource(
 ): RepositorySource {
   if (hostedOnly) return "hosted"
   return initialSource(repository)
+}
+
+/** A hosted repository has no login; a URL one is prepared by the form. */
+async function preparedAccess(
+  source: RepositorySource,
+  access: ReturnType<typeof useRepositoryAccess>,
+  url: string
+): Promise<PreparedAccess> {
+  if (source === "hosted") return { url: url.trim(), credentialId: undefined }
+  return access.prepare()
 }
 
 function sourceHint(
@@ -142,16 +156,30 @@ export function ContentRepositoryFormDialog({
     setRef(value)
   }
 
-  const debouncedUrl = useDebouncedValue(url.trim(), URL_DEBOUNCE_MS)
+  const credentials = useGitCredentials()
+  const access = useRepositoryAccess({
+    open,
+    repository,
+    credentials: credentials.data,
+    url,
+  })
+  const debouncedUrl = useDebouncedValue(access.readUrl, URL_DEBOUNCE_MS)
   const debouncedRef = useDebouncedValue(ref, URL_DEBOUNCE_MS)
   const folders = useContentRepositoryFolders(
     foldersInput(
-      branchesSource(open, repository, source, debouncedUrl),
+      branchesSource(
+        open,
+        repository,
+        source,
+        debouncedUrl,
+        access.readCredentialId
+      ),
       debouncedRef
     )
   )
 
-  const isPending = createRepository.isPending || updateRepository.isPending
+  const isPending =
+    createRepository.isPending || updateRepository.isPending || access.isPending
 
   const handleOpenChange = (next: boolean) => {
     if (isPending) return
@@ -165,12 +193,14 @@ export function ContentRepositoryFormDialog({
 
   const handleSubmit = async (e: SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault()
+    const prepared = await preparedAccess(source, access, url)
     const values = {
       source,
       name: name.trim(),
-      url: url.trim(),
+      url: prepared.url,
       ref: ref.trim(),
       path: contentPath.trim(),
+      credentialId: prepared.credentialId,
     }
     if (repository !== null) {
       await updateRepository.mutateAsync(updateInput(repository, values))
@@ -189,6 +219,7 @@ export function ContentRepositoryFormDialog({
       onSubmit={handleSubmit}
       isPending={isPending}
       submitLabel={copy.submitLabel}
+      className="sm:max-w-2xl"
     >
       <FormField label="Nombre" htmlFor="content-repository-name">
         <Input
@@ -239,7 +270,7 @@ export function ContentRepositoryFormDialog({
           <Input
             id="content-repository-url"
             type="url"
-            required={urlRequired(repository, source)}
+            required={urlRequired(repository, source) || access.needsUrl}
             placeholder={urlPlaceholderOf(repository)}
             className={textVariants({ role: "data" })}
             autoComplete="off"
@@ -248,11 +279,18 @@ export function ContentRepositoryFormDialog({
           />
         </FormField>
       )}
+      {source === "url" && (
+        <CredentialField
+          access={access}
+          editing={repository !== null && !repository.hosted}
+        />
+      )}
       <RefField
         open={open}
         repository={repository}
         source={source}
-        url={url}
+        url={access.readUrl}
+        credentialId={access.readCredentialId}
         value={ref}
         onChange={chooseRef}
         onSuggest={setRef}
