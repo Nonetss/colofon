@@ -13,6 +13,7 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
+import { SecretOrigins } from "@/features/profile/secrets/components/secret-origins"
 import {
   SecretFormDialog,
   type SecretListItem,
@@ -191,19 +192,7 @@ export function ProfileSecretsContent() {
                       <Text variant="label" tone="muted">
                         Orígenes
                       </Text>
-                      <ul className="flex flex-col">
-                        {secret.origins.map((origin) => (
-                          <li key={origin} className="min-w-0">
-                            <Text
-                              variant="data"
-                              tone="muted"
-                              className="block truncate"
-                            >
-                              {origin}
-                            </Text>
-                          </li>
-                        ))}
-                      </ul>
+                      <SecretOrigins origins={secret.origins} />
                     </div>
                   </CardContent>
 
