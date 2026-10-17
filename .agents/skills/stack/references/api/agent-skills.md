@@ -12,7 +12,7 @@ The site serves Agent Skills an agent can discover and install from its address,
 | `packages/api/src/v1/skills/` | The `v1.skills` feature: public `list`, `get`, `file` and `archive`. Without a user, only the platform's skills (both roots, `platformRoots`, by name). With one, also each content repository's, as `<slug>-<name>` with its `name` rewritten, in the repository order the docs `nav` uses. Each entry has its `type` (`archive` for a platform skill with files, else `skill-md`), its paths, its `files` and the `sha256:` digest of what installs it. `archive.ts` is the deterministic tar.gz writer. |
 | `apps/frontend/src/pages/.well-known/agent-skills/` | `index.json.ts` (the draft's JSON), `[archive].tar.gz.ts` (`application/gzip`) and `[name]/[...path].ts` (`SKILL.md` or any file of the skill), through `features/docs/llm-text/model/skills-response.ts`: `Access-Control-Allow-Origin: *`, `private, no-cache`. |
 | `packages/api/src/v1/docs/llm-text.ts` | `agentGuide` (with the «Configurar tu agente» setup procedure), `llmsGuide` (the anonymous `/llms.txt`), and the skills in `llmsIndex`/`repositoryLlmsIndex`. |
-| `apps/frontend/src/features/api-keys/manage/model/skills-prompt.ts` | The setup prompt: the profile's «Skills para tu IA» (key placeholder) and the created-key dialog's first tab (the key). It only points at the procedure in `/llms.txt`, so the steps live in one place. |
+| `apps/frontend/src/features/api-keys/manage/model/skills-prompt.ts` | The setup prompt: the profile's «Skills para tu IA» page, `/me/skills` (key placeholder) and the created-key dialog's first tab (the key). It only points at the procedure in `/llms.txt`, so the steps live in one place. |
 
 ## Rules
 
