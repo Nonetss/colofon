@@ -1,21 +1,23 @@
 ---
 titulo: Agentes que escriben
-descripcion: Cómo preparar un repositorio de contenido para que un agente de IA escriba en él siguiendo sus convenciones, con AGENTS.md, una skill por carpeta y los comandos /doc
+descripcion: Cómo preparar un repositorio de contenido para que un agente de IA escriba en él, con las skills y los comandos /doc comunes a todo sitio y un AGENTS.md con lo propio del tuyo
 orden: 3
-actualizado: 2026-10-16
+actualizado: 2026-10-17
 ---
 
 ## Los ficheros
 
 ```text
-AGENTS.md                        # lo que vale para toda tarea
+AGENTS.md                        # las reglas y «Este sitio»: lo propio de tu sitio
 CLAUDE.md                        # solo una línea: @AGENTS.md
-.agents/
+.agents/                         # común a todo sitio: se copia, no se edita
 ├── skills/
 │   ├── documentation/SKILL.md   # el repositorio entero
 │   ├── docs/SKILL.md            # una por carpeta de contenido
 │   ├── catalog/SKILL.md
-│   └── diagrams/SKILL.md
+│   ├── diagrams/SKILL.md
+│   ├── styles/SKILL.md
+│   └── skills/SKILL.md
 └── commands/doc/
     ├── questions.md             # /doc:questions
     └── check.md                 # /doc:check
@@ -26,20 +28,25 @@ CLAUDE.md                        # solo una línea: @AGENTS.md
 
 La plataforma no lee ninguno de estos ficheros: no se validan, no se publican y no cambian nada del sitio. Son para el agente que escribe en el repositorio, igual que `.vscode/settings.json` es para el editor. Este sitio los usa todos; consulta su `AGENTS.md`.
 
+Se reparten en dos partes:
+
+- **`.agents/` es común a todos los repositorios de contenido.** Explica cómo se documenta para la plataforma, no qué contiene un sitio. Cópialo tal cual de este repositorio (`doc-example`) y no lo edites en el tuyo. Cuando cambie aquí, vuelve a copiarlo entero.
+- **`AGENTS.md` es tuyo.** Además de las reglas, tiene una sección «Este sitio» con lo que ningún YAML declara: qué documenta el sitio, cómo se forman sus ids, qué página explica qué, sus diagramas y sus estilos. Lo demás (los campos de cabecera, los grupos del menú, los tipos del catálogo) el agente lo lee de `doc.config.yaml`, `menu.yaml` y cada `_type.yaml`.
+
 | Fichero | Qué es |
 | --- | --- |
-| `AGENTS.md` | Opcional. Las instrucciones que el agente lee en toda tarea: qué es el repositorio, su mapa, las reglas que no se rompen nunca y qué skill cargar para cada carpeta. |
+| `AGENTS.md` | Opcional. Las instrucciones que el agente lee en toda tarea: las reglas que no se rompen nunca, qué skill cargar para cada carpeta y, en «Este sitio», qué es el repositorio, su mapa y sus convenciones propias. |
 | `CLAUDE.md` | Opcional. Solo `@AGENTS.md`, para que Claude Code lea el mismo texto que los demás agentes. Nunca lleva instrucciones propias. |
-| `.agents/skills/` | Opcionales. Una skill por carpeta de contenido, más una para el repositorio entero: cómo se escribe lo que va en cada una. |
-| `.agents/commands/doc/` | Opcionales. Las tareas que se repiten, como comandos: cada fichero es un `/doc:` seguido de su nombre. |
+| `.agents/skills/` | Opcionales y comunes. Una skill por carpeta de contenido, más una para el repositorio entero: cómo se escribe lo que va en cada una, en cualquier sitio. |
+| `.agents/commands/doc/` | Opcionales y comunes. Las tareas que se repiten, como comandos: cada fichero es un `/doc:` seguido de su nombre. |
 | `.claude/` | Opcional. Enlaces simbólicos a `.agents/`, para que Claude Code encuentre las mismas skills y comandos. |
 
-- **Una sola copia.** Las skills y los comandos viven en `.agents/`; `.claude/` solo enlaza. Una skill nueva recibe su enlace (`.claude/skills/<name>`); un comando nuevo va en `.agents/commands/doc/` y no necesita enlace, porque se enlaza la carpeta entera.
+- **Una sola copia.** Las skills y los comandos viven en `.agents/`; `.claude/` solo enlaza. Una skill nueva se añade aquí, en `doc-example`, con su enlace (`.claude/skills/<name>`); un comando nuevo va en `.agents/commands/doc/` y no necesita enlace, porque se enlaza la carpeta entera.
 - **Nada aquí es un secreto.** El repositorio se clona en servidores y lo leen agentes: estos ficheros siguen la misma regla que las páginas.
 
 ## AGENTS.md
 
-Contiene solo lo que se aplica a **toda** tarea; el detalle de cada convención vive en las skills.
+Contiene solo lo que se aplica a **toda** tarea: las reglas, comunes a todo sitio, y la sección «Este sitio», que es lo único que cambia entre uno y otro. El detalle de cada convención del contrato vive en las skills.
 
 ```markdown
 # AGENTS.md
@@ -56,22 +63,28 @@ la plataforma lo clona, lo valida y lo publica.
 
 ## Reglas estrictas
 
+- `.agents/` es común a todo sitio: nunca lo edites aquí.
 - Nunca escribas un secreto.
 - No renombres el contrato.
 - Toda página la muestra `menu.yaml`.
+
+## Este sitio
+
+- El id de una máquina es su hostname.
+- Cada diagrama de red empieza por `network-`.
 ```
 
 ## Las skills
 
 Una skill es una carpeta con su `SKILL.md`: un front matter con `name` y `description`, y las instrucciones debajo. Las reglas largas van en `references/` y la skill dice cuándo leer cada una.
 
-- **Una por carpeta de contenido** (`docs`, `catalog`, `diagrams`, `skills`) y una para el repositorio entero, que dice qué cargar para cada tarea.
-- **Lo propio de este sitio,** no el contrato: las reglas que valen para todo sitio ya están en las páginas de esta guía, y la skill las enlaza.
+- **Una por carpeta de contenido** (`docs`, `catalog`, `diagrams`, `styles`, `skills`) y una para el repositorio entero, que dice qué cargar para cada tarea.
+- **Comunes, no de un sitio:** dicen cómo se escribe bien con el contrato y citan las páginas de esta guía que lo explican. Nunca nombran los tipos, los grupos ni los diagramas de un sitio: los leen de sus ficheros y de la sección «Este sitio» de su `AGENTS.md`.
 - No son las [skills servidas](agents.mdx#skills-servidas). Las de `skills/` las sirve la plataforma a agentes que trabajan desde otro proyecto; las de `.agents/skills/` solo las lee el agente que escribe aquí.
 
 ## Los comandos
 
-Un comando es un fichero Markdown con un front matter (`description` y, si recibe algo, `argument-hint`) y los pasos de la tarea. Dice cómo hacerla y remite a la skill que tiene las reglas, sin copiarlas. Los de este sitio:
+Un comando es un fichero Markdown con un front matter (`description` y, si recibe algo, `argument-hint`) y los pasos de la tarea. Dice cómo hacerla y remite a la skill que tiene las reglas, sin copiarlas. Son comunes, como las skills:
 
 | Comando | Para qué |
 | --- | --- |
@@ -79,7 +92,6 @@ Un comando es un fichero Markdown con un front matter (`description` y, si recib
 | `/doc:questions` | Una ronda de preguntas para terminar de documentar una sección |
 | `/doc:check` | Comprueba lo que la plataforma reportaría en la próxima sincronización, sin editar |
 | `/doc:review` | Revisa una página, entidad o diagrama contra las convenciones del sitio, sin editar |
-| `/doc:sync-platform` | Compara el catálogo y la guía con lo que la plataforma lee hoy |
 | `/doc:new-page` | Escribe una página nueva, con su cabecera, su entrada en el menú y su fila en "¿Dónde encuentro…?" |
 | `/doc:diagram` | Elige la forma de un diagrama, lo escribe en `diagrams/` y lo comprueba |
 
@@ -87,7 +99,7 @@ Los que escriben algo (`/doc:new-page`, `/doc:diagram`) proponen antes un plan y
 
 ## Una ronda de preguntas
 
-Cuando una página no puede afirmar algo, el agente lo deja en `open_questions`, un campo de cabecera que este sitio declara en `doc.config.yaml`, en lugar de inventarlo. La ronda lo cierra:
+Cuando una página no puede afirmar algo, el agente lo deja en `open_questions`, un campo de cabecera que el sitio declara en `doc.config.yaml` (una `lista` de `texto`), en lugar de inventarlo. La ronda lo cierra:
 
 1. `/doc:pending` muestra qué secciones tienen más preguntas abiertas.
 2. `/doc:questions <sección>` escribe `questions.md` en la raíz del repositorio, con las preguntas agrupadas por tema y una línea `>` vacía bajo cada una.

@@ -21,7 +21,8 @@ no se compila ni se ejecuta nada.
 | `catalog/<type>/` | El propio contrato como datos: los `files` de un repositorio, los `field-kinds`, los `header-fields`, los `components` de página y los `diagram-types`. Las tablas de referencia de la guía se construyen a partir de él |
 | `diagrams/` | Los diagramas de la guía, mostrados con `<Diagram id="…" />`: los dibujados a mano, un ejemplo de cada tipo que la plataforma coloca sola y una ilustración en SVG |
 | `skills/guide/SKILL.md` | Una skill que la plataforma sirve a otros agentes: dónde explica esta guía cada parte del contrato |
-| `AGENTS.md`, `.agents/`, `.claude/` | Instrucciones para el agente de IA que escribe en este repositorio |
+| `AGENTS.md` | Instrucciones para el agente de IA que escribe aquí: las reglas comunes y, en «Este sitio», lo propio de la guía |
+| `.agents/`, `.claude/` | Las skills y los commands `/doc:` del agente que escribe, **comunes a todo repositorio de contenido**: este es su original |
 | `.vscode/settings.json` | Autocompletado y validación de todos los ficheros YAML, a partir de la plataforma |
 
 ## Nombres del contrato frente a los tuyos
@@ -39,8 +40,11 @@ tuyo, en el idioma en que escribas. La tabla completa está en
 ## Usarlo como punto de partida
 
 1. **Copia este repositorio** y sustituye sus páginas, su menú, sus tipos de
-   catálogo y sus diagramas por los tuyos; conserva las claves de
-   `doc.config.yaml` y cambia sus valores.
+   catálogo, sus diagramas, sus estilos y su skill servida por los tuyos;
+   conserva las claves de `doc.config.yaml` y cambia sus valores. En
+   `AGENTS.md`, reescribe solo la sección «Este sitio» con lo propio de tu
+   sitio. **`.agents/` y `.claude/` se copian tal cual y no se editan**:
+   cuando cambien aquí, vuelve a copiarlos enteros.
 2. **Regístralo en la plataforma** en `/admin/content`: un nombre, un slug, y
    o bien la URL `https://` del repositorio y su rama, o bien «alojado en la
    plataforma» para hacer push a la propia plataforma.
@@ -63,9 +67,11 @@ su página «Primeros pasos».
 ## Escribir con un agente de IA
 
 `AGENTS.md` (importado por `CLAUDE.md`) y las skills de `.agents/skills/` le
-indican a un agente cómo está organizado este repositorio y cómo se escribe lo
-de cada carpeta: `documentation` para el repositorio entero y una skill por
-carpeta (`docs`, `catalog`, `diagrams`, `styles`, `skills`). `/doc:questions <section>` ejecuta una ronda de preguntas para
+indican a un agente cómo se escribe un repositorio de contenido:
+`documentation` para el repositorio entero y una skill por carpeta (`docs`,
+`catalog`, `diagrams`, `styles`, `skills`). Las skills y los commands son
+comunes a todos los sitios y leen lo propio de cada uno de sus declaraciones
+y de la sección «Este sitio» de su `AGENTS.md`. `/doc:questions <section>` ejecuta una ronda de preguntas para
 terminar una sección: el agente escribe las preguntas en `questions.md`,
 alguien las responde y, al ejecutar `/doc:questions` de nuevo, pasa las respuestas
 a las páginas.
