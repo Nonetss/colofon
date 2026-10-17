@@ -25,6 +25,7 @@ import {
 } from "@/lib/site-nav"
 
 const PanelLeftIcon = getIcon("views", "sidebar")
+const BackIcon = getIcon("navigation", "back")
 
 /** The element id `WithSidebar.astro` marks <body> with for the navbar. */
 export const SECTION_SIDEBAR_ID = "section-sidebar"
@@ -119,10 +120,19 @@ function SectionSidebarBody({ section }: SectionSidebarProps) {
         </SidebarGroup>
       </SidebarContent>
 
-      {/* Below `md` the sidebar is a sheet; the collapse control is desktop-only. */}
-      <SidebarFooter className="hidden md:flex">
+      <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
+            <SidebarMenuButton
+              tooltip="Volver a la documentación"
+              render={<AppLink href="/" />}
+            >
+              <BackIcon />
+              <span>Volver a la documentación</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          {/* Below `md` the sidebar is a sheet; the collapse control is desktop-only. */}
+          <SidebarMenuItem className="hidden md:block">
             <SidebarMenuButton
               type="button"
               tooltip={collapseLabel(state)}
