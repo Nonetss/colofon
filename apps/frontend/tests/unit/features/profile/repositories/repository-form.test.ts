@@ -16,6 +16,7 @@ const stored: OwnRepository = {
   name: "Apuntes",
   url: "https://***@github.com/ana/apuntes.git",
   ref: "main",
+  path: "",
   lastSyncedAt: null,
   lastCommit: null,
   lastSyncError: null,
@@ -30,12 +31,14 @@ describe("createInput", () => {
         name: "Apuntes",
         url: "https://github.com/ana/apuntes.git",
         ref: "main",
+        path: "docs",
       })
     ).toEqual({
       slug: "apuntes",
       name: "Apuntes",
       url: "https://github.com/ana/apuntes.git",
       ref: "main",
+      path: "docs",
     })
   })
 })
@@ -43,7 +46,7 @@ describe("createInput", () => {
 describe("updateInput", () => {
   test("sends only what changed, and an empty URL keeps the stored one", () => {
     expect(
-      updateInput(stored, { name: "Notas", url: "", ref: "main" })
+      updateInput(stored, { name: "Notas", url: "", ref: "main", path: "" })
     ).toEqual({ slug: "apuntes", name: "Notas" })
   })
 
@@ -53,12 +56,30 @@ describe("updateInput", () => {
         name: "Apuntes",
         url: "https://github.com/ana/otro.git",
         ref: "produccion",
+        path: "",
       })
     ).toEqual({
       slug: "apuntes",
       url: "https://github.com/ana/otro.git",
       ref: "produccion",
     })
+  })
+
+  test("a changed content folder is sent, and emptying it goes back to the root", () => {
+    expect(
+      updateInput(stored, {
+        name: "Apuntes",
+        url: "",
+        ref: "main",
+        path: "docs",
+      })
+    ).toEqual({ slug: "apuntes", path: "docs" })
+    expect(
+      updateInput(
+        { ...stored, path: "docs" },
+        { name: "Apuntes", url: "", ref: "main", path: "" }
+      )
+    ).toEqual({ slug: "apuntes", path: "" })
   })
 })
 

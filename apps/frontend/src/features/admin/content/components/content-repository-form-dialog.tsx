@@ -7,8 +7,10 @@ import { Input } from "@/components/ui/input"
 import { RefField } from "@/features/admin/content/components/ref-field"
 import {
   useContentRepositoryCreate,
+  useContentRepositoryFolders,
   useContentRepositoryUpdate,
 } from "@/features/admin/content/hooks/use-content-repositories"
+import { branchesSource } from "@/features/admin/content/model/branches-source"
 import {
   createInput,
   initialSource,
@@ -19,6 +21,11 @@ import type {
   ContentRepository,
   RepositorySource,
 } from "@/features/admin/content/model/types"
+import {
+  ContentPathField,
+  foldersInput,
+} from "@/features/content-repositories/manage"
+import { useDebouncedValue } from "@/hooks/use-debounced-value"
 import { slugify } from "@/lib/slugify"
 
 interface ContentRepositoryFormDialogProps {
@@ -29,6 +36,8 @@ interface ContentRepositoryFormDialogProps {
   /** Create only hosted repositories: the source is fixed and not shown. */
   hostedOnly?: boolean
 }
+
+const URL_DEBOUNCE_MS = 500
 
 const SOURCE_OPTIONS = [
   { value: "url", label: "URL externa" },
@@ -111,6 +120,7 @@ export function ContentRepositoryFormDialog({
   const [source, setSource] = useState<RepositorySource>("url")
   const [url, setUrl] = useState("")
   const [ref, setRef] = useState("main")
+  const [contentPath, setContentPath] = useState("")
   // An edited repository's ref, or one the user picked, is never replaced by
   // the remote's default branch.
   const [refChosen, setRefChosen] = useState(false)
@@ -123,6 +133,7 @@ export function ContentRepositoryFormDialog({
     setSource(startingSource(repository, hostedOnly))
     setUrl("")
     setRef(repository?.ref ?? "main")
+    setContentPath(repository?.path ?? "")
     setRefChosen(repository !== null)
   }, [open, repository, hostedOnly])
 
@@ -130,6 +141,15 @@ export function ContentRepositoryFormDialog({
     setRefChosen(true)
     setRef(value)
   }
+
+  const debouncedUrl = useDebouncedValue(url.trim(), URL_DEBOUNCE_MS)
+  const debouncedRef = useDebouncedValue(ref, URL_DEBOUNCE_MS)
+  const folders = useContentRepositoryFolders(
+    foldersInput(
+      branchesSource(open, repository, source, debouncedUrl),
+      debouncedRef
+    )
+  )
 
   const isPending = createRepository.isPending || updateRepository.isPending
 
@@ -150,6 +170,7 @@ export function ContentRepositoryFormDialog({
       name: name.trim(),
       url: url.trim(),
       ref: ref.trim(),
+      path: contentPath.trim(),
     }
     if (repository !== null) {
       await updateRepository.mutateAsync(updateInput(repository, values))
@@ -236,6 +257,11 @@ export function ContentRepositoryFormDialog({
         onChange={chooseRef}
         onSuggest={setRef}
         chosen={refChosen}
+      />
+      <ContentPathField
+        value={contentPath}
+        onChange={setContentPath}
+        folders={folders}
       />
     </FormDialog>
   )

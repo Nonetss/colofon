@@ -15,6 +15,7 @@ import {
 import type { ContentRepository } from "@/features/admin/content/model/types"
 import { CopyableUrl } from "@/features/admin/shared"
 import {
+  ContentPathCell,
   RepositorySyncError,
   RepositorySyncStatus,
 } from "@/features/content-repositories/manage"
@@ -100,6 +101,7 @@ export function ContentRepositoryCard({
               {repository.ref}
             </Text>
           </MetadataCell>
+          <ContentPathCell path={repository.path} />
           <RepositorySyncStatus
             repository={repository}
             hosted={repository.hosted}

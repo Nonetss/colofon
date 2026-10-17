@@ -11,6 +11,8 @@ export type RepositoryFormValues = {
   name: string
   url: string
   ref: string
+  /** The content folder of the git repository; empty is its root. */
+  path: string
 }
 
 /** The source the form starts with: the edited repository's, else a URL. */
@@ -39,7 +41,12 @@ export function createInput(
   slug: string,
   values: RepositoryFormValues
 ): CreateRepositoryInput {
-  const fields = { slug, name: values.name, ref: values.ref }
+  const fields = {
+    slug,
+    name: values.name,
+    ref: values.ref,
+    path: values.path,
+  }
   if (values.source === "hosted") return { ...fields, hosted: true }
   return { ...fields, url: values.url }
 }
@@ -58,6 +65,7 @@ export function updateInput(
     ...(values.name !== repository.name && { name: values.name }),
     ...sourceChange(repository, values),
     ...(values.ref !== repository.ref && { ref: values.ref }),
+    ...(values.path !== repository.path && { path: values.path }),
   }
 }
 

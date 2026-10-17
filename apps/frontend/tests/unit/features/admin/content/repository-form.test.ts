@@ -18,6 +18,7 @@ const external: ContentRepository = {
   hosted: false,
   pushUrl: null,
   ref: "main",
+  path: "",
   catalogUrl: "https://localhost:4321/api/v1/content/schemas/documentacion",
   lastSyncedAt: null,
   lastCommit: null,
@@ -38,7 +39,14 @@ const hosted: ContentRepository = {
 function values(
   overrides: Partial<RepositoryFormValues> = {}
 ): RepositoryFormValues {
-  return { source: "url", name: "Manual", url: "", ref: "main", ...overrides }
+  return {
+    source: "url",
+    name: "Manual",
+    url: "",
+    ref: "main",
+    path: "",
+    ...overrides,
+  }
 }
 
 describe("initialSource", () => {
@@ -73,8 +81,18 @@ describe("createInput", () => {
       slug: "documentacion",
       name: "Manual",
       ref: "main",
+      path: "",
       url: "https://git.example/docs.git",
     })
+  })
+
+  test("the content folder travels with the create", () => {
+    expect(
+      createInput(
+        "documentacion",
+        values({ url: "https://git.example/docs.git", path: "docs" })
+      )
+    ).toMatchObject({ path: "docs" })
   })
 
   test("a hosted source sends hosted and never the URL typed before", () => {
@@ -83,7 +101,13 @@ describe("createInput", () => {
         "manual",
         values({ source: "hosted", url: "https://git.example/docs.git" })
       )
-    ).toEqual({ slug: "manual", name: "Manual", ref: "main", hosted: true })
+    ).toEqual({
+      slug: "manual",
+      name: "Manual",
+      ref: "main",
+      path: "",
+      hosted: true,
+    })
   })
 })
 
@@ -92,6 +116,20 @@ describe("updateInput", () => {
     expect(
       updateInput(external, values({ name: "Docs", ref: "produccion" }))
     ).toEqual({ slug: "documentacion", name: "Docs", ref: "produccion" })
+  })
+
+  test("a changed content folder travels alone, and emptying it goes back to the root", () => {
+    expect(
+      updateInput(external, values({ name: "Documentación", path: "docs" }))
+    ).toEqual({
+      slug: "documentacion",
+      path: "docs",
+    })
+    const inDocs = { ...external, path: "docs" }
+    expect(updateInput(inDocs, values({ name: "Documentación" }))).toEqual({
+      slug: "documentacion",
+      path: "",
+    })
   })
 
   test("making an external repository hosted sends hosted", () => {

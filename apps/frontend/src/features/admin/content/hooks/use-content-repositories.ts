@@ -5,6 +5,7 @@ import type {
   CreateRepositoryInput,
   UpdateRepositoryInput,
 } from "@/features/admin/content/model/types"
+import type { foldersInput } from "@/features/content-repositories/manage"
 import { useResourceMutation } from "@/hooks/use-resource-mutation"
 import { orpc } from "@/lib/orpc"
 
@@ -17,6 +18,11 @@ const listKey = orpc.v1.content.listRepositories.queryKey()
 export const useContentRepositoryBranches = (
   source: BranchesSource | typeof skipToken
 ) => useQuery(orpc.v1.content.listBranches.queryOptions({ input: source }))
+
+/** The folders that hold a site, read once `input` exists. */
+export const useContentRepositoryFolders = (
+  input: ReturnType<typeof foldersInput>
+) => useQuery(orpc.v1.content.listContentFolders.queryOptions({ input }))
 
 type ContentRepositoryDeleteOutput = { id: string; success: boolean }
 

@@ -1,4 +1,5 @@
 import { type skipToken, useQuery } from "@tanstack/react-query"
+import type { foldersInput } from "@/features/content-repositories/manage"
 import type { OwnBranchesSource } from "@/features/profile/repositories/model/repository-form"
 import type {
   CreateOwnRepositoryInput,
@@ -15,6 +16,11 @@ const extraInvalidate = [orpc.v1.docs.nav.queryKey()]
 
 export const useOwnRepositoriesList = () =>
   useQuery(orpc.v1.content.listMyRepositories.queryOptions())
+
+/** The folders that hold a site, read once `input` exists. */
+export const useOwnRepositoryFolders = (
+  input: ReturnType<typeof foldersInput>
+) => useQuery(orpc.v1.content.listMyContentFolders.queryOptions({ input }))
 
 /** The remote's branches, read once `source` exists. */
 export const useOwnRepositoryBranches = (

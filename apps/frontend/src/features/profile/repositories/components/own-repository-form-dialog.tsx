@@ -3,10 +3,15 @@ import { textVariants } from "@/components/shared/brand/typography"
 import { FormField } from "@/components/shared/form/field-label"
 import { FormDialog } from "@/components/shared/form/form-dialog"
 import { Input } from "@/components/ui/input"
-import { BranchRefField } from "@/features/content-repositories/manage"
+import {
+  BranchRefField,
+  ContentPathField,
+  foldersInput,
+} from "@/features/content-repositories/manage"
 import {
   useOwnRepositoryBranches,
   useOwnRepositoryCreate,
+  useOwnRepositoryFolders,
   useOwnRepositoryUpdate,
 } from "@/features/profile/repositories/hooks/use-own-repositories"
 import {
@@ -48,6 +53,7 @@ export function OwnRepositoryFormDialog({
   const [slugTouched, setSlugTouched] = useState(false)
   const [url, setUrl] = useState("")
   const [ref, setRef] = useState("main")
+  const [contentPath, setContentPath] = useState("")
   // An edited repository's ref, or one the user picked, is never replaced by
   // the remote's default branch.
   const [refChosen, setRefChosen] = useState(false)
@@ -59,12 +65,21 @@ export function OwnRepositoryFormDialog({
     setSlugTouched(false)
     setUrl("")
     setRef(repository?.ref ?? "main")
+    setContentPath(repository?.path ?? "")
     setRefChosen(repository !== null)
   }, [open, repository])
 
   const debouncedUrl = useDebouncedValue(url.trim(), URL_DEBOUNCE_MS)
   const branches = useOwnRepositoryBranches(
     ownBranchesSource(open, repository, debouncedUrl)
+  )
+
+  const debouncedRef = useDebouncedValue(ref, URL_DEBOUNCE_MS)
+  const folders = useOwnRepositoryFolders(
+    foldersInput(
+      ownBranchesSource(open, repository, debouncedUrl),
+      debouncedRef
+    )
   )
 
   const chooseRef = (value: string) => {
@@ -86,7 +101,12 @@ export function OwnRepositoryFormDialog({
 
   const handleSubmit = async (e: SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault()
-    const values = { name: name.trim(), url: url.trim(), ref: ref.trim() }
+    const values = {
+      name: name.trim(),
+      url: url.trim(),
+      ref: ref.trim(),
+      path: contentPath.trim(),
+    }
     if (repository !== null) {
       await updateRepository.mutateAsync(updateInput(repository, values))
     } else {
@@ -165,6 +185,11 @@ export function OwnRepositoryFormDialog({
             ? `No se pudieron leer las ramas (${branches.error.message}); escribe la rama, el tag o el commit.`
             : "Rama, tag o commit que se descarga. Con la URL completa, se elige de una lista."
         }
+      />
+      <ContentPathField
+        value={contentPath}
+        onChange={setContentPath}
+        folders={folders}
       />
     </FormDialog>
   )

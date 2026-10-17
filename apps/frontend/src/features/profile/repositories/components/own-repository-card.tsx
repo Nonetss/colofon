@@ -4,6 +4,7 @@ import { MetadataCell } from "@/components/shared/data-display/metadata-cell"
 import { RowActions } from "@/components/shared/data-display/row-action-items"
 import { Button } from "@/components/ui/button"
 import {
+  ContentPathCell,
   RepositorySyncError,
   RepositorySyncStatus,
 } from "@/features/content-repositories/manage"
@@ -87,6 +88,7 @@ export function OwnRepositoryCard({
               {repository.ref}
             </Text>
           </MetadataCell>
+          <ContentPathCell path={repository.path} />
           <RepositorySyncStatus
             repository={repository}
             className="@md:col-span-2"

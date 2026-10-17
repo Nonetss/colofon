@@ -10,6 +10,8 @@ export type OwnRepositoryFormValues = {
   name: string
   url: string
   ref: string
+  /** The content folder of the git repository; empty is its root. */
+  path: string
 }
 
 /** What a create sends. */
@@ -17,7 +19,13 @@ export function createInput(
   slug: string,
   values: OwnRepositoryFormValues
 ): CreateOwnRepositoryInput {
-  return { slug, name: values.name, url: values.url, ref: values.ref }
+  return {
+    slug,
+    name: values.name,
+    url: values.url,
+    ref: values.ref,
+    path: values.path,
+  }
 }
 
 /**
@@ -33,6 +41,7 @@ export function updateInput(
     ...(values.name !== repository.name && { name: values.name }),
     ...(values.url !== "" && { url: values.url }),
     ...(values.ref !== repository.ref && { ref: values.ref }),
+    ...(values.path !== repository.path && { path: values.path }),
   }
 }
 

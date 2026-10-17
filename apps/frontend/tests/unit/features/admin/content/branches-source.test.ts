@@ -11,6 +11,7 @@ const stored: ContentRepository = {
   hosted: false,
   pushUrl: null,
   ref: "main",
+  path: "",
   catalogUrl: "https://localhost:4321/api/v1/content/schemas/documentacion",
   lastSyncedAt: null,
   lastCommit: null,
