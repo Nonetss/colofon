@@ -1,0 +1,1 @@
+ALTER TABLE "content_repository" ADD COLUMN "content_path" text DEFAULT '' NOT NULL;

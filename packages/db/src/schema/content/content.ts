@@ -27,6 +27,8 @@ export const contentRepository = pgTable(
     ownerId: text("owner_id").references(() => user.id, {
       onDelete: "cascade",
     }),
+    // Folder of the git repository that holds the content ("" is the root).
+    contentPath: text("content_path").default("").notNull(),
     // Branch, tag or commit checked out.
     ref: text("ref").default("main").notNull(),
     // Outcome of the last sync, all null until the first one. A failed sync

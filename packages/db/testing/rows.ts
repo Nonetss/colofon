@@ -174,6 +174,7 @@ export function contentRepositoryRow(
     name: "Documentación",
     url: "https://git.example/documentacion.git",
     ownerId: null,
+    contentPath: "",
     ref: "main",
     lastSyncedAt: null,
     lastCommit: null,
