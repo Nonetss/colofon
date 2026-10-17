@@ -41,7 +41,14 @@ The web SHALL serve `/llms.txt`, an index following llmstxt.org, as `text/plain;
 - that every page has its Markdown at `<page>/llm.txt`, and that the pages, `/<slug>/llms.txt`, the MCP and the projects' skills need a session or an API key in the `x-api-key` header;
 - that the user creates the key at the full address of `/me`;
 - how to connect the MCP, with the full address of `/mcp`, a `claude mcp add` command with a placeholder for the key, and the names of its tools;
-- the full address of the skills index (`agent-skills`), each platform skill as a Markdown link to its `SKILL.md` with its description, and how to install a skill: save its `SKILL.md` as `<skills folder>/<name>/SKILL.md`, with an example command that downloads one sending the key.
+- a setup procedure, under a level 2 heading of its own, that an AI follows to configure itself with no further step by the user:
+  1. read the skills index at its full address (`agent-skills`), sending the key when the user gave one;
+  2. install every skill it lists in the AI's personal skills folder (in Claude Code, `~/.claude/skills/`), replacing an earlier copy: a `skill-md` entry by saving its `url` as `<name>/SKILL.md`, an `archive` entry by downloading its `url` and extracting it into `<name>/`; in both cases checking that the downloaded bytes match the entry's `digest` before saving, and skipping an entry that doesn't;
+  3. tell the user which skills were installed, and that repeating the procedure refreshes them when the index shows another digest;
+  4. only if the user wants the AI to use the documentation's tools, connect the MCP as the guide explains;
+  
+  with example commands, the key as a placeholder, that download the index and one skill of each type;
+- each platform skill as a Markdown link to its `url` with its description.
 
 Without a credential, the index SHALL be that guide followed by a line saying that with an API key it also lists the repositories, their pages and their skills, and it SHALL NOT name any repository.
 
@@ -70,12 +77,17 @@ With a credential, the guide SHALL be followed by one level 2 section per availa
 #### Scenario: Agent without a key
 
 - **WHEN** a request without session or API key asks for `/llms.txt` and the public origin is `https://docs.example.org`
-- **THEN** the response SHALL be status 200 with the guide, holding `https://docs.example.org/me`, `https://docs.example.org/mcp`, `https://docs.example.org/.well-known/agent-skills/index.json` and a link to `https://docs.example.org/.well-known/agent-skills/colofon/SKILL.md`, and no repository section
+- **THEN** the response SHALL be status 200 with the guide, holding `https://docs.example.org/me`, `https://docs.example.org/mcp`, `https://docs.example.org/.well-known/agent-skills/index.json`, the setup procedure, a link to `https://docs.example.org/.well-known/agent-skills/colofon/SKILL.md` and a link to `https://docs.example.org/.well-known/agent-skills/colofon-diagrams.tar.gz`, and no repository section
 
 #### Scenario: Repository skills
 
 - **WHEN** a signed-in user requests `/llms.txt` and `casa` serves the skill `casa-deploy`
 - **THEN** the `## Casa` section SHALL end with `### Skills` and a link to `https://docs.example.org/.well-known/agent-skills/casa-deploy/SKILL.md` with its description
+
+#### Scenario: Setup procedure
+
+- **WHEN** an AI given only the site's address reads `/llms.txt`
+- **THEN** the guide SHALL hold the setup procedure, with steps to install both `skill-md` and `archive` skills checking their digests, and the MCP as an optional last step
 
 ### Requirement: Repository index for AIs
 
