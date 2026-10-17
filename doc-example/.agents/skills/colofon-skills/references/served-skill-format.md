@@ -69,5 +69,5 @@ why the skill points at the live pages.
 
 ## Length
 
-The platform's own `doc-writing` is under 30 lines. Keep a served skill under a screen or two:
+The platform's own `colofon` is a single short file. Keep a served skill under a screen or two:
 if it grows, something in it belongs on a page.

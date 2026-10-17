@@ -1,5 +1,5 @@
 ---
-name: diagrams
+name: colofon-diagrams
 description: The diagrams/ folder of this content repository, one diagram per file shown with <Diagram>. Covers when a diagram earns its place, choosing the form (drawn by hand, one of the 30 typed forms the platform lays out from data, or a hand-drawn SVG illustration), a reference per type with its keys, layout, budget and anti-patterns, recipes for architecture, deployment and data models drawn by hand, the platform's look, linking pieces to the catalog, and checking a diagram. Use before drawing, changing or reusing any diagram.
 ---
 
@@ -10,7 +10,7 @@ page with `<Diagram id="…" />` in a block of its own. The platform reads it,
 checks it, lays it out when it has a `type`, and draws it with its own look in
 light or dark. The guide explains the contract for writers in its
 `diagrams` section; this skill is how **you** pick and write a diagram well.
-The repository as a whole is in the `documentation` skill.
+The repository as a whole is in the `colofon-documentation` skill.
 
 The typed forms are ported from
 [diagram-design](https://github.com/cathrynlavery/diagram-design) (MIT, Cathryn

@@ -56,7 +56,7 @@ read, so it never goes stale.
 - Only valid entities appear. An unknown type, column or group field, and
   every entity that fails its type, is reported on the page; the rest of the
   table renders.
-- Picking columns and groups for a type: `catalog` skill,
+- Picking columns and groups for a type: `colofon-catalog` skill,
   `references/entities-tables.md`.
 
 ## `<Diagram>`
@@ -78,7 +78,7 @@ needs it.
 - A missing or unreadable file is reported ("<Diagram id="…">: no hay ningún
   diagrams/….json ni diagrams/….svg que se pueda leer (hay: …)") and shows a
   notice; the diagram's own problems are reported on the page too.
-- Choosing and writing the diagram: `diagrams` skill.
+- Choosing and writing the diagram: `colofon-diagrams` skill.
 
 ## Which one
 

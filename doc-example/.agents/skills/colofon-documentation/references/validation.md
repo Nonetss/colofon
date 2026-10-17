@@ -56,8 +56,8 @@ Each sync reads in two steps:
 | The log | Every problem, once per commit, with repository and file | Whoever runs the platform |
 | `/admin/content` | A sync that failed (remote unreachable) | Admins |
 
-Messages are Spanish and quoted in the folder skills' references (`docs`:
-`mdx.md`, `links.md`, `header.md`; `catalog`: `writing-an-entity.md`;
+Messages are Spanish and quoted in the folder skills' references (`colofon-docs`:
+`mdx.md`, `links.md`, `header.md`; `colofon-catalog`: `writing-an-entity.md`;
 `menu.md` here).
 
 ## Reading a report
@@ -77,6 +77,6 @@ Messages are Spanish and quoted in the folder skills' references (`docs`:
 - Every link, `ficha` field, `ref`, menu entry and diagram `entity` or `page`
   points at something that exists.
 - No page lands in "Otros".
-- No MDX outside backticks reads as code (`docs` skill, `references/mdx.md`).
+- No MDX outside backticks reads as code (`colofon-docs` skill, `references/mdx.md`).
 - After the push and sync, if the user asks, the changed pages show no
   problem to an admin. Don't probe the running platform yourself unless asked.

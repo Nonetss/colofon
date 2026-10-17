@@ -33,7 +33,7 @@ other five are the common ones.
 
 Read `cabecera` in `doc.config.yaml` before writing a header: it lists every
 extra field the site's pages accept, each with its kind and a `descripcion`
-that says what it is for (`documentation` skill, `references/doc-config.md`).
+that says what it is for (`colofon-documentation` skill, `references/doc-config.md`).
 The «Este sitio» section of `AGENTS.md` says which pages use which, when it
 is not obvious.
 
@@ -59,7 +59,7 @@ open_questions:
   - ¿Qué VM usa la IP 192.168.1.40?
 ```
 
-A question round closes them (`documentation` skill,
+A question round closes them (`colofon-documentation` skill,
 `references/question-rounds.md`): each answered question is removed
 completely. A site without that field writes a "_Pending: …_" line in the
 text instead, and the round finds those too.
@@ -81,5 +81,5 @@ text instead, and the round finds those too.
 - `titulo` and `descripcion` present; `orden` unless it is an `index.mdx`; no
   `icono`.
 - Quote a value that contains `: ` or starts with `[`, `{` and the like (same
-  YAML traps as entities: `catalog` skill, `references/writing-an-entity.md`).
+  YAML traps as entities: `colofon-catalog` skill, `references/writing-an-entity.md`).
 - Every cited id exists in `catalog/<type>/`.

@@ -58,7 +58,7 @@ thing is explained in one place and linked from the rest.
 2. Give it a header (`header.md`), with the next free `orden` of the section.
 3. **Menu:** a page inside a folder the menu lists needs nothing (the folder's
    entry brings it, ordered by `orden`). A new folder or loose page needs an
-   entry in its group (`documentation` skill, `references/menu.md`).
+   entry in its group (`colofon-documentation` skill, `references/menu.md`).
 4. Link it from the section's "¿Dónde encuentro…?" table, and from the home's
    when it answers a first-time question.
 5. If it is about catalog entities, cite them in the header field the site

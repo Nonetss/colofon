@@ -1,6 +1,6 @@
 ---
-name: documentation
-description: Map and conventions of a colofon content repository as a whole. A decision guide for what goes where and which folder skill to load (docs, catalog, diagrams, styles, skills), the root files doc.config.yaml and menu.yaml, contract names vs the site's own names, where the contract is explained (the «Escribir documentación» guide) and where the site's own conventions are (its declarations and the «Este sitio» section of AGENTS.md), the rules that always apply, how content is validated (editor schemas, the platform's sync and reports) and question rounds (/doc:questions). Use before any change, to check where something belongs, before touching doc.config.yaml or menu.yaml, when the platform reports a problem, and before a question round.
+name: colofon-documentation
+description: Map and conventions of a colofon content repository as a whole. A decision guide for what goes where and which writing skill to load (colofon-docs, colofon-catalog, colofon-diagrams, colofon-styles, colofon-skills, and the task skills colofon-new-page, colofon-new-diagram, colofon-check, colofon-review, colofon-pending, colofon-questions), the root files doc.config.yaml and menu.yaml, contract names vs the site's own names, where the contract is explained (the «Escribir documentación» guide) and where the site's own conventions are (its declarations and the «Este sitio» section of AGENTS.md), the rules that always apply, how content is validated (editor schemas, the platform's sync and reports) and question rounds (colofon-questions). Use before any change, to check where something belongs, before touching doc.config.yaml or menu.yaml, when the platform reports a problem, and before a question round.
 ---
 
 # Documentation
@@ -12,12 +12,16 @@ Nothing here is built or run.
 
 ## 1. Philosophy
 
-**The skills are common; the site is yours.** Everything under `.agents/`
-(these skills and the `/doc:` commands) is the same in every colofon content
-repository: it says how to write documentation for the platform, never what
-one site holds. It is copied unchanged from the template repository
-(`doc-example`) and **never edited in a site's repository**; it changes only
-there, and every site copies it again.
+**The skills are the platform's; the site is yours.** The writing skills
+(`colofon-documentation`, this one, and every other `colofon-*` skill) are
+the same for every colofon content repository: they say how to write
+documentation for the platform, never what one site holds. The platform
+serves them at `/.well-known/agent-skills/`, and you install them for the
+whole user with the setup prompt on the platform's `/me` page (or the
+"Configurar tu agente" procedure of its `/llms.txt`). A content repository
+**never copies or edits them**: it holds only its content and its
+`AGENTS.md`. Their only source is `doc-example/.agents/skills/`, inside the
+platform's repository; they change only there.
 
 - **The contract is explained in the guide «Escribir documentación»**, the
   site published on the platform as repository `doc-example`. When you need a
@@ -32,7 +36,7 @@ there, and every site copies it again.
 - **What no file declares is in `AGENTS.md`, section «Este sitio»**: what the
   site documents, its id and naming rules, which page explains what, its
   diagrams and styles, its own procedures. A new convention of the site goes
-  there, never into `.agents/`.
+  there, never into a skill.
 - **Two vocabularies.** The contract's names are fixed
   (`references/contract-names.md`). Everything else (type ids, field names,
   values, folders, file names, prose) is the site's own; once it exists it is
@@ -51,7 +55,8 @@ this repository                         platform
   skills/<name>/    served skills ──┘
 
   AGENTS.md         for you: the rules and «Este sitio»     (never read by the platform)
-  .agents/          for you: common skills and /doc: commands
+
+platform ──▶ /.well-known/agent-skills/ ──▶ colofon-* writing skills, installed for you
 ```
 
 Declarations (`doc.config.yaml`, `menu.yaml`, each `_type.yaml`) are read
@@ -59,10 +64,10 @@ first and, when broken, the last valid version is kept. Content (pages,
 entities, diagrams, styles) is checked one by one: a broken one is reported,
 the rest published.
 
-`skills/` and `.agents/skills/` are different things: `skills/` holds what
-the platform **serves to agents that read** the site (about the documented
-project, so it differs per site); `.agents/skills/` holds what **you, the
-agent writing here**, load (common to every site).
+`skills/` and the `colofon-*` skills are different things: `skills/` holds
+what the platform **serves to agents that read** the site (about the
+documented project, so it differs per site); the `colofon-*` skills are what
+**you, the agent writing here**, load (the same for every site).
 
 ## 3. Reading the guide
 
@@ -81,31 +86,38 @@ guessing a rule; the skills' references still hold the common rules.
 
 ## 4. Where to look
 
-Each content folder has its own skill (`.agents/skills/<folder>/`); load the
-one for the folder you are about to change, plus this one. A task crossing
-folders loads several.
+Each content folder has its own skill (`colofon-<folder>`); load the one for
+the folder you are about to change, plus this one. A task crossing folders
+loads several. Repeated tasks have their own skill too, invoked by name
+(`/colofon-new-page` in Claude Code).
 
 | Task | Load or read |
 | --- | --- |
-| Writing, moving or renaming a page under `docs/` | the `docs` skill |
-| Adding or changing a type, a field or an entity under `catalog/` | the `catalog` skill |
-| Drawing, changing or reusing a diagram under `diagrams/` | the `diagrams` skill |
-| Restyling the site's pages with `styles/` (theme variables, a module) | the `styles` skill |
-| Writing a skill under `skills/` for agents that read the site | the `skills` skill |
+| Writing, moving or renaming a page under `docs/` | the `colofon-docs` skill |
+| Adding or changing a type, a field or an entity under `catalog/` | the `colofon-catalog` skill |
+| Drawing, changing or reusing a diagram under `diagrams/` | the `colofon-diagrams` skill |
+| Restyling the site's pages with `styles/` (theme variables, a module) | the `colofon-styles` skill |
+| Writing a skill under `skills/` for agents that read the site | the `colofon-skills` skill |
 | What the site documents, its own conventions and procedures | `AGENTS.md`, «Este sitio» |
 | Where a file goes, the repository tree, naming | [layout.md](references/layout.md) |
 | `menu.yaml`: its keys, adding an entry, "Otros" | [menu.md](references/menu.md) |
 | `doc.config.yaml`: its keys, `cabecera` fields and their kinds, `plataforma` | [doc-config.md](references/doc-config.md) |
 | Which names are the contract's and which are the site's | [contract-names.md](references/contract-names.md) |
 | The editor's schemas, the platform's sync, where problems show, final checks | [validation.md](references/validation.md) |
-| Running a question round (`/doc:questions`) | [question-rounds.md](references/question-rounds.md) |
+| Running a question round (`colofon-questions`) | [question-rounds.md](references/question-rounds.md) |
+| Writing a new page with its header and menu entry | the `colofon-new-page` skill |
+| Drawing a new diagram | the `colofon-new-diagram` skill |
+| What the platform would report, without editing | the `colofon-check` skill |
+| Reviewing one file against these conventions | the `colofon-review` skill |
+| What is still open or stale, by section | the `colofon-pending` skill |
 
 ## 5. Always true
 
-- **Never edit `.agents/` in a site's repository.** If a common skill is
-  wrong or missing something, tell the user: it is fixed in `doc-example` and
-  copied to every site. A convention of this site goes to `AGENTS.md`,
-  «Este sitio».
+- **The writing skills are the platform's.** Never copy them into a site's
+  repository or edit an installed copy. If one is wrong or missing something,
+  tell the user: it is fixed in `doc-example/.agents/skills/` and every agent
+  gets it with the next install. A convention of this site goes to
+  `AGENTS.md`, «Este sitio».
 - **No secret ever enters this repository**, not even in an example: write
   where it lives and which account to use.
 - **Don't rename the contract.** Its names are fixed; translating one breaks
@@ -131,7 +143,7 @@ folders loads several.
 
 | Anti-pattern | Why it fails |
 | --- | --- |
-| Editing a skill or command under `.agents/` to fit this site | The next copy from the template overwrites it, and the sites drift apart; the site's convention goes in `AGENTS.md` «Este sitio» |
+| Copying the writing skills into a site's repository, or editing them to fit it | The next install overwrites the installed copy, and the copy in the repository drifts from the platform's; the site's convention goes in `AGENTS.md` «Este sitio» |
 | Writing a rule of the contract into `AGENTS.md` or a page instead of reading the guide | Two sources; the copy goes stale first |
 | Assuming the types, header fields or menu groups of another site | Each site declares its own: read its `doc.config.yaml`, `menu.yaml` and `_type.yaml` |
 | Translating `titulo`, `catalog/`, `_type.yaml`, or a diagram's `nodes` | The platform no longer reads it; the file fails validation |
@@ -146,5 +158,5 @@ folders loads several.
 - Every link, `ref`, `ficha`, menu entry and diagram `entity` or `page`
   points at something that exists, and no page lands in "Otros".
 - A convention of the site you added or changed is written in `AGENTS.md`,
-  «Este sitio», in the same change; nothing under `.agents/` changed.
+  «Este sitio», in the same change; no writing skill was copied or edited.
 - No secret anywhere.

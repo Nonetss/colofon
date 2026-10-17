@@ -1,7 +1,7 @@
 # Entities on pages
 
 How pages show the catalog. The component itself (attributes, messages) is
-in the `docs` skill, `references/components.md`; the generated catalog pages
+in the `colofon-docs` skill, `references/components.md`; the generated catalog pages
 are explained in the guide's `data/reader` page.
 
 ## Three ways a page uses an entity

@@ -34,7 +34,7 @@ read. The contract is the guide's `pages/markdown` page ("Enlaces",
 - Only pages (`.mdx`) and images can be linked inside the repository: a link
   to any other file is reported ("…: solo se enlazan fichas (.mdx) e
   imágenes").
-- For how things connect, draw a diagram (`diagrams` skill) rather than
+- For how things connect, draw a diagram (`colofon-diagrams` skill) rather than
   pasting a screenshot of one.
 
 ## What gets reported

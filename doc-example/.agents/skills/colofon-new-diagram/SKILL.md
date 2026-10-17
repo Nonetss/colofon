@@ -1,14 +1,14 @@
 ---
-description: Pick the right form for a diagram, write it in diagrams/ and check it
-argument-hint: <what it should show> [page where it goes]
+name: colofon-new-diagram
+description: Pick the right form for a diagram, write it in diagrams/ and check it. Use when the user asks to draw, add or create a diagram, chart or illustration for a page.
 ---
 
-Draw a diagram for the site. The rules are in the `diagrams` skill: when a
+Draw a diagram for the site. The rules are in the `colofon-diagrams` skill: when a
 diagram earns its place, how to choose the form, the reference of each form,
 `references/items.md`, `references/style.md` and `references/checking.md`.
 Load it and read the reference of the form you pick before writing.
 
-`$ARGUMENTS` says what the diagram should show and, optionally, the page it
+The user says what the diagram should show and, optionally, the page it
 goes on. If it is missing, ask me what it should show.
 
 ## 1. Decide
@@ -24,7 +24,7 @@ goes on. If it is missing, ask me what it should show.
 
 Tell me in one short message the form, the pieces it will hold, which ones
 link to catalog entities or pages, the one or two in the accent, and what the
-budget forces out. Wait for my OK unless `$ARGUMENTS` already pins all of it.
+budget forces out. Wait for my OK unless the request already pins all of it.
 
 ## 3. Write and check
 

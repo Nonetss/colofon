@@ -1,5 +1,5 @@
 ---
-name: docs
+name: colofon-docs
 description: The docs/ folder of a doc platform content repository, its pages in MDX. A decision guide for writing a page well - where it goes and what it is called, its header and the header fields the site declares in doc.config.yaml, how a page reads (the reader's answer first, procedures as steps, data from the catalog, what fails and what still works), MDX without code, the platform's three components (Callout, Entities, Diagram) and links to pages, entities, catalog tables and images. Use before writing, changing, moving or renaming any page under docs/, and when the platform reports a problem on one.
 ---
 
@@ -14,7 +14,7 @@ skill is how to write pages well. What is particular to this site (its
 sections, its header fields, its own conventions) is read from
 `doc.config.yaml`, `menu.yaml` and the «Este sitio» section of `AGENTS.md`.
 The repository as a whole (the menu, the contract's names, validation) is in
-the `documentation` skill.
+the `colofon-documentation` skill.
 
 ## 1. Philosophy
 
@@ -43,8 +43,8 @@ the `documentation` skill.
 | Links to pages, entities, catalog tables, images and other files | [links.md](references/links.md) |
 | This site's sections, header fields and page conventions | `doc.config.yaml` (`cabecera`), `menu.yaml` and `AGENTS.md` «Este sitio» |
 
-A diagram itself is written in `diagrams/` (`diagrams` skill); a type or an
-entity in `catalog/` (`catalog` skill).
+A diagram itself is written in `diagrams/` (`colofon-diagrams` skill); a type or an
+entity in `catalog/` (`colofon-catalog` skill).
 
 ## 3. Always true
 
@@ -52,7 +52,7 @@ entity in `catalog/` (`catalog` skill).
   folders lowercase, digits and hyphens.
 - **`docs/catalog/` is reserved** by the platform: never create it.
 - **Every page is shown by `menu.yaml`**, never in "Otros"
-  (`documentation` skill, `references/menu.md`).
+  (`colofon-documentation` skill, `references/menu.md`).
 - **`titulo` and `descripcion` on every page**, `orden` on every page that is
   not a section's `index.mdx`, `actualizado` the date it was last checked
   against what it describes, and **no `icono`**: icons go in `menu.yaml`.

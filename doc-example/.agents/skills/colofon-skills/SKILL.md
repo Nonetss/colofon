@@ -1,5 +1,5 @@
 ---
-name: skills
+name: colofon-skills
 description: The skills/ folder of a doc platform content repository, the skills the platform serves to other agents so they can work with the project this site documents (not the ones for you, which live in .agents/skills/). A guide to what a served skill is for, its format (Agent Skills front matter, thin, what it may and may not say, how the platform validates and publishes it), and keeping it current with the pages it points at. Use before writing or changing a served skill, and when a page or rule a served skill points at changes.
 ---
 
@@ -16,8 +16,8 @@ are whatever `skills/` holds (`ls skills/`); what each is for is its
 `description`.
 
 How to write a content repository in general, and how to use a site, are
-not a site's skills: the platform serves `doc-writing` and `colofon` to
-every agent itself.
+not a site's skills: the platform serves `colofon` and the `colofon-*`
+writing skills to every agent itself.
 
 ## 1. Philosophy
 
@@ -61,7 +61,7 @@ every agent itself.
 | Rules about how this repository is written (menu groups, header fields) | Those are for the agent writing here (`AGENTS.md` «Este sitio»), not for agents using the project |
 | A description that says what it is, not when to use it | Agents load skills by their description; they never load this one |
 | Asking the person for a password or token | Served skills never handle secrets; say where they live |
-| A served skill for what the platform's `doc-writing` or `colofon` already cover | Two snapshots to keep in step |
+| A served skill for what the platform's `colofon` or `colofon-*` skills already cover | Two snapshots to keep in step |
 
 ## 5. Before finishing
 

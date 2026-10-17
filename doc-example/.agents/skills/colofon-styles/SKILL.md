@@ -1,5 +1,5 @@
 ---
-name: styles
+name: colofon-styles
 description: The styles/ folder of a doc platform content repository, the site's own CSS that the platform cleans and applies over its own styles on the site's pages, one file per platform module (theme.css, page.css, controls.css, code.css, tables.css, diagrams.css, images.css, callouts.css, sections.css). A decision guide for theme variables vs a module rule, writing a module (both themes, only the documented classes and variables, resources from docs/ or data:), what the platform removes and where it is reported. Use before adding or changing any file under styles/, before restyling a piece of the reader, and when the platform reports a problem on styles/.
 ---
 
@@ -14,7 +14,7 @@ Where both set the same thing with the same selector, the site wins. How
 module, what is removed, the limits) is explained in the guide's
 `repository/styles` page. This skill is how **you** write the site's styles
 well; why the site styles what it does, when it says, is in `AGENTS.md`
-(«Este sitio»). The repository as a whole is in the `documentation` skill.
+(«Este sitio»). The repository as a whole is in the `colofon-documentation` skill.
 
 ## 1. Philosophy
 

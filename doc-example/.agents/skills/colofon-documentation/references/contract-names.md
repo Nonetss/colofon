@@ -18,7 +18,7 @@ Everything else is the site's own. The source is the guide's `repository` page
 | Field kinds | `texto`, `numero`, `entero`, `booleano`, `fecha`, `url`, `email`, `ip`, `ficha`, `enum`, `ref`, `lista`, `objeto` |
 | Every page header | `titulo`, `descripcion`, `icono`, `orden`, `actualizado` |
 | Every entity | `fuente`, `actualizado` |
-| A diagram (JSON) | `type`, `variant`, `title`, `desc` and its form's keys: `width`, `height`, `nodes`, `edges`, `zones`, `notes` drawn by hand, `items` and `links` in a chain, its type's keys with a `type` (`diagrams` skill) |
+| A diagram (JSON) | `type`, `variant`, `title`, `desc` and its form's keys: `width`, `height`, `nodes`, `edges`, `zones`, `notes` drawn by hand, `items` and `links` in a chain, its type's keys with a `type` (`colofon-diagrams` skill) |
 | Links | `catalog:` followed by a type, or a type and an id |
 | Component names and attributes | `Callout` (`type`, `title`), `Entities` (`type`, `columns`, `group`), `Diagram` (`id`) |
 

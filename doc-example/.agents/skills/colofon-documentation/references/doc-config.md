@@ -25,7 +25,7 @@ field names are the site's own. Keep it.
 
 Every page header already has `titulo`, `descripcion`, `icono`, `orden` and
 `actualizado`; `cabecera` adds the site's own, each declared with a field kind
-exactly like a catalog field (`catalog` skill,
+exactly like a catalog field (`colofon-catalog` skill,
 `references/writing-a-type.md`). Read the site's `cabecera` before writing a
 header: those are the only extra fields a page may carry. For example:
 
@@ -40,15 +40,15 @@ cabecera:
     tipo: lista
     de: { tipo: texto }
     opcional: true
-    descripcion: Preguntas aún abiertas; una ronda de preguntas las responde (/doc:questions)
+    descripcion: Preguntas aún abiertas; una ronda de preguntas las responde (colofon-questions)
 ```
 
 | Common shape | Kind | What for |
 | --- | --- | --- |
 | The entities a page explains (`machines`, `files`…) | `lista` of `ref` to the type | Links the header to them; each entity lists the page under "Páginas que la citan" |
-| `open_questions` | `lista` of `texto` | What a page can't state yet; emptied by a question round (`/doc:questions` and `/doc:pending` read it) |
+| `open_questions` | `lista` of `texto` | What a page can't state yet; emptied by a question round (`colofon-questions` and `colofon-pending` read it) |
 
-How pages fill them: `docs` skill, `references/header.md`.
+How pages fill them: `colofon-docs` skill, `references/header.md`.
 
 ## Rules for adding a header field
 

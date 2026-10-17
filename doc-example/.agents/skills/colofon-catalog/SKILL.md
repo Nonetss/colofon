@@ -1,5 +1,5 @@
 ---
-name: catalog
+name: colofon-catalog
 description: The catalog/ folder of a doc platform content repository, its structured data as types and entities. A decision guide for data vs page, finding the site's own types, writing a _type.yaml (keys, field kinds, etiqueta, vista.columnas) and an entity (id, YAML quoting, fuente/actualizado, refs and fichas), and listing them on pages with <Entities>. Use before adding or changing a type, a field or an entity, before writing a table of repeated data on a page, and when the platform reports an entity or a type.
 ---
 
@@ -14,7 +14,7 @@ its data is read from, when no `descripcion` says it, is in `AGENTS.md`
 («Este sitio»). The contract is explained in the guide's `data/types`,
 `data/entities` and `data/reader` pages; this skill is how **you** write
 types and entities well. The repository as a whole is in the
-`documentation` skill.
+`colofon-documentation` skill.
 
 ## 1. Philosophy
 
@@ -64,7 +64,7 @@ types and entities well. The repository as a whole is in the
 - After changing a `_type.yaml`, **every entity of the type must still
   validate**.
 - **A table of reference data on a page is `<Entities>`**, never typed by
-  hand (`docs` skill).
+  hand (`colofon-docs` skill).
 - Every `icono` is a Lucide icon name the platform knows.
 - Ids, field names and enum values are the site's own: never rename an
   existing one, and follow the language the existing ones use. Values meant

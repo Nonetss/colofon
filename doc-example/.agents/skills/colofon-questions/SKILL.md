@@ -1,9 +1,9 @@
 ---
-description: Run a question round to finish documenting a section, or apply the answers already written in questions.md
-argument-hint: <section> (a folder under docs/)
+name: colofon-questions
+description: Run a question round to finish documenting a section (write questions.md with the questions), or apply the answers already written in questions.md to the pages. Use when the user asks for a question round, to finish a section, or says the questions are answered.
 ---
 
-Run a **question round** as described in the `documentation` skill,
+Run a **question round** as described in the `colofon-documentation` skill,
 `references/question-rounds.md`. Load the skill and read that reference first:
 it is the source of truth, and this command only says how to run it. Write in
 the language of the site's prose.
@@ -11,9 +11,9 @@ the language of the site's prose.
 Pick the phase from the state of the repository:
 
 - **`questions.md` exists at the repository root and has answers under the `>`
-  lines** → phase 2, apply the answers. `$ARGUMENTS` is not needed.
-- **Otherwise** → phase 1, write the questions for the section in
-  `$ARGUMENTS`. If it is missing or does not match a folder under `docs/`, ask
+  lines** → phase 2, apply the answers. No section is needed.
+- **Otherwise** → phase 1, write the questions for the section the
+  user names. If they name none, or it or does not match a folder under `docs/`, ask
   me which section instead of guessing.
 
 ## Phase 1: write the questions
@@ -44,7 +44,7 @@ Pick the phase from the state of the repository:
 2. Re-read each page and entity before editing it: I may have changed it by
    hand in between, and my changes stay.
 3. Move each answer to the page or entity where it belongs, written cleanly and
-   without naming who answered. Follow every rule of the `documentation` skill
+   without naming who answered. Follow every rule of the `colofon-documentation` skill
    (header, catalog, MDX without code, links, images in the page's own
    `img/`). If an answer contains a secret, do not copy it anywhere: note
    where it should be stored and tell me.

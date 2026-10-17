@@ -6,9 +6,9 @@ questions, whoever knows the topic answers them roughly, and the writer moves
 the answers into the pages. It closes a section in one sitting instead of open
 question by open question.
 
-With Claude Code, **`/doc:questions <section>`** (for example
-`/doc:questions network`) writes the questions. Once they are answered,
-**`/doc:questions`** again moves the answers into the pages.
+With Claude Code, **`colofon-questions <section>`** (for example
+`colofon-questions network`) writes the questions. Once they are answered,
+**`colofon-questions`** again moves the answers into the pages.
 
 ## How it works
 
@@ -81,7 +81,7 @@ Also:
 
 - `open_questions` is a header field the site declares in `doc.config.yaml`
   (`doc-config.md`); if it doesn't, propose declaring it before a round. How
-  pages fill it: `docs` skill, `references/header.md`.
+  pages fill it: `colofon-docs` skill, `references/header.md`.
 - Closing the round means validating what you touched: `validation.md`.
-- `/doc:questions` is `.agents/commands/doc/questions.md` (the folder is
-  symlinked from `.claude/commands/doc`); it defers to this file.
+- The `colofon-questions` skill runs the round step by step; it defers to
+  this file.
