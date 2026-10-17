@@ -157,18 +157,28 @@ async function fetchArgs(git: Git, ref: string): Promise<string[]> {
   return ["fetch", "--quiet", "origin", ref]
 }
 
+/** The pathspec prefix of a content path: `docs/` for `docs`, none for the root. */
+function prefixOf(contentPath: string): string {
+  if (contentPath === "") return ""
+  return `${contentPath}/`
+}
+
 /** Separates the commits in the output of `readEditDates`' log. */
 const COMMIT_MARK = "\u0001"
 
 /**
  * The date (`YYYY-MM-DD`, the committer's) of the last commit that touched
- * each file under `docs/` and `catalog/` of the checkout at `root`, keyed
- * by its path relative to `root`. One `git log` pass over the history.
+ * each file under `docs/` and `catalog/` of the content folder
+ * `contentPath` of the checkout at `root` (the root itself when empty),
+ * keyed by its path relative to that folder. One `git log` pass over the
+ * history.
  */
 export async function readEditDates(
   root: string,
-  timeoutMs = GIT_TIMEOUT_MS
+  timeoutMs = GIT_TIMEOUT_MS,
+  contentPath = ""
 ): Promise<ReadonlyMap<string, string>> {
+  const prefix = prefixOf(contentPath)
   const git = gitRunner({ root, timeoutMs })
   const log = await git([
     "-c",
@@ -178,15 +188,16 @@ export async function readEditDates(
     "--name-only",
     "HEAD",
     "--",
-    DOCS_DIR,
-    CATALOG_DIR,
+    `${prefix}${DOCS_DIR}`,
+    `${prefix}${CATALOG_DIR}`,
   ])
   const dates = new Map<string, string>()
   for (const chunk of log.split(COMMIT_MARK)) {
     const [date, ...files] = chunk.split("\n")
     if (date === undefined || date === "") continue
     for (const file of files) {
-      if (file !== "" && !dates.has(file)) dates.set(file, date)
+      const key = file.slice(prefix.length)
+      if (file !== "" && !dates.has(key)) dates.set(key, date)
     }
   }
   return dates

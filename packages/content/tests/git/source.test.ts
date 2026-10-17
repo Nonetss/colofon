@@ -345,6 +345,33 @@ describe("readEditDates", () => {
     expect([...dates.keys()]).toEqual(["docs/a.mdx"])
   })
 
+  test("a content folder limits the log to its docs and catalog and keys the dates relative to it", async () => {
+    const origin = await remote()
+    await origin.commit(
+      {
+        "docs/doc.config.yaml": "nombre: Uno\n",
+        "docs/docs/red/dns.mdx": "a\n",
+        "docs/catalog/machines/nas.yaml": "id: nas\n",
+        "docs/other/x.txt": "x\n",
+        "docs/leftover.txt": "x\n",
+        "docs/docs/red/vpn.mdx": "v\n",
+      },
+      "2026-03-02T10:00:00+01:00"
+    )
+    await origin.commit(
+      { "docs/docs/red/vpn.mdx": "dos\n" },
+      "2026-10-14T09:00:00+02:00"
+    )
+    await origin.commit({ "docs/a.mdx": "root-level docs\n" })
+
+    const dates = await readEditDates(await synced(origin), undefined, "docs")
+    expect(dates.get("docs/red/dns.mdx")).toBe("2026-03-02")
+    expect(dates.get("docs/red/vpn.mdx")).toBe("2026-10-14")
+    expect(dates.get("catalog/machines/nas.yaml")).toBe("2026-03-02")
+    expect(dates.has("other/x.txt")).toBe(false)
+    expect(dates.has("a.mdx")).toBe(false)
+  })
+
   test("a folder that is not a clone rejects", async () => {
     expect(readEditDates(await tempFolder())).rejects.toThrow()
   })

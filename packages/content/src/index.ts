@@ -69,6 +69,18 @@ export {
   readFolder,
 } from "#git/browse"
 export {
+  type ContentFolders,
+  type ContentFoldersOptions,
+  foldersHoldingConfig,
+  listContentFolders,
+  MAX_CONTENT_FOLDERS,
+} from "#git/content-folders"
+export {
+  type ContentRoot,
+  contentPathProblem,
+  resolveContentRoot,
+} from "#git/content-root"
+export {
   createGitHttpHandler,
   ensureBareRepo,
   type GitHttpHandler,
