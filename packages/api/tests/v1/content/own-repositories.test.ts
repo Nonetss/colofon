@@ -31,7 +31,7 @@ function fakeReader() {
   return {
     content: mock(async () => undefined),
     site: mock(async () => undefined),
-    folderOf: mock((_repository: StoredRepository) => "/nonexistent"),
+    contentRoot: mock(async (_repository: StoredRepository) => undefined),
     sync: mock(async (_repository: StoredRepository) => ({
       ok: true as const,
       commit: "abc123",
@@ -122,6 +122,7 @@ describe("content.createMyRepository", () => {
     name: "Apuntes",
     url: SECRET_URL,
     ref: "main",
+    path: "",
   }
 
   test("the eleventh repository is BAD_REQUEST and nothing is inserted", async () => {
@@ -162,11 +163,82 @@ describe("content.createMyRepository", () => {
     const [insert] = fakeDb.calls("insert")
     if (!insert) throw new Error("no insert recorded")
     expect(stepArgs(insert, "values")[0]).toEqual({
-      ...input,
+      slug: "apuntes",
+      name: "Apuntes",
+      url: SECRET_URL,
+      ref: "main",
+      contentPath: "",
       ownerId: "user-id",
     })
     expect(reader.syncInBackground).toHaveBeenCalledWith(owned)
     expect(created.url).toBe("https://***@git.example/ana/apuntes.git")
+  })
+})
+
+describe("the content folder of an own repository", () => {
+  test("it is stored on create and shown in the answer", async () => {
+    fakeDb.queue("select", [{ total: 0 }])
+    fakeDb.queue("query.contentRepository.findFirst", undefined)
+    fakeDb.queue("insert", [{ ...owned, contentPath: "docs" }])
+
+    const created = await handler.createMyRepository({
+      context: userContext(),
+      input: {
+        slug: "apuntes",
+        name: "Apuntes",
+        url: SECRET_URL,
+        ref: "main",
+        path: "docs",
+      },
+    })
+
+    const [insert] = fakeDb.calls("insert")
+    if (!insert) throw new Error("no insert recorded")
+    expect(stepArgs(insert, "values")[0]).toMatchObject({ contentPath: "docs" })
+    expect(created.path).toBe("docs")
+  })
+
+  test("editing only the folder is saved and starts no sync", async () => {
+    fakeDb.queue("query.contentRepository.findFirst", owned)
+    fakeDb.queue("update", [{ ...owned, contentPath: "sitio" }])
+
+    const saved = await handler.updateMyRepository({
+      context: userContext(),
+      input: { slug: "apuntes", path: "sitio" },
+    })
+
+    const [update] = fakeDb.calls("update")
+    if (!update) throw new Error("no update recorded")
+    expect(stepArgs(update, "set")[0]).toEqual({ contentPath: "sitio" })
+    expect(saved.path).toBe("sitio")
+    expect(reader.syncInBackground).not.toHaveBeenCalled()
+  })
+
+  test.each(["../fuera", "/etc", "docs//x", ".git"])(
+    "the folder %s is refused",
+    (path) => {
+      expect(
+        contentInput.createMyRepository.safeParse({
+          slug: "apuntes",
+          name: "x",
+          url: "https://github.com/ana/x.git",
+          path,
+        }).success
+      ).toBe(false)
+      expect(
+        contentInput.updateMyRepository.safeParse({ slug: "apuntes", path })
+          .success
+      ).toBe(false)
+    }
+  )
+
+  test("the folder defaults to the root", () => {
+    const parsed = contentInput.createMyRepository.parse({
+      slug: "apuntes",
+      name: "x",
+      url: "https://github.com/ana/x.git",
+    })
+    expect(parsed.path).toBe("")
   })
 })
 
@@ -321,6 +393,7 @@ describe("admin procedures leave the users' repositories alone", () => {
           name: "Apuntes",
           url: "https://git.example/x.git",
           ref: "main",
+          path: "",
         },
       }),
       "CONFLICT"

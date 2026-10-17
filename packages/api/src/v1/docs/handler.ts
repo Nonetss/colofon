@@ -192,7 +192,10 @@ export function createDocsHandler({
       )
       if (repository === undefined || !isImageFile(input.path))
         throw errors.NOT_FOUND({ message: FILE_NOT_FOUND })
-      const target = await insideDocs(reader.folderOf(repository), input.path)
+      const root = await reader.contentRoot(repository)
+      if (root === undefined)
+        throw errors.NOT_FOUND({ message: FILE_NOT_FOUND })
+      const target = await insideDocs(root, input.path)
       if (target === undefined)
         throw errors.NOT_FOUND({ message: FILE_NOT_FOUND })
       const extension = path.extname(target).slice(1).toLowerCase()
@@ -401,16 +404,16 @@ function elementOf(node: Element): DocsHastContent {
 }
 
 /**
- * The real path of `relative` under the clone's docs/, or `undefined` when
+ * The real path of `relative` under the content root's docs/, or `undefined` when
  * it doesn't exist, isn't a file, is too large or resolves outside docs/
  * (through `..` or a symlink).
  */
 async function insideDocs(
-  cloneFolder: string,
+  contentRoot: string,
   relative: string
 ): Promise<string | undefined> {
   try {
-    const root = await realpath(path.join(cloneFolder, DOCS_DIR))
+    const root = await realpath(path.join(contentRoot, DOCS_DIR))
     const target = await realpath(path.join(root, relative))
     if (!target.startsWith(`${root}${path.sep}`)) return undefined
     const info = await stat(target)

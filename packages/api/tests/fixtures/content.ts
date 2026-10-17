@@ -86,6 +86,7 @@ export function storedRepository(
     name: "Documentación",
     url: "https://git.example/documentacion.git",
     ref: "main",
+    contentPath: "",
     ownerId: null,
     ...overrides,
   }

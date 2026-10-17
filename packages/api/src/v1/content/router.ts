@@ -164,6 +164,20 @@ export const contentRouter = {
     .output(contentOutput.listBranches)
     .handler(({ input }) => contentHandler.listBranches({ input })),
 
+  listContentFolders: adminProcedure
+    .meta(
+      openapi({
+        summary: "List the content folders of a git repository",
+        description:
+          "Folders of the git repository at `url`, or of the stored repository `slug`, that hold a doc.config.yaml at `ref` (the remote's HEAD when missing): the root as an empty path first, then the rest in order, at most 50. Only the tree is fetched. QUERY rather than GET: the URL may carry credentials. BAD_GATEWAY with the git error, without credentials, when the remote or the ref can't be read.",
+        tags,
+        method: "QUERY",
+      })
+    )
+    .input(contentInput.listContentFolders)
+    .output(contentOutput.listContentFolders)
+    .handler(({ input }) => contentHandler.listContentFolders({ input })),
+
   deleteRepository: adminProcedure
     .meta(
       openapi({
@@ -282,6 +296,22 @@ export const contentRouter = {
     .output(contentOutput.listBranches)
     .handler(({ context, input }) =>
       contentHandler.listMyBranches({ context, input })
+    ),
+
+  listMyContentFolders: protectedProcedure
+    .meta(
+      openapi({
+        summary: "List the content folders of a user's git repository",
+        description:
+          "Like listContentFolders, for the public https git repository at `url` or one of the caller's own repositories by `slug`. QUERY rather than GET: the URL may carry a token. BAD_REQUEST for an address that is not allowed; BAD_GATEWAY with the git error, without credentials, when the remote or the ref can't be read.",
+        tags,
+        method: "QUERY",
+      })
+    )
+    .input(contentInput.listMyContentFolders)
+    .output(contentOutput.listContentFolders)
+    .handler(({ context, input }) =>
+      contentHandler.listMyContentFolders({ context, input })
     ),
 
   syncRepository: protectedProcedure

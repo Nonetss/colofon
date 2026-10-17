@@ -9,6 +9,7 @@ import {
   editorSchemas,
   HOSTED_DIR,
   hostedFolder,
+  listContentFolders,
   listRemoteBranches,
   MENU_SCHEMA,
   publicUrl,
@@ -91,6 +92,7 @@ function toRepository(row: ContentRepository): ContentRepositoryOutput {
     hosted: isHosted(row),
     pushUrl: pushUrlOf(row),
     ref: row.ref,
+    path: row.contentPath,
     catalogUrl: catalogUrlOf(row.slug),
     lastSyncedAt: toIsoOrNull(row.lastSyncedAt),
     lastCommit: row.lastCommit,
@@ -107,6 +109,7 @@ function toOwnRepository(row: ContentRepository): OwnRepositoryOutput {
     name: row.name,
     url: publicUrl(row.url),
     ref: row.ref,
+    path: row.contentPath,
     lastSyncedAt: toIsoOrNull(row.lastSyncedAt),
     lastCommit: row.lastCommit,
     lastSyncError: row.lastSyncError,
@@ -189,6 +192,24 @@ export function createContentHandler(
       NOT_FOUND_MESSAGE
     )
     return gitSourceOf(row, hostedRoot)
+  }
+
+  /**
+   * What `listContentFolders` reads: the URL sent, or a stored repository's
+   * source, credentials included, and whether that is a bare repository.
+   */
+  async function foldersSourceOf(
+    input: z.infer<typeof contentInput.listContentFolders>
+  ): Promise<{ source: string; bare: boolean }> {
+    if (input.url !== undefined) return { source: input.url, bare: false }
+    if (input.slug === undefined) {
+      throw errors.BAD_REQUEST({ message: "Send either url or slug" })
+    }
+    const row = assertFound(
+      await findRow(input.slug, "platform"),
+      NOT_FOUND_MESSAGE
+    )
+    return { source: gitSourceOf(row, hostedRoot), bare: isHosted(row) }
   }
 
   /**
@@ -315,7 +336,13 @@ export function createContentHandler(
       // A concurrent create with the same slug loses here, on the unique index.
       const [row] = await db
         .insert(contentRepository)
-        .values({ slug: input.slug, name: input.name, url, ref: input.ref })
+        .values({
+          slug: input.slug,
+          name: input.name,
+          url,
+          ref: input.ref,
+          contentPath: input.path,
+        })
         .onConflictDoNothing({ target: contentRepository.slug })
         .returning()
       if (!row) throw conflict
@@ -342,6 +369,7 @@ export function createContentHandler(
         ...(input.name !== undefined && { name: input.name }),
         ...(url !== undefined && { url }),
         ...(input.ref !== undefined && { ref: input.ref }),
+        ...(input.path !== undefined && { contentPath: input.path }),
       }
       if (Object.keys(patch).length === 0) return toRepository(row)
       const [updated] = await db
@@ -365,6 +393,37 @@ export function createContentHandler(
       const result = await listRemoteBranches(await branchesSourceOf(input))
       if (!result.ok) throw errors.BAD_GATEWAY({ message: result.error })
       return { branches: result.branches, defaultBranch: result.defaultBranch }
+    },
+
+    async listContentFolders({
+      input,
+    }: {
+      input: z.infer<typeof contentInput.listContentFolders>
+    }): Promise<z.infer<typeof contentOutput.listContentFolders>> {
+      const { source, bare } = await foldersSourceOf(input)
+      const result = await listContentFolders(source, { ref: input.ref, bare })
+      if (!result.ok) throw errors.BAD_GATEWAY({ message: result.error })
+      return { folders: result.folders }
+    },
+
+    async listMyContentFolders({
+      context,
+      input,
+    }: {
+      context: Context
+      input: z.infer<typeof contentInput.listMyContentFolders>
+    }): Promise<z.infer<typeof contentOutput.listContentFolders>> {
+      const url = await ownBranchesUrlOf(ownerOf(context), input)
+      const checked = await checkRemote(url)
+      if (!checked.ok) {
+        throw errors.BAD_REQUEST({ message: "Esa dirección no está permitida" })
+      }
+      const result = await listContentFolders(url, {
+        ref: input.ref,
+        httpsOnly: true,
+      })
+      if (!result.ok) throw errors.BAD_GATEWAY({ message: result.error })
+      return { folders: result.folders }
     },
 
     async readFolder({
@@ -489,6 +548,7 @@ export function createContentHandler(
           name: input.name,
           url: input.url,
           ref: input.ref,
+          contentPath: input.path,
           ownerId,
         })
         .onConflictDoNothing({ target: contentRepository.slug })
@@ -513,6 +573,7 @@ export function createContentHandler(
         ...(input.name !== undefined && { name: input.name }),
         ...(input.url !== undefined && { url: input.url }),
         ...(input.ref !== undefined && { ref: input.ref }),
+        ...(input.path !== undefined && { contentPath: input.path }),
       }
       if (Object.keys(patch).length === 0) return toOwnRepository(row)
       const [updated] = await db

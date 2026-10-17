@@ -14,6 +14,7 @@ const casa: ContentRepositoryOutput = {
   hosted: false,
   pushUrl: null,
   ref: "main",
+  path: "",
   catalogUrl: "https://docs.example.org/api/v1/content/casa/catalog.json",
   lastSyncedAt: "2026-10-16T10:00:00.000Z",
   lastCommit: "4f1c2a9",

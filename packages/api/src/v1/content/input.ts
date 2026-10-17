@@ -1,4 +1,8 @@
-import { isReservedSlug, userRemoteProblem } from "@nonete/content"
+import {
+  contentPathProblem,
+  isReservedSlug,
+  userRemoteProblem,
+} from "@nonete/content"
 import { z } from "zod"
 
 const repository = z
@@ -42,6 +46,17 @@ const ref = z
   .min(1)
   .max(255)
   .describe("Branch, tag or commit to check out")
+
+const contentPath = z
+  .string()
+  .trim()
+  .refine((value) => contentPathProblem(value) === undefined, {
+    message:
+      "La carpeta debe ser una ruta relativa al repositorio, sin segmentos vacíos ni que empiecen por punto (docs, sitio/docs)",
+  })
+  .describe(
+    "Folder of the git repository where the content lives, with / separators; empty for the root"
+  )
 
 const hosted = z
   .literal(true)
@@ -103,6 +118,7 @@ export const contentInput = {
       url: url.optional(),
       hosted: hosted.optional(),
       ref: ref.default("main"),
+      path: contentPath.default(""),
     })
     .refine(oneSource(false), { message: "Send either url or hosted" }),
   updateRepository: z
@@ -116,6 +132,7 @@ export const contentInput = {
         .describe("A new URL; makes a hosted repository external"),
       hosted: hosted.optional(),
       ref: ref.optional(),
+      path: contentPath.optional(),
     })
     .refine(oneSource(true), { message: "Send url or hosted, not both" }),
   listBranches: z
@@ -128,6 +145,48 @@ export const contentInput = {
       slug: repository
         .optional()
         .describe("A stored repository, read at its stored URL"),
+    })
+    .refine(
+      (input) => (input.url === undefined) !== (input.slug === undefined),
+      {
+        message: "Send either url or slug",
+      }
+    ),
+  listContentFolders: z
+    .object({
+      url: url
+        .optional()
+        .describe(
+          "URL of a git repository to read; with credentials if private"
+        ),
+      slug: repository
+        .optional()
+        .describe("A stored repository, read at its stored URL"),
+      ref: ref
+        .optional()
+        .describe(
+          "Branch, tag or commit to read; the remote's HEAD when left out"
+        ),
+    })
+    .refine(
+      (input) => (input.url === undefined) !== (input.slug === undefined),
+      {
+        message: "Send either url or slug",
+      }
+    ),
+  listMyContentFolders: z
+    .object({
+      url: userUrl
+        .optional()
+        .describe("URL of a git repository to read; with its token if private"),
+      slug: repository
+        .optional()
+        .describe("One of the caller's repositories, read at its stored URL"),
+      ref: ref
+        .optional()
+        .describe(
+          "Branch, tag or commit to read; the remote's HEAD when left out"
+        ),
     })
     .refine(
       (input) => (input.url === undefined) !== (input.slug === undefined),
@@ -151,12 +210,14 @@ export const contentInput = {
     name,
     url: userUrl,
     ref: ref.default("main"),
+    path: contentPath.default(""),
   }),
   updateMyRepository: z.object({
     slug: repository.describe("Slug of the repository to edit; never changes"),
     name: name.optional(),
     url: userUrl.optional(),
     ref: ref.optional(),
+    path: contentPath.optional(),
   }),
   listMyBranches: z
     .object({

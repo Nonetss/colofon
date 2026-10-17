@@ -1,4 +1,6 @@
 import { afterEach, describe, expect, mock, test } from "bun:test"
+import { symlink } from "node:fs/promises"
+import path from "node:path"
 import {
   CONTENT_SITE,
   createContentFolder,
@@ -27,13 +29,14 @@ async function readerWith(
   const root = await createContentFolder(files)
   cleanups.push(root.remove)
   const logger = fakeLogger()
+  const store = memoryRepositoryStore(repositories)
   const reader = createContentReader({
     cloneRoot: root.root,
-    repositories: memoryRepositoryStore(repositories),
+    repositories: store,
     resolveSource: (stored) => gitSourceOf(stored, "/nonexistent/hosted"),
     logger,
   })
-  return { reader, root, logger }
+  return { reader, root, logger, store }
 }
 
 function inClone(id: string, files: Record<string, string>) {
@@ -163,5 +166,106 @@ describe("readerRoutesOf", () => {
     expect(routes.fileUrlOf("red/img/mapa de red.svg")).toBe(
       "/api/v1/docs/casa/files/red/img/mapa%20de%20red.svg"
     )
+  })
+})
+
+function under(folder: string, files: Record<string, string>) {
+  return Object.fromEntries(
+    Object.entries(files).map(([file, text]) => [`${folder}/${file}`, text])
+  )
+}
+
+describe("contentReader with a content folder", () => {
+  const repository = storedRepository({ contentPath: "docs" })
+
+  test("the site is read from the folder and the files outside it are ignored", async () => {
+    const { reader } = await readerWith(
+      [repository],
+      inClone(repository.id, {
+        "doc.config.yaml": 'nombre: Raíz\nplataforma: "1"\n',
+        "catalog/raiz/_type.yaml":
+          "nombre: Raíz\nplural: Raíces\ncampos:\n  x: { tipo: texto }\n",
+        ...under("docs", CONTENT_SITE),
+      })
+    )
+    const read = await reader.site("documentacion", "all")
+    expect(read?.declarations?.config.nombre).toBe("Homelab")
+    expect([...(read?.declarations?.types.keys() ?? [])].toSorted()).toEqual([
+      "maquinas",
+      "ubicaciones",
+    ])
+    expect(read?.site?.pages.has("red/dns")).toBe(true)
+  })
+
+  test("a folder missing from the checkout is a repository without content, logged once", async () => {
+    const missing = storedRepository({ contentPath: "sitio" })
+    const { reader, logger } = await readerWith(
+      [missing],
+      inClone(missing.id, CONTENT_SITE)
+    )
+    expect((await reader.site("documentacion", "all"))?.site).toBeUndefined()
+    await reader.site("documentacion", "all")
+    const warnings = logger.warn.mock.calls.filter((args: unknown[]) =>
+      args.includes("Content folder is unusable; serving no content")
+    )
+    expect(warnings).toHaveLength(1)
+    expect(JSON.stringify(warnings[0])).toContain("documentacion")
+  })
+
+  test("a symbolic link out of the clone serves nothing from outside", async () => {
+    const outside = await createContentFolder(CONTENT_SITE)
+    cleanups.push(outside.remove)
+    const { reader, root } = await readerWith(
+      [repository],
+      inClone(repository.id, { "README.md": "x" })
+    )
+    await symlink(outside.root, path.join(root.root, repository.id, "docs"))
+    const read = await reader.site("documentacion", "all")
+    expect(read?.declarations).toBeUndefined()
+    expect(read?.site).toBeUndefined()
+    expect(await reader.contentRoot(repository)).toBeUndefined()
+  })
+
+  test("changing the content folder serves the other folder of the same clone", async () => {
+    const stored = storedRepository({ contentPath: "uno" })
+    const files = inClone(stored.id, {
+      "uno/doc.config.yaml": 'nombre: Uno\nplataforma: "1"\n',
+      "dos/doc.config.yaml": 'nombre: Dos\nplataforma: "1"\n',
+    })
+    const { reader, store } = await readerWith([stored], files)
+    expect(
+      (await reader.site("documentacion", "all"))?.declarations?.config.nombre
+    ).toBe("Uno")
+
+    store.rows[0] = { ...stored, contentPath: "dos" }
+    expect(
+      (await reader.site("documentacion", "all"))?.declarations?.config.nombre
+    ).toBe("Dos")
+  })
+
+  test("the content root is the clone joined with the folder", async () => {
+    const { reader, root } = await readerWith(
+      [repository],
+      inClone(repository.id, under("docs", CONTENT_SITE))
+    )
+    expect(await reader.contentRoot(repository)).toBe(
+      path.join(root.root, repository.id, "docs")
+    )
+    expect(await reader.contentRoot({ ...repository, contentPath: "" })).toBe(
+      path.join(root.root, repository.id)
+    )
+  })
+
+  test("a synced repository's pages are dated from the files under the folder", async () => {
+    const url = await remote(
+      under("docs", CONTENT_SITE),
+      "2026-03-02T10:00:00+01:00"
+    )
+    const stored = storedRepository({ url, contentPath: "docs" })
+    const { reader } = await readerWith([stored])
+
+    await reader.sync(stored)
+    const read = await reader.site("documentacion", "all")
+    expect(read?.site?.pages.get("red/dns")?.header.editado).toBe("2026-03-02")
   })
 })

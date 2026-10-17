@@ -41,7 +41,7 @@ const SITE = {
 const reader: ContentReader = {
   content: async () => undefined,
   site: async () => undefined,
-  folderOf: () => "/nonexistent",
+  contentRoot: async () => undefined,
   sync: async (_repository: StoredRepository): Promise<SyncResult> => ({
     ok: false,
     error: "unused",

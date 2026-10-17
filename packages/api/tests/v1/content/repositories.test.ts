@@ -35,7 +35,7 @@ function fakeReader(result: SyncResult = { ok: true, commit: "abc123" }) {
   const reader = {
     content: mock(async (_slug: string) => undefined),
     site: mock(async (_slug: string) => undefined),
-    folderOf: mock((_repository: StoredRepository) => "/nonexistent"),
+    contentRoot: mock(async (_repository: StoredRepository) => undefined),
     sync: mock(async (_repository: StoredRepository) => result),
     syncAll: mock(async () => []),
     syncInBackground: mock((_repository: StoredRepository) => {}),
@@ -222,6 +222,7 @@ describe("content.createRepository", () => {
     name: "Documentación",
     url: SECRET_URL,
     ref: "main",
+    path: "",
   }
 
   test("a taken slug is CONFLICT and nothing is inserted", async () => {
@@ -248,7 +249,13 @@ describe("content.createRepository", () => {
 
     const [insert] = fakeDb.calls("insert")
     if (!insert) throw new Error("no insert recorded")
-    expect(stepArgs(insert, "values")[0]).toEqual(input)
+    expect(stepArgs(insert, "values")[0]).toEqual({
+      slug: "documentacion",
+      name: "Documentación",
+      url: SECRET_URL,
+      ref: "main",
+      contentPath: "",
+    })
     expect(reader.syncInBackground).toHaveBeenCalledWith(privateRow)
     expect(created.url).toBe("https://***@git.example/org/docs.git")
   })
@@ -258,7 +265,13 @@ describe("content.createRepository", () => {
     fakeDb.queue("insert", [hostedRow])
 
     const created = await handler.createRepository({
-      input: { slug: "manual", name: "Manual", hosted: true, ref: "main" },
+      input: {
+        slug: "manual",
+        name: "Manual",
+        hosted: true,
+        ref: "main",
+        path: "",
+      },
     })
 
     const [insert] = fakeDb.calls("insert")
@@ -268,6 +281,7 @@ describe("content.createRepository", () => {
       name: "Manual",
       url: "/git/manual.git",
       ref: "main",
+      contentPath: "",
     })
     expect(hasBareRepo(hostedRow.id)).toBe(true)
     expect(reader.syncInBackground).not.toHaveBeenCalled()
@@ -277,12 +291,62 @@ describe("content.createRepository", () => {
   test("neither a URL nor hosted is BAD_REQUEST and nothing is inserted", async () => {
     await expectErrorCode(
       handler.createRepository({
-        input: { slug: "manual", name: "Manual", ref: "main" },
+        input: { slug: "manual", name: "Manual", ref: "main", path: "" },
       }),
       "BAD_REQUEST"
     )
     expect(fakeDb.calls()).toEqual([])
   })
+})
+
+describe("the content folder of a repository", () => {
+  test("a site in docs/ is stored with its folder", async () => {
+    fakeDb.queue("query.contentRepository.findFirst", undefined)
+    fakeDb.queue("insert", [{ ...row, contentPath: "docs" }])
+
+    const created = await handler.createRepository({
+      input: {
+        slug: "documentacion",
+        name: "Documentación",
+        url: "https://git.example/documentacion.git",
+        ref: "main",
+        path: "docs",
+      },
+    })
+
+    const [insert] = fakeDb.calls("insert")
+    if (!insert) throw new Error("no insert recorded")
+    expect(stepArgs(insert, "values")[0]).toMatchObject({ contentPath: "docs" })
+    expect(created.path).toBe("docs")
+  })
+
+  test("editing only the folder is saved and starts no sync", async () => {
+    fakeDb.queue("query.contentRepository.findFirst", row)
+    fakeDb.queue("update", [{ ...row, contentPath: "sitio" }])
+
+    await handler.updateRepository({
+      input: { slug: "documentacion", path: "sitio" },
+    })
+
+    const [update] = fakeDb.calls("update")
+    if (!update) throw new Error("no update recorded")
+    expect(stepArgs(update, "set")[0]).toEqual({ contentPath: "sitio" })
+    expect(reader.syncInBackground).not.toHaveBeenCalled()
+  })
+
+  test.each(["../fuera", "/etc", "docs/", "a/./b"])(
+    "the folder %s fails input validation",
+    (path) => {
+      expect(
+        contentInput.createRepository.safeParse({
+          slug: "documentacion",
+          name: "x",
+          url: "https://git.example/x.git",
+          path,
+        }).success
+      ).toBe(false)
+    }
+  )
 })
 
 describe("content.updateRepository", () => {

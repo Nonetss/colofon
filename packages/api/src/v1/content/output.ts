@@ -21,6 +21,11 @@ const repository = z.object({
       "Absolute git URL to clone and push a hosted repository; null for an external one"
     ),
   ref: z.string().describe("Branch, tag or commit checked out"),
+  path: z
+    .string()
+    .describe(
+      "Folder of the git repository the content is read from; empty for the root"
+    ),
   catalogUrl: z
     .string()
     .describe(
@@ -99,6 +104,13 @@ export const contentOutput = {
       .string()
       .nullable()
       .describe("The branch the remote's HEAD points at, when it has one"),
+  }),
+  listContentFolders: z.object({
+    folders: z
+      .array(z.string())
+      .describe(
+        "Folders that hold a doc.config.yaml, the root as an empty path first, then in order; at most 50"
+      ),
   }),
   readFolder: z.object({
     entries: z

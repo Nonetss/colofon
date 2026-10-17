@@ -1,4 +1,5 @@
 import { rm, stat } from "node:fs/promises"
+import path from "node:path"
 import {
   type ContentDeclarations,
   checkUserRemote,
@@ -12,6 +13,7 @@ import {
   readEditDates,
   readSite,
   redactCredentials,
+  resolveContentRoot,
   type Site,
   type SiteRoutes,
   type SyncResult,
@@ -31,6 +33,8 @@ export type StoredRepository = {
   name: string
   url: string
   ref: string
+  /** The folder of the git repository the content is in; "" is the root. */
+  contentPath: string
   /** The user it is private to; `null` for a platform repository. */
   ownerId: string | null
 }
@@ -132,8 +136,12 @@ export type ContentReader = {
     slug: string,
     audience: RepositoryAudience
   ) => Promise<RepositorySite | undefined>
-  /** The repository's clone folder, where its files are read. */
-  folderOf: (repository: StoredRepository) => string
+  /**
+   * The folder the repository's content is read from (its clone folder
+   * joined with its content path), `undefined` when that is missing or
+   * resolves outside the clone.
+   */
+  contentRoot: (repository: StoredRepository) => Promise<string | undefined>
   /** Brings the repository's clone to its ref and records the outcome. */
   sync: (repository: StoredRepository) => Promise<SyncResult>
   /**
@@ -171,19 +179,28 @@ export function createContentReader(
   }
 
   async function declarationsOf(repository: StoredRepository) {
-    const folder = cloneFolder(cloneRoot, repository.id)
+    const clone = cloneFolder(cloneRoot, repository.id)
+    const key = keyOf(repository)
     // Not cloned yet: nothing to read and nothing to report.
-    if (!(await isFolder(folder))) return lastValid.get(folder)
-    const result = await loadContent(folder)
+    if (!(await isFolder(clone))) return lastValid.get(key)
+    const resolved = await resolveContentRoot(clone, repository.contentPath)
+    if (!resolved.ok) {
+      reportOnce(key, resolved.reason, () =>
+        logger.warn(
+          { source: describeRepository(repository), reason: resolved.reason },
+          "Content folder is unusable; serving no content"
+        )
+      )
+      return undefined
+    }
+    const result = await loadContent(resolved.root)
     if (result.ok) {
-      lastValid.set(folder, result.content)
-      reportedProblems.delete(folder)
+      lastValid.set(key, result.content)
+      reportedProblems.delete(key)
       return result.content
     }
     // Logged once per distinct list: the editor asks on every keystroke.
-    const signature = JSON.stringify(result.problems)
-    if (reportedProblems.get(folder) !== signature) {
-      reportedProblems.set(folder, signature)
+    reportOnce(key, JSON.stringify(result.problems), () =>
       logger.warn(
         {
           source: describeRepository(repository),
@@ -191,8 +208,23 @@ export function createContentReader(
         },
         "Content is invalid; serving the last valid declarations"
       )
-    }
-    return lastValid.get(folder)
+    )
+    return lastValid.get(key)
+  }
+
+  /** Runs `log` unless `signature` is what was last reported for `key`. */
+  function reportOnce(key: string, signature: string, log: () => void) {
+    if (reportedProblems.get(key) === signature) return
+    reportedProblems.set(key, signature)
+    log()
+  }
+
+  /** The cache key of a repository's content: its content root, resolved or not. */
+  function keyOf(repository: StoredRepository) {
+    return path.join(
+      cloneFolder(cloneRoot, repository.id),
+      repository.contentPath
+    )
   }
 
   async function site(slug: string, audience: RepositoryAudience) {
@@ -212,13 +244,13 @@ export function createContentReader(
     repository: StoredRepository,
     declarations: ContentDeclarations
   ): Promise<Site> {
-    const folder = cloneFolder(cloneRoot, repository.id)
-    const cached = sites.get(folder)
+    const key = keyOf(repository)
+    const cached = sites.get(key)
     if (cached !== undefined) return cached
-    const built = buildSite(repository, declarations, folder)
-    sites.set(folder, built)
+    const built = buildSite(repository, declarations, key)
+    sites.set(key, built)
     // A failed build is not kept, so the next read tries again.
-    built.catch(() => sites.delete(folder))
+    built.catch(() => sites.delete(key))
     return built
   }
 
@@ -229,7 +261,7 @@ export function createContentReader(
   ): Promise<Site> {
     const [catalog, editDates] = await Promise.all([
       readCatalog(folder, declarations),
-      editDatesOf(repository, folder),
+      editDatesOf(repository),
     ])
     const catalogProblems = [...catalog.values()].flatMap(
       (type) => type.problems
@@ -266,11 +298,14 @@ export function createContentReader(
 
   /** The clone's last commit date per file; none when git can't tell. */
   async function editDatesOf(
-    repository: StoredRepository,
-    folder: string
+    repository: StoredRepository
   ): Promise<ReadonlyMap<string, string>> {
     try {
-      return await readEditDates(folder)
+      return await readEditDates(
+        cloneFolder(cloneRoot, repository.id),
+        undefined,
+        repository.contentPath
+      )
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error)
       logger.warn(
@@ -284,8 +319,32 @@ export function createContentReader(
     }
   }
 
-  function folderOf(repository: StoredRepository) {
-    return cloneFolder(cloneRoot, repository.id)
+  async function contentRoot(repository: StoredRepository) {
+    const resolved = await resolveContentRoot(
+      cloneFolder(cloneRoot, repository.id),
+      repository.contentPath
+    )
+    if (!resolved.ok) return undefined
+    return resolved.root
+  }
+
+  /** Drops the keys of `cache` that belong to the clone folder `clone`. */
+  function forgetIn(cache: Map<string, unknown>, clone: string) {
+    for (const key of cache.keys()) {
+      if (key === clone || key.startsWith(`${clone}${path.sep}`)) {
+        cache.delete(key)
+      }
+    }
+  }
+
+  function forgetSites(clone: string) {
+    forgetIn(sites, clone)
+  }
+
+  function forgetCaches(clone: string) {
+    forgetIn(lastValid, clone)
+    forgetIn(reportedProblems, clone)
+    forgetIn(sites, clone)
   }
 
   /** Runs the sync, after vetting the remote of a user's repository. */
@@ -300,7 +359,7 @@ export function createContentReader(
   async function sync(repository: StoredRepository) {
     const result = await runSync(repository)
     if (result.ok) {
-      sites.delete(cloneFolder(cloneRoot, repository.id))
+      forgetSites(cloneFolder(cloneRoot, repository.id))
       logger.info(
         { source: describeRepository(repository), commit: result.commit },
         "Content repository synced"
@@ -370,10 +429,8 @@ export function createContentReader(
 
   function forget(id: string) {
     const folder = cloneFolder(cloneRoot, id)
-    lastValid.delete(folder)
-    reportedProblems.delete(folder)
+    forgetCaches(folder)
     repoSyncs.delete(folder)
-    sites.delete(folder)
   }
 
   async function remove(repository: StoredRepository) {
@@ -391,7 +448,7 @@ export function createContentReader(
   return {
     content,
     site,
-    folderOf,
+    contentRoot,
     sync,
     syncAll,
     syncInBackground,

@@ -426,6 +426,49 @@ describe("docs.file", () => {
   })
 })
 
+describe("docs.file with a content folder", () => {
+  const sub = { ...casa, contentPath: "docs" }
+  const files = Object.fromEntries(
+    Object.entries(SITE).map(([file, text]) => [`docs/${file}`, text])
+  )
+
+  test("an image is read under the content root's docs/", async () => {
+    const { handler } = await setup([sub], inClone(sub, files))
+    const file = await handler.file({
+      context: userContext(),
+      input: { repository: "casa", path: "red/img/zonas.svg" },
+    })
+    expect(file.type).toBe("image/svg+xml")
+  })
+
+  test("the docs/ of the repository's root is not the content's", async () => {
+    const { handler } = await setup(
+      [sub],
+      inClone(sub, {
+        "docs/red/img/zonas.svg": "<svg xmlns='http://www.w3.org/2000/svg'/>",
+      })
+    )
+    await expectErrorCode(
+      handler.file({
+        context: userContext(),
+        input: { repository: "casa", path: "red/img/zonas.svg" },
+      }),
+      "NOT_FOUND"
+    )
+  })
+
+  test("a content folder that is missing is NOT_FOUND", async () => {
+    const { handler } = await setup([sub], inClone(casa, {}))
+    await expectErrorCode(
+      handler.file({
+        context: userContext(),
+        input: { repository: "casa", path: "red/img/zonas.svg" },
+      }),
+      "NOT_FOUND"
+    )
+  })
+})
+
 describe("docs.search", () => {
   const CASA: Record<string, string> = {
     ...CONTENT_SITE,
