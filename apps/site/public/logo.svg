@@ -1,0 +1,23 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  width="64"
+  height="64"
+  viewBox="0 0 64 64"
+>
+  <title>COLOFON</title>
+  <style>
+  .colofon-ink {
+    fill: var(--logo-ink, #1f1e1c);
+  }
+  @media (prefers-color-scheme: dark) {
+    .colofon-ink {
+      fill: var(--logo-ink, #f1efe8);
+    }
+  }
+  </style>
+  <path
+    class="colofon-ink"
+    d="M42.55 19.14A19 20 0 1 0 42.55 44.86L36.43 42.29A11 16 0 1 1 36.43 21.71L42.55 19.14ZM36.43 21.71L42.55 19.14L45 26.5L39.5 26.5Z"
+  />
+  <circle cx="50" cy="44" r="4.5" fill="#d97757" />
+</svg>

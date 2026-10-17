@@ -1,0 +1,22 @@
+---
+interface Props {
+  class?: string
+}
+
+const { class: className } = Astro.props
+---
+
+<!-- The app's mark (apps/frontend/src/components/shared/brand/app-logo.tsx):
+     the letter follows the theme and the full stop keeps the accent. -->
+<svg
+  class={className}
+  viewBox="0 0 64 64"
+  aria-hidden="true"
+  xmlns="http://www.w3.org/2000/svg"
+>
+  <path
+    d="M42.55 19.14A19 20 0 1 0 42.55 44.86L36.43 42.29A11 16 0 1 1 36.43 21.71L42.55 19.14ZM36.43 21.71L42.55 19.14L45 26.5L39.5 26.5Z"
+    class="fill-strong"
+  ></path>
+  <circle cx="50" cy="44" r="4.5" class="fill-primary"></circle>
+</svg>
