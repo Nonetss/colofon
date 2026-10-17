@@ -72,6 +72,25 @@ export function useSidebarMemory(
     return () => element.removeEventListener("scroll", onScroll)
   }, [scroller])
 
+  // Astro moves the persisted wrapper to the new body; where `moveBefore`
+  // isn't available that detaches it, and a detached scroller loses its
+  // offset. Keep the offset from before the swap and put it back after.
+  useEffect(() => {
+    let top = 0
+    const onBeforeSwap = () => {
+      top = scroller.current?.scrollTop ?? 0
+    }
+    const onAfterSwap = () => {
+      if (scroller.current !== null) scroller.current.scrollTop = top
+    }
+    document.addEventListener("astro:before-swap", onBeforeSwap)
+    document.addEventListener("astro:after-swap", onAfterSwap)
+    return () => {
+      document.removeEventListener("astro:before-swap", onBeforeSwap)
+      document.removeEventListener("astro:after-swap", onAfterSwap)
+    }
+  }, [scroller])
+
   useEffect(() => {
     openRef.current = open
     save({ top: scroller.current?.scrollTop ?? 0, open: [...open] })
