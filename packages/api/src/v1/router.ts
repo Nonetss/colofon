@@ -7,6 +7,7 @@ import { contentRouter } from "#v1/content/router"
 import { cronRouter } from "#v1/cron/router"
 import { docsRouter } from "#v1/docs/router"
 import { entityIconRouter } from "#v1/entity-icon/router"
+import { gitCredentialRouter } from "#v1/git-credential/router"
 import { healthRouter } from "#v1/health/router"
 import { organizationRouter } from "#v1/organization/router"
 import { pluginsRouter } from "#v1/plugins/router"
@@ -31,6 +32,7 @@ export const appRouter = {
   docs: docsRouter,
   skills: skillsRouter,
   secret: secretRouter,
+  gitCredential: gitCredentialRouter,
 }
 export type AppRouter = typeof appRouter
 export type AppRouterClient = RouterClient<typeof appRouter>
