@@ -7,6 +7,7 @@ import {
 } from "drizzle-orm/pg-core"
 
 import { user } from "#schema/auth"
+import { gitCredential } from "#schema/git-credential"
 
 /**
  * A git repository of documentation content the backend clones and reads.
@@ -26,6 +27,11 @@ export const contentRepository = pgTable(
     url: text("url").notNull(),
     ownerId: text("owner_id").references(() => user.id, {
       onDelete: "cascade",
+    }),
+    // The login its clone uses; then `url` carries no credentials. A credential
+    // in use can't be deleted.
+    credentialId: uuid("credential_id").references(() => gitCredential.id, {
+      onDelete: "restrict",
     }),
     // Folder of the git repository that holds the content ("" is the root).
     contentPath: text("content_path").default("").notNull(),

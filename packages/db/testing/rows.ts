@@ -3,6 +3,7 @@ import type {
   comments,
   contentRepository,
   entityIcons,
+  gitCredential,
   member,
   organization,
   secret,
@@ -23,6 +24,7 @@ export type EntityIconRow = typeof entityIcons.$inferSelect
 export type OrganizationRow = typeof organization.$inferSelect
 export type MemberRow = typeof member.$inferSelect
 export type TeamRow = typeof team.$inferSelect
+export type GitCredentialRow = typeof gitCredential.$inferSelect
 export type SecretRow = typeof secret.$inferSelect
 export type SecretUsageRow = typeof secretUsage.$inferSelect
 
@@ -174,11 +176,27 @@ export function contentRepositoryRow(
     name: "Documentación",
     url: "https://git.example/documentacion.git",
     ownerId: null,
+    credentialId: null,
     contentPath: "",
     ref: "main",
     lastSyncedAt: null,
     lastCommit: null,
     lastSyncError: null,
+    createdAt: NOW,
+    updatedAt: NOW,
+    ...overrides,
+  }
+}
+
+export function gitCredentialRow(
+  overrides: Partial<GitCredentialRow> = {}
+): GitCredentialRow {
+  return {
+    id: "00000000-0000-4000-8000-0000000000c1",
+    userId: "user-id",
+    host: "git.example.com",
+    username: "ana",
+    ciphertext: "",
     createdAt: NOW,
     updatedAt: NOW,
     ...overrides,
