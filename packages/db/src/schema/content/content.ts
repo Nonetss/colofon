@@ -6,12 +6,16 @@ import {
   uuid,
 } from "drizzle-orm/pg-core"
 
+import { user } from "#schema/auth"
+
 /**
  * A git repository of documentation content the backend clones and reads.
  * The slug names it in the editor's public schema URLs, so the application
  * never changes it after creation. The clone lives in a folder named by the
  * id. The URL may carry credentials (https://user:token@host/...): the
- * application never returns or logs it as stored.
+ * application never returns or logs it as stored. A repository with an
+ * owner is private to that user; without one it is the platform's, read by
+ * every signed-in user.
  */
 export const contentRepository = pgTable(
   "content_repository",
@@ -20,6 +24,9 @@ export const contentRepository = pgTable(
     slug: text("slug").notNull(),
     name: text("name").notNull(),
     url: text("url").notNull(),
+    ownerId: text("owner_id").references(() => user.id, {
+      onDelete: "cascade",
+    }),
     // Branch, tag or commit checked out.
     ref: text("ref").default("main").notNull(),
     // Outcome of the last sync, all null until the first one. A failed sync

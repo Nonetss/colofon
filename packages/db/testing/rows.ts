@@ -173,6 +173,7 @@ export function contentRepositoryRow(
     slug: "documentacion",
     name: "Documentación",
     url: "https://git.example/documentacion.git",
+    ownerId: null,
     ref: "main",
     lastSyncedAt: null,
     lastCommit: null,

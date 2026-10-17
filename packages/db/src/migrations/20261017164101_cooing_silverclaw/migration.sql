@@ -1,0 +1,2 @@
+ALTER TABLE "content_repository" ADD COLUMN "owner_id" text;--> statement-breakpoint
+ALTER TABLE "content_repository" ADD CONSTRAINT "content_repository_owner_id_user_id_fkey" FOREIGN KEY ("owner_id") REFERENCES "user"("id") ON DELETE CASCADE;
