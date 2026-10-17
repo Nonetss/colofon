@@ -1,8 +1,17 @@
 import { Text } from "@/components/shared/brand/typography"
-import { SoftCardList } from "@/components/shared/data-display/soft-card-list"
+import { StatusTag } from "@/components/shared/data-display/status-dot"
 import { Hint } from "@/components/shared/feedback/hint"
 import { PageHero } from "@/components/shared/layout/page-hero"
 import { Button } from "@/components/ui/button"
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 import {
   SecretFormDialog,
@@ -47,13 +56,13 @@ function listNotice(
   return null
 }
 
-/** What the secret allows, in a few words. */
-function rulesLabel(secret: SecretListItem): string {
-  const parts = [secret.origins.join(", ")]
-  if (secret.allowWrite) parts.push("escritura")
-  if (secret.allowInUrl) parts.push("en URL")
-  if (secret.allowInBody) parts.push("en body")
-  return parts.join(" · ")
+/** The flags the secret has turned on, as their short Spanish names. */
+function allowedLabels(secret: SecretListItem): string[] {
+  const labels: string[] = []
+  if (secret.allowWrite) labels.push("Escritura")
+  if (secret.allowInUrl) labels.push("En URL")
+  if (secret.allowInBody) labels.push("En body")
+  return labels
 }
 
 function lastUseLabel(secret: SecretListItem): string {
@@ -102,71 +111,122 @@ export function ProfileSecretsContent() {
         </Text>
       )}
       {notice === null && (
-        <SoftCardList as="ul">
-          {secrets.map((secret) => (
-            <li key={secret.id} className="flex items-center gap-3 px-4 py-3">
-              <Vault
-                aria-hidden
-                className="size-4 shrink-0 text-muted-foreground"
-              />
-              <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-                <Text variant="title" className="truncate">
-                  {secret.name}
-                </Text>
-                {secret.description !== null && (
-                  <Text variant="meta-sm" tone="muted" className="truncate">
-                    {secret.description}
-                  </Text>
-                )}
-                <Text variant="data" tone="muted" className="truncate">
-                  {secret.fields.join(", ")} · {rulesLabel(secret)}
-                </Text>
-                <Text variant="meta-sm" tone="muted">
-                  {lastUseLabel(secret)}
-                </Text>
-                {secret.unreadable && (
-                  <Text variant="meta-sm" tone="destructive">
-                    No se puede descifrar: vuelve a escribir sus valores.
-                  </Text>
-                )}
-              </div>
-              <Hint label="Ver uso">
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  aria-label={`Ver el uso de ${secret.name}`}
-                  onClick={() => usageSheet.open(secret)}
-                >
-                  <History className="size-3.5" />
-                </Button>
-              </Hint>
-              <Hint label="Editar">
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  aria-label={`Editar ${secret.name}`}
-                  onClick={() => formDialog.openEdit(secret)}
-                >
-                  <Pencil className="size-3.5" />
-                </Button>
-              </Hint>
-              <Hint label="Eliminar">
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  aria-label={`Eliminar ${secret.name}`}
-                  disabled={
-                    deleteSecret.isPending &&
-                    deleteSecret.variables?.id === secret.id
-                  }
-                  onClick={() => deleteDialog.open(secret)}
-                >
-                  <Trash className="size-3.5" />
-                </Button>
-              </Hint>
-            </li>
-          ))}
-        </SoftCardList>
+        <div className="@container">
+          <ul className="grid gap-3 @2xl:grid-cols-2 @3xl:grid-cols-3">
+            {secrets.map((secret) => (
+              <li key={secret.id} className="flex">
+                <Card className="w-full gap-4 py-4">
+                  <CardHeader className="px-4">
+                    <CardTitle className="flex min-w-0 items-center gap-2">
+                      <Vault
+                        aria-hidden
+                        className="size-4 shrink-0 text-muted-foreground"
+                      />
+                      <Text variant="title" className="truncate">
+                        {secret.name}
+                      </Text>
+                    </CardTitle>
+                    {secret.description !== null && (
+                      <CardDescription>
+                        <Text variant="compact" tone="muted">
+                          {secret.description}
+                        </Text>
+                      </CardDescription>
+                    )}
+                    <CardAction className="flex items-center">
+                      <Hint label="Ver uso">
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          aria-label={`Ver el uso de ${secret.name}`}
+                          onClick={() => usageSheet.open(secret)}
+                        >
+                          <History className="size-3.5" />
+                        </Button>
+                      </Hint>
+                      <Hint label="Editar">
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          aria-label={`Editar ${secret.name}`}
+                          onClick={() => formDialog.openEdit(secret)}
+                        >
+                          <Pencil className="size-3.5" />
+                        </Button>
+                      </Hint>
+                      <Hint label="Eliminar">
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          aria-label={`Eliminar ${secret.name}`}
+                          disabled={
+                            deleteSecret.isPending &&
+                            deleteSecret.variables?.id === secret.id
+                          }
+                          onClick={() => deleteDialog.open(secret)}
+                        >
+                          <Trash className="size-3.5" />
+                        </Button>
+                      </Hint>
+                    </CardAction>
+                  </CardHeader>
+
+                  <CardContent className="flex flex-1 flex-col gap-3 px-4">
+                    <div className="flex flex-col gap-1">
+                      <Text variant="label" tone="muted">
+                        Campos
+                      </Text>
+                      <ul className="flex flex-wrap gap-1.5">
+                        {secret.fields.map((field) => (
+                          <li
+                            key={field}
+                            className="rounded-sm border bg-muted/40 px-1.5 py-0.5"
+                          >
+                            <Text variant="data">{field}</Text>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <Text variant="label" tone="muted">
+                        Orígenes
+                      </Text>
+                      <ul className="flex flex-col">
+                        {secret.origins.map((origin) => (
+                          <li key={origin} className="min-w-0">
+                            <Text
+                              variant="data"
+                              tone="muted"
+                              className="block truncate"
+                            >
+                              {origin}
+                            </Text>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </CardContent>
+
+                  <CardFooter className="flex-wrap gap-x-3 gap-y-1 border-t px-4 pt-3!">
+                    <Text variant="meta-sm" tone="muted" className="mr-auto">
+                      {lastUseLabel(secret)}
+                    </Text>
+                    {allowedLabels(secret).map((label) => (
+                      <StatusTag key={label} dotTone="primary">
+                        {label}
+                      </StatusTag>
+                    ))}
+                    {secret.unreadable && (
+                      <Text variant="meta-sm" tone="destructive">
+                        No se puede descifrar: vuelve a escribir sus valores.
+                      </Text>
+                    )}
+                  </CardFooter>
+                </Card>
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
 
       <SecretFormDialog
