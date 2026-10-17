@@ -4,6 +4,24 @@ import type { Context } from "#context"
 import { toIso, toIsoOrNull } from "#shared/dates"
 import type { apiKeyInput } from "#v1/api-key/input"
 
+type StoredApiKey = Awaited<
+  ReturnType<typeof auth.api.listApiKeys>
+>["apiKeys"][number]
+
+/** A key as `list` and `update` return it: no secret, dates as ISO strings. */
+function toListItem(apiKey: StoredApiKey) {
+  return {
+    id: apiKey.id,
+    name: apiKey.name,
+    start: apiKey.start,
+    prefix: apiKey.prefix,
+    enabled: apiKey.enabled,
+    expiresAt: toIsoOrNull(apiKey.expiresAt),
+    createdAt: toIso(apiKey.createdAt),
+    updatedAt: toIso(apiKey.updatedAt),
+  }
+}
+
 export const apiKeyHandler = {
   create: async ({
     context,
@@ -36,16 +54,23 @@ export const apiKeyHandler = {
       headers: context.headers,
     })
 
-    return apiKeys.map((apiKey) => ({
-      id: apiKey.id,
-      name: apiKey.name,
-      start: apiKey.start,
-      prefix: apiKey.prefix,
-      enabled: apiKey.enabled,
-      expiresAt: toIsoOrNull(apiKey.expiresAt),
-      createdAt: toIso(apiKey.createdAt),
-      updatedAt: toIso(apiKey.updatedAt),
-    }))
+    return apiKeys.map(toListItem)
+  },
+
+  // Better Auth answers NOT_FOUND for a key of another user.
+  update: async ({
+    context,
+    input,
+  }: {
+    context: Context
+    input: z.infer<typeof apiKeyInput.update>
+  }) => {
+    const apiKey = await auth.api.updateApiKey({
+      headers: context.headers,
+      body: { keyId: input.id, name: input.name },
+    })
+
+    return toListItem(apiKey)
   },
 
   delete: async ({

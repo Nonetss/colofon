@@ -13,6 +13,16 @@ export const apiKeyInput = {
       )
       .default(3600 * 24 * 30),
   }),
+  update: z.object({
+    id: z.string().describe("The id of the API key to rename"),
+    name: z
+      .string()
+      .trim()
+      .min(1)
+      // Better Auth's default `maximumNameLength`.
+      .max(32)
+      .describe("The new name of the API key"),
+  }),
   delete: z.object({
     id: z.string().describe("The id of the API key to delete"),
   }),

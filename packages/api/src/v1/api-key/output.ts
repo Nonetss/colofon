@@ -28,6 +28,7 @@ export const apiKeyOutput = {
   search: z
     .array(apiKeySearchItem)
     .describe("API keys owned by the user matching the search term"),
+  update: apiKeyListItem.describe("The renamed API key"),
   delete: z.object({
     id: z.string().describe("The id of the deleted API key"),
     success: z.boolean().describe("Whether the API key was deleted"),

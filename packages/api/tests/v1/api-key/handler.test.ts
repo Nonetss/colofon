@@ -3,14 +3,17 @@ import { auth } from "@nonete/auth"
 import { listedApiKey, listedApiKeys } from "#tests/fixtures/auth"
 import { userContext } from "#tests/fixtures/context"
 import { apiKeyHandler } from "#v1/api-key/handler"
+import { apiKeyInput } from "#v1/api-key/input"
 import { apiKeyRouter } from "#v1/api-key/router"
 
 const listApiKeys = spyOn(auth.api, "listApiKeys")
 const createApiKey = spyOn(auth.api, "createApiKey")
+const updateApiKey = spyOn(auth.api, "updateApiKey")
 
 afterEach(() => {
   listApiKeys.mockReset()
   createApiKey.mockReset()
+  updateApiKey.mockReset()
 })
 
 describe("apiKey.list", () => {
@@ -81,6 +84,39 @@ describe("apiKey.create without expiry", () => {
         body: { configId: "default", name: "Agent", expiresIn: null },
       })
     )
+  })
+})
+
+describe("apiKey.update", () => {
+  test("renames the caller's key and returns it as the list shows it", async () => {
+    updateApiKey.mockResolvedValue(listedApiKey({ name: "Claude Code" }))
+
+    const updated = await apiKeyHandler.update({
+      context: userContext(),
+      input: { id: "key-1", name: "Claude Code" },
+    })
+
+    expect(updateApiKey).toHaveBeenCalledWith(
+      expect.objectContaining({ body: { keyId: "key-1", name: "Claude Code" } })
+    )
+    expect(updated).toEqual({
+      id: "key-1",
+      name: "Claude Code",
+      start: "sk_ab",
+      prefix: "sk_",
+      enabled: true,
+      expiresAt: null,
+      createdAt: "2026-01-01T10:00:00.000Z",
+      updatedAt: "2026-01-01T10:00:00.000Z",
+    })
+  })
+
+  test("trims the name and refuses an empty one", () => {
+    const parse = (name: string) =>
+      apiKeyInput.update.safeParse({ id: "key-1", name })
+    expect(parse("  Codex  ").data?.name).toBe("Codex")
+    expect(parse("   ").success).toBe(false)
+    expect(parse("x".repeat(33)).success).toBe(false)
   })
 })
 

@@ -36,6 +36,22 @@ export const apiKeyRouter = {
       return apiKeyHandler.list({ context })
     }),
 
+  update: protectedProcedure
+    .meta(
+      openapi({
+        summary: "Rename an API key",
+        description:
+          "Renames an API key owned by the authenticated user. The key itself and its expiry are unchanged.",
+        tags: ["API Keys"],
+        method: "PATCH",
+      })
+    )
+    .input(apiKeyInput.update)
+    .output(apiKeyOutput.update)
+    .handler(({ context, input }) => {
+      return apiKeyHandler.update({ context, input })
+    }),
+
   delete: protectedProcedure
     .meta(
       openapi({
