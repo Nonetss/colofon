@@ -48,6 +48,10 @@ export const env = createEnv({
       .string()
       .refine(isBase64Key, "Must be the Base64 of exactly 32 bytes")
       .optional(),
+    // Internal git hosts users may add repositories from, comma separated
+    // (git.casa.lan,gitea.lan). Any other host that resolves to a private
+    // address is refused.
+    TRUSTED_GIT_HOSTS: z.string().optional(),
   },
   runtimeEnv: process.env,
   skipValidation: !!process.env.SKIP_ENV_VALIDATION,
