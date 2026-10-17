@@ -9,6 +9,19 @@ import { isIP } from "node:net"
 /** Looks up every address `host` resolves to. */
 export type ResolveHost = (host: string) => Promise<string[]>
 
+/** Host names the operator allows although they are internal. */
+export type TrustedHosts = ReadonlySet<string>
+
+/** The trusted hosts of a comma-separated list: trimmed, lower-cased, no blanks. */
+export function parseTrustedHosts(raw: string | undefined): TrustedHosts {
+  if (raw === undefined) return new Set()
+  const hosts = raw
+    .split(",")
+    .map((host) => host.trim().toLowerCase())
+    .filter((host) => host !== "")
+  return new Set(hosts)
+}
+
 export type RemoteCheck = { ok: true } | { ok: false; error: string }
 
 async function resolveAddresses(host: string): Promise<string[]> {
@@ -59,13 +72,17 @@ function hostnameOf(url: URL): string {
 /**
  * Why `url` can't be a user's repository by its text alone, or `undefined`
  * when it can: HTTPS only and no IP literal of an internal address. Names
- * are checked by `checkUserRemote`.
+ * are checked by `checkUserRemote`. A host in `trusted` is exempt.
  */
-export function userRemoteProblem(url: string): string | undefined {
+export function userRemoteProblem(
+  url: string,
+  trusted: TrustedHosts = new Set()
+): string | undefined {
   const parsed = URL.canParse(url) ? new URL(url) : undefined
   if (parsed === undefined) return "No es una URL válida"
   if (parsed.protocol !== "https:") return "La URL debe empezar por https://"
   const host = hostnameOf(parsed)
+  if (trusted.has(host)) return undefined
   if (host === "localhost" || host.endsWith(".localhost")) {
     return "La URL apunta a una dirección interna"
   }
@@ -75,21 +92,26 @@ export function userRemoteProblem(url: string): string | undefined {
 
 /**
  * The check a sync of a user's repository runs first: `userRemoteProblem`
- * plus the addresses the host resolves to, which must all be public. The
- * error never names the resolved addresses.
+ * plus the addresses the host resolves to, which must all be public, unless
+ * the host is in `trusted`. The error never names the resolved addresses.
  */
 export async function checkUserRemote(
   url: string,
-  resolve: ResolveHost = resolveAddresses
+  resolve: ResolveHost = resolveAddresses,
+  trusted: TrustedHosts = new Set()
 ): Promise<RemoteCheck> {
-  const problem = userRemoteProblem(url)
+  const problem = userRemoteProblem(url, trusted)
   if (problem !== undefined) return { ok: false, error: problem }
   const host = hostnameOf(new URL(url))
-  if (isIP(host) !== 0) return { ok: true }
+  if (isIP(host) !== 0 || trusted.has(host)) return { ok: true }
   try {
     const addresses = await resolve(host)
     if (addresses.length === 0 || addresses.some(isInternalAddress)) {
-      return { ok: false, error: "The remote host is not allowed" }
+      return {
+        ok: false,
+        error:
+          "El host del repositorio resuelve a una dirección interna y no está permitido; el administrador del servidor puede autorizarlo con TRUSTED_GIT_HOSTS",
+      }
     }
     return { ok: true }
   } catch {

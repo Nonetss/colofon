@@ -105,8 +105,10 @@ export {
 export {
   checkUserRemote,
   isInternalAddress,
+  parseTrustedHosts,
   type RemoteCheck,
   type ResolveHost,
+  type TrustedHosts,
   userRemoteProblem,
 } from "#git/user-remote"
 export { fieldLabel } from "#pages/entities"

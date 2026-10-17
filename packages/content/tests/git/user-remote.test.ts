@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test"
 import {
   checkUserRemote,
   isInternalAddress,
+  parseTrustedHosts,
   userRemoteProblem,
 } from "#git/user-remote"
 
@@ -86,5 +87,67 @@ describe("checkUserRemote", () => {
       throw new Error("must not resolve")
     })
     expect(result).toEqual({ ok: true })
+  })
+})
+
+describe("parseTrustedHosts", () => {
+  test("trims, lower-cases and drops blanks", () => {
+    expect([...parseTrustedHosts(" Git.Casa.lan , gitea.lan,")]).toEqual([
+      "git.casa.lan",
+      "gitea.lan",
+    ])
+  })
+
+  test("nothing is trusted when unset or empty", () => {
+    expect(parseTrustedHosts(undefined).size).toBe(0)
+    expect(parseTrustedHosts("").size).toBe(0)
+  })
+})
+
+describe("trusted hosts", () => {
+  const trusted = parseTrustedHosts("git.noneweb.online,10.1.1.10")
+  const internal = async () => ["10.1.1.10"]
+
+  test("a listed name that resolves to a private address is accepted", async () => {
+    const result = await checkUserRemote(
+      "https://git.noneweb.online/nonete/homelab",
+      internal,
+      trusted
+    )
+    expect(result).toEqual({ ok: true })
+  })
+
+  test("an unlisted name that resolves to a private address is refused, with advice and no address", async () => {
+    const result = await checkUserRemote(
+      "https://git.otro.lan/x.git",
+      internal,
+      trusted
+    )
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.error).toContain("TRUSTED_GIT_HOSTS")
+      expect(result.error).not.toContain("10.1.1.10")
+    }
+  })
+
+  test("without a trusted list nothing changes", async () => {
+    const result = await checkUserRemote(
+      "https://git.noneweb.online/nonete/homelab",
+      internal
+    )
+    expect(result.ok).toBe(false)
+  })
+
+  test("a listed IP literal passes the text check, an unlisted one does not", () => {
+    expect(
+      userRemoteProblem("https://10.1.1.10/x.git", trusted)
+    ).toBeUndefined()
+    expect(userRemoteProblem("https://10.1.1.11/x.git", trusted)).toBeString()
+  })
+
+  test("plain http is refused even on a listed host", () => {
+    expect(
+      userRemoteProblem("http://git.noneweb.online/x.git", trusted)
+    ).toBeString()
   })
 })
