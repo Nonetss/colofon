@@ -3,7 +3,7 @@ titulo: El editor
 descripcion: Dos ajustes del editor dan a los ficheros YAML y a los diagramas del repositorio autocompletado y validación desde la plataforma
 files: [doc-config, menu, type-declaration, entity, diagram-file]
 orden: 1
-actualizado: 2026-10-16
+actualizado: 2026-10-17
 ---
 
 ## El ajuste
@@ -18,7 +18,7 @@ La plataforma sirve, sin iniciar sesión, un **catálogo de esquemas** por repos
 
 Copia la URL exacta de la tarjeta del repositorio en `/admin/content`.
 
-- **El repositorio de contenido por sí solo:** en su `.vscode/settings.json`, con commit, para que quien lo clone tenga autocompletado.
+- **El repositorio de contenido por sí solo:** en su `.vscode/settings.json`, con commit, para que quien lo clone tenga autocompletado. Si el sitio vive en una carpeta de un repositorio de código, el ajuste va en el `.vscode/` del repositorio, no en el de la carpeta.
 - **Un espacio de trabajo con varias carpetas:** en los ajustes del espacio de trabajo; la extensión ignora este ajuste en el `.vscode/` de una carpeta.
 
 Los diagramas son JSON, que la extensión YAML no lee. El editor de JSON de VS Code, sin extensión, toma su esquema con otro ajuste en el mismo sitio:
@@ -27,7 +27,7 @@ Los diagramas son JSON, que la extensión YAML no lee. El editor de JSON de VS C
 {
   "json.schemas": [
     {
-      "fileMatch": ["/diagrams/*.json"],
+      "fileMatch": ["**/diagrams/*.json"],
       "url": "https://<platform>/api/v1/content/schemas/<slug>/diagram"
     }
   ]

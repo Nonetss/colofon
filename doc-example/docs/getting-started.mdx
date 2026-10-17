@@ -2,7 +2,7 @@
 titulo: Primeros pasos
 descripcion: Crea un repositorio de contenido, regístralo en la plataforma y publica tu primera página
 files: [doc-config, page]
-actualizado: 2026-10-15
+actualizado: 2026-10-17
 ---
 
 ## 1. Crea el repositorio
@@ -29,12 +29,18 @@ Todo lo que funciona en casa, y dónde encontrarlo.
 
 La forma más rápida de empezar es copiar este repositorio y reemplazar sus páginas y su catálogo por los tuyos.
 
+No hace falta un repositorio solo para la documentación. Si la documentación de un proyecto vive en el propio repositorio del proyecto, pon todo lo anterior dentro de una carpeta (`docs`, por ejemplo) y regístrala como **carpeta del contenido** en el paso siguiente: la plataforma lee el sitio desde ella e ignora el resto del repositorio.
+
 ## 2. Regístralo
 
 Un administrador lo añade en `/admin/content`, con un nombre, un **slug** (su nombre en las URL, que no cambia una vez creado) y su origen:
 
 - **URL externa:** una URL git `https://` (GitHub, Gitea…) y la rama que se publicará. Un repositorio privado lleva sus credenciales en la URL; la plataforma nunca las muestra ni las registra en los logs.
 - **Alojado en la plataforma:** la plataforma es el servidor git. Su tarjeta muestra la URL para clonar y hacer push, `/git/` seguido del slug y `.git`. No hay credenciales: cualquiera que llegue a la plataforma puede hacer push.
+
+En el mismo formulario, **Carpeta del contenido** dice dónde está el sitio dentro del repositorio. Déjala vacía si `doc.config.yaml` está en la raíz; si no, elígela de la lista de carpetas que tienen un `doc.config.yaml` en la rama elegida (hace falta haber hecho push antes), o escríbela a mano. Se puede cambiar después, sin volver a descargar el repositorio.
+
+Cualquier usuario, no solo un administrador, puede añadir sus propios repositorios en `/me/repositories`: solo los ve quien los añade, y deben ser URLs `https://` públicas o con su token.
 
 ## 3. Haz push
 

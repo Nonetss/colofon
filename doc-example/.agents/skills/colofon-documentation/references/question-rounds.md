@@ -15,7 +15,7 @@ With Claude Code, **`colofon-questions <section>`** (for example
 1. **Review the section.** Read its pages, their `open_questions` and any
    "_Pending…_" line in the text, and search the rest of `docs/` and
    `catalog/` for what is already answered, so it is not asked again.
-2. **Write the questions** in `questions.md` at the repository root (not under
+2. **Write the questions** in `questions.md` at the content root (not under
    `docs/`: it is not documentation). Three lines of instructions on top, then
    the questions grouped by topic, the most common need going first. Each
    question in bold, with an empty `>` line under it for the answer:

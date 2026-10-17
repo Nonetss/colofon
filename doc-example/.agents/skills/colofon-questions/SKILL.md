@@ -10,7 +10,7 @@ the language of the site's prose.
 
 Pick the phase from the state of the repository:
 
-- **`questions.md` exists at the repository root and has answers under the `>`
+- **`questions.md` exists at the content root and has answers under the `>`
   lines** → phase 2, apply the answers. No section is needed.
 - **Otherwise** → phase 1, write the questions for the section the
   user names. If they name none, or it or does not match a folder under `docs/`, ask
@@ -23,7 +23,7 @@ Pick the phase from the state of the repository:
    the catalog entities they cite.
 2. Before asking anything, search the rest of `docs/` and `catalog/` for the
    answer. Do not ask what is already answered or what can be looked up.
-3. Write `questions.md` at the repository root in the format of the reference:
+3. Write `questions.md` at the content root in the format of the reference:
    a `# Questions: <Section>` title, the three lines of instructions, the
    questions grouped by topic under `##` headings with the most common need first, each
    question in bold with just enough context, and an empty `>` line under it.

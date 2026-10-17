@@ -2,7 +2,7 @@
 titulo: El repositorio
 descripcion: Cada fichero y carpeta que puede contener un repositorio de contenido, y qué nombres pertenecen a la plataforma
 files: [doc-config, menu, page, type-declaration, entity, diagram-file, diagram-illustration, served-skill]
-actualizado: 2026-10-16
+actualizado: 2026-10-17
 ---
 
 ## Los ficheros
@@ -34,6 +34,12 @@ skills/
 ```
 
 <Diagram id="repository" />
+
+## Dónde está el sitio
+
+Todo lo anterior cuelga de la **raíz del contenido**: la raíz del repositorio git, o la carpeta con la que se registró (su **carpeta del contenido**, `docs` para la documentación de un proyecto que vive en su repositorio de código). La plataforma descarga el repositorio entero, pero solo lee esa carpeta: `doc.config.yaml`, `menu.yaml`, `docs/`, `catalog/`, `diagrams/`, `styles/` y `skills/` se buscan bajo ella, y los problemas se nombran con rutas relativas a ella. Lo que haya fuera —código, `.github/`, el `README.md` del proyecto— no se lee ni se reporta.
+
+La carpeta es una ruta relativa (`docs`, `sitio/docs`), sin `..`, sin `/` inicial y sin segmentos que empiecen por punto. Si no existe en la rama, o apunta fuera del repositorio, el sitio sale como «Sin contenido todavía».
 
 ## Nombres del contrato y nombres tuyos
 

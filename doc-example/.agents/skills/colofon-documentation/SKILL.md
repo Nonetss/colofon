@@ -5,10 +5,20 @@ description: Map and conventions of a colofon content repository as a whole. A d
 
 # Documentation
 
-This repository is **content only**: the pages, data and diagrams of one
+A colofon site is **content only**: the pages, data and diagrams of one
 documentation site of the colofon platform. The platform (a separate
-repository) clones it, validates it against its contract and publishes it.
-Nothing here is built or run.
+repository) clones the git repository, reads the site from its **content
+root**, validates it against its contract and publishes it. Nothing there is
+built or run.
+
+The content root is the top of the git repository, or a folder of it when the
+repository is registered with a **content folder** (`docs`, for the
+documentation of a code repository). Every path in these skills (`docs/`,
+`catalog/`, `menu.yaml`, `questions.md`…) is relative to the content root, so
+with a content folder `docs` the home is `docs/docs/index.mdx` of the
+repository. When you are asked to document a project from inside its own
+code repository, put the site in a folder and tell the user the folder to
+type in the platform; see `references/layout.md`, «In a code repository».
 
 ## 1. Philosophy
 

@@ -28,6 +28,9 @@ CLAUDE.md                # only @AGENTS.md
 README.md
 ```
 
+All of the above is relative to the **content root**: the top of the
+repository, or the folder it is registered with.
+
 Which sections, types, diagrams and styles this site has: the tree itself,
 its declarations and `AGENTS.md`, «Este sitio».
 
@@ -36,6 +39,38 @@ A site's repository holds no skills for the agent that writes it: the
 `doc-example`, inside the platform's repository, holds them, in
 `.agents/skills/colofon-*/` (linked from `.claude/skills/`), because it is
 their source.
+
+## In a code repository
+
+The documentation of a project can live inside the project's own repository
+instead of a repository of its own. Put the whole tree above in one folder
+(`docs/` is the usual one) and register the repository with that folder as
+its **content folder**:
+
+```
+src/ ...                         # the project's code
+docs/                            # ← the content folder: type `docs`
+├── doc.config.yaml
+├── menu.yaml
+├── docs/index.mdx               # the home (the folder docs/ inside it)
+├── catalog/
+└── diagrams/
+```
+
+- The platform still clones the whole repository; it reads only the content
+  folder. Files outside it (code, the project's own `README.md`,
+  `.github/`) are never read and never reported.
+- The folder is a plain relative path (`docs`, `site/docs`): no `..`, no
+  leading `/`, no segment that starts with a dot. In the platform's form it
+  is a select of the folders holding a `doc.config.yaml` at the chosen
+  branch, so commit and push the site before registering it.
+- Editor settings go where the editor opens the repository: the schema
+  catalog is the same, and the `json.schemas` entry for diagrams must match
+  at any depth (`**/diagrams/*.json`), see the guide's `publishing/editor`
+  page.
+- `AGENTS.md` and `CLAUDE.md` of the project stay where the project has them;
+  the site's own conventions, «Este sitio», go in the one that already
+  exists, under their own heading.
 
 ## Where does it go?
 
@@ -50,7 +85,7 @@ their source.
 | What agents that read the site should know about the documented project | A served skill in `skills/<name>/` | `colofon-skills` |
 | A convention of this site for **you**, the agent writing here | `AGENTS.md`, «Este sitio» | — |
 | An image a page shows | `docs/<section>/img/` next to the page | `colofon-docs` |
-| Unanswered questions for a round | `questions.md` at the root, temporarily | `references/question-rounds.md` |
+| Unanswered questions for a round | `questions.md` at the content root, temporarily | `references/question-rounds.md` |
 
 ## The writing skills
 
