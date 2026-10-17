@@ -93,6 +93,7 @@ export {
   cloneFolder,
   createRepoSync,
   describeRepository,
+  hostOf,
   listRemoteBranches,
   pruneClones,
   publicUrl,
@@ -101,6 +102,7 @@ export {
   readEditDates,
   redactCredentials,
   type SyncResult,
+  withCredentials,
 } from "#git/source"
 export {
   checkUserRemote,
