@@ -25,8 +25,12 @@
 .content
 .hosted
 
-# The sample content repository (a git subtree), never part of an image
-doc-example
+# The sample content repository (a git subtree): only its writing skills
+# reach an image, since the backend serves them as platform skills
+doc-example/*
+!doc-example/.agents
+doc-example/.agents/*
+!doc-example/.agents/skills
 
 Dockerfile
 **/Dockerfile
