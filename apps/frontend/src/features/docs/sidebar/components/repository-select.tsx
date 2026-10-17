@@ -1,10 +1,4 @@
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+import { SearchableCombobox } from "@/components/ui/searchable-combobox"
 import type { DocsRepository } from "@/features/docs/shared/model/nav"
 import {
   ALL_SCOPE,
@@ -18,39 +12,27 @@ export interface RepositorySelectProps {
   onChange: (value: string) => void
 }
 
-/** "Todos" plus every repository by name, at the top of the sidebar. */
+/** "Todos" plus every repository by name, searchable, at the top of the sidebar. */
 export function RepositorySelect({
   repositories,
   scope,
   onChange,
 }: RepositorySelectProps) {
-  const items = [
-    { value: ALL_SCOPE, label: "Todos" },
-    ...repositories.map((repository) => ({
-      value: repository.slug,
-      label: repository.name,
-    })),
-  ]
+  const options = repositories.map((repository) => ({
+    value: repository.slug,
+    label: repository.name,
+  }))
   const value = scopeValue(scope)
-  const current = items.find((item) => item.value === value)
   return (
-    <Select
-      items={items}
-      value={value}
-      onValueChange={(next) => {
-        if (next !== null) onChange(next)
-      }}
-    >
-      <SelectTrigger aria-label="Repositorio" className="w-full">
-        <SelectValue>{current?.label}</SelectValue>
-      </SelectTrigger>
-      <SelectContent>
-        {items.map((item) => (
-          <SelectItem key={item.value} value={item.value} label={item.label}>
-            {item.label}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+    <SearchableCombobox
+      options={options}
+      value={value === ALL_SCOPE ? undefined : value}
+      onChange={(next) => onChange(next ?? ALL_SCOPE)}
+      placeholder="Todos"
+      searchPlaceholder="Buscar repositorio…"
+      allLabel="Todos"
+      aria-label="Repositorio"
+      className="w-full max-w-none"
+    />
   )
 }
