@@ -32,6 +32,11 @@ function skill(name: string, description: string): string {
 const PLATFORM: Record<string, string> = {
   "platform/skills/colofon/SKILL.md": skill("colofon", "Cómo usar el sitio."),
   "platform/skills/casa-deploy/SKILL.md": skill("casa-deploy", "Choca."),
+  "writing/skills/colofon-docs/SKILL.md": skill(
+    "colofon-docs",
+    "Cómo escribir páginas."
+  ),
+  "writing/skills/colofon-docs/references/header.md": "# La cabecera\n",
 }
 
 function inClone(repository: StoredRepository, files: Record<string, string>) {
@@ -60,12 +65,12 @@ async function setup(
   return createSkillsHandler({
     reader,
     repositories: store,
-    platformRoot: `${root.root}/platform`,
+    platformRoots: [`${root.root}/platform`, `${root.root}/writing`],
   })
 }
 
-function digest(text: string): string {
-  return `sha256:${createHash("sha256").update(text, "utf8").digest("hex")}`
+function digest(bytes: string | Uint8Array): string {
+  return `sha256:${createHash("sha256").update(bytes).digest("hex")}`
 }
 
 const repositoryFiles = {
@@ -92,6 +97,7 @@ describe("skills.list", () => {
     expect(skills.map((entry) => entry.name)).toEqual([
       "casa-deploy",
       "colofon",
+      "colofon-docs",
     ])
     expect(skills.every((entry) => entry.repository === null)).toBe(true)
   })
@@ -104,14 +110,18 @@ describe("skills.list", () => {
     ).toEqual([
       ["casa-deploy", null],
       ["colofon", null],
+      ["colofon-docs", null],
       ["casa-red", "casa"],
       ["trabajo-deploy", "trabajo"],
     ])
-    expect(skills[3]).toEqual({
+    expect(skills[4]).toEqual({
       name: "trabajo-deploy",
       repository: { slug: "trabajo", name: "Trabajo" },
       description: "Cómo se despliega en el trabajo.",
+      type: "skill-md",
       path: "/.well-known/agent-skills/trabajo-deploy/SKILL.md",
+      archivePath: null,
+      files: [],
       digest: digest(trabajoDeploy),
     })
   })
@@ -178,5 +188,97 @@ describe("skills.get", () => {
       input: { name: "casa-deploy" },
     })
     expect(got.text).toBe(skill("casa-deploy", "Choca."))
+  })
+})
+
+describe("platform skills with files", () => {
+  test("a skill with files is an archive whose digest covers the archive", async () => {
+    const handler = await setup([], {})
+    const context = anonymousContext()
+    const { skills } = await handler.list({ context })
+    const docs = skills.find((entry) => entry.name === "colofon-docs")
+    const archive = await handler.archive({
+      context,
+      input: { name: "colofon-docs" },
+    })
+    expect(docs).toMatchObject({
+      type: "archive",
+      path: "/.well-known/agent-skills/colofon-docs/SKILL.md",
+      archivePath: "/.well-known/agent-skills/colofon-docs.tar.gz",
+      files: ["references/header.md"],
+    })
+    expect(archive.type).toBe("application/gzip")
+    expect(docs?.digest).toBe(
+      digest(new Uint8Array(await archive.arrayBuffer()))
+    )
+  })
+
+  test("a skill that is only its SKILL.md has no archive", async () => {
+    const handler = await setup([], {})
+    const { skills } = await handler.list({ context: anonymousContext() })
+    expect(skills.find((entry) => entry.name === "colofon")).toMatchObject({
+      type: "skill-md",
+      archivePath: null,
+      files: [],
+    })
+    await expectErrorCode(
+      handler.archive({
+        context: anonymousContext(),
+        input: { name: "colofon" },
+      }),
+      "NOT_FOUND"
+    )
+  })
+
+  test("the archive's bytes are the same on another handler", async () => {
+    const first = await setup([], {})
+    const second = await setup([], {})
+    const context = anonymousContext()
+    const [a, b] = await Promise.all([
+      first.list({ context }),
+      second.list({ context }),
+    ])
+    const digests = (list: typeof a) => list.skills.map((entry) => entry.digest)
+    expect(digests(a)).toEqual(digests(b))
+  })
+
+  test("file reads SKILL.md and each listed file, and nothing else", async () => {
+    const handler = await setup([casa], repositoryFiles)
+    const context = userContext()
+    expect(
+      await handler.file({
+        context,
+        input: { name: "colofon-docs", path: "references/header.md" },
+      })
+    ).toEqual({
+      name: "colofon-docs",
+      path: "references/header.md",
+      text: "# La cabecera\n",
+    })
+    const skillFile = await handler.file({
+      context,
+      input: { name: "casa-red", path: "SKILL.md" },
+    })
+    expect(skillFile.text).toBe(
+      "---\nname: casa-red\ndescription: La red.\n---\n\n# red\n"
+    )
+    for (const path of [
+      "references/no.md",
+      "../colofon/SKILL.md",
+      "references",
+    ])
+      await expectErrorCode(
+        handler.file({ context, input: { name: "colofon-docs", path } }),
+        "NOT_FOUND"
+      )
+  })
+
+  test("a name in two roots fails instead of serving either", async () => {
+    const handler = await setup([], {
+      "writing/skills/colofon/SKILL.md": skill("colofon", "Otra."),
+    })
+    await expect(handler.list({ context: anonymousContext() })).rejects.toThrow(
+      "colofon"
+    )
   })
 })
