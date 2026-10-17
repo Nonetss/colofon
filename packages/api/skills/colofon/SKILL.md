@@ -39,6 +39,8 @@ When the site's MCP is connected (`<site>/mcp`, with the key in `x-api-key`), pr
 
 To write or change a content repository for the platform, load `colofon-documentation` first: it routes to the skill for each folder (`colofon-docs`, `colofon-catalog`, `colofon-diagrams`, `colofon-styles`, `colofon-skills`) and to the task skills (`colofon-new-page`, `colofon-check`…). The repository's own `AGENTS.md`, section «Este sitio», holds what is particular to that site.
 
+The documentation does not need a repository of its own. A repository registered with a **content folder** (the «Carpeta del contenido» field of its form, `docs` for a site kept inside a code repository) is read from that folder: `doc.config.yaml`, `menu.yaml`, `docs/`, `catalog/` and the rest sit under it, not at the top of the git repository. Ask which folder the site lives in, write there, and read every path of the writing skills as relative to it. A user can also register their own repositories, private to them, at `/me/repositories`.
+
 ## Rules
 
 - Quote and link the page you used, with its full address.
