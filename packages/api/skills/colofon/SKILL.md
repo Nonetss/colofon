@@ -9,7 +9,7 @@ This skill says how to work with the site, not what it holds. The documentation 
 
 ## Credentials
 
-- Everything except the site's `/llms.txt` guide and its platform skills needs an API key in the `x-api-key` header. The user creates one on the site's `/me` page.
+- Everything except the site's `/llms.txt` guide and its platform skills needs an API key in the `x-api-key` header. The user creates one on the site's `/me/api-keys` page.
 - Ask the user for the key when you need it, keep it out of files you write and out of commits, and never print it back.
 
 ## Finding things

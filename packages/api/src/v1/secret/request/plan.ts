@@ -317,7 +317,7 @@ function ruleViolation(
   for (const secret of used) {
     if (secret === undefined) continue
     if (values(secret) === null) {
-      return `Secret "${secret.name}" can't be decrypted (the server's encryption key changed); its owner must save its values again on /me.`
+      return `Secret "${secret.name}" can't be decrypted (the server's encryption key changed); its owner must save its values again on /me/secrets.`
     }
     if (!secret.origins.some((allowed) => originAllowed(origin, allowed))) {
       return `Secret "${secret.name}" can only be sent to ${secret.origins.join(", ")}; this request goes to ${origin}.`
@@ -329,14 +329,14 @@ function ruleViolation(
     for (const ref of refsOf(placeholder.expression)) {
       const secret = byName.get(ref.secret)
       if (secret === undefined || rule.allowed(secret)) continue
-      return `Secret "${secret.name}" can't be used in ${rule.where}; its owner can turn on "${rule.flag}" for it on /me.`
+      return `Secret "${secret.name}" can't be used in ${rule.where}; its owner can turn on "${rule.flag}" for it on /me/secrets.`
     }
   }
 
   if (!isReadMethod(method)) {
     for (const secret of used) {
       if (secret === undefined || secret.allowWrite) continue
-      return `Secret "${secret.name}" only allows reading methods (GET, HEAD, OPTIONS); its owner can turn on "allow write" for it on /me to use it with ${method}.`
+      return `Secret "${secret.name}" only allows reading methods (GET, HEAD, OPTIONS); its owner can turn on "allow write" for it on /me/secrets to use it with ${method}.`
     }
   }
   return null

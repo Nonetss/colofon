@@ -91,7 +91,7 @@ describe("secretsTool", () => {
     const result = await secretsTool({ secrets: access([]), origin })
 
     expect(result.isError).toBeFalsy()
-    expect(text(result)).toContain("https://docs.example.org/me")
+    expect(text(result)).toContain("https://docs.example.org/me/secrets")
   })
 })
 

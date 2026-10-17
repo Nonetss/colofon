@@ -183,7 +183,7 @@ function installExamples(
 
 /**
  * The procedure an AI follows to install every skill the index lists, the
- * one the setup prompt on `/me` points at.
+ * one the setup prompt on `/me/skills` points at.
  */
 function setupProcedure(
   skills: readonly DocsSkill[],
@@ -225,7 +225,7 @@ export function agentGuide(
   const lines = [
     "## Para agentes",
     "",
-    `Las páginas, el índice de cada repositorio, el MCP y las skills de los proyectos necesitan una sesión o una API key en la cabecera \`x-api-key\`. Cada usuario crea sus keys en ${origin}/me.`,
+    `Las páginas, el índice de cada repositorio, el MCP y las skills de los proyectos necesitan una sesión o una API key en la cabecera \`x-api-key\`. Cada usuario crea sus keys en ${origin}/me/api-keys.`,
     "",
     "Cada página tiene su texto en Markdown en `<página>/llm.txt`, con sus enlaces como direcciones completas.",
     "",
@@ -235,7 +235,7 @@ export function agentGuide(
     "",
     "## El MCP",
     "",
-    `El MCP de la documentación está en ${mcpUrl(origin)}, con la key en \`x-api-key\`. Sus herramientas: ${tools}; si el servidor tiene activados los secretos, también ${secretTools}, para llamar a las APIs de tus servicios con los secretos que guardes en ${origin}/me sin que el agente vea sus valores; y a un administrador, ${adminTools}, para sincronizar un repositorio con su remoto al momento. En Claude Code:`,
+    `El MCP de la documentación está en ${mcpUrl(origin)}, con la key en \`x-api-key\`. Sus herramientas: ${tools}; si el servidor tiene activados los secretos, también ${secretTools}, para llamar a las APIs de tus servicios con los secretos que guardes en ${origin}/me/secrets sin que el agente vea sus valores; y a un administrador, ${adminTools}, para sincronizar un repositorio con su remoto al momento. En Claude Code:`,
     "",
     ...fenced([claudeCodeCommand(origin, KEY_PLACEHOLDER)]),
   ]

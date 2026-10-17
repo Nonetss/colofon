@@ -75,7 +75,7 @@ function secretBlock(secret: ListedSecret): string[] {
   )
   if (secret.unreadable) {
     lines.push(
-      "- Unusable: its values can't be decrypted; its owner must save them again on /me"
+      "- Unusable: its values can't be decrypted; its owner must save them again on /me/secrets"
     )
   }
   return lines
@@ -101,7 +101,7 @@ export async function secretsTool({
   if (listed.length === 0) {
     return {
       ...textResult(
-        `You have no secrets. Their owner creates them on ${origin}/me.`
+        `You have no secrets. Their owner creates them on ${origin}/me/secrets.`
       ),
       structuredContent: { secrets: structured },
     }

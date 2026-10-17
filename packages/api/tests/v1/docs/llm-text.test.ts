@@ -182,7 +182,8 @@ describe("agentGuide", () => {
   )
 
   test("says where to get the key and how to send it", () => {
-    expect(guide).toContain("https://docs.example.org/me")
+    expect(guide).toContain("https://docs.example.org/me/api-keys")
+    expect(guide).toContain("https://docs.example.org/me/secrets")
     expect(guide).toContain("`x-api-key`")
     expect(guide).toContain("`<página>/llm.txt`")
   })

@@ -1,8 +1,8 @@
 // How a client connects to the documentation MCP with an API key: its
-// address and the config each client reads. The created-key dialog on `/me`
-// shows them with the new key, and `/llms.txt` shows the Claude Code one with
-// a placeholder, so both stay the same. No imports: the dialog's browser
-// bundle loads this file on its own.
+// address and the config each client reads. The created-key dialog on
+// `/me/api-keys` shows them with the new key, and `/llms.txt` shows the Claude
+// Code one with a placeholder, so both stay the same. No imports: the dialog's
+// browser bundle loads this file on its own.
 
 /**
  * The documentation tools the server always registers (`server.ts`), as

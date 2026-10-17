@@ -217,19 +217,19 @@ describe("planRequest", () => {
   })
 
   test("refuses a secret that can't be decrypted", () => {
-    expect(
-      refusal(
-        plan(
-          {
-            method: "GET",
-            url: "https://komodo.casa.lan",
-            headers: komodoHeaders,
-          },
-          [komodo],
-          () => null
-        )
+    const message = refusal(
+      plan(
+        {
+          method: "GET",
+          url: "https://komodo.casa.lan",
+          headers: komodoHeaders,
+        },
+        [komodo],
+        () => null
       )
-    ).toContain("can't be decrypted")
+    )
+    expect(message).toContain("can't be decrypted")
+    expect(message).toContain("/me/secrets")
   })
 
   test.each(["Host", "content-length", "Transfer-Encoding"])(
