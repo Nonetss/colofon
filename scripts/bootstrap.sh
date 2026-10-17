@@ -147,6 +147,16 @@ gen_password() {
   openssl rand -hex 32
 }
 
+# The `.env` line for the trusted git hosts: set when answered, an example
+# comment otherwise.
+trusted_hosts_line() {
+  if [[ -n "$TRUSTED_GIT_HOSTS" ]]; then
+    printf 'TRUSTED_GIT_HOSTS=%s' "$(env_quote "$TRUSTED_GIT_HOSTS")"
+  else
+    printf '# TRUSTED_GIT_HOSTS=git.casa.lan'
+  fi
+}
+
 # ── Inputs ───────────────────────────────────────────────────────────────────
 log "Configuration — answer the prompts."
 echo
@@ -184,6 +194,15 @@ if [[ "$PUBLIC_URL" =~ ^http://([^/:]+) ]]; then
   fi
 fi
 
+# Optional. A user's repository is refused when its host resolves to a private
+# address; the hosts listed here (a Gitea at home, say) are the exception.
+TRUSTED_GIT_HOSTS=$(prompt "Trusted internal git hosts users may add repositories from, comma separated (empty for none)" "")
+TRUSTED_GIT_HOSTS="${TRUSTED_GIT_HOSTS//[[:space:]]/}"
+if [[ ! "$TRUSTED_GIT_HOSTS" =~ ^([A-Za-z0-9.-]+(,[A-Za-z0-9.-]+)*)?$ ]]; then
+  err "Invalid hosts (host names separated by commas, no spaces, quotes or ports)"
+  exit 1
+fi
+
 ADMIN_NAME=$(prompt "Admin name" "Admin")
 [[ -n "$ADMIN_NAME" ]] || { err "Name cannot be empty"; exit 1; }
 has_single_quote "$ADMIN_NAME" && { err "Name cannot contain a single quote (')"; exit 1; }
@@ -211,6 +230,7 @@ log "Configuration summary:"
 echo "  Public URL:        $PUBLIC_URL"
 echo "  Frontend port:     $FRONTEND_PORT"
 echo "  Admin:             $ADMIN_NAME <$ADMIN_EMAIL>"
+echo "  Trusted git hosts: ${TRUSTED_GIT_HOSTS:-none}"
 echo
 
 if ! prompt_confirm "Generate .env and continue?"; then
@@ -256,6 +276,10 @@ BETTER_AUTH_SECRET=$(env_quote "$BETTER_AUTH_SECRET")
 # Encrypts the users' secrets (the MCP's \`request\` tool). Losing or changing
 # it makes every stored secret unreadable.
 SECRETS_ENCRYPTION_KEY=$(env_quote "$SECRETS_ENCRYPTION_KEY")
+
+# Internal git hosts users may add repositories from, comma separated. Any
+# other host that resolves to a private address is refused. Optional.
+$(trusted_hosts_line)
 
 # ── Seed admin ───────────────────────────────────────────────────────────────
 # Created on first backend boot (idempotent by email). Leave blank to skip.
