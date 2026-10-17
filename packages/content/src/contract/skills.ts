@@ -32,6 +32,18 @@ export type RepositorySkills = {
   problems: PageProblem[]
 }
 
+/** A file of a skill besides its `SKILL.md`: its POSIX path in the folder and its text. */
+export type SkillFile = { path: string; text: string }
+
+/** A valid skill with every other file of its folder, sorted by path. */
+export type SkillWithFiles = ContentSkill & { files: SkillFile[] }
+
+export type SkillsWithFiles = {
+  /** The valid skills, by name. */
+  skills: SkillWithFiles[]
+  problems: PageProblem[]
+}
+
 /** Whether `name` is a skill name: lowercase words joined by single hyphens. */
 export function isSkillName(name: string): boolean {
   return name.length <= MAX_SKILL_NAME && NAME.test(name)
@@ -82,6 +94,86 @@ export async function readSkills(root: string): Promise<RepositorySkills> {
     skills.push(read.skill)
   }
   return { skills, problems }
+}
+
+/**
+ * The skills under `root`'s `skills/`, each with the other files of its folder
+ * (`references/…`): how the platform's own skills are read. Dot-files and
+ * symbolic links are skipped; a file that isn't UTF-8 text is reported and
+ * left out. A content repository's skills are read with `readSkills`, whose
+ * extra files the platform ignores.
+ */
+export async function readSkillsWithFiles(
+  root: string
+): Promise<SkillsWithFiles> {
+  const read = await readSkills(root)
+  const problems = [...read.problems]
+  const skills: SkillWithFiles[] = []
+  for (const skill of read.skills) {
+    const files: SkillFile[] = []
+    await collectFiles(
+      path.join(root, SKILLS_DIR, skill.name),
+      "",
+      `${SKILLS_DIR}/${skill.name}`,
+      files,
+      problems
+    )
+    files.sort((a, b) => comparePaths(a.path, b.path))
+    skills.push({ ...skill, files })
+  }
+  return { skills, problems }
+}
+
+const UTF8 = new TextDecoder("utf-8", { fatal: true })
+
+async function collectFiles(
+  folder: string,
+  prefix: string,
+  shown: string,
+  files: SkillFile[],
+  problems: PageProblem[]
+): Promise<void> {
+  for (const entry of await listEntries(path.join(folder, prefix))) {
+    const relative = joinPosix(prefix, entry.name)
+    if (entry.isDirectory()) {
+      await collectFiles(folder, relative, shown, files, problems)
+      continue
+    }
+    if (!entry.isFile()) continue
+    if (relative === SKILL_FILE) continue
+    const bytes = await readFile(path.join(folder, relative))
+    const text = decodeUtf8(bytes)
+    if (text === null) {
+      problems.push(
+        problem(
+          `${shown}/${relative}`,
+          "Solo puede tener ficheros de texto UTF-8"
+        )
+      )
+      continue
+    }
+    files.push({ path: relative, text })
+  }
+}
+
+function joinPosix(prefix: string, name: string): string {
+  if (prefix === "") return name
+  return `${prefix}/${name}`
+}
+
+function decodeUtf8(bytes: Uint8Array): string | null {
+  try {
+    return UTF8.decode(bytes)
+  } catch {
+    return null
+  }
+}
+
+/** Code-point order, the same on every machine and locale. */
+function comparePaths(a: string, b: string): number {
+  if (a < b) return -1
+  if (a > b) return 1
+  return 0
 }
 
 function problem(file: string, message: string): PageProblem {

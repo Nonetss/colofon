@@ -1,5 +1,12 @@
 import { afterEach, describe, expect, test } from "bun:test"
-import { isSkillName, readSkills, withSkillName } from "#contract/skills"
+import { symlink, writeFile } from "node:fs/promises"
+import path from "node:path"
+import {
+  isSkillName,
+  readSkills,
+  readSkillsWithFiles,
+  withSkillName,
+} from "#contract/skills"
 import { type ContentDir, createContentDir } from "#tests/fixtures/content-dir"
 
 const dirs: ContentDir[] = []
@@ -118,6 +125,82 @@ describe("readSkills", () => {
       "skills/Deploy",
       "skills/README.md",
       "skills/vacia/SKILL.md",
+    ])
+  })
+})
+
+describe("readSkillsWithFiles", () => {
+  async function dirOf(files: Record<string, string>) {
+    const dir = await createContentDir(files)
+    dirs.push(dir)
+    return dir
+  }
+
+  test("carries every other file of the folder, nested, by path", async () => {
+    const dir = await dirOf({
+      "skills/deploy/SKILL.md": skill("deploy"),
+      "skills/deploy/references/z.md": "zeta",
+      "skills/deploy/references/a/b.md": "be",
+      "skills/deploy/notas.md": "notas",
+      "skills/red/SKILL.md": skill("red"),
+    })
+    const read = await readSkillsWithFiles(dir.root)
+    expect(read.problems).toEqual([])
+    expect(read.skills.map((entry) => [entry.name, entry.files])).toEqual([
+      [
+        "deploy",
+        [
+          { path: "notas.md", text: "notas" },
+          { path: "references/a/b.md", text: "be" },
+          { path: "references/z.md", text: "zeta" },
+        ],
+      ],
+      ["red", []],
+    ])
+  })
+
+  test("skips dot-files and symbolic links", async () => {
+    const dir = await dirOf({
+      "skills/deploy/SKILL.md": skill("deploy"),
+      "skills/deploy/.oculto.md": "x",
+      "skills/deploy/.git/config": "x",
+      "fuera.md": "fuera",
+    })
+    await symlink(
+      path.join(dir.root, "fuera.md"),
+      path.join(dir.root, "skills/deploy/enlace.md")
+    )
+    const read = await readSkillsWithFiles(dir.root)
+    expect(read.skills[0]?.files).toEqual([])
+    expect(read.problems).toEqual([])
+  })
+
+  test("a file that isn't UTF-8 text is reported and left out", async () => {
+    const dir = await dirOf({
+      "skills/deploy/SKILL.md": skill("deploy"),
+      "skills/deploy/ok.md": "ok",
+    })
+    await writeFile(
+      path.join(dir.root, "skills/deploy/logo.png"),
+      new Uint8Array([0x89, 0x50, 0xff, 0xfe, 0x00])
+    )
+    const read = await readSkillsWithFiles(dir.root)
+    expect(read.skills[0]?.files).toEqual([{ path: "ok.md", text: "ok" }])
+    expect(read.problems).toEqual([
+      {
+        file: "skills/deploy/logo.png",
+        line: null,
+        message: "Solo puede tener ficheros de texto UTF-8",
+      },
+    ])
+  })
+
+  test("keeps the problems of the skills themselves", async () => {
+    const dir = await dirOf({ "skills/deploy/SKILL.md": skill("otra") })
+    const read = await readSkillsWithFiles(dir.root)
+    expect(read.skills).toEqual([])
+    expect(read.problems.map((entry) => entry.file)).toEqual([
+      "skills/deploy/SKILL.md",
     ])
   })
 })

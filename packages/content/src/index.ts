@@ -40,8 +40,12 @@ export {
   MAX_SKILL_NAME,
   type RepositorySkills,
   readSkills,
+  readSkillsWithFiles,
   SKILL_FILE,
   SKILLS_DIR,
+  type SkillFile,
+  type SkillsWithFiles,
+  type SkillWithFiles,
   withSkillName,
 } from "#contract/skills"
 export {
