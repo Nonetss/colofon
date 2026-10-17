@@ -225,7 +225,7 @@ export const contentRouter = {
       openapi({
         summary: "List the caller's own repositories",
         description:
-          "The git repositories the caller added, ordered by name, private to them, with the most they may own. Their URLs are stripped of credentials.",
+          "The git repositories the caller added, ordered by name, private to them. Their URLs are stripped of credentials.",
         tags,
         method: "GET",
       })
@@ -238,7 +238,7 @@ export const contentRouter = {
       openapi({
         summary: "Add one of the caller's own repositories",
         description:
-          "Stores an external git repository private to the caller and starts its first sync without waiting for it. The URL must be a public https one. CONFLICT when the slug is taken by any repository; BAD_REQUEST past the limit.",
+          "Stores an external git repository private to the caller and starts its first sync without waiting for it. The URL must be a public https one. CONFLICT when the slug is taken by any repository.",
         tags,
         method: "POST",
         successStatus: 201,

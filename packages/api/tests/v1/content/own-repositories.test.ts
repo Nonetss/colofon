@@ -10,11 +10,7 @@ import {
 import { fakeDb } from "#tests/fixtures/db"
 import { resetEnv, testEnv } from "#tests/fixtures/env"
 import { expectErrorCode } from "#tests/fixtures/errors"
-import {
-  audienceFilter,
-  createContentHandler,
-  MAX_USER_REPOSITORIES,
-} from "#v1/content/handler"
+import { audienceFilter, createContentHandler } from "#v1/content/handler"
 import { contentInput } from "#v1/content/input"
 import type { ContentReader, StoredRepository } from "#v1/content/reader"
 import { contentRouter } from "#v1/content/router"
@@ -92,7 +88,7 @@ describe("access to the owner procedures", () => {
     const answer = await call(contentRouter.listMyRepositories, undefined, {
       context: userContext(),
     })
-    expect(answer).toEqual({ limit: MAX_USER_REPOSITORIES, repositories: [] })
+    expect(answer).toEqual([])
   })
 })
 
@@ -100,7 +96,7 @@ describe("content.listMyRepositories", () => {
   test("lists the caller's repositories without credentials or hosting fields", async () => {
     fakeDb.queue("query.contentRepository.findMany", [owned])
 
-    const { repositories } = await handler.listMyRepositories({
+    const repositories = await handler.listMyRepositories({
       context: userContext(),
     })
 
@@ -125,18 +121,7 @@ describe("content.createMyRepository", () => {
     path: "",
   }
 
-  test("the eleventh repository is BAD_REQUEST and nothing is inserted", async () => {
-    fakeDb.queue("select", [{ total: MAX_USER_REPOSITORIES }])
-
-    await expectErrorCode(
-      handler.createMyRepository({ context: userContext(), input }),
-      "BAD_REQUEST"
-    )
-    expect(fakeDb.calls("insert")).toEqual([])
-  })
-
   test("a slug used by anyone is CONFLICT", async () => {
-    fakeDb.queue("select", [{ total: 0 }])
     fakeDb.queue(
       "query.contentRepository.findFirst",
       contentRepositoryRow({ slug: "apuntes", ownerId: "other-id" })
@@ -151,7 +136,6 @@ describe("content.createMyRepository", () => {
   })
 
   test("stores it as the caller's, starts its sync and hides the token", async () => {
-    fakeDb.queue("select", [{ total: 0 }])
     fakeDb.queue("query.contentRepository.findFirst", undefined)
     fakeDb.queue("insert", [owned])
 
@@ -177,7 +161,6 @@ describe("content.createMyRepository", () => {
 
 describe("the content folder of an own repository", () => {
   test("it is stored on create and shown in the answer", async () => {
-    fakeDb.queue("select", [{ total: 0 }])
     fakeDb.queue("query.contentRepository.findFirst", undefined)
     fakeDb.queue("insert", [{ ...owned, contentPath: "docs" }])
 

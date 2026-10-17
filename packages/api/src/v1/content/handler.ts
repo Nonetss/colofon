@@ -23,7 +23,7 @@ import { db } from "@nonete/db"
 import { type ContentRepository, contentRepository } from "@nonete/db/schema"
 import { env } from "@nonete/env/server"
 import { child } from "@nonete/logger"
-import { count, eq } from "drizzle-orm"
+import { eq } from "drizzle-orm"
 import type { z } from "zod"
 import type { Context } from "#context"
 import { errors } from "#errors"
@@ -55,8 +55,6 @@ import { checkUserRemoteWithTrusted } from "#v1/content/trusted-hosts"
 export const SCHEMAS_PATH = "/api/v1/content/schemas"
 
 const NOT_FOUND_MESSAGE = "Repositorio de contenido no encontrado"
-/** How many repositories a user may own. */
-export const MAX_USER_REPOSITORIES = 10
 
 const NOT_IN_REPOSITORY_MESSAGE = "No existe esa rama o ruta en el repositorio"
 
@@ -513,10 +511,7 @@ export function createContentHandler(
         where: { ownerId: ownerOf(context) },
         orderBy: { name: "asc" },
       })
-      return {
-        limit: MAX_USER_REPOSITORIES,
-        repositories: rows.map(toOwnRepository),
-      }
+      return rows.map(toOwnRepository)
     },
 
     async createMyRepository({
@@ -527,15 +522,6 @@ export function createContentHandler(
       input: z.infer<typeof contentInput.createMyRepository>
     }): Promise<z.infer<typeof contentOutput.createMyRepository>> {
       const ownerId = ownerOf(context)
-      const [owned] = await db
-        .select({ total: count() })
-        .from(contentRepository)
-        .where(eq(contentRepository.ownerId, ownerId))
-      if ((owned?.total ?? 0) >= MAX_USER_REPOSITORIES) {
-        throw errors.BAD_REQUEST({
-          message: `Solo puedes tener ${MAX_USER_REPOSITORIES} repositorios`,
-        })
-      }
       const conflict = errors.CONFLICT({
         message: "Ya existe un repositorio con ese slug",
       })

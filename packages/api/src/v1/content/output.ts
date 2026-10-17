@@ -89,10 +89,7 @@ export const contentOutput = {
   typeSchema: jsonSchema,
   entitySchema: jsonSchema,
   listRepositories: z.array(repository),
-  listMyRepositories: z.object({
-    limit: z.number().int().describe("How many repositories a user may own"),
-    repositories: z.array(ownRepository),
-  }),
+  listMyRepositories: z.array(ownRepository),
   createMyRepository: ownRepository,
   updateMyRepository: ownRepository,
   deleteMyRepository: z.object({ id: z.uuid(), success: z.boolean() }),
