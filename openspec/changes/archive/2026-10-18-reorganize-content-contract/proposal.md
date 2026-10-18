@@ -6,8 +6,9 @@
 
 - `contract/` is split into subfolders by concern: `schema/` (meta-schema, entity schema, enum and icon helpers, the generated Lucide list), `read/` (declarations, files and paths, YAML, JSON, problems, `isRecord`), `versions/` (version detection, the contract 1 translation, version-aware reading) and `catalog/` (reading entities, catalog paths). `images.ts` and `reserved-slugs.ts` stay at its root.
 - `load.ts` is split across `read/` by reason to change; `ContentProblem` and `PageProblem` live together in `read/problems.ts`.
-- The JSON Schema renaming for contract 1 moves to `editor/contract-1-schemas.ts`; `versions/contract-1.ts` exposes the Spanish names it needs.
+- The JSON Schema renaming for contract 1 moves to `editor/v1-schemas.ts`; `versions/v1.ts` exposes the Spanish names it needs.
 - A new area, `skills/`, reads a repository's `skills/` folder (formerly `contract/skills.ts`). It imports only from `contract`, and `pages` may import from it.
+- `contract-1.ts` becomes `versions/v1.ts`, which no longer repeats `contract` under `contract/` and reads as a version next to `detect.ts`; its exports drop the repetition too (`translateV1`, `v1Path`, `V1_FILES`, `V1File`, `v1JsonSchema`, `v1Problems`).
 - `isRecord` is defined once, in `contract/read/records.ts`, and the copies in `diagrams/` and `pages/` import it.
 - The public barrel exports the same names; tests move to mirror the new paths. No behavior changes.
 
