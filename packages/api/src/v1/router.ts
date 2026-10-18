@@ -12,6 +12,7 @@ import { healthRouter } from "#v1/health/router"
 import { organizationRouter } from "#v1/organization/router"
 import { pluginsRouter } from "#v1/plugins/router"
 import { privateRouter } from "#v1/private/router"
+import { releaseRouter } from "#v1/release/router"
 import { secretRouter } from "#v1/secret/router"
 import { sessionHistoryRouter } from "#v1/session-history/router"
 import { skillsRouter } from "#v1/skills/router"
@@ -19,6 +20,7 @@ import { skillsRouter } from "#v1/skills/router"
 export const appRouter = {
   authConfig: authConfigRouter,
   health: healthRouter,
+  release: releaseRouter,
   apiKey: apiKeyRouter,
   comment: commentRouter,
   entityIcon: entityIconRouter,
