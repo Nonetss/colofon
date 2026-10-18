@@ -108,6 +108,17 @@ export interface SiteNavSearchItem {
   keywords?: string[]
   /** Text around where a full-text search matched, shown instead of the description. */
   excerpt?: SiteNavSearchExcerpt
+  /** Other sections of the record that matched, listed under it. */
+  sections?: SiteNavSearchSection[]
+  /** The query's words the record lacks, in a partial answer. */
+  missing?: string[]
+}
+
+/** Another place in a record where a full-text search matched. */
+export interface SiteNavSearchSection {
+  href: string
+  label: string
+  excerpt: SiteNavSearchExcerpt
 }
 
 /** A stretch of text with the matched words, as offsets into `text`. */

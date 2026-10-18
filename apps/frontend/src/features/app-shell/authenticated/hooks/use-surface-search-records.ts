@@ -4,50 +4,48 @@ import {
   getSearchSourceSurfaces,
   recordHref,
   recordTrail,
-  serverSearchText,
+  sourceSearchText,
   surfaceSearchSources,
 } from "@/features/app-shell/authenticated/model/surface-search-sources"
-import { useDebouncedValue } from "@/hooks/use-debounced-value"
 import { resolveIconRef } from "@/lib/icon-registry"
 import type { SiteNavSearchGroup } from "@/lib/site-nav"
-
-/** Pause after the last keystroke before server-searched sources are asked:
- *  short, since the palette is typed in short bursts and waits on it. */
-const SEARCH_DEBOUNCE_MS = 150
 
 interface UseSurfaceSearchRecordsOptions {
   isAdmin: boolean
   /** Fetch only while the search dialog is open. */
   enabled: boolean
-  /** What the user typed; server-searched sources query its settled form. */
-  search: string
+  /**
+   * What the user typed once they paused (the dialog debounces it), which
+   * server-searched sources query.
+   */
+  settledSearch: string
+  /** The repository the dialog searches, `undefined` for every one. */
+  scope: string | undefined
 }
 
 /**
  * Records behind the dynamic surfaces that declare a `searchSource`, as one
  * search group per source. Full-list sources reuse each list page's query
  * (shared cache, so an already loaded list costs no request); server-searched
- * ones ask their entity's `search` for the debounced text, minus the words
+ * ones ask their entity's `search` for the settled text, minus the words
  * their own section labels already match. A source that is still loading or
  * failed yields no group, so the static results never wait on it.
  */
 export function useSurfaceSearchRecords({
   isAdmin,
   enabled,
-  search,
+  settledSearch,
+  scope,
 }: UseSurfaceSearchRecordsOptions): SiteNavSearchGroup[] {
   const targets = useMemo(() => getSearchSourceSurfaces(isAdmin), [isAdmin])
-  const settledSearch = useDebouncedValue(search.trim(), SEARCH_DEBOUNCE_MS)
   const results = useQueries({
-    queries: targets.map(({ surface, source, trail }) => {
-      const { serverSearch, queryOptions } = surfaceSearchSources[source]
-      return queryOptions({
+    queries: targets.map((target) =>
+      surfaceSearchSources[target.source].queryOptions({
         enabled,
-        search: serverSearch
-          ? serverSearchText(settledSearch, [...trail, surface.label])
-          : "",
+        search: sourceSearchText(target, settledSearch),
+        scope,
       })
-    }),
+    ),
   })
 
   return targets.flatMap(({ surface, source, trail }, index) => {
@@ -68,6 +66,8 @@ export function useSurfaceSearchRecords({
           trail: recordTrail(trail, entry),
           keywords: [surface.label, ...(entry.keywords ?? [])],
           excerpt: entry.excerpt,
+          sections: entry.sections,
+          missing: entry.missing,
         },
       ]
     })

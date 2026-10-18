@@ -1,5 +1,5 @@
 import type { User } from "better-auth"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { AppLogo } from "@/components/shared/brand/app-logo"
 import { Hint } from "@/components/shared/feedback/hint"
 import { NavbarAction } from "@/components/shared/navigation/navbar-action"
@@ -8,11 +8,16 @@ import { AppLink } from "@/components/ui/app-link"
 import { NavbarSearchTrigger } from "@/features/app-shell/authenticated/components/navbar-search-trigger"
 import { SurfaceSearchDialog } from "@/features/app-shell/authenticated/components/surface-search-dialog"
 import { UserNav } from "@/features/app-shell/authenticated/components/user-nav"
+import {
+  RECENT_DOC_PAGES,
+  recordableDocPath,
+} from "@/features/app-shell/authenticated/model/recent-doc-pages"
 import { usePageSidebarId } from "@/hooks/use-page-sidebar"
 import { usePathname } from "@/hooks/use-pathname"
 import { useScrolled } from "@/hooks/use-scrolled"
 import { getIcon } from "@/lib/icon-registry"
 import { togglePageSidebar } from "@/lib/page-sidebar"
+import { recordRecent } from "@/lib/recent-surfaces"
 import { cn } from "@/lib/utils"
 import { QueryProvider } from "@/providers/query-provider"
 
@@ -51,6 +56,13 @@ export function NavbarAuthenticated({
   const scrolled = useScrolled()
   const [searchOpen, setSearchOpen] = useState(false)
   const openSearch = () => setSearchOpen(true)
+
+  // Remember the documentation pages the user reads, for the search's
+  // "Recientes".
+  useEffect(() => {
+    const path = recordableDocPath(currentPath)
+    if (path !== null) recordRecent(RECENT_DOC_PAGES, user.id, path)
+  }, [currentPath, user.id])
 
   // The account menu and the search read through the browser-wide query
   // client, sharing its cache with the page islands.
@@ -96,6 +108,7 @@ export function NavbarAuthenticated({
           onOpenChange={setSearchOpen}
           isAdmin={isAdmin}
           currentPath={currentPath}
+          userId={user.id}
         />
       </header>
     </QueryProvider>

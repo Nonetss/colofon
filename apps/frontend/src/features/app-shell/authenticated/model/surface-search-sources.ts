@@ -4,7 +4,6 @@ import {
   type UseQueryOptions,
 } from "@tanstack/react-query"
 import { docSearchEntries } from "@/features/app-shell/authenticated/model/doc-search-entries"
-import { readScopeCookie } from "@/features/docs/shared"
 import {
   type AppSurface,
   appSurfaceList,
@@ -13,7 +12,7 @@ import {
 } from "@/lib/app-surfaces"
 import { foldText } from "@/lib/fold-text"
 import { orpc } from "@/lib/orpc"
-import type { SiteNavSearchExcerpt } from "@/lib/site-nav"
+import type { SiteNavSearchExcerpt, SiteNavSearchSection } from "@/lib/site-nav"
 
 /** One record behind a dynamic surface, as the navbar search lists it. */
 export interface SurfaceSearchEntry {
@@ -35,13 +34,27 @@ export interface SurfaceSearchEntry {
   keywords?: string[]
   /** Where a full-text search matched, shown instead of the description. */
   excerpt?: SiteNavSearchExcerpt
+  /** Other sections of the record where a full-text search matched. */
+  sections?: SiteNavSearchSection[]
+  /** The query's words the record lacks, in a partial answer. */
+  missing?: string[]
 }
 
-type SearchQueryOptions<TData, TError, TQueryKey extends QueryKey> = (options: {
+/** What the dialog tells every source. */
+export interface SourceQueryOptions {
   enabled: boolean
   /** Settled text for a server-searched source; full-list sources ignore it. */
   search: string
-}) => UseQueryOptions<TData, TError, SurfaceSearchEntry[], TQueryKey>
+  /**
+   * The repository the dialog searches, `undefined` for every one; sources
+   * whose records don't belong to a repository ignore it.
+   */
+  scope: string | undefined
+}
+
+type SearchQueryOptions<TData, TError, TQueryKey extends QueryKey> = (
+  options: SourceQueryOptions
+) => UseQueryOptions<TData, TError, SurfaceSearchEntry[], TQueryKey>
 
 /**
  * One source of the registry. It keeps its procedure's own record, error and
@@ -117,13 +130,7 @@ export function defineServerSearchSource<
  * while the next one loads but not once the text no longer searches.
  */
 export function serverSearchQuery(
-  {
-    enabled,
-    search,
-  }: {
-    enabled: boolean
-    search: string
-  },
+  { enabled, search }: Pick<SourceQueryOptions, "enabled" | "search">,
   limit = SEARCH_RECORD_LIMIT
 ) {
   const input = { query: search, limit }
@@ -132,6 +139,16 @@ export function serverSearchQuery(
     return { input, enabled: false, placeholderData: undefined }
   }
   return { input, enabled: true, placeholderData: keepPreviousData }
+}
+
+/**
+ * Input and gating of `v1.docs.search` for the dialog's settled text and
+ * scope. The pages source and the dialog's catalog and partial notice both
+ * spread it, so they share one query key and one request.
+ */
+export function docsSearchQuery(options: SourceQueryOptions) {
+  const query = serverSearchQuery(options, DOC_SEARCH_LIMIT)
+  return { ...query, input: { ...query.input, repository: options.scope } }
 }
 
 /**
@@ -160,23 +177,15 @@ export function serverSearchQuery(
  * ),
  * ```
  */
-/** The scope cookie as the browser holds it, `undefined` outside one. */
-function browserScopeCookie(): string | undefined {
-  if (typeof document === "undefined") return undefined
-  return readScopeCookie(document.cookie)
-}
-
 export const surfaceSearchSources = {
-  // Full text over the pages of the reader's scope (the server reads every
-  // repository when the cookie names none).
-  "doc-pages": defineServerSearchSource("Documentación", (options) => {
-    const query = serverSearchQuery(options, DOC_SEARCH_LIMIT)
-    return orpc.v1.docs.search.queryOptions({
-      ...query,
-      input: { ...query.input, repository: browserScopeCookie() },
+  // Full text over the pages of the dialog's scope (the server reads every
+  // repository when it names none).
+  "doc-pages": defineServerSearchSource("Documentación", (options) =>
+    orpc.v1.docs.search.queryOptions({
+      ...docsSearchQuery(options),
       select: docSearchEntries,
     })
-  }),
+  ),
 } satisfies Record<SurfaceSearchSourceId, SurfaceSearchSourceShape>
 
 export interface SearchSourceSurface {
@@ -218,6 +227,18 @@ export function serverSearchText(search: string, sectionLabels: string[]) {
         word && !foldedLabels.some((label) => label.includes(foldText(word)))
     )
     .join(" ")
+}
+
+/**
+ * The text a source's server search is asked for: the settled text minus its
+ * own section words for a server-searched source, nothing for a full-list one.
+ */
+export function sourceSearchText(
+  { surface, source, trail }: SearchSourceSurface,
+  settledSearch: string
+): string {
+  if (!surfaceSearchSources[source].serverSearch) return ""
+  return serverSearchText(settledSearch, [...trail, surface.label])
 }
 
 /**
