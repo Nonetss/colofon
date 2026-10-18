@@ -4,7 +4,7 @@ import { paginationLimit, sortedPaginationCursor } from "#shared/pagination"
 import { searchQuery } from "#shared/search"
 
 /** Orderings of the admin user list; `createdAt` is the natural order. */
-export const ADMIN_USER_SORT_KEYS = [
+const ADMIN_USER_SORT_KEYS = [
   "name",
   "email",
   "role",

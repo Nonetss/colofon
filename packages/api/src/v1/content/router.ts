@@ -6,9 +6,9 @@ import {
   protectedProcedure,
   publicProcedure,
 } from "#index"
-import { contentHandler } from "#v1/content/handler"
 import { contentInput } from "#v1/content/input"
 import { contentOutput } from "#v1/content/output"
+import { contentHandler } from "#v1/content/runtime"
 
 // The schema endpoints are public on purpose: the editor's YAML language
 // server fetches them and cannot sign in. They expose declarations, entity

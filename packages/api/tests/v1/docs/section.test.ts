@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test"
 import type { Element, Root } from "hast"
-import { sectionTree } from "#v1/mcp/section"
+import { sectionTree } from "#v1/docs/section"
 
 function el(
   tagName: string,

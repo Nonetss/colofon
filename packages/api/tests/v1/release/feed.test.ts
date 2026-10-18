@@ -7,7 +7,7 @@ import {
   type LatestRelease,
   newerRelease,
   parseLatestRelease,
-} from "#shared/releases"
+} from "#v1/release/feed"
 
 const release: LatestRelease = {
   version: "0.4.0",

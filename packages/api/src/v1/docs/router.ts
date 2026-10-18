@@ -1,14 +1,8 @@
 import { openapi } from "@orpc/openapi"
 import { protectedProcedure } from "#index"
-import { contentReader, repositoryStore } from "#v1/content/handler"
-import { createDocsHandler } from "#v1/docs/handler"
+import { docsHandler } from "#v1/content/runtime"
 import { docsInput } from "#v1/docs/input"
 import { docsOutput } from "#v1/docs/output"
-
-const docsHandler = createDocsHandler({
-  reader: contentReader,
-  repositories: repositoryStore,
-})
 
 const tags = ["Docs"]
 

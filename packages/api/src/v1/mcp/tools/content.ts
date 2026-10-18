@@ -5,6 +5,7 @@ import { z } from "zod"
 import type { AppRouterClient } from "#router"
 import { contentInput } from "#v1/content/input"
 import type { OwnRepositoryOutput } from "#v1/content/output"
+import { errorResult, textResult } from "#v1/mcp/results"
 
 // The MCP's content tools, served to every user. They go through the
 // `v1.content` and `v1.gitCredential` procedures as the caller, like the
@@ -82,14 +83,6 @@ type SavedCredential = Awaited<
 >["credentials"][number]
 
 type MyRepository = z.infer<typeof myRepositoriesOutput>["repositories"][number]
-
-function textResult(text: string): CallToolResult {
-  return { content: [{ type: "text", text }] }
-}
-
-function errorResult(text: string): CallToolResult {
-  return { content: [{ type: "text", text }], isError: true }
-}
 
 function profileUrl(origin: string): string {
   return `${origin}/me/repositories`

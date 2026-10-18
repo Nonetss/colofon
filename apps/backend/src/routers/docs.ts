@@ -1,6 +1,6 @@
 import { type Context, createContext } from "@nonete/api/context"
 import { appRouter } from "@nonete/api/router"
-import { SCHEMAS_PATH } from "@nonete/api/v1/content/handler"
+import { SCHEMAS_PATH } from "@nonete/api/server"
 import { SmartCoercionHandlerPlugin } from "@orpc/json-schema"
 import { OpenAPIGenerator } from "@orpc/openapi"
 import { OpenAPIHandler } from "@orpc/openapi/fetch"
@@ -35,13 +35,14 @@ const generateSpec = () =>
         title: "Colofon API",
         version: "1.0.0",
         summary:
-          "Advanced base template for modern APIs — robust authentication with Better Auth, a scalable Hono and oRPC architecture, API key management, generated OpenAPI docs and Docker ready for production deployments. Built to get new projects off the ground in record time.",
+          "The API of colofon, a self-hosted documentation platform: content repositories and their pages, catalog and diagrams, search, agent skills, secrets, API keys, users, organizations and crons.",
         contact: {
           name: "Nonete",
           email: "amorenolopezbarajas@pm.me",
           url: "https://github.com/Nonetss",
         },
-        description: "Colofon API description",
+        description:
+          "Every procedure the web app uses, under /api with REST paths. Calls authenticate with the session cookie or an API key in the x-api-key header; the documentation MCP is served apart at /mcp.",
       },
       security: [{ ApiKey: [] }, { BearerAuth: [] }],
       components: {
@@ -116,45 +117,34 @@ const contentSchemasHandler = new OpenAPIHandler(appRouter, {
 
 const router = new Hono()
 
-const docsMiddleware: Parameters<typeof router.use>[1] = async (c, next) => {
-  const context = await createContext({
-    context: c,
-    request: c.get("requestScope"),
-  })
-  const result = await docsHandler.handle(c.req.raw, {
-    prefix: "/",
-    context,
-  })
-  if (result.matched)
-    return c.newResponse(result.response.body, result.response)
-  await next()
-}
-
-router.use("/scalar", requireAdmin, docsMiddleware)
-router.use("/scalar/*", requireAdmin, docsMiddleware)
-router.use("/openapi.json", requireAdmin, docsMiddleware)
-
+/** Answers what `handler` matches under `prefix`, and passes the rest on. */
 function openApiMiddleware(
-  handler: OpenAPIHandler<Context>
+  handler: OpenAPIHandler<Context>,
+  prefix: `/${string}`
 ): Parameters<typeof router.use>[1] {
   return async (c, next) => {
     const context = await createContext({
       context: c,
       request: c.get("requestScope"),
     })
-    const result = await handler.handle(c.req.raw, {
-      prefix: "/api",
-      context,
-    })
+    const result = await handler.handle(c.req.raw, { prefix, context })
     if (result.matched)
       return c.newResponse(result.response.body, result.response)
     await next()
   }
 }
 
+const docsMiddleware = openApiMiddleware(docsHandler, "/")
+router.use("/scalar", requireAdmin, docsMiddleware)
+router.use("/scalar/*", requireAdmin, docsMiddleware)
+router.use("/openapi.json", requireAdmin, docsMiddleware)
+
 // Registered first: a content schema request is answered by its own handler,
 // and only a path under it that matches no procedure falls through to /api.
-router.use(`${SCHEMAS_PATH}/*`, openApiMiddleware(contentSchemasHandler))
-router.use("/api/*", openApiMiddleware(apiHandler))
+router.use(
+  `${SCHEMAS_PATH}/*`,
+  openApiMiddleware(contentSchemasHandler, "/api")
+)
+router.use("/api/*", openApiMiddleware(apiHandler, "/api"))
 
 export default router

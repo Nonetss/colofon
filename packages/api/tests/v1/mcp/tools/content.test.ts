@@ -11,7 +11,7 @@ import {
   type CredentialClient,
   myRepositoriesTool,
   syncTool,
-} from "#v1/mcp/content-tools"
+} from "#v1/mcp/tools/content"
 
 const origin = "https://docs.example.org"
 

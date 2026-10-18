@@ -1,19 +1,18 @@
 import type { CallToolResult } from "@modelcontextprotocol/server"
 import { CATALOG_PATH, catalogTypePath, entityPath } from "@nonete/content"
-import { ORPCError } from "@orpc/server"
 import type { Root } from "hast"
 import { z } from "zod"
-import type { AppRouterClient } from "#router"
 import { withOrigin } from "#v1/docs/full-links"
 import type { docsInput } from "#v1/docs/input"
 import {
   type DocsRepository,
-  type DocsSkill,
   llmsIndex,
   repositoryLlmsIndex,
 } from "#v1/docs/llm-text"
 import { bodyMarkdown, pageMarkdown } from "#v1/docs/markdown"
-import { sectionTree } from "#v1/mcp/section"
+import { sectionTree } from "#v1/docs/section"
+import { errorResult, isMissing, textResult } from "#v1/mcp/results"
+import type { DocsClient, ToolScope } from "#v1/mcp/scope"
 
 // The MCP's tools, one function each. They read through the `v1.docs`
 // procedures as the caller (never the handlers or the content reader), so a
@@ -22,25 +21,32 @@ import { sectionTree } from "#v1/mcp/section"
 // reads; `index` and `read` are byte for byte the `llms.txt` and `llm.txt`
 // routes.
 
-/** The `v1.docs` procedures the tools read through, called as the caller. */
-export type DocsClient = Pick<
-  AppRouterClient["v1"]["docs"],
-  "nav" | "page" | "search"
->
+export const indexInput = z.object({
+  repository: z
+    .string()
+    .optional()
+    .describe(
+      "Slug of one repository; every repository with content when missing"
+    ),
+})
 
-/** The `v1.skills` procedures the skills tools read through. */
-export type SkillsClient = Pick<
-  AppRouterClient["v1"]["skills"],
-  "list" | "get" | "file"
->
+export const readInput = z.object({
+  route: z
+    .string()
+    .min(1)
+    .describe(
+      "Route of the page, as search returns it or index links it: /<repository>/<page path>, a full address or a link ending in /llm.txt"
+    ),
+})
 
-/** What every tool gets: the caller's client and the public origin. */
-export type ToolScope = {
-  docs: DocsClient
-  skills: SkillsClient
-  /** Origin the site is reached at, prefixed to every reader route. */
-  origin: string
-}
+export const entityInput = z.object({
+  repository: z.string().min(1).describe("Slug of the repository"),
+  type: z
+    .string()
+    .min(1)
+    .describe("Id of the catalog type, as in catalog/<type> routes"),
+  id: z.string().min(1).describe("Id of the entity within its type"),
+})
 
 /**
  * A reader route split into the repository, the page under it and the
@@ -126,24 +132,6 @@ export const searchOutput = z.object({
 export type SearchHit = z.infer<typeof searchOutput>["results"][number]
 
 type SearchEntityHit = z.infer<typeof searchOutput>["entities"][number]
-
-function textResult(text: string): CallToolResult {
-  return { content: [{ type: "text", text }] }
-}
-
-function errorResult(text: string): CallToolResult {
-  return { content: [{ type: "text", text }], isError: true }
-}
-
-/**
- * Whether a reader call failed because there is no such repository or page,
- * or the route can't name one: the input check of `v1.docs.page` rejects
- * such paths before looking.
- */
-function isMissing(error: unknown): boolean {
-  if (!(error instanceof ORPCError)) return false
-  return error.code === "NOT_FOUND" || error.code === "BAD_REQUEST"
-}
 
 function decoded(path: string): string | null {
   try {
@@ -537,112 +525,4 @@ export async function entityTool({
     if (!isMissing(error)) throw error
     return errorResult(await missingEntity(docs, input))
   }
-}
-
-/** What `skills` returns as structured content. */
-export const skillsOutput = z.object({
-  skills: z.array(
-    z.object({
-      name: z.string(),
-      repository: z
-        .string()
-        .nullable()
-        .describe(
-          "Slug of the repository it comes from; null for the platform's"
-        ),
-      description: z.string(),
-      url: z.string().describe("Full address of its SKILL.md"),
-      files: z
-        .array(z.string())
-        .describe(
-          "Paths of its files besides SKILL.md, each readable with skill and a path; empty for a single-file skill"
-        ),
-    })
-  ),
-})
-
-type SkillSummary = z.infer<typeof skillsOutput>["skills"][number]
-
-function skillSummary(skill: DocsSkill, origin: string): SkillSummary {
-  return {
-    name: skill.name,
-    repository: repositorySlug(skill),
-    description: skill.description,
-    url: `${origin}${skill.path}`,
-    files: skill.files,
-  }
-}
-
-function repositorySlug(skill: DocsSkill): string | null {
-  if (skill.repository === null) return null
-  return skill.repository.slug
-}
-
-function ownerOf(skill: DocsSkill): string {
-  if (skill.repository === null) return "the platform's"
-  return `${skill.repository.name}'s`
-}
-
-/** One skill as `skills` lists it, with its files when it has any. */
-function skillLine(skill: DocsSkill, origin: string): string {
-  const line = `- \`${skill.name}\` (${ownerOf(skill)}): ${skill.description} ${origin}${skill.path}`
-  if (skill.files.length === 0) return line
-  return `${line}\n  Files: ${skill.files.map((file) => `\`${file}\``).join(", ")}`
-}
-
-/** `skills`: every skill the caller can see, as the discovery index lists them. */
-export async function skillsTool({
-  skills,
-  origin,
-}: ToolScope): Promise<CallToolResult> {
-  const listed = await skills.list()
-  const summaries = listed.skills.map((skill) => skillSummary(skill, origin))
-  const lines = listed.skills.map((skill) => skillLine(skill, origin))
-  return {
-    ...textResult(
-      [
-        ...lines,
-        "",
-        "Call skill with a name for its SKILL.md, or with a name and one of its files' paths for that file. To install them all, follow the setup procedure in the site's /llms.txt.",
-      ].join("\n")
-    ),
-    structuredContent: { skills: summaries },
-  }
-}
-
-/**
- * `skill`: one skill's SKILL.md, or one of its files with `path`, as its
- * route serves it to the caller.
- */
-export async function skillTool({
-  skills,
-  input,
-}: ToolScope & {
-  input: { name: string; path?: string | undefined }
-}): Promise<CallToolResult> {
-  const missingSkill = `There is no skill "${input.name}" you can read. Call skills to list them.`
-  if (input.path === undefined) {
-    try {
-      const skill = await skills.get({ name: input.name })
-      return textResult(skill.text)
-    } catch (error) {
-      if (!isMissing(error)) throw error
-      return errorResult(missingSkill)
-    }
-  }
-  const listed = await skills.list()
-  const skill = listed.skills.find((entry) => entry.name === input.name)
-  if (skill === undefined) return errorResult(missingSkill)
-  try {
-    const file = await skills.file({ name: input.name, path: input.path })
-    return textResult(file.text)
-  } catch (error) {
-    if (!isMissing(error)) throw error
-    return errorResult(missingFile(skill, input.path))
-  }
-}
-
-function missingFile(skill: DocsSkill, path: string): string {
-  const files = ["SKILL.md", ...skill.files].map((file) => `\`${file}\``)
-  return `The skill "${skill.name}" has no file "${path}". Its files: ${files.join(", ")}.`
 }

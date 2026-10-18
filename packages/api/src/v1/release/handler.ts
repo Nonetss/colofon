@@ -1,5 +1,5 @@
 import { type Context, getRequestLogger } from "#context"
-import { APP_VERSION, newerRelease, releaseFeed } from "#shared/releases"
+import { APP_VERSION, newerRelease, releaseFeed } from "#v1/release/feed"
 
 export const releaseHandler = {
   status: async ({ context }: { context: Context }) => {

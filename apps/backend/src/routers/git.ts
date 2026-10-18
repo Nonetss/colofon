@@ -1,4 +1,4 @@
-import { gitHttp } from "@nonete/api/v1/content/handler"
+import { gitHttp } from "@nonete/api/server"
 import { Hono } from "hono"
 
 // Git's smart HTTP protocol for the content repositories the platform hosts

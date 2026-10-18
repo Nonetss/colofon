@@ -1,5 +1,5 @@
 import { closeCronEvents } from "#v1/cron/events"
-import { closeMcp } from "#v1/mcp/handler"
+import { closeMcp } from "#v1/mcp/http"
 
 /**
  * Ends every v1 stream that outlives its request: the open cron run and job

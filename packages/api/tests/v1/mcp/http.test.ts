@@ -5,12 +5,12 @@ import {
 } from "@modelcontextprotocol/client"
 import type { CallToolResult } from "@modelcontextprotocol/server"
 import { resetEnv, testEnv } from "#tests/fixtures/env"
-import type { ContentClient, CredentialClient } from "#v1/mcp/content-tools"
-import { serveMcp } from "#v1/mcp/handler"
-import type { SecretsAccess } from "#v1/mcp/secret-tools"
+import { serveMcp } from "#v1/mcp/http"
+import type { DocsClient, SkillsClient } from "#v1/mcp/scope"
 import type { McpScope } from "#v1/mcp/server"
 import { MCP_SECRET_TOOL_NAMES, MCP_TOOL_NAMES } from "#v1/mcp/setup"
-import type { DocsClient, SkillsClient } from "#v1/mcp/tools"
+import type { ContentClient, CredentialClient } from "#v1/mcp/tools/content"
+import type { SecretsAccess } from "#v1/mcp/tools/secrets"
 
 // The real handler and server, driven by the SDK's own client over a fetch
 // that calls `serveMcp` directly: no network, no backend. Each request gets the

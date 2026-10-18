@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test"
 import { type SecretRow, secretRow } from "@nonete/db/testing"
-import type { SecretValues } from "#v1/secret/cipher"
+import type { SecretValues } from "#lib/cipher"
 import {
   loggedUrl,
   type PlanResult,

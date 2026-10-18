@@ -17,7 +17,7 @@ import type {
 // repository on disk wherever git needs a source.
 
 /** Public path the git endpoint hangs from. */
-export const GIT_PATH = "/git"
+const GIT_PATH = "/git"
 
 /** The URL a hosted repository stores: its git path on the platform. */
 export function hostedMarkerOf(slug: string): string {

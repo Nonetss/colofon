@@ -1,14 +1,42 @@
 import type { CallToolResult } from "@modelcontextprotocol/server"
 import { z } from "zod"
 import type { AppRouterClient } from "#router"
+import { errorResult, textResult } from "#v1/mcp/results"
 import type { RequestResult } from "#v1/secret/request/execute"
 import type { RequestInput } from "#v1/secret/request/plan"
+import { REQUEST_METHODS } from "#v1/secret/request/plan"
 import type { ResponseBody } from "#v1/secret/request/send"
 
 // The MCP's secrets tools. `secrets` reads through `v1.secret.list` as the
 // caller, like every other tool. `request` runs the executor bound to the
 // caller (`v1/secret/request/execute.ts`): it has no procedure, because the
 // MCP is its only consumer (design of `add-mcp-secrets`, §4).
+
+export const requestInput = z.object({
+  method: z
+    .enum(REQUEST_METHODS)
+    .describe(
+      "HTTP method; POST, PUT, PATCH and DELETE need a secret that allows writing"
+    ),
+  url: z
+    .string()
+    .min(1)
+    .describe(
+      "Absolute http(s) URL. Its origin (scheme, host, port) must be one every secret used allows, and can't hold placeholders; the path and query can, if the secret allows the URL"
+    ),
+  headers: z
+    .record(z.string(), z.string())
+    .optional()
+    .describe(
+      "Request headers; values may hold placeholders. host, connection, content-length, transfer-encoding and other hop-by-hop headers are refused"
+    ),
+  body: z
+    .json()
+    .optional()
+    .describe(
+      "A string, sent as is, or a JSON value, sent serialized with content-type application/json unless headers set one. Placeholders in its strings need a secret that allows the body"
+    ),
+})
 
 /** What the secrets tools get: the caller's list and their bound executor. */
 export type SecretsAccess = {
@@ -37,14 +65,6 @@ export const secretsOutput = z.object({
     })
   ),
 })
-
-function textResult(text: string): CallToolResult {
-  return { content: [{ type: "text", text }] }
-}
-
-function errorResult(text: string): CallToolResult {
-  return { content: [{ type: "text", text }], isError: true }
-}
 
 type ListedSecret = Awaited<
   ReturnType<SecretsAccess["list"]>

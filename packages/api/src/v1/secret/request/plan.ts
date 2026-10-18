@@ -1,5 +1,5 @@
 import type { Secret } from "@nonete/db/schema"
-import type { SecretValues } from "#v1/secret/cipher"
+import type { SecretValues } from "#lib/cipher"
 import { originAllowed, originOfUrl } from "#v1/secret/origins"
 import {
   type Placeholder,
@@ -33,7 +33,7 @@ export type RequestMethod = (typeof REQUEST_METHODS)[number]
 const READ_METHODS: readonly RequestMethod[] = ["GET", "HEAD", "OPTIONS"]
 
 /** Headers that would let a request reach another host than its URL's. */
-export const FORBIDDEN_HEADERS = [
+const FORBIDDEN_HEADERS = [
   "host",
   "connection",
   "content-length",

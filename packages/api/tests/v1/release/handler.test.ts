@@ -1,6 +1,6 @@
 import { afterAll, beforeEach, describe, expect, spyOn, test } from "bun:test"
-import { APP_VERSION } from "#shared/releases"
 import { adminContext, userContext } from "#tests/fixtures/context"
+import { APP_VERSION } from "#v1/release/feed"
 import { releaseHandler } from "#v1/release/handler"
 
 const fetchSpy = spyOn(globalThis, "fetch")

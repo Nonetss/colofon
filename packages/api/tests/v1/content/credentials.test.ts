@@ -6,6 +6,7 @@ import {
   gitCredentialRow,
   stepArgs,
 } from "@nonete/db/testing"
+import { encryptValues } from "#lib/cipher"
 import {
   createContentFolder,
   memoryRepositoryStore,
@@ -19,7 +20,6 @@ import { createContentHandler } from "#v1/content/handler"
 import type { ContentReader, StoredRepository } from "#v1/content/reader"
 import { createContentReader } from "#v1/content/reader"
 import { UNREADABLE_MESSAGE, withSavedAccess } from "#v1/git-credential/access"
-import { encryptValues } from "#v1/secret/cipher"
 
 const KEY = Buffer.alloc(32, 7).toString("base64")
 const CREDENTIAL_ID = "00000000-0000-4000-8000-0000000000c1"

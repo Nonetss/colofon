@@ -10,6 +10,12 @@ import { and, arrayContains, asc, eq, lt } from "drizzle-orm"
 import type { z } from "zod"
 import type { Context } from "#context"
 import { errors } from "#errors"
+import {
+  decryptValues,
+  encryptValues,
+  type SecretValues,
+  secretsEnabled,
+} from "#lib/cipher"
 import { toIso, toIsoOrNull } from "#shared/dates"
 import { assertFound } from "#shared/not-found"
 import {
@@ -17,12 +23,7 @@ import {
   encodeKeysetCursor,
   paginate,
 } from "#shared/pagination"
-import {
-  decryptValues,
-  encryptValues,
-  type SecretValues,
-  secretsEnabled,
-} from "#v1/secret/cipher"
+import { requireUserId } from "#shared/session"
 import type { secretInput } from "#v1/secret/input"
 import type { secretOutput } from "#v1/secret/output"
 
@@ -34,7 +35,7 @@ type SecretOutput = z.infer<typeof secretOutput.secret>
 type UsageEntry = z.infer<typeof secretOutput.usage>["entries"][number]
 
 /** How long the usage log keeps an entry. */
-export const USAGE_RETENTION_DAYS = 90
+const USAGE_RETENTION_DAYS = 90
 
 const NOT_FOUND = "Secreto no encontrado"
 const DUPLICATE_NAME = "Ya tienes un secreto con ese nombre"
@@ -47,16 +48,11 @@ function isOutcome(value: string): value is Outcome {
 }
 
 /** Throws unless the secrets feature is configured on this server. */
-export function assertSecretsEnabled(): void {
+function assertSecretsEnabled(): void {
   if (secretsEnabled()) return
   throw errors.SERVICE_UNAVAILABLE({
     message: "Los secretos no están configurados en este servidor",
   })
-}
-
-function requireUserId(context: Context): string {
-  if (!context.user) throw errors.UNAUTHORIZED()
-  return context.user.id
 }
 
 function toSecret(row: Secret): SecretOutput {

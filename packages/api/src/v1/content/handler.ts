@@ -1,12 +1,9 @@
 import { rm } from "node:fs/promises"
-import path from "node:path"
 import {
-  CLONE_DIR,
   CONFIG_SCHEMA,
   DIAGRAM_SCHEMA,
   ENTITY_SCHEMA_PREFIX,
   editorSchemas,
-  HOSTED_DIR,
   hostedFolder,
   listContentFolders,
   listRemoteBranches,
@@ -22,15 +19,14 @@ import {
 import { db } from "@nonete/db"
 import { type ContentRepository, contentRepository } from "@nonete/db/schema"
 import { env } from "@nonete/env/server"
-import { child } from "@nonete/logger"
 import { eq } from "drizzle-orm"
 import type { z } from "zod"
 import type { Context } from "#context"
 import { errors } from "#errors"
 import { toIso, toIsoOrNull } from "#shared/dates"
 import { assertFound } from "#shared/not-found"
+import { requireUserId } from "#shared/session"
 import {
-  createGitHosting,
   ensureHostedRepo,
   gitSourceOf,
   hostedMarkerOf,
@@ -45,9 +41,7 @@ import type {
 import {
   audienceOfUser,
   type ContentReader,
-  createContentReader,
   type RepositoryAudience,
-  type RepositoryStore,
 } from "#v1/content/reader"
 import { checkUserRemoteWithTrusted } from "#v1/content/trusted-hosts"
 import {
@@ -67,7 +61,7 @@ const NOT_FOUND_MESSAGE = "Repositorio de contenido no encontrado"
 const NOT_IN_REPOSITORY_MESSAGE = "No existe esa rama o ruta en el repositorio"
 
 /** The absolute URL of a repository's schema catalog. */
-export function catalogUrlOf(slug: string): string {
+function catalogUrlOf(slug: string): string {
   return `${env.CORS_ORIGIN}${SCHEMAS_PATH}/${slug}`
 }
 
@@ -75,7 +69,7 @@ export function catalogUrlOf(slug: string): string {
  * The absolute git URL to clone and push `row` with, when it is hosted;
  * `null` for an external repository.
  */
-export function pushUrlOf(row: ContentRepository): string | null {
+function pushUrlOf(row: ContentRepository): string | null {
   if (!isHosted(row)) return null
   return `${env.CORS_ORIGIN}${hostedMarkerOf(row.slug)}`
 }
@@ -135,16 +129,10 @@ export function audienceFilter(audience: RepositoryAudience) {
   }
 }
 
-function findRow(slug: string, audience: RepositoryAudience) {
+export function findRow(slug: string, audience: RepositoryAudience) {
   return db.query.contentRepository.findFirst({
     where: { slug, ...audienceFilter(audience) },
   })
-}
-
-/** The signed-in user a `protectedProcedure` always has. */
-function ownerOf(context: Context): string {
-  if (context.user === null) throw errors.UNAUTHORIZED()
-  return context.user.id
 }
 
 function findOwned(slug: string, userId: string) {
@@ -460,7 +448,7 @@ export function createContentHandler(
       })
       const url = createdUrlOf(input)
       const credential = await createdCredential(
-        ownerOf(context),
+        requireUserId(context),
         url,
         input.credentialId
       )
@@ -500,7 +488,11 @@ export function createContentHandler(
         NOT_FOUND_MESSAGE
       )
       const url = editedUrlOf(input)
-      const credential = await editedCredential(ownerOf(context), row, input)
+      const credential = await editedCredential(
+        requireUserId(context),
+        row,
+        input
+      )
       const patch = {
         ...(input.name !== undefined && { name: input.name }),
         ...(url !== undefined && { url }),
@@ -529,7 +521,7 @@ export function createContentHandler(
       context: Context
       input: z.infer<typeof contentInput.listBranches>
     }): Promise<z.infer<typeof contentOutput.listBranches>> {
-      const source = await branchesSourceOf(ownerOf(context), input)
+      const source = await branchesSourceOf(requireUserId(context), input)
       const result = await listRemoteBranches(source)
       if (!result.ok) throw errors.BAD_GATEWAY({ message: result.error })
       return { branches: result.branches, defaultBranch: result.defaultBranch }
@@ -542,7 +534,10 @@ export function createContentHandler(
       context: Context
       input: z.infer<typeof contentInput.listContentFolders>
     }): Promise<z.infer<typeof contentOutput.listContentFolders>> {
-      const { source, bare } = await foldersSourceOf(ownerOf(context), input)
+      const { source, bare } = await foldersSourceOf(
+        requireUserId(context),
+        input
+      )
       const result = await listContentFolders(source, { ref: input.ref, bare })
       if (!result.ok) throw errors.BAD_GATEWAY({ message: result.error })
       return { folders: result.folders }
@@ -555,7 +550,7 @@ export function createContentHandler(
       context: Context
       input: z.infer<typeof contentInput.listMyContentFolders>
     }): Promise<z.infer<typeof contentOutput.listContentFolders>> {
-      const url = await ownBranchesUrlOf(ownerOf(context), input)
+      const url = await ownBranchesUrlOf(requireUserId(context), input)
       const checked = await checkRemote(url)
       if (!checked.ok) {
         throw errors.BAD_REQUEST({ message: "Esa dirección no está permitida" })
@@ -652,7 +647,7 @@ export function createContentHandler(
       context: Context
     }): Promise<z.infer<typeof contentOutput.listMyRepositories>> {
       const rows = await db.query.contentRepository.findMany({
-        where: { ownerId: ownerOf(context) },
+        where: { ownerId: requireUserId(context) },
         orderBy: { name: "asc" },
       })
       return rows.map(toOwnRepository)
@@ -665,7 +660,7 @@ export function createContentHandler(
       context: Context
       input: z.infer<typeof contentInput.createMyRepository>
     }): Promise<z.infer<typeof contentOutput.createMyRepository>> {
-      const ownerId = ownerOf(context)
+      const ownerId = requireUserId(context)
       const conflict = errors.CONFLICT({
         message: "Ya existe un repositorio con ese slug",
       })
@@ -701,7 +696,7 @@ export function createContentHandler(
       context: Context
       input: z.infer<typeof contentInput.updateMyRepository>
     }): Promise<z.infer<typeof contentOutput.updateMyRepository>> {
-      const ownerId = ownerOf(context)
+      const ownerId = requireUserId(context)
       const row = assertFound(
         await findOwned(input.slug, ownerId),
         NOT_FOUND_MESSAGE
@@ -733,7 +728,7 @@ export function createContentHandler(
       input: z.infer<typeof contentInput.deleteMyRepository>
     }): Promise<z.infer<typeof contentOutput.deleteMyRepository>> {
       const row = assertFound(
-        await findOwned(input.slug, ownerOf(context)),
+        await findOwned(input.slug, requireUserId(context)),
         NOT_FOUND_MESSAGE
       )
       await db.delete(contentRepository).where(eq(contentRepository.id, row.id))
@@ -748,7 +743,7 @@ export function createContentHandler(
       context: Context
       input: z.infer<typeof contentInput.listMyBranches>
     }): Promise<z.infer<typeof contentOutput.listBranches>> {
-      const url = await ownBranchesUrlOf(ownerOf(context), input)
+      const url = await ownBranchesUrlOf(requireUserId(context), input)
       const checked = await checkRemote(url)
       if (!checked.ok) {
         throw errors.BAD_REQUEST({ message: "Esa dirección no está permitida" })
@@ -778,62 +773,4 @@ export function createContentHandler(
       return { repositories }
     },
   }
-}
-
-/** The stored repositories, read and updated through Drizzle. */
-export const repositoryStore: RepositoryStore = {
-  find: findRow,
-  list: (audience) =>
-    db.query.contentRepository.findMany({
-      where: audienceFilter(audience),
-      orderBy: { name: "asc" },
-    }),
-  recordSync: async (id, result) => {
-    await db
-      .update(contentRepository)
-      .set(syncFields(result, new Date()))
-      .where(eq(contentRepository.id, id))
-  },
-}
-
-const contentLogger = child({ module: "content" })
-
-/**
- * The clone root and the hosted root. The repo root is two levels above the
- * workspace the backend runs in, as for the root `.env`.
- */
-const cloneRoot = path.resolve(process.cwd(), "../..", CLONE_DIR)
-const hostedRoot = path.resolve(process.cwd(), "../..", HOSTED_DIR)
-
-export const contentReader = createContentReader({
-  cloneRoot,
-  repositories: repositoryStore,
-  resolveSource: (repository) => gitSourceOf(repository, hostedRoot),
-  withAccess: withSavedAccess,
-  logger: contentLogger,
-})
-
-export const contentHandler = createContentHandler(contentReader, {
-  hostedRoot,
-})
-
-/**
- * Fetch handler of the git endpoint (`/git/<slug>.git`) that serves the
- * hosted repositories; the backend mounts it outside oRPC.
- */
-export const gitHttp = createGitHosting({
-  hostedRoot,
-  repositories: repositoryStore,
-  reader: contentReader,
-  logger: contentLogger,
-})
-
-/**
- * Starts the first sync of every content repository without waiting for it:
- * a slow or unreachable remote must not delay startup. The reader already
- * logs each failed sync, so the rejection is dropped here.
- */
-export function startContentSync() {
-  contentLogger.info({ cloneRoot }, "Syncing content repositories")
-  contentHandler.sync().catch(() => undefined)
 }

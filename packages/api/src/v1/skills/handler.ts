@@ -54,12 +54,12 @@ export type SkillsHandlerOptions = {
 const ROUTE = "/.well-known/agent-skills"
 
 /** Where the web serves a skill's file. */
-export function skillPath(name: string): string {
+function skillPath(name: string): string {
   return `${ROUTE}/${name}/${SKILL_FILE}`
 }
 
 /** Where the web serves a skill's archive. */
-export function skillArchivePath(name: string): string {
+function skillArchivePath(name: string): string {
   return `${ROUTE}/${name}.tar.gz`
 }
 

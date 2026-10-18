@@ -5,7 +5,7 @@ import {
   requestTool,
   type SecretsAccess,
   secretsTool,
-} from "#v1/mcp/secret-tools"
+} from "#v1/mcp/tools/secrets"
 import type { RequestResult } from "#v1/secret/request/execute"
 import type { RequestInput } from "#v1/secret/request/plan"
 

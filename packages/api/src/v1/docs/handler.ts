@@ -38,7 +38,7 @@ import type { DocsHastContent, DocsNavNode, docsOutput } from "#v1/docs/output"
 // non-admins and serves the images under docs/.
 
 /** Largest image the reader serves. */
-export const MAX_IMAGE_BYTES = 10 * 1024 * 1024
+const MAX_IMAGE_BYTES = 10 * 1024 * 1024
 
 const CONTENT_TYPES: Record<string, string> = {
   png: "image/png",

@@ -1,5 +1,5 @@
 import { closeStreams } from "@nonete/api/lifecycle"
-import { startContentSync } from "@nonete/api/v1/content/handler"
+import { startContentSync } from "@nonete/api/server"
 import { auth } from "@nonete/auth"
 import { closeDb } from "@nonete/db"
 import { seed } from "@nonete/db/seed"

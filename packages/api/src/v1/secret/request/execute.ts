@@ -1,7 +1,7 @@
 import { db } from "@nonete/db"
 import { type Secret, secret, secretUsage } from "@nonete/db/schema"
 import { and, eq, inArray } from "drizzle-orm"
-import { decryptValues, type SecretValues } from "#v1/secret/cipher"
+import { decryptValues, type SecretValues } from "#lib/cipher"
 import { createMasker } from "#v1/secret/request/mask"
 import {
   loggedUrl,

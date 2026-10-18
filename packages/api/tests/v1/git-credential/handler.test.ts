@@ -7,6 +7,7 @@ import {
 } from "@nonete/db/testing"
 import { call } from "@orpc/server"
 import { z } from "zod"
+import { decryptValues, encryptValues } from "#lib/cipher"
 import { apiKeyContext, userContext } from "#tests/fixtures/context"
 import { fakeDb } from "#tests/fixtures/db"
 import { resetEnv, testEnv } from "#tests/fixtures/env"
@@ -14,7 +15,6 @@ import { expectErrorCode } from "#tests/fixtures/errors"
 import { gitCredentialHandler } from "#v1/git-credential/handler"
 import { gitCredentialInput } from "#v1/git-credential/input"
 import { gitCredentialRouter } from "#v1/git-credential/router"
-import { decryptValues, encryptValues } from "#v1/secret/cipher"
 
 const KEY = Buffer.alloc(32, 7).toString("base64")
 const context = userContext()

@@ -7,7 +7,7 @@
 export type MaskedValue = { label: string | null; text: string }
 
 /** Values shorter than this are left alone: masking them would mangle text. */
-export const MIN_MASKED_LENGTH = 4
+const MIN_MASKED_LENGTH = 4
 
 function replacementOf(label: string | null): string {
   if (label === null) return "[secret]"

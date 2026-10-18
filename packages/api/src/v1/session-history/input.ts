@@ -3,7 +3,7 @@ import { z } from "zod"
 import { paginationLimit, sortedPaginationCursor } from "#shared/pagination"
 
 /** Orderings of the session history; `createdAt` is the natural order. */
-export const SESSION_SORT_KEYS = [
+const SESSION_SORT_KEYS = [
   "createdAt",
   "expiresAt",
   "ipAddress",

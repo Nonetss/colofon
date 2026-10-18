@@ -8,22 +8,18 @@ import { and, asc, eq, inArray } from "drizzle-orm"
 import type { z } from "zod"
 import type { Context } from "#context"
 import { errors } from "#errors"
+import { encryptValues, secretsEnabled } from "#lib/cipher"
 import { toIso } from "#shared/dates"
+import { requireUserId } from "#shared/session"
 import { credentialOwnedBy, tokenOf } from "#v1/git-credential/access"
 import type { gitCredentialInput } from "#v1/git-credential/input"
 import type { gitCredentialOutput } from "#v1/git-credential/output"
-import { encryptValues, secretsEnabled } from "#v1/secret/cipher"
 
 // The caller's own git credentials: every query filters by owner. The token
 // goes in encrypted and never comes out; a repository clones with it through
 // `access.ts`.
 
 type CredentialOutput = z.infer<typeof gitCredentialOutput.credential>
-
-function requireUserId(context: Context): string {
-  if (!context.user) throw errors.UNAUTHORIZED()
-  return context.user.id
-}
 
 /** Throws unless this server can store credentials. */
 function assertEnabled(): void {

@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, test } from "bun:test"
 import { type FakeDbCall, secretRow, stepArgs } from "@nonete/db/testing"
+import { encryptValues } from "#lib/cipher"
 import { fakeDb } from "#tests/fixtures/db"
 import { resetEnv, testEnv } from "#tests/fixtures/env"
-import { encryptValues } from "#v1/secret/cipher"
 import { executeRequest, type RequestCaller } from "#v1/secret/request/execute"
 import type { FetchLike, SendOptions } from "#v1/secret/request/send"
 

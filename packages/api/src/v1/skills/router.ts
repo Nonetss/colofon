@@ -1,23 +1,8 @@
-import path from "node:path"
 import { openapi } from "@orpc/openapi"
 import { publicProcedure } from "#index"
-import { contentReader, repositoryStore } from "#v1/content/handler"
-import { createSkillsHandler } from "#v1/skills/handler"
+import { skillsHandler } from "#v1/content/runtime"
 import { skillsInput } from "#v1/skills/input"
 import { skillsOutput } from "#v1/skills/output"
-
-// The platform's skills live in `packages/api/skills/` (`colofon`) and in
-// `doc-example/.agents/skills/` (the writing skills, whose only copy that
-// is), found from the backend's working directory (`apps/backend`, also in
-// its image) as the migrations are.
-const skillsHandler = createSkillsHandler({
-  reader: contentReader,
-  repositories: repositoryStore,
-  platformRoots: [
-    path.resolve(process.cwd(), "../../packages/api"),
-    path.resolve(process.cwd(), "../../doc-example/.agents"),
-  ],
-})
 
 const tags = ["Skills"]
 

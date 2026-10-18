@@ -3,8 +3,8 @@ import { db } from "@nonete/db"
 import { type GitCredential, gitCredential } from "@nonete/db/schema"
 import { and, eq } from "drizzle-orm"
 import { errors } from "#errors"
+import { decryptValues } from "#lib/cipher"
 import { assertFound } from "#shared/not-found"
-import { decryptValues } from "#v1/secret/cipher"
 
 // How a repository clones with a saved credential: the credential is bound
 // to its host, and the URL with the token only exists in memory.

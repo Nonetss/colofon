@@ -1,4 +1,4 @@
-import { SCHEMAS_PATH } from "@nonete/api/v1/content/handler"
+import { SCHEMAS_PATH } from "@nonete/api/server"
 import { createMiddleware } from "hono/factory"
 
 /**

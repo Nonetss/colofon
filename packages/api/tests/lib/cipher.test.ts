@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test } from "bun:test"
+import { decryptValues, encryptValues, secretsEnabled } from "#lib/cipher"
 import { resetEnv, testEnv } from "#tests/fixtures/env"
-import { decryptValues, encryptValues, secretsEnabled } from "#v1/secret/cipher"
 
 const KEY = Buffer.alloc(32, 7).toString("base64")
 const OTHER_KEY = Buffer.alloc(32, 9).toString("base64")

@@ -7,15 +7,11 @@ import {
   stepArgs,
 } from "@nonete/db/testing"
 import { z } from "zod"
+import { decryptValues, encryptValues, type SecretValues } from "#lib/cipher"
 import { userContext } from "#tests/fixtures/context"
 import { fakeDb } from "#tests/fixtures/db"
 import { resetEnv, testEnv } from "#tests/fixtures/env"
 import { expectErrorCode } from "#tests/fixtures/errors"
-import {
-  decryptValues,
-  encryptValues,
-  type SecretValues,
-} from "#v1/secret/cipher"
 import { secretHandler } from "#v1/secret/handler"
 import { secretInput } from "#v1/secret/input"
 

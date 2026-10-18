@@ -1,6 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/server"
-import { z } from "zod"
+import { secretsEnabled } from "#lib/cipher"
 import { docsInput } from "#v1/docs/input"
+import type { ToolScope } from "#v1/mcp/scope"
 import {
   addRepositoryInput,
   addRepositoryTool,
@@ -10,31 +11,36 @@ import {
   myRepositoriesTool,
   syncInput,
   syncTool,
-} from "#v1/mcp/content-tools"
+} from "#v1/mcp/tools/content"
 import {
-  requestTool,
-  type SecretsAccess,
-  secretsOutput,
-  secretsTool,
-} from "#v1/mcp/secret-tools"
-import {
+  entityInput,
   entityTool,
+  indexInput,
   indexTool,
+  readInput,
   readTool,
   repositoriesOutput,
   repositoriesTool,
   searchOutput,
   searchTool,
+} from "#v1/mcp/tools/docs"
+import {
+  requestInput,
+  requestTool,
+  type SecretsAccess,
+  secretsOutput,
+  secretsTool,
+} from "#v1/mcp/tools/secrets"
+import {
+  skillInput,
   skillsOutput,
   skillsTool,
   skillTool,
-  type ToolScope,
-} from "#v1/mcp/tools"
-import { secretsEnabled } from "#v1/secret/cipher"
-import { REQUEST_METHODS } from "#v1/secret/request/plan"
+} from "#v1/mcp/tools/skills"
 
 // The documentation MCP: one server per request, bound to the caller's client.
-// It only declares the tools; what each one does lives in `tools.ts`.
+// It only declares the tools; what each one does, and its input and output
+// schemas, live in `tools/`.
 
 /**
  * What the server is built with: the documentation tools' scope, the
@@ -75,59 +81,6 @@ const annotations = {
   openWorldHint: false,
 }
 
-const indexInput = z.object({
-  repository: z
-    .string()
-    .optional()
-    .describe(
-      "Slug of one repository; every repository with content when missing"
-    ),
-})
-
-const readInput = z.object({
-  route: z
-    .string()
-    .min(1)
-    .describe(
-      "Route of the page, as search returns it or index links it: /<repository>/<page path>, a full address or a link ending in /llm.txt"
-    ),
-})
-
-const entityInput = z.object({
-  repository: z.string().min(1).describe("Slug of the repository"),
-  type: z
-    .string()
-    .min(1)
-    .describe("Id of the catalog type, as in catalog/<type> routes"),
-  id: z.string().min(1).describe("Id of the entity within its type"),
-})
-
-const requestInput = z.object({
-  method: z
-    .enum(REQUEST_METHODS)
-    .describe(
-      "HTTP method; POST, PUT, PATCH and DELETE need a secret that allows writing"
-    ),
-  url: z
-    .string()
-    .min(1)
-    .describe(
-      "Absolute http(s) URL. Its origin (scheme, host, port) must be one every secret used allows, and can't hold placeholders; the path and query can, if the secret allows the URL"
-    ),
-  headers: z
-    .record(z.string(), z.string())
-    .optional()
-    .describe(
-      "Request headers; values may hold placeholders. host, connection, content-length, transfer-encoding and other hop-by-hop headers are refused"
-    ),
-  body: z
-    .json()
-    .optional()
-    .describe(
-      "A string, sent as is, or a JSON value, sent serialized with content-type application/json unless headers set one. Placeholders in its strings need a secret that allows the body"
-    ),
-})
-
 /** The `request` tool writes on the user's services and reaches outside. */
 const requestAnnotations = {
   readOnlyHint: false,
@@ -135,22 +88,6 @@ const requestAnnotations = {
   idempotentHint: false,
   openWorldHint: true,
 }
-
-const skillInput = z.object({
-  name: z
-    .string()
-    .min(1)
-    .describe(
-      "Name of the skill, as skills lists it (`colofon`, `casa-deploy`)"
-    ),
-  path: z
-    .string()
-    .min(1)
-    .optional()
-    .describe(
-      "Path of one of the skill's files, as skills lists them (`references/type-bar.md`); its SKILL.md when missing"
-    ),
-})
 
 /**
  * The `sync` tool writes the backend's clone and reaches the git remote, and
