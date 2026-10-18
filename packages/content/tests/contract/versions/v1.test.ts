@@ -1,12 +1,9 @@
 import { afterEach, describe, expect, test } from "bun:test"
 import { type LoadResult, loadContent } from "#contract/read/declarations"
-import {
-  contract1Path,
-  translateContract1,
-} from "#contract/versions/contract-1"
+import { translateV1, v1Path } from "#contract/versions/v1"
 import { type ContentDir, createContentDir } from "#tests/fixtures/content-dir"
-import { CONTRACT_1_SITE, CONTRACT_2_TWIN } from "#tests/fixtures/contract-1"
 import { htmlOf, messagesOf, pageAt, readSiteOf } from "#tests/fixtures/site"
+import { V1_SITE, V2_TWIN } from "#tests/fixtures/v1-site"
 
 let dir: ContentDir | undefined
 
@@ -25,14 +22,14 @@ function messages(result: LoadResult): string[] {
   return result.problems.map((problem) => problem.message)
 }
 
-/** CONTRACT_1_SITE with `file` replaced by `lines`. */
-function contract1With(file: string, lines: string[]): Record<string, string> {
-  return { ...CONTRACT_1_SITE, [file]: lines.join("\n") }
+/** V1_SITE with `file` replaced by `lines`. */
+function v1With(file: string, lines: string[]): Record<string, string> {
+  return { ...V1_SITE, [file]: lines.join("\n") }
 }
 
-describe("translateContract1", () => {
+describe("translateV1", () => {
   test("doc.config.yaml takes the English keys, its header fields included", () => {
-    const { data, foreign } = translateContract1("config", {
+    const { data, foreign } = translateV1("config", {
       nombre: "Homelab",
       descripcion: "La red",
       plataforma: "1",
@@ -50,7 +47,7 @@ describe("translateContract1", () => {
   })
 
   test("etiqueta is a type's title_field and a field's label", () => {
-    const { data } = translateContract1("type", {
+    const { data } = translateV1("type", {
       nombre: "Máquina",
       plural: "Máquinas",
       etiqueta: "hostname",
@@ -67,7 +64,7 @@ describe("translateContract1", () => {
   })
 
   test("every kind is renamed, inside lists and objects at any depth", () => {
-    const { data } = translateContract1("type", {
+    const { data } = translateV1("type", {
       campos: {
         a: { tipo: "entero" },
         b: { tipo: "numero" },
@@ -98,7 +95,7 @@ describe("translateContract1", () => {
   })
 
   test("menu.yaml renames its groups and object entries and keeps text entries", () => {
-    const { data } = translateContract1("menu", {
+    const { data } = translateV1("menu", {
       secciones: [
         {
           titulo: "Red",
@@ -120,14 +117,14 @@ describe("translateContract1", () => {
 
   test("names the site chose are never renamed", () => {
     expect(
-      translateContract1("type", {
+      translateV1("type", {
         campos: { titulo: { tipo: "texto" }, nombre: { tipo: "texto" } },
       }).data
     ).toEqual({
       fields: { titulo: { type: "text" }, nombre: { type: "text" } },
     })
     expect(
-      translateContract1("entity", {
+      translateV1("entity", {
         nombre: "NAS",
         tipo: "fisica",
         fuente: "manual",
@@ -140,13 +137,12 @@ describe("translateContract1", () => {
       updated: "2026-10-15",
     })
     expect(
-      translateContract1("pageHeader", { titulo: "DNS", maquinas: ["nas"] })
-        .data
+      translateV1("pageHeader", { titulo: "DNS", maquinas: ["nas"] }).data
     ).toEqual({ title: "DNS", maquinas: ["nas"] })
   })
 
   test("a contract 2 key where contract 1 has its own name is left out and reported", () => {
-    const { data, foreign } = translateContract1("type", {
+    const { data, foreign } = translateV1("type", {
       name: "Máquina",
       plural: "Máquinas",
       campos: { ip: { type: "ip", tipo: "ip" } },
@@ -156,33 +152,33 @@ describe("translateContract1", () => {
   })
 })
 
-describe("contract1Path", () => {
+describe("v1Path", () => {
   test("maps a contract 2 path back to the keys the file holds", () => {
-    expect(contract1Path("type", ["title_field"])).toEqual(["etiqueta"])
-    expect(contract1Path("type", ["fields", "ip", "label"])).toEqual([
+    expect(v1Path("type", ["title_field"])).toEqual(["etiqueta"])
+    expect(v1Path("type", ["fields", "ip", "label"])).toEqual([
       "campos",
       "ip",
       "etiqueta",
     ])
-    expect(contract1Path("type", ["fields", "p", "of", "type"])).toEqual([
+    expect(v1Path("type", ["fields", "p", "of", "type"])).toEqual([
       "campos",
       "p",
       "de",
       "tipo",
     ])
-    expect(contract1Path("type", ["view", "columns", 1])).toEqual([
+    expect(v1Path("type", ["view", "columns", 1])).toEqual([
       "vista",
       "columnas",
       1,
     ])
-    expect(contract1Path("menu", ["sections", 0, "pages", 1, "icon"])).toEqual([
+    expect(v1Path("menu", ["sections", 0, "pages", 1, "icon"])).toEqual([
       "secciones",
       0,
       "paginas",
       1,
       "icono",
     ])
-    expect(contract1Path("config", ["header", "name", "label"])).toEqual([
+    expect(v1Path("config", ["header", "name", "label"])).toEqual([
       "cabecera",
       "name",
       "etiqueta",
@@ -190,16 +186,16 @@ describe("contract1Path", () => {
   })
 
   test("what it cannot place is kept as is", () => {
-    expect(contract1Path("type", ["otra", "cosa"])).toEqual(["otra", "cosa"])
+    expect(v1Path("type", ["otra", "cosa"])).toEqual(["otra", "cosa"])
   })
 })
 
 describe("a contract 1 repository", () => {
   test("loads to the same declarations as its contract 2 twin", async () => {
-    const one = await load(CONTRACT_1_SITE)
+    const one = await load(V1_SITE)
     if (!one.ok) throw new Error(JSON.stringify(one.problems))
     await dir?.remove()
-    const two = await load(CONTRACT_2_TWIN)
+    const two = await load(V2_TWIN)
     if (!two.ok) throw new Error(JSON.stringify(two.problems))
     expect(one.content.contract).toBe("1")
     expect(two.content.contract).toBe("2")
@@ -210,8 +206,8 @@ describe("a contract 1 repository", () => {
   })
 
   test("reads to the same pages, navigation and catalog as its twin", async () => {
-    const one = await readSiteOf(CONTRACT_1_SITE)
-    const two = await readSiteOf(CONTRACT_2_TWIN)
+    const one = await readSiteOf(V1_SITE)
+    const two = await readSiteOf(V2_TWIN)
     expect([...one.pages.keys()]).toEqual([...two.pages.keys()])
     for (const [pagePath, page] of two.pages) {
       const same = pageAt(one, pagePath)
@@ -228,8 +224,8 @@ describe("a contract 1 repository", () => {
   })
 
   test("its problems name the keys as its files write them", async () => {
-    const one = await readSiteOf(CONTRACT_1_SITE)
-    const two = await readSiteOf(CONTRACT_2_TWIN)
+    const one = await readSiteOf(V1_SITE)
+    const two = await readSiteOf(V2_TWIN)
     expect(messagesOf(pageAt(one, "red"))).toEqual([
       "titulo: la cabecera dice «Red», pero manda menu.yaml («Redes»)",
     ])
@@ -239,8 +235,8 @@ describe("a contract 1 repository", () => {
   })
 
   test("is reported once as superseded on its home, and its twin is not", async () => {
-    const one = await readSiteOf(CONTRACT_1_SITE)
-    const two = await readSiteOf(CONTRACT_2_TWIN)
+    const one = await readSiteOf(V1_SITE)
+    const two = await readSiteOf(V2_TWIN)
     expect(pageAt(one, "").problems).toEqual([
       {
         file: "doc.config.yaml",
@@ -254,7 +250,7 @@ describe("a contract 1 repository", () => {
 
   test("declaration problems are on the Spanish keys", async () => {
     const result = await load(
-      contract1With("catalog/maquinas/_type.yaml", [
+      v1With("catalog/maquinas/_type.yaml", [
         "nombre: Máquina",
         "plural: Máquinas",
         "etiqueta: nada",
@@ -272,7 +268,7 @@ describe("a contract 1 repository", () => {
 
   test("an unknown kind is reported on campos and tipo", async () => {
     const result = await load(
-      contract1With("catalog/ubicaciones/_type.yaml", [
+      v1With("catalog/ubicaciones/_type.yaml", [
         "nombre: Ubicación",
         "plural: Ubicaciones",
         "campos:",
@@ -284,7 +280,7 @@ describe("a contract 1 repository", () => {
 
   test("a reference to a missing type names `a` and `de`", async () => {
     const result = await load(
-      contract1With("catalog/ubicaciones/_type.yaml", [
+      v1With("catalog/ubicaciones/_type.yaml", [
         "nombre: Ubicación",
         "plural: Ubicaciones",
         "campos:",
@@ -299,7 +295,7 @@ describe("a contract 1 repository", () => {
 
   test("a menu problem is on secciones and icono", async () => {
     const result = await load(
-      contract1With("menu.yaml", [
+      v1With("menu.yaml", [
         "secciones:",
         "  - titulo: Red",
         "    icono: netwrok",
@@ -313,7 +309,7 @@ describe("a contract 1 repository", () => {
 
   test("a contract 2 key in a contract 1 file is reported, and its own key is missing", async () => {
     const result = await load(
-      contract1With("catalog/ubicaciones/_type.yaml", [
+      v1With("catalog/ubicaciones/_type.yaml", [
         "name: Ubicación",
         "plural: Ubicaciones",
         "campos:",
@@ -328,7 +324,7 @@ describe("a contract 1 repository", () => {
 
   test("a field named like a contract 2 reserved field is refused", async () => {
     const result = await load(
-      contract1With("catalog/ubicaciones/_type.yaml", [
+      v1With("catalog/ubicaciones/_type.yaml", [
         "nombre: Ubicación",
         "plural: Ubicaciones",
         "campos:",
@@ -343,7 +339,7 @@ describe("a contract 1 repository", () => {
 
   test("an entity problem is on the Spanish keys", async () => {
     const dated = await readSiteOf({
-      ...CONTRACT_1_SITE,
+      ...V1_SITE,
       "catalog/maquinas/pve-01.yaml":
         "hostname: pve-01\nip: 192.168.1.10\nubicacion: casa\nactualizado: ayer\nsource: x\n",
     })
@@ -355,7 +351,7 @@ describe("a contract 1 repository", () => {
 
   test("a page header problem names the Spanish key and finds its line", async () => {
     const site = await readSiteOf({
-      ...CONTRACT_1_SITE,
+      ...V1_SITE,
       "docs/red/vpn.mdx":
         "---\ntitulo: VPN\ndescripcion: Túnel\nicono: netwrok\ntitle: VPN\n---\n",
       "docs/red/sin.mdx": "---\nicono: router\n---\n",
@@ -382,7 +378,7 @@ describe("a contract 1 repository", () => {
 
   test("an unknown header key lists the Spanish fixed keys", async () => {
     const site = await readSiteOf({
-      ...CONTRACT_1_SITE,
+      ...V1_SITE,
       "docs/red/vpn.mdx":
         "---\ntitulo: VPN\ndescripcion: Túnel\notro: 1\n---\n",
     })
@@ -395,7 +391,7 @@ describe("a contract 1 repository", () => {
 describe("the contract version", () => {
   test("an unquoted plataforma is reported under its own name", async () => {
     const result = await load(
-      contract1With("doc.config.yaml", ["nombre: Homelab", "plataforma: 1"])
+      v1With("doc.config.yaml", ["nombre: Homelab", "plataforma: 1"])
     )
     expect(messages(result)).toContain(
       'plataforma: `plataforma` es la versión del contrato, entre comillas: "1"'
@@ -404,7 +400,7 @@ describe("the contract version", () => {
 
   test("with both keys the repository is version 2 and plataforma is refused", async () => {
     const result = await load({
-      ...CONTRACT_2_TWIN,
+      ...V2_TWIN,
       "doc.config.yaml": 'name: Homelab\ncontract: "2"\nplataforma: "1"\n',
     })
     expect(messages(result)).toEqual(['Llave desconocida: "plataforma"'])
@@ -412,7 +408,7 @@ describe("the contract version", () => {
 
   test("without either key, contract is missing", async () => {
     const result = await load({
-      ...CONTRACT_2_TWIN,
+      ...V2_TWIN,
       "doc.config.yaml": "name: Homelab\n",
     })
     expect(messages(result)).toEqual([

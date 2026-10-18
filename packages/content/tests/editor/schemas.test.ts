@@ -13,7 +13,7 @@ import {
   createContentDir,
   VALID_SITE,
 } from "#tests/fixtures/content-dir"
-import { CONTRACT_1_SITE } from "#tests/fixtures/contract-1"
+import { V1_SITE } from "#tests/fixtures/v1-site"
 
 let dir: ContentDir | undefined
 
@@ -199,7 +199,7 @@ describe("schemaCatalog", () => {
 
 describe("editorSchemas of a contract 1 repository", () => {
   test("the declarations' schemas take the Spanish names, kinds and version", async () => {
-    const schemas = editorSchemas(await loadSite(CONTRACT_1_SITE))
+    const schemas = editorSchemas(await loadSite(V1_SITE))
     const type = JSON.stringify(schemaNamed(schemas, "type").schema)
     for (const key of ['"campos":', '"etiqueta":', '"vista":', '"columnas":'])
       expect(type).toContain(key)
@@ -229,7 +229,7 @@ describe("editorSchemas of a contract 1 repository", () => {
   })
 
   test("an entity's schema renames only fuente and actualizado", async () => {
-    const schemas = editorSchemas(await loadSite(CONTRACT_1_SITE))
+    const schemas = editorSchemas(await loadSite(V1_SITE))
     const machines = schemaNamed(schemas, "entities/maquinas").schema
     expect(machines).toMatchObject({
       properties: {

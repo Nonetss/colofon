@@ -9,13 +9,9 @@ import {
   PAGE_HEADER_FIELDS,
   type SiteConfig,
 } from "#contract/schema/meta-schema"
-import {
-  contractKey,
-  pathFor,
-  translateContract1,
-} from "#contract/versions/contract-1"
 import type { ContractVersion } from "#contract/versions/detect"
 import { foreignKeyMessage } from "#contract/versions/reading"
+import { contractKey, pathFor, translateV1 } from "#contract/versions/v1"
 import type { PageHeader } from "#pages/types"
 
 // The header of a page: its YAML front matter, checked against the fields
@@ -110,7 +106,7 @@ function asContract2Header(
   foreign: (at: PropertyKey[]) => void
 ): Record<string, unknown> {
   if (contract === "2") return value
-  const translated = translateContract1("pageHeader", value)
+  const translated = translateV1("pageHeader", value)
   for (const at of translated.foreign) foreign(at)
   if (!isRecord(translated.data)) return {}
   return translated.data

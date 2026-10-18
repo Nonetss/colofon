@@ -26,14 +26,11 @@ import {
   type TypeDefinition,
 } from "#contract/schema/meta-schema"
 import {
-  type ContractReading,
-  contractKey,
-} from "#contract/versions/contract-1"
-import {
   type ContractVersion,
   contractVersionOf,
 } from "#contract/versions/detect"
-import { asContract2, checkContract1Version } from "#contract/versions/reading"
+import { asContract2, checkV1Version } from "#contract/versions/reading"
+import { type ContractReading, contractKey } from "#contract/versions/v1"
 
 // Reads the declarations of a content repository: doc.config.yaml, the
 // optional menu.yaml, each catalog type and the ids and pages its fields can
@@ -65,7 +62,7 @@ export async function loadContent(root: string): Promise<LoadResult> {
 
   const configData = await readYaml(root, CONFIG_FILE, problems)
   const contract = contractVersionOf(configData)
-  if (contract === "1") checkContract1Version(configData, problems)
+  if (contract === "1") checkV1Version(configData, problems)
   const config = validateDeclaration(
     configData,
     CONFIG_FILE,

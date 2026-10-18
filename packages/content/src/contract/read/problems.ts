@@ -1,5 +1,5 @@
 import { z } from "zod"
-import { type ContractReading, pathFor } from "#contract/versions/contract-1"
+import { type ContractReading, pathFor } from "#contract/versions/v1"
 
 // The problems the platform reports, shared by every area: one in a
 // declaration or catalog file, and one in a page (or anything shown on a

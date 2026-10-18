@@ -1,11 +1,8 @@
 import { CONFIG_FILE } from "#contract/read/files"
 import type { ContentProblem } from "#contract/read/problems"
 import { isRecord } from "#contract/read/records"
-import {
-  type ContractReading,
-  translateContract1,
-} from "#contract/versions/contract-1"
 import { CONTRACT_1_KEY, CONTRACT_1_VALUE } from "#contract/versions/detect"
+import { type ContractReading, translateV1 } from "#contract/versions/v1"
 
 // Reading a file under the repository's contract version: a version 2 file
 // as it is, a version 1 file translated to the version 2 names first, with
@@ -22,7 +19,7 @@ export function asContract2(
   problems: ContentProblem[]
 ): unknown {
   if (reading.contract === "2") return data
-  const translated = translateContract1(reading.file, data)
+  const translated = translateV1(reading.file, data)
   for (const at of translated.foreign) {
     problems.push({ file, message: foreignKeyMessage(at) })
   }
@@ -36,10 +33,7 @@ export function foreignKeyMessage(at: readonly PropertyKey[]): string {
 }
 
 /** Version 1 says its version as `plataforma: "1"`, between quotes. */
-export function checkContract1Version(
-  config: unknown,
-  problems: ContentProblem[]
-) {
+export function checkV1Version(config: unknown, problems: ContentProblem[]) {
   if (!isRecord(config)) return
   if (config[CONTRACT_1_KEY] === CONTRACT_1_VALUE) return
   problems.push({

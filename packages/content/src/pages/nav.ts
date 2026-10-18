@@ -8,8 +8,8 @@ import {
 } from "#contract/read/files"
 import type { PageProblem } from "#contract/read/problems"
 import type { Menu, MenuEntry } from "#contract/schema/meta-schema"
-import { contractKey } from "#contract/versions/contract-1"
 import type { ContractVersion } from "#contract/versions/detect"
+import { contractKey } from "#contract/versions/v1"
 import { pagePathOf } from "#pages/transform"
 import type { Page } from "#pages/types"
 

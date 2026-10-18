@@ -139,7 +139,7 @@ const ENTITY: Shape = {
 }
 
 /** The files a version 1 repository holds that name contract keys. */
-export const CONTRACT_1_FILES = {
+export const V1_FILES = {
   config: CONFIG,
   menu: MENU,
   type: TYPE,
@@ -147,14 +147,14 @@ export const CONTRACT_1_FILES = {
   entity: ENTITY,
 } as const
 
-export type Contract1File = keyof typeof CONTRACT_1_FILES
+export type V1File = keyof typeof V1_FILES
 
 /**
  * How a file that names contract keys is read: which kind of file it is, and
  * the repository's contract version, which says whether it is translated
  * from the version 1 names before it is validated.
  */
-export type ContractReading = { contract: ContractVersion; file: Contract1File }
+export type ContractReading = { contract: ContractVersion; file: V1File }
 
 export type Translation = {
   /** The file's data under the version 2 names. */
@@ -167,12 +167,9 @@ export type Translation = {
 }
 
 /** Translates the data of a version 1 `file` to the version 2 names. */
-export function translateContract1(
-  file: Contract1File,
-  data: unknown
-): Translation {
+export function translateV1(file: V1File, data: unknown): Translation {
   const foreign: PropertyKey[][] = []
-  return { data: translate(CONTRACT_1_FILES[file], data, [], foreign), foreign }
+  return { data: translate(V1_FILES[file], data, [], foreign), foreign }
 }
 
 function translate(
@@ -261,12 +258,12 @@ function englishKeys(keys: Readonly<Record<string, Rename>>): Set<string> {
  * file holds (`["title_field"]` → `["etiqueta"]`); what the walk cannot place
  * is kept as is.
  */
-export function contract1Path(
-  file: Contract1File,
+export function v1Path(
+  file: V1File,
   path: readonly PropertyKey[]
 ): PropertyKey[] {
   const mapped: PropertyKey[] = []
-  let shape: Shape | undefined = CONTRACT_1_FILES[file]
+  let shape: Shape | undefined = V1_FILES[file]
   for (const segment of path) {
     if (shape === undefined) {
       mapped.push(segment)
@@ -329,11 +326,11 @@ export function contractKey(version: ContractVersion, key: MessageKey): string {
 /** The version 1 path of a version 2 problem path, for `version` repositories. */
 export function pathFor(
   version: ContractVersion,
-  file: Contract1File,
+  file: V1File,
   path: readonly PropertyKey[]
 ): PropertyKey[] {
   if (version === "2") return [...path]
-  return contract1Path(file, path)
+  return v1Path(file, path)
 }
 
 /** Version 2 key → version 1 key, over every shape listed. */

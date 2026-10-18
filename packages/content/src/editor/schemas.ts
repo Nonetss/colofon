@@ -13,7 +13,7 @@ import { entitySchema } from "#contract/schema/entity-schema"
 import { createMetaSchemas } from "#contract/schema/meta-schema"
 import { diagramSchemas, type References } from "#diagrams/schema"
 import { DIAGRAM_TYPES } from "#diagrams/types/index"
-import { contract1JsonSchema } from "#editor/contract-1-schemas"
+import { v1JsonSchema } from "#editor/v1-schemas"
 
 // JSON Schemas for the editor: the YAML language server (Red Hat's YAML
 // extension) completes, validates and documents a file once a schema is
@@ -155,7 +155,7 @@ function forContract(
   file: "declaration" | "entity"
 ): Record<string, unknown> {
   if (declarations.contract === "2") return schema
-  return contract1JsonSchema(schema, file)
+  return v1JsonSchema(schema, file)
 }
 
 function toJsonSchema(

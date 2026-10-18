@@ -67,7 +67,7 @@ export async function formerNameProblems(root: string): Promise<PageProblem[]> {
  * "Contract 1 is reported as superseded"): it is read, but the names it
  * uses are not the current ones.
  */
-export function contract1Problems(contract: ContractVersion): PageProblem[] {
+export function v1Problems(contract: ContractVersion): PageProblem[] {
   if (contract === "2") return []
   return [
     {

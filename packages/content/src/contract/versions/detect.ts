@@ -3,7 +3,7 @@ import { isRecord } from "#contract/read/records"
 // The contract major versions the platform reads. Version 2 names every key
 // and fixed value in English and is what the schemas describe; version 1 is
 // the same contract with the Spanish names, read by translating its files
-// to version 2 first (`#contract/versions/contract-1`). `doc.config.yaml` says which
+// to version 2 first (`#contract/versions/v1`). `doc.config.yaml` says which
 // one a repository follows, and that decides how every file of it is read.
 
 export type ContractVersion = "1" | "2"

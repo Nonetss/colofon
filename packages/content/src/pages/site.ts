@@ -8,8 +8,8 @@ import type { ContentDeclarations } from "#contract/read/declarations"
 import { DOCS_DIR, isReservedDocsPath } from "#contract/read/files"
 import type { PageProblem } from "#contract/read/problems"
 import type { Menu } from "#contract/schema/meta-schema"
-import { contractKey } from "#contract/versions/contract-1"
 import type { ContractVersion } from "#contract/versions/detect"
+import { contractKey } from "#contract/versions/v1"
 import { diagramFigure } from "#diagrams/figure"
 import type { DiagramFile } from "#diagrams/model"
 import { diagramsByEntity, readDiagrams } from "#diagrams/read"
@@ -18,7 +18,7 @@ import {
   catalogPages,
   withCatalogBody,
 } from "#pages/catalog-pages"
-import { contract1Problems, formerNameProblems } from "#pages/former-names"
+import { formerNameProblems, v1Problems } from "#pages/former-names"
 import { type HeaderSchema, headerSchema, readHeader } from "#pages/header"
 import {
   folderNav,
@@ -123,7 +123,7 @@ export async function readSite(
     mdxFiles.push(file)
   }
   siteProblems.push(...(await formerNameProblems(root)))
-  siteProblems.push(...contract1Problems(contract))
+  siteProblems.push(...v1Problems(contract))
   const pagePaths = new Set(mdxFiles.map(pagePathOf))
   const folders = foldersWithPages(mdxFiles)
   for (const folder of folders) pagePaths.add(folder)

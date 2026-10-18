@@ -6,7 +6,7 @@
 // and kind, entities with `fuente` and `actualizado`, and page headers.
 
 /** The site under the contract 1 names. */
-export const CONTRACT_1_SITE: Record<string, string> = {
+export const V1_SITE: Record<string, string> = {
   "doc.config.yaml": [
     "nombre: Homelab",
     "descripcion: La red de casa",
@@ -92,7 +92,7 @@ export const CONTRACT_1_SITE: Record<string, string> = {
 }
 
 /** The same site under the contract 2 names. */
-export const CONTRACT_2_TWIN: Record<string, string> = {
+export const V2_TWIN: Record<string, string> = {
   "doc.config.yaml": [
     "name: Homelab",
     "description: La red de casa",

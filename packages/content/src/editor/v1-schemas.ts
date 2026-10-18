@@ -1,11 +1,11 @@
 import { isRecord } from "#contract/read/records"
+import { CONTRACT_1_VALUE } from "#contract/versions/detect"
 import {
   DECLARATION_KEYS,
   ENTITY_KEYS,
   SPANISH_KINDS,
   spanishOf,
-} from "#contract/versions/contract-1"
-import { CONTRACT_1_VALUE } from "#contract/versions/detect"
+} from "#contract/versions/v1"
 
 // The editor's schemas for a contract 1 repository: the contract 2 JSON
 // Schemas, renamed to the Spanish names the repository writes
@@ -19,7 +19,7 @@ import { CONTRACT_1_VALUE } from "#contract/versions/detect"
  * every other property is a field the site named. JSON Schema's own keywords
  * are never renamed: only the keys of `properties` and `required` are.
  */
-export function contract1JsonSchema(
+export function v1JsonSchema(
   schema: Record<string, unknown>,
   file: "declaration" | "entity"
 ): Record<string, unknown> {
