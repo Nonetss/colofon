@@ -21,9 +21,7 @@
     "@better-auth/api-key": "catalog:",
     "@nonete/db": "workspace:*",
     "@nonete/env": "workspace:*",
-    "better-auth": "catalog:",
-    "dotenv": "catalog:",
-    "zod": "catalog:"
+    "better-auth": "catalog:"
   },
   "devDependencies": {
     "@nonete/config": "workspace:*",

@@ -44,8 +44,7 @@
     "@nonete/logger": "workspace:*",
     "dotenv": "catalog:",
     "drizzle-orm": "catalog:",
-    "pg": "catalog:",
-    "zod": "catalog:"
+    "pg": "catalog:"
   },
   "devDependencies": {
     "@nonete/config": "workspace:*",

@@ -157,8 +157,6 @@
         "@nonete/db": "workspace:*",
         "@nonete/env": "workspace:*",
         "better-auth": "catalog:",
-        "dotenv": "catalog:",
-        "zod": "catalog:",
       },
       "devDependencies": {
         "@nonete/config": "workspace:*",
@@ -228,7 +226,6 @@
         "dotenv": "catalog:",
         "drizzle-orm": "catalog:",
         "pg": "catalog:",
-        "zod": "catalog:",
       },
       "devDependencies": {
         "@nonete/config": "workspace:*",

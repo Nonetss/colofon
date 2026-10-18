@@ -5,8 +5,8 @@ import { env } from "@nonete/env/server"
 import { betterAuth } from "better-auth"
 import { drizzleAdapter } from "better-auth/adapters/drizzle"
 import { admin, organization } from "better-auth/plugins"
+import { buildGenericOAuthPlugin } from "#auth/oauth"
 import { ac, roles } from "#auth/permissions"
-import { buildGenericOAuthPlugin } from "./oauth"
 
 export function createAuth() {
   const oauthPlugin = buildGenericOAuthPlugin()
