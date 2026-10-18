@@ -11,6 +11,13 @@ import {
 import { salvagedList } from "#diagrams/report"
 import type { References } from "#diagrams/schema"
 import { checkBudget } from "#diagrams/types/kit/budget"
+import {
+  arrowEdge,
+  lineShape,
+  rectShape,
+  roleWidth,
+  textShape,
+} from "#diagrams/types/kit/flow"
 import { formSchema, itemList } from "#diagrams/types/kit/form"
 import { type Item, itemBox, itemFields } from "#diagrams/types/kit/items"
 import {
@@ -19,13 +26,6 @@ import {
   type Tools,
   type TypeModule,
 } from "#diagrams/types/kit/scene"
-import {
-  arrowEdge,
-  lineShape,
-  rectShape,
-  roleWidth,
-  textShape,
-} from "#diagrams/types/layout/flow-draw"
 
 // Sequence diagram (diagram-design's `type-sequence.md`): actors as headed
 // lifelines left to right, messages as arrows between them from top to

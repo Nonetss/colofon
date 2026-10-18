@@ -13,7 +13,7 @@ export type Scale = {
 }
 
 /** A step of 1, 2 or 5 × 10ⁿ that splits `span` in about `count` parts. */
-export function niceStep(span: number, count = 5): number {
+function niceStep(span: number, count = 5): number {
   if (span <= 0) return 1
   const raw = span / count
   const power = 10 ** Math.floor(Math.log10(raw))

@@ -1,35 +1,27 @@
-import path from "node:path"
 import GithubSlugger from "github-slugger"
 import type { Element } from "hast"
-import type {
-  Blockquote,
-  Code,
-  Definition,
-  Image,
-  Link,
-  Paragraph,
-  Root,
-} from "mdast"
+import type { Blockquote, Code, Paragraph, Root } from "mdast"
 import type { MdxJsxFlowElement, MdxJsxTextElement } from "mdast-util-mdx"
 import type {} from "mdast-util-to-hast"
 import { toString as textOf } from "mdast-util-to-string"
 import { SKIP, visit } from "unist-util-visit"
-import {
-  catalogTypePath,
-  entityPagePath,
-  entityPath,
-} from "#contract/catalog/paths"
 import type { Catalog } from "#contract/catalog/read"
-import { isImageFile } from "#contract/images"
 import type { PageProblem } from "#contract/read/problems"
 import { diagramFigure } from "#diagrams/figure"
 import type { DiagramFile } from "#diagrams/model"
 import { ENTITIES, entitiesTable } from "#pages/entities"
-import type { PageHeading } from "#pages/types"
+import { componentNotice } from "#pages/hast"
+import {
+  type Report,
+  resolveDefinition,
+  resolveImage,
+  resolveLink,
+} from "#pages/links"
+import type { PageHeading } from "#pages/page"
 
 // Walks a page's syntax tree before it becomes HTML: reports what a page
 // cannot use, gives headings their ids, turns `[!KIND]` blockquotes into
-// alerts and points links and images at the reader's routes. The platform's
+// alerts and points links and images at the reader's routes (`links.ts`). The platform's
 // components are replaced here: `<Callout>` by an alert, `<Entities>` by its
 // catalog table (`entities.ts`) and `<Diagram>` by its figure
 // (`diagrams/figure.ts`); a ```diagram block, which belongs in diagrams/, by a
@@ -68,10 +60,10 @@ const ALERT_TITLES = {
 type AlertKind = keyof typeof ALERT_TITLES
 
 /** The component pages may use, rendered as an alert. */
-export const CALLOUT = "Callout"
+const CALLOUT = "Callout"
 
 /** The component that shows a diagram of diagrams/. */
-export const DIAGRAM = "Diagram"
+const DIAGRAM = "Diagram"
 
 /** `<Callout type="…">`: the alert kind and default title of each type. */
 const CALLOUT_TYPES = {
@@ -87,8 +79,6 @@ const CALLOUT_TYPES = {
 type CalloutType = keyof typeof CALLOUT_TYPES
 
 const ALERT_MARKER = /^\[!(note|tip|important|warning|caution)\][ \t]*(\r?\n)?/i
-
-const SCHEME = /^[a-z][a-z0-9+.-]*:/i
 
 export function transformPage(
   tree: Root,
@@ -285,7 +275,10 @@ function diagramElement(
   const known = [...context.diagrams.keys()].join(", ")
   if (id === null) {
     const message = `<${DIAGRAM}> necesita id, el nombre de un fichero de diagrams/ (hay: ${known})`
-    return { element: diagramNotice(message), problems: [...problems, message] }
+    return {
+      element: componentNotice(DIAGRAM, message),
+      problems: [...problems, message],
+    }
   }
   const found = context.diagrams.get(id)
   if (found === undefined || found.diagram === null) {
@@ -294,22 +287,13 @@ function diagramElement(
       (problem) => `${problem.file}: ${problem.message}`
     )
     return {
-      element: diagramNotice(message),
+      element: componentNotice(DIAGRAM, message),
       problems: [...problems, message, ...fileProblems],
     }
   }
   for (const problem of found.problems)
     problems.push(`${problem.file}: ${problem.message}`)
   return { element: diagramFigure(found.diagram, context.routeOf), problems }
-}
-
-function diagramNotice(message: string): Element {
-  return {
-    type: "element",
-    tagName: "div",
-    properties: { className: ["doc-component-notice"], dataComponent: DIAGRAM },
-    children: [{ type: "text", value: message }],
-  }
 }
 
 function isBlockComponent(name: string | null): name is string {
@@ -483,157 +467,4 @@ function alertKindOf(value: string | undefined): AlertKind | undefined {
   )
     return kind
   return undefined
-}
-
-type Report = (line: number | null, message: string) => void
-
-/** Where a relative URL leads, once checked against the repository. */
-type Target =
-  | { kind: "keep" }
-  | { kind: "url"; url: string }
-  | { kind: "broken"; message: string }
-
-const CATALOG_SCHEME = "catalog:"
-
-/**
- * `catalog:<type>/<id>`: the entity's page, or its generated catalog page
- * when it has none. `catalog:<type>`: the type's generated page.
- */
-function entityTarget(url: string, context: LinkContext): Target {
-  const [typeId = "", id, ...rest] = url.slice(CATALOG_SCHEME.length).split("/")
-  const type = context.catalog.get(typeId)
-  if (rest.length === 0 && id === undefined && type !== undefined)
-    return { kind: "url", url: context.routeOf(catalogTypePath(typeId)) }
-  const entity = type?.entities.get(id ?? "")
-  if (rest.length > 0 || entity === undefined)
-    return {
-      kind: "broken",
-      message: `${url} no es ninguna entidad del catálogo`,
-    }
-  context.cite(entityPath(typeId, entity.id))
-  return { kind: "url", url: context.routeOf(entityPagePath(entity)) }
-}
-
-function resolveTarget(
-  url: string,
-  context: LinkContext,
-  imagesOnly: boolean
-): Target {
-  if (url === "" || url.startsWith("#") || url.startsWith("/"))
-    return { kind: "keep" }
-  if (url.startsWith(CATALOG_SCHEME)) {
-    if (imagesOnly)
-      return { kind: "broken", message: `${url} no es una imagen` }
-    return entityTarget(url, context)
-  }
-  if (SCHEME.test(url)) return { kind: "keep" }
-  const [target = "", hash] = splitHash(url)
-  const relative = path.posix.normalize(
-    path.posix.join(context.folder, decode(target))
-  )
-  if (relative === ".." || relative.startsWith("../"))
-    return { kind: "broken", message: `${url} queda fuera de docs/` }
-  if (!imagesOnly && relative.endsWith(".mdx")) {
-    const page = pagePathOf(relative)
-    if (!context.pages.has(page))
-      return { kind: "broken", message: `${url} no es ninguna ficha` }
-    return { kind: "url", url: withHash(context.routeOf(page), hash) }
-  }
-  if (isImageFile(relative)) {
-    if (!context.files.has(relative))
-      return { kind: "broken", message: `${url} no existe` }
-    return { kind: "url", url: context.fileUrlOf(relative) }
-  }
-  if (imagesOnly) return { kind: "broken", message: `${url} no es una imagen` }
-  return {
-    kind: "broken",
-    message: `${url}: solo se enlazan fichas (.mdx) e imágenes`,
-  }
-}
-
-function resolveLink(
-  node: Link,
-  context: LinkContext,
-  line: number | null,
-  report: Report
-) {
-  const target = resolveTarget(node.url, context, false)
-  if (target.kind === "keep") return
-  if (target.kind === "url") {
-    node.url = target.url
-    return
-  }
-  node.url = ""
-  report(line, `Enlace roto: ${target.message}`)
-  node.data = {
-    ...node.data,
-    hName: "span",
-    hProperties: { className: ["doc-broken-link"] },
-  }
-}
-
-function resolveDefinition(
-  node: Definition,
-  context: LinkContext,
-  line: number | null,
-  report: Report
-) {
-  const target = resolveTarget(node.url, context, false)
-  if (target.kind === "keep") return
-  if (target.kind === "url") {
-    node.url = target.url
-    return
-  }
-  node.url = ""
-  report(line, `Enlace roto: ${target.message}`)
-}
-
-function resolveImage(
-  node: Image,
-  context: LinkContext,
-  line: number | null,
-  report: Report
-) {
-  const target = resolveTarget(node.url, context, true)
-  if (target.kind === "keep") return
-  if (target.kind === "url") {
-    node.url = target.url
-    return
-  }
-  report(line, `Imagen rota: ${target.message}`)
-  node.url = ""
-  node.data = {
-    ...node.data,
-    hName: "span",
-    hProperties: { className: ["doc-broken-image"] },
-    hChildren: [{ type: "text", value: node.alt ?? "" }],
-  }
-}
-
-function splitHash(url: string): [string, string | undefined] {
-  const at = url.indexOf("#")
-  if (at === -1) return [url, undefined]
-  return [url.slice(0, at), url.slice(at + 1)]
-}
-
-function withHash(url: string, hash: string | undefined): string {
-  if (hash === undefined || hash === "") return url
-  return `${url}#${hash}`
-}
-
-function decode(value: string): string {
-  try {
-    return decodeURI(value)
-  } catch {
-    return value
-  }
-}
-
-/** `red/dns.mdx` → `red/dns`, `red/index.mdx` → `red`, `index.mdx` → `""`. */
-export function pagePathOf(file: string): string {
-  const withoutExt = file.slice(0, -".mdx".length)
-  if (withoutExt === "index") return ""
-  if (withoutExt.endsWith("/index"))
-    return withoutExt.slice(0, -"/index".length)
-  return withoutExt
 }

@@ -28,7 +28,7 @@ export function checkBudget(
 }
 
 /** The most elements a diagram draws in the accent. */
-export const MAX_ACCENTS = 2
+const MAX_ACCENTS = 2
 
 /** Reports a diagram with more than two elements in the accent. */
 export function checkAccents(count: number, report: Report) {

@@ -97,20 +97,6 @@ export function linkLine(link: LinkWritten): TextPart[] {
   return line
 }
 
-/** The furthest right and down any of `points` reaches. */
-export function extentOf(points: readonly Point[]): {
-  right: number
-  bottom: number
-} {
-  let right = 0
-  let bottom = 0
-  for (const [x, y] of points) {
-    right = Math.max(right, x)
-    bottom = Math.max(bottom, y)
-  }
-  return { right, bottom }
-}
-
 function kindOf(
   forced: EdgeKind | undefined,
   own: EdgeKind | undefined

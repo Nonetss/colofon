@@ -3,8 +3,17 @@ import type { Graphic, LegendEntry, TextTree } from "#diagrams/model"
 import { optional, salvagedList } from "#diagrams/report"
 import type { References } from "#diagrams/schema"
 import { checkBudget } from "#diagrams/types/kit/budget"
+import {
+  checkFits,
+  lineShape,
+  maskedText,
+  rectShape,
+  shape,
+  textShape,
+} from "#diagrams/types/kit/flow"
 import { formSchema, itemList } from "#diagrams/types/kit/form"
 import { type Item, itemFields } from "#diagrams/types/kit/items"
+import { withDatum, withLink } from "#diagrams/types/kit/marks"
 import {
   emptyScene,
   type Scene,
@@ -20,16 +29,6 @@ import {
   monthTick,
   parseDate,
 } from "#diagrams/types/kit/values"
-import {
-  checkFits,
-  lineShape,
-  maskedText,
-  rectShape,
-  shape,
-  textShape,
-  withDatum,
-  withLink,
-} from "#diagrams/types/layout/flow-draw"
 import { exactScale, timeTicks } from "#diagrams/types/layout/scale"
 
 // Gantt chart (diagram-design's `type-gantt.md`): tasks with a start and an

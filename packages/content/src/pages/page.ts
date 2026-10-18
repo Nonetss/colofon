@@ -1,3 +1,4 @@
+import path from "node:path"
 import type { Root } from "hast"
 import type { PageProblem } from "#contract/read/problems"
 
@@ -29,4 +30,11 @@ export type Page = {
   tree: Root | null
   headings: PageHeading[]
   problems: PageProblem[]
+}
+
+/** The title of a page whose header gives none: its file name, "Inicio" for the home. */
+export function fallbackTitleOf(pagePath: string): string {
+  const name = path.posix.basename(pagePath)
+  if (name === "") return "Inicio"
+  return name
 }

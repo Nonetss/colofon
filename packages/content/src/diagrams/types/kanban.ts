@@ -3,6 +3,13 @@ import type { Graphic, LegendEntry, TextPart } from "#diagrams/model"
 import { salvagedList } from "#diagrams/report"
 import type { References } from "#diagrams/schema"
 import { checkBudget } from "#diagrams/types/kit/budget"
+import {
+  checkFits,
+  lineShape,
+  rectShape,
+  roleWidth,
+  textShape,
+} from "#diagrams/types/kit/flow"
 import { formSchema, itemList } from "#diagrams/types/kit/form"
 import { type Item, itemBox, itemFields } from "#diagrams/types/kit/items"
 import {
@@ -11,13 +18,6 @@ import {
   type Tools,
   type TypeModule,
 } from "#diagrams/types/kit/scene"
-import {
-  checkFits,
-  lineShape,
-  rectShape,
-  roleWidth,
-  textShape,
-} from "#diagrams/types/layout/flow-draw"
 
 // Kanban (diagram-design's `type-kanban.md`): a snapshot of work in progress
 // by state. Columns side by side with their name and card count, the cards

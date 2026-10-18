@@ -2,9 +2,23 @@ import { z } from "zod"
 import { textWidth } from "#diagrams/measure"
 import type { Graphic, LegendEntry } from "#diagrams/model"
 import { optional, type Report, salvagedList } from "#diagrams/report"
-import type { Hue } from "#diagrams/schema"
+import { HUES, type Hue } from "#diagrams/schema"
+import {
+  label,
+  matchingSeries,
+  type Plot,
+  rule,
+  type SeriesWritten,
+  seriesSchema,
+  shape,
+  tickWidth,
+  tinted,
+  valueAxis,
+} from "#diagrams/types/kit/axes"
 import { checkBudget } from "#diagrams/types/kit/budget"
+import { seriesHue } from "#diagrams/types/kit/charts"
 import { formSchema } from "#diagrams/types/kit/form"
+import { datumOf, markIds } from "#diagrams/types/kit/marks"
 import {
   emptyScene,
   type Scene,
@@ -16,21 +30,6 @@ import {
   formatNumber,
   type ValueFormat,
 } from "#diagrams/types/kit/values"
-import {
-  datum,
-  label,
-  markIds,
-  matchingSeries,
-  type Plot,
-  rule,
-  type SeriesWritten,
-  seriesHue,
-  seriesSchema,
-  shape,
-  tickWidth,
-  tinted,
-  valueAxis,
-} from "#diagrams/types/layout/axes"
 import { linearScale, type Scale } from "#diagrams/types/layout/scale"
 
 // Bar chart (diagram-design's `type-bar.md`): one or two series of values
@@ -73,7 +72,7 @@ export type CategoryChart = {
 }
 
 /** Reads `categories`, `series` (at most `maxSeries`), `focal` and the format. */
-export function readCategoryChart(
+function readCategoryChart(
   data: Record<string, unknown>,
   report: Report,
   maxSeries: number
@@ -160,14 +159,14 @@ function accentsOf(chart: CategoryChart): number {
 }
 
 /** A legend entry per series when there are two; none for one. */
-export function seriesLegend(
+function seriesLegend(
   series: readonly SeriesWritten[],
   dots: boolean
 ): LegendEntry[] {
   if (series.length < 2) return []
   return series.map((one, index) => ({
     name: one.name,
-    sample: sampleOf(seriesHue(index, one.hue), dots, index === 0),
+    sample: sampleOf(seriesHue(index, one.hue, HUES), dots, index === 0),
     series: one.name,
   }))
 }
@@ -215,7 +214,12 @@ function barPaint(
     return tinted(null, null, "fill-accent-tint", "line-accent")
   if (chart.series.length === 1 && one.hue === undefined)
     return tinted(null, null, "fill-soft", "line-muted")
-  return tinted(seriesHue(index, one.hue), null, "fill-hue-tint", "line-hue")
+  return tinted(
+    seriesHue(index, one.hue, HUES),
+    null,
+    "fill-hue-tint",
+    "line-hue"
+  )
 }
 
 function valueClass(chart: CategoryChart, category: string): string {
@@ -321,7 +325,7 @@ function verticalBar(
     },
     {
       ...look,
-      datum: datum(
+      datum: datumOf(
         mark.id,
         mark.category,
         mark.one.name,
@@ -379,7 +383,7 @@ function horizontalBars(
           },
           {
             ...barPaint(chart, category, index, one),
-            datum: datum(
+            datum: datumOf(
               next(),
               category,
               one.name,
@@ -501,12 +505,17 @@ function dot(
   id: string,
   hollow: boolean
 ): Graphic {
-  const look = dotPaint(chart, category, seriesHue(index, one.hue), hollow)
+  const look = dotPaint(
+    chart,
+    category,
+    seriesHue(index, one.hue, HUES),
+    hollow
+  )
   return shape(
     { kind: "circle", cx: x, cy: y, r: 5 },
     {
       ...look,
-      datum: datum(
+      datum: datumOf(
         id,
         category,
         one.name,

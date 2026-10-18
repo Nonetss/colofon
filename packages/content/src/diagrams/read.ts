@@ -1,8 +1,7 @@
-import type { Dirent } from "node:fs"
-import { readdir, readFile } from "node:fs/promises"
+import { readFile } from "node:fs/promises"
 import path from "node:path"
 import { entityPath } from "#contract/catalog/paths"
-import { DIAGRAMS_DIR } from "#contract/read/files"
+import { DIAGRAMS_DIR, listDir } from "#contract/read/files"
 import { parseJson } from "#contract/read/json"
 import type { PageProblem } from "#contract/read/problems"
 import { isRecord } from "#contract/read/records"
@@ -280,15 +279,4 @@ export function diagramsByEntity(
     }
   }
   return found
-}
-
-async function listDir(dir: string): Promise<Dirent[]> {
-  try {
-    const entries = await readdir(dir, { withFileTypes: true })
-    return entries.sort((a, b) => a.name.localeCompare(b.name))
-  } catch (error) {
-    if (error instanceof Error && "code" in error && error.code === "ENOENT")
-      return []
-    throw error
-  }
 }

@@ -139,7 +139,7 @@ const ENTITY: Shape = {
 }
 
 /** The files a version 1 repository holds that name contract keys. */
-export const V1_FILES = {
+const V1_FILES = {
   config: CONFIG,
   menu: MENU,
   type: TYPE,

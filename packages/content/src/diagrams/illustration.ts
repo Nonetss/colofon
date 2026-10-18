@@ -23,7 +23,7 @@ export const TRANSFORM =
   /^(\s*(matrix|translate|scale|rotate|skewX|skewY)\([-\d.eE,\s]*\)\s*)+$/
 
 /** The role classes an illustration paints with. */
-export const ILLUSTRATION_ROLES = [
+const ILLUSTRATION_ROLES = [
   "ink",
   "muted",
   "soft",

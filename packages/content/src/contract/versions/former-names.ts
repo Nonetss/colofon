@@ -1,10 +1,10 @@
-import type { Dirent } from "node:fs"
-import { readdir } from "node:fs/promises"
 import path from "node:path"
 import {
   CATALOG_DIR,
   CONFIG_FILE,
   DIAGRAMS_DIR,
+  listDir,
+  STYLES_DIR,
   TYPE_FILE,
 } from "#contract/read/files"
 import type { PageProblem } from "#contract/read/problems"
@@ -14,7 +14,6 @@ import {
   CONTRACT_KEY,
   type ContractVersion,
 } from "#contract/versions/detect"
-import { STYLES_DIR } from "#styles/modules"
 
 // The folders and files the contract named in Spanish before it moved to
 // English (`content-contract`, "Former Spanish names are reported"). They are
@@ -76,15 +75,4 @@ export function v1Problems(contract: ContractVersion): PageProblem[] {
       message: `Este repositorio sigue el contrato 1, con las claves en español (\`${CONTRACT_1_KEY}: "${CONTRACT_1_VALUE}"\`). Se sigue leyendo, pero el contrato 2 las nombra en inglés (\`${CONTRACT_KEY}: "2"\`): la guía «Escribir documentación» explica el cambio en «Pasar del contrato 1 al 2»`,
     },
   ]
-}
-
-async function listDir(dir: string): Promise<Dirent[]> {
-  try {
-    const entries = await readdir(dir, { withFileTypes: true })
-    return entries.sort((a, b) => a.name.localeCompare(b.name))
-  } catch (error) {
-    if (error instanceof Error && "code" in error && error.code === "ENOENT")
-      return []
-    throw error
-  }
 }

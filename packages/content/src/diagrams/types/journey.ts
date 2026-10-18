@@ -2,14 +2,6 @@ import { z } from "zod"
 import type { Graphic, LegendEntry, Point, TextTree } from "#diagrams/model"
 import type { References } from "#diagrams/schema"
 import { checkBudget } from "#diagrams/types/kit/budget"
-import { formSchema, itemList } from "#diagrams/types/kit/form"
-import { type Item, itemFields } from "#diagrams/types/kit/items"
-import {
-  emptyScene,
-  type Scene,
-  type Tools,
-  type TypeModule,
-} from "#diagrams/types/kit/scene"
 import {
   checkFits,
   lineShape,
@@ -17,9 +9,16 @@ import {
   roleWidth,
   shape,
   textShape,
-  withDatum,
-  withLink,
-} from "#diagrams/types/layout/flow-draw"
+} from "#diagrams/types/kit/flow"
+import { formSchema, itemList } from "#diagrams/types/kit/form"
+import { type Item, itemFields } from "#diagrams/types/kit/items"
+import { tenth, withDatum, withLink } from "#diagrams/types/kit/marks"
+import {
+  emptyScene,
+  type Scene,
+  type Tools,
+  type TypeModule,
+} from "#diagrams/types/kit/scene"
 
 // User journey (diagram-design's `type-journey.md`): the stages of one
 // person's experience as columns, how it feels at each one as a curve
@@ -273,17 +272,13 @@ function curveThrough(points: readonly Point[]): string {
     if (p1 === undefined || p2 === undefined) continue
     const p0 = points[i - 1] ?? p1
     const p3 = points[i + 2] ?? p2
-    const c1x = round(p1[0] + (p2[0] - p0[0]) / 6)
-    const c1y = round(p1[1] + (p2[1] - p0[1]) / 6)
-    const c2x = round(p2[0] - (p3[0] - p1[0]) / 6)
-    const c2y = round(p2[1] - (p3[1] - p1[1]) / 6)
-    parts.push(`C${c1x} ${c1y} ${c2x} ${c2y} ${round(p2[0])} ${round(p2[1])}`)
+    const c1x = tenth(p1[0] + (p2[0] - p0[0]) / 6)
+    const c1y = tenth(p1[1] + (p2[1] - p0[1]) / 6)
+    const c2x = tenth(p2[0] - (p3[0] - p1[0]) / 6)
+    const c2y = tenth(p2[1] - (p3[1] - p1[1]) / 6)
+    parts.push(`C${c1x} ${c1y} ${c2x} ${c2y} ${tenth(p2[0])} ${tenth(p2[1])}`)
   }
   return parts.join(" ")
-}
-
-function round(value: number): number {
-  return Math.round(value * 10) / 10
 }
 
 /** A dashed accent tag naming a stage's pain. */

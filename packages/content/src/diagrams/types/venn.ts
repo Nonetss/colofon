@@ -6,18 +6,14 @@ import type { Hue, References } from "#diagrams/schema"
 import { checkBudget } from "#diagrams/types/kit/budget"
 import { formSchema, itemList } from "#diagrams/types/kit/form"
 import { type Item, itemFields } from "#diagrams/types/kit/items"
+import { itemDatum, markIds } from "#diagrams/types/kit/marks"
 import {
   emptyScene,
   type Scene,
   type Tools,
   type TypeModule,
 } from "#diagrams/types/kit/scene"
-import {
-  circleAt,
-  itemDatum,
-  markIds,
-  textAt,
-} from "#diagrams/types/layout/shapes"
+import { circleAt, textAt } from "#diagrams/types/kit/shapes"
 
 // Venn (diagram-design's `type-venn.md`): two or three overlapping circles
 // of equal size, each tinted faintly in its own hue so the tints compound
@@ -64,7 +60,7 @@ const sets = z.strictObject(itemFields({}))
 type VennSet = { item: Item; centre: Point; hue: Hue }
 
 /** The centres of `count` circles around (cx, cy): two side by side, three in a triangle. */
-export function centresOf(count: number, cx: number, cy: number): Point[] {
+function centresOf(count: number, cx: number, cy: number): Point[] {
   if (count === 2) {
     const d = SPREAD.two * RADIUS
     return [
@@ -225,7 +221,7 @@ function anchorOf(ux: number): "start" | "middle" | "end" {
  * Where a region's label goes: between the centres of its sets, pushed away
  * from any set it leaves out, so it lands in that intersection alone.
  */
-export function regionCentre(
+function regionCentre(
   ids: readonly string[],
   placed: readonly VennSet[]
 ): Point {

@@ -5,21 +5,20 @@ import type { References } from "#diagrams/schema"
 import { checkBudget } from "#diagrams/types/kit/budget"
 import { formSchema, itemList } from "#diagrams/types/kit/form"
 import { type Item, itemFields } from "#diagrams/types/kit/items"
+import { itemDatum, markIds } from "#diagrams/types/kit/marks"
 import {
   emptyScene,
   type Scene,
   type Tools,
   type TypeModule,
 } from "#diagrams/types/kit/scene"
-import { type Box, placeLabels } from "#diagrams/types/layout/labels"
 import {
   arrowheadAt,
   circleAt,
-  itemDatum,
   lineAt,
-  markIds,
   textAt,
-} from "#diagrams/types/layout/shapes"
+} from "#diagrams/types/kit/shapes"
+import { type Box, placeLabels } from "#diagrams/types/layout/labels"
 import { percent } from "#diagrams/types/quadrant"
 
 // Wardley map (diagram-design's `type-wardley.md`): the components of a
@@ -35,7 +34,7 @@ const TOP = 48
 const DOT = 6
 
 /** The evolution stages, each a quarter of the x axis. */
-export const STAGES = ["Génesis", "A medida", "Producto", "Commodity"]
+const STAGES = ["Génesis", "A medida", "Producto", "Commodity"]
 
 const LIMITS = [
   { max: 9, what: "componentes" },
@@ -83,7 +82,7 @@ function schema(references: References) {
 }
 
 /** The stage an evolution from 0 to 100 falls in. */
-export function stageOf(evolution: number): string {
+function stageOf(evolution: number): string {
   const index = Math.min(3, Math.floor(evolution / 25))
   return STAGES[index] ?? ""
 }

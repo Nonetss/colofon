@@ -5,12 +5,14 @@ import type { References } from "#diagrams/schema"
 import { checkBudget } from "#diagrams/types/kit/budget"
 import { formSchema, itemList } from "#diagrams/types/kit/form"
 import { type Item, itemFields } from "#diagrams/types/kit/items"
+import { itemDatum, markIds } from "#diagrams/types/kit/marks"
 import {
   emptyScene,
   type Scene,
   type Tools,
   type TypeModule,
 } from "#diagrams/types/kit/scene"
+import { itemTextClass, polygonOf, textAt } from "#diagrams/types/kit/shapes"
 import {
   formatFields,
   formatNumber,
@@ -18,13 +20,6 @@ import {
   formatPercent,
   type ValueFormat,
 } from "#diagrams/types/kit/values"
-import {
-  itemDatum,
-  itemTextClass,
-  markIds,
-  polygonOf,
-  textAt,
-} from "#diagrams/types/layout/shapes"
 
 // Pyramid and funnel (diagram-design's `type-pyramid.md`): levels stacked as
 // trapezoids, narrowing upwards (the rarest on top) or, as a funnel,
@@ -195,7 +190,7 @@ function valuesOf(
  * straight sides from the apex to the base, or, for a funnel with values,
  * each level as wide as its value.
  */
-export function edgeWidths(
+function edgeWidths(
   count: number,
   funnel: boolean,
   values: readonly number[] | null

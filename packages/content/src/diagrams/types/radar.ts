@@ -4,14 +4,14 @@ import { listOf, optional, positive } from "#diagrams/report"
 import { HUES } from "#diagrams/schema"
 import { checkBudget } from "#diagrams/types/kit/budget"
 import {
-  datumOf,
   label,
-  markIds,
   readFormat,
+  SERIES_HUES,
   seriesHue,
   shape,
-} from "#diagrams/types/kit/chart-kit"
+} from "#diagrams/types/kit/charts"
 import { formSchema } from "#diagrams/types/kit/form"
+import { datumOf, markIds } from "#diagrams/types/kit/marks"
 import {
   emptyScene,
   type Scene,
@@ -170,7 +170,7 @@ function read(data: Record<string, unknown>, tools: Tools): Scene | null {
     }
     scene.over.push(
       shape({ kind: "polygon", points }, ["fill-hue", "line-hue"], {
-        hue: seriesHue(value.hue, index),
+        hue: seriesHue(index, value.hue, SERIES_HUES),
         opacity: 0.18,
         datum,
       })
@@ -193,7 +193,7 @@ function read(data: Record<string, unknown>, tools: Tools): Scene | null {
       sample: {
         kind: "swatch" as const,
         classes: ["fill-hue"],
-        hue: seriesHue(value.hue, index),
+        hue: seriesHue(index, value.hue, SERIES_HUES),
       },
       series: value.name,
     }

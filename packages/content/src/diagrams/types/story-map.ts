@@ -2,6 +2,13 @@ import { z } from "zod"
 import type { Graphic, LegendEntry, TextTree } from "#diagrams/model"
 import type { References } from "#diagrams/schema"
 import { checkBudget } from "#diagrams/types/kit/budget"
+import {
+  checkFits,
+  lineShape,
+  maskedText,
+  rectShape,
+  textShape,
+} from "#diagrams/types/kit/flow"
 import { formSchema, itemList } from "#diagrams/types/kit/form"
 import { type Item, itemBox, itemFields } from "#diagrams/types/kit/items"
 import {
@@ -10,13 +17,6 @@ import {
   type Tools,
   type TypeModule,
 } from "#diagrams/types/kit/scene"
-import {
-  checkFits,
-  lineShape,
-  maskedText,
-  rectShape,
-  textShape,
-} from "#diagrams/types/layout/flow-draw"
 
 // User story map (diagram-design's `type-story-map.md`, after Jeff Patton):
 // the backbone of activities left to right, and under it one band per

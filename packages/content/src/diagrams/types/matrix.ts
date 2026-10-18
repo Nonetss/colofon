@@ -5,13 +5,14 @@ import type { References } from "#diagrams/schema"
 import { checkBudget } from "#diagrams/types/kit/budget"
 import { formSchema, itemList } from "#diagrams/types/kit/form"
 import { type Item, itemFields } from "#diagrams/types/kit/items"
+import { markIds } from "#diagrams/types/kit/marks"
 import {
   emptyScene,
   type Scene,
   type Tools,
   type TypeModule,
 } from "#diagrams/types/kit/scene"
-import { markIds, rectAt, textAt } from "#diagrams/types/layout/shapes"
+import { rectAt, textAt } from "#diagrams/types/kit/shapes"
 
 // Matrix (diagram-design's `type-dp-security-matrix.md`): rows by columns —
 // components by roles, say — each cell holding one of a few ordered levels
@@ -51,7 +52,7 @@ function schema(references: References) {
 const items = z.strictObject(itemFields({}))
 
 /** How dark a level's cell is: faint for the least, dark for the most. */
-export function levelOpacity(level: number, count: number): number {
+function levelOpacity(level: number, count: number): number {
   if (count <= 1) return 0.5
   return Math.round((0.1 + (0.62 * level) / (count - 1)) * 100) / 100
 }

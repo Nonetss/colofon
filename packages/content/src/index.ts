@@ -16,7 +16,7 @@ export {
   type LoadResult,
   loadContent,
 } from "#contract/read/declarations"
-export { CATALOG_PATH, DOCS_DIR } from "#contract/read/files"
+export { CATALOG_PATH, DOCS_DIR, SKILLS_DIR } from "#contract/read/files"
 export type { ContentProblem, PageProblem } from "#contract/read/problems"
 export { isReservedSlug, RESERVED_SLUGS } from "#contract/reserved-slugs"
 export {
@@ -77,17 +77,19 @@ export {
   cloneFolder,
   createRepoSync,
   describeRepository,
-  hostOf,
   listRemoteBranches,
   pruneClones,
-  publicUrl,
   type RemoteBranches,
   type RepositorySource,
   readEditDates,
-  redactCredentials,
   type SyncResult,
-  withCredentials,
 } from "#git/source"
+export {
+  hostOf,
+  publicUrl,
+  redactCredentials,
+  withCredentials,
+} from "#git/urls"
 export {
   checkUserRemote,
   isInternalAddress,
@@ -99,6 +101,7 @@ export {
 } from "#git/user-remote"
 export { fieldLabel } from "#pages/entities"
 export { type HeaderSchema, headerSchema, readHeader } from "#pages/header"
+export type { Page, PageHeader, PageHeading } from "#pages/page"
 export {
   createDocsSearch,
   type DocsSearch,
@@ -121,7 +124,6 @@ export {
   type SiteRoutes,
 } from "#pages/site"
 export { SANITIZE_SCHEMA } from "#pages/to-hast"
-export type { Page, PageHeader, PageHeading } from "#pages/types"
 export {
   type ContentSkill,
   isSkillName,
@@ -130,7 +132,6 @@ export {
   readSkills,
   readSkillsWithFiles,
   SKILL_FILE,
-  SKILLS_DIR,
   type SkillFile,
   type SkillsWithFiles,
   type SkillWithFiles,

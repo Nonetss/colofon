@@ -2,9 +2,21 @@ import { z } from "zod"
 import { textWidth } from "#diagrams/measure"
 import type { Graphic, Paint } from "#diagrams/model"
 import { optional, type Report, salvagedList } from "#diagrams/report"
-import type { Hue } from "#diagrams/schema"
+import { HUES, type Hue } from "#diagrams/schema"
+import {
+  label,
+  maskedLabel,
+  type Plot,
+  rule,
+  shape,
+  tickText,
+  tickWidth,
+  tinted,
+} from "#diagrams/types/kit/axes"
 import { checkBudget } from "#diagrams/types/kit/budget"
+import { seriesHue } from "#diagrams/types/kit/charts"
 import { formSchema } from "#diagrams/types/kit/form"
+import { datumOf, markIds } from "#diagrams/types/kit/marks"
 import {
   emptyScene,
   type Scene,
@@ -17,19 +29,6 @@ import {
   numberSchema,
   type ValueFormat,
 } from "#diagrams/types/kit/values"
-import {
-  datum,
-  label,
-  markIds,
-  maskedLabel,
-  type Plot,
-  rule,
-  seriesHue,
-  shape,
-  tickText,
-  tickWidth,
-  tinted,
-} from "#diagrams/types/layout/axes"
 import { placeLabels, type Spot, textBox } from "#diagrams/types/layout/labels"
 import { linearScale, type Scale } from "#diagrams/types/layout/scale"
 
@@ -176,7 +175,7 @@ function groupsOf(points: readonly Point[]): string[] {
 }
 
 function groupHue(index: number): Hue {
-  return seriesHue(index, undefined)
+  return seriesHue(index, undefined, HUES)
 }
 
 function pointPaint(point: Point, groups: readonly string[]): Paint {
@@ -321,7 +320,7 @@ function plotScene(
         { kind: "circle", cx, cy, r },
         {
           ...look,
-          datum: datum(
+          datum: datumOf(
             next(),
             nameOf(point, index),
             seriesOf(point),
@@ -458,7 +457,7 @@ function swarmScene(
           { kind: "circle", cx: dot.cx, cy: centre + dot.dy, r: radius },
           {
             ...pointPaint(point, groups),
-            datum: datum(
+            datum: datumOf(
               next(),
               nameOf(point, at),
               seriesOf(point),

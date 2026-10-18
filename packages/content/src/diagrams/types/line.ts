@@ -2,8 +2,24 @@ import { z } from "zod"
 import { textWidth } from "#diagrams/measure"
 import type { Graphic, LegendEntry, Paint, TextBlock } from "#diagrams/model"
 import { optional, type Report, salvagedList } from "#diagrams/report"
+import { HUES } from "#diagrams/schema"
+import {
+  label,
+  matchingSeries,
+  type Plot,
+  rule,
+  type SeriesWritten,
+  seriesSchema,
+  shape,
+  tickWidth,
+  tinted,
+  valueAxis,
+  xLabel,
+} from "#diagrams/types/kit/axes"
 import { checkBudget } from "#diagrams/types/kit/budget"
+import { seriesHue } from "#diagrams/types/kit/charts"
 import { formSchema } from "#diagrams/types/kit/form"
+import { datumOf, markIds, tenthText } from "#diagrams/types/kit/marks"
 import {
   emptyScene,
   type Scene,
@@ -15,22 +31,6 @@ import {
   formatNumber,
   type ValueFormat,
 } from "#diagrams/types/kit/values"
-import {
-  datum,
-  label,
-  markIds,
-  matchingSeries,
-  type Plot,
-  rule,
-  type SeriesWritten,
-  seriesHue,
-  seriesSchema,
-  shape,
-  tickWidth,
-  tinted,
-  valueAxis,
-  xLabel,
-} from "#diagrams/types/layout/axes"
 import { placeLabels } from "#diagrams/types/layout/labels"
 import { exactScale, linearScale } from "#diagrams/types/layout/scale"
 
@@ -148,12 +148,12 @@ function table(chart: Chart): TextBlock {
 function linePaint(one: SeriesWritten, index: number): Paint {
   if (one.focal === true)
     return tinted(null, null, "fill-none", "line-accent", "line-bold")
-  return tinted(seriesHue(index, one.hue), null, "fill-none", "line-hue")
+  return tinted(seriesHue(index, one.hue, HUES), null, "fill-none", "line-hue")
 }
 
 function dotPaint(one: SeriesWritten, index: number): Paint {
   if (one.focal === true) return tinted(null, null, "fill-accent", "line-paper")
-  return tinted(seriesHue(index, one.hue), null, "fill-hue", "line-paper")
+  return tinted(seriesHue(index, one.hue, HUES), null, "fill-hue", "line-paper")
 }
 
 function nameClass(one: SeriesWritten): string[] {
@@ -165,8 +165,8 @@ function polyline(points: readonly (readonly [number, number])[]): string {
   const [first, ...rest] = points
   if (first === undefined) return ""
   return [
-    `M${round(first[0])} ${round(first[1])}`,
-    ...rest.map(([x, y]) => `L${round(x)} ${round(y)}`),
+    `M${tenthText(first[0])} ${tenthText(first[1])}`,
+    ...rest.map(([x, y]) => `L${tenthText(x)} ${tenthText(y)}`),
   ].join(" ")
 }
 
@@ -176,10 +176,6 @@ function edges(xs: readonly number[], fallback: number): [number, number] {
   const last = xs.at(-1)
   if (first === undefined || last === undefined) return [fallback, fallback]
   return [first, last]
-}
-
-function round(value: number): string {
-  return String(Math.round(value * 10) / 10)
 }
 
 function allValues(chart: Chart): number[] {
@@ -277,7 +273,7 @@ function lineScene(chart: Chart): Scene {
           { kind: "circle", cx: point[0], cy: point[1], r: 3 },
           {
             ...dotPaint(one, index),
-            datum: datum(
+            datum: datumOf(
               next(),
               chart.x[at] ?? "",
               one.name,
@@ -325,7 +321,7 @@ function endLabels(
     const y = spot === null || spot === undefined ? end.y : spot.y
     labels.push({
       ...label(x, y, end.text, "sub", "start", ...nameClass(end.one)),
-      hue: seriesHue(index, end.one.hue),
+      hue: seriesHue(index, end.one.hue, HUES),
     })
   })
   return labels
@@ -389,7 +385,7 @@ function slopeScene(chart: Chart): Scene {
           { kind: "circle", cx: x, cy: y, r: 3.5 },
           {
             ...look,
-            datum: datum(
+            datum: datumOf(
               next(),
               chart.x[at] ?? "",
               one.name,
@@ -459,7 +455,7 @@ function slopeClasses(one: SeriesWritten): string[] {
 function slopePaint(one: SeriesWritten, index: number): Paint {
   if (one.focal === true) return tinted(null, null, "fill-accent")
   if (one.hue !== undefined)
-    return tinted(seriesHue(index, one.hue), null, "fill-hue")
+    return tinted(seriesHue(index, one.hue, HUES), null, "fill-hue")
   return tinted(null, null, "fill-muted")
 }
 
@@ -485,13 +481,13 @@ function ridgelineScene(chart: Chart): Scene {
       base - lift(Math.max(0, value)),
     ])
     const [first, last] = edges(xs, left)
-    const area = `${polyline(points)} L${round(last)} ${round(base)} L${round(first)} ${round(base)} Z`
+    const area = `${polyline(points)} L${tenthText(last)} ${tenthText(base)} L${tenthText(first)} ${tenthText(base)} Z`
     scene.over.push(
       shape({ kind: "path", d: area }, ridgePaint(one, index)),
       rule(first, base, last, base, "line-rule"),
       {
         ...label(left - 12, base, one.name, "sub", "end", ...nameClass(one)),
-        hue: seriesHue(index, one.hue),
+        hue: seriesHue(index, one.hue, HUES),
       }
     )
     one.values.forEach((value, at) => {
@@ -502,7 +498,7 @@ function ridgelineScene(chart: Chart): Scene {
           { kind: "circle", cx: point[0], cy: point[1], r: 2 },
           {
             ...dotPaint(one, index),
-            datum: datum(
+            datum: datumOf(
               next(),
               chart.x[at] ?? "",
               one.name,
@@ -520,7 +516,12 @@ function ridgelineScene(chart: Chart): Scene {
 function ridgePaint(one: SeriesWritten, index: number): Paint {
   if (one.focal === true)
     return tinted(null, null, "fill-accent-tint", "line-accent")
-  return tinted(seriesHue(index, one.hue), null, "fill-hue-tint", "line-hue")
+  return tinted(
+    seriesHue(index, one.hue, HUES),
+    null,
+    "fill-hue-tint",
+    "line-hue"
+  )
 }
 
 // ── Stream ──────────────────────────────────────────────────────────────
@@ -556,7 +557,7 @@ function streamScene(chart: Chart): Scene {
     })
     const d = `${polyline(upper)} ${lower
       .reverse()
-      .map(([x, y]) => `L${round(x)} ${round(y)}`)
+      .map(([x, y]) => `L${tenthText(x)} ${tenthText(y)}`)
       .join(" ")} Z`
     const total = one.values.reduce((sum, value) => sum + value, 0)
     scene.over.push(
@@ -564,7 +565,7 @@ function streamScene(chart: Chart): Scene {
         { kind: "path", d },
         {
           ...streamPaint(one, index),
-          datum: datum(
+          datum: datumOf(
             next(),
             one.name,
             one.name,
@@ -589,7 +590,12 @@ function streamScene(chart: Chart): Scene {
 
 function streamPaint(one: SeriesWritten, index: number): Paint {
   if (one.focal === true) return tinted(null, null, "fill-accent", "line-paper")
-  return tinted(seriesHue(index, one.hue), null, "fill-hue-tint", "line-hue")
+  return tinted(
+    seriesHue(index, one.hue, HUES),
+    null,
+    "fill-hue-tint",
+    "line-hue"
+  )
 }
 
 // ── Bump ────────────────────────────────────────────────────────────────
@@ -642,7 +648,7 @@ function bumpScene(chart: Chart): Scene {
           { kind: "circle", cx: point[0], cy: point[1], r: 8 },
           {
             ...dotPaint(one, index),
-            datum: datum(
+            datum: datumOf(
               next(),
               chart.x[at] ?? "",
               one.name,
@@ -673,7 +679,7 @@ function bumpScene(chart: Chart): Scene {
           "end",
           ...nameClass(one)
         ),
-        hue: seriesHue(index, one.hue),
+        hue: seriesHue(index, one.hue, HUES),
       })
     if (last !== undefined)
       scene.over.push({
@@ -685,7 +691,7 @@ function bumpScene(chart: Chart): Scene {
           "start",
           ...nameClass(one)
         ),
-        hue: seriesHue(index, one.hue),
+        hue: seriesHue(index, one.hue, HUES),
       })
   })
   return scene
@@ -695,7 +701,7 @@ function bumpLine(one: SeriesWritten, index: number): Paint {
   if (one.focal === true)
     return tinted(null, null, "fill-none", "line-accent", "line-bold")
   return tinted(
-    seriesHue(index, one.hue),
+    seriesHue(index, one.hue, HUES),
     null,
     "fill-none",
     "line-hue",

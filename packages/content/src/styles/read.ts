@@ -1,12 +1,11 @@
-import type { Dirent } from "node:fs"
-import { readdir, readFile } from "node:fs/promises"
+import { readFile } from "node:fs/promises"
 import path from "node:path"
+import { listVisible, STYLES_DIR } from "#contract/read/files"
 import type { PageProblem } from "#contract/read/problems"
 import { cleanStyleModule } from "#styles/clean"
 import {
   MAX_MODULE_BYTES,
   MAX_STYLESHEET_BYTES,
-  STYLES_DIR,
   styleModuleFiles,
 } from "#styles/modules"
 
@@ -25,7 +24,7 @@ export async function readStyles(
   fileUrlOf: (docsPath: string) => string
 ): Promise<RepositoryStyles> {
   const folder = path.join(root, STYLES_DIR)
-  const entries = await listEntries(folder)
+  const entries = await listVisible(folder)
   const modules = styleModuleFiles()
   const problems: PageProblem[] = []
   const present = new Set<string>()
@@ -83,19 +82,5 @@ function leftOut(file: string): PageProblem {
     file,
     line: null,
     message: `Los estilos pasan de ${MAX_STYLESHEET_BYTES / 1024} KiB: se han dejado fuera este módulo y los siguientes`,
-  }
-}
-
-/** The visible entries of `folder`; none when it doesn't exist. */
-async function listEntries(folder: string): Promise<Dirent[]> {
-  try {
-    const entries = await readdir(folder, { withFileTypes: true })
-    return entries
-      .filter((entry) => !entry.name.startsWith("."))
-      .sort((a, b) => a.name.localeCompare(b.name))
-  } catch (error) {
-    if (error instanceof Error && "code" in error && error.code === "ENOENT")
-      return []
-    throw error
   }
 }

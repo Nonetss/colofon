@@ -1,7 +1,7 @@
-import type { Dirent } from "node:fs"
-import { readdir, readFile } from "node:fs/promises"
+import { readFile } from "node:fs/promises"
 import path from "node:path"
 import { parseDocument } from "yaml"
+import { listVisible, SKILLS_DIR } from "#contract/read/files"
 import type { PageProblem } from "#contract/read/problems"
 
 // Reads a content repository's `skills/` (`content-contract`): one folder per
@@ -9,9 +9,6 @@ import type { PageProblem } from "#contract/read/problems"
 // `name` and `description`, then the instructions). A broken skill is
 // reported and left out; the others are still read. The platform's own
 // skills (`packages/api/skills/`) are read with the same rules.
-
-/** The folder of the skills, under the content root. */
-export const SKILLS_DIR = "skills"
 
 /** The file each skill folder holds. */
 export const SKILL_FILE = "SKILL.md"
@@ -66,7 +63,7 @@ export async function readSkills(root: string): Promise<RepositorySkills> {
   const folder = path.join(root, SKILLS_DIR)
   const skills: ContentSkill[] = []
   const problems: PageProblem[] = []
-  for (const entry of await listEntries(folder)) {
+  for (const entry of await listVisible(folder)) {
     const file = `${SKILLS_DIR}/${entry.name}`
     if (!entry.isDirectory()) {
       problems.push(
@@ -133,7 +130,7 @@ async function collectFiles(
   files: SkillFile[],
   problems: PageProblem[]
 ): Promise<void> {
-  for (const entry of await listEntries(path.join(folder, prefix))) {
+  for (const entry of await listVisible(path.join(folder, prefix))) {
     const relative = joinPosix(prefix, entry.name)
     if (entry.isDirectory()) {
       await collectFiles(folder, relative, shown, files, problems)
@@ -252,17 +249,4 @@ async function readText(file: string): Promise<string | null> {
 function isMissing(error: unknown): boolean {
   if (!(error instanceof Error) || !("code" in error)) return false
   return error.code === "ENOENT" || error.code === "EISDIR"
-}
-
-/** The visible entries of `folder`, by name; none when it doesn't exist. */
-async function listEntries(folder: string): Promise<Dirent[]> {
-  try {
-    const entries = await readdir(folder, { withFileTypes: true })
-    return entries
-      .filter((entry) => !entry.name.startsWith("."))
-      .sort((a, b) => a.name.localeCompare(b.name))
-  } catch (error) {
-    if (isMissing(error)) return []
-    throw error
-  }
 }

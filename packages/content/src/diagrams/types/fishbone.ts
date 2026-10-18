@@ -6,19 +6,14 @@ import { HUES, type References } from "#diagrams/schema"
 import { checkBudget } from "#diagrams/types/kit/budget"
 import { formSchema, oneItem } from "#diagrams/types/kit/form"
 import { itemBox, itemFields } from "#diagrams/types/kit/items"
+import { markIds } from "#diagrams/types/kit/marks"
 import {
   emptyScene,
   type Scene,
   type Tools,
   type TypeModule,
 } from "#diagrams/types/kit/scene"
-import {
-  arrowheadAt,
-  lineAt,
-  markIds,
-  rectAt,
-  textAt,
-} from "#diagrams/types/layout/shapes"
+import { arrowheadAt, lineAt, rectAt, textAt } from "#diagrams/types/kit/shapes"
 
 // Fishbone (diagram-design's `type-fishbone.md`): one observed effect at the
 // head on the right, a spine running into it, and a bone per category at

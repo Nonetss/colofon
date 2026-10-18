@@ -12,7 +12,7 @@ import {
 import type { ContractVersion } from "#contract/versions/detect"
 import { foreignKeyMessage } from "#contract/versions/reading"
 import { contractKey, pathFor, translateV1 } from "#contract/versions/v1"
-import type { PageHeader } from "#pages/types"
+import type { PageHeader } from "#pages/page"
 
 // The header of a page: its YAML front matter, checked against the fields
 // every page has plus the site's own `header` fields. A broken header never

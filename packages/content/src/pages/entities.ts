@@ -12,6 +12,7 @@ import {
   ID_COLUMN,
   type TypeDefinition,
 } from "#contract/schema/meta-schema"
+import { componentNotice, element, link, text, textOf } from "#pages/hast"
 
 // `<Entities type="…" columns="…" group="…" />`: a table of the valid
 // entities of one catalog type, built as hast so cells can hold links and
@@ -36,22 +37,6 @@ type Options = {
 
 const collator = new Intl.Collator("es", { numeric: true })
 
-function element(
-  tagName: string,
-  properties: Element["properties"],
-  children: ElementContent[]
-): Element {
-  return { type: "element", tagName, properties, children }
-}
-
-function text(value: string): ElementContent {
-  return { type: "text", value }
-}
-
-function link(href: string, children: ElementContent[]): ElementContent {
-  return element("a", { href }, children)
-}
-
 /** The table, or a notice when the type is missing or unknown. */
 export function entitiesTable(
   attributes: MdxJsxFlowElement["attributes"],
@@ -62,12 +47,18 @@ export function entitiesTable(
   const known = [...context.catalog.keys()].join(", ")
   if (options.type === null) {
     const message = `<${ENTITIES}> necesita type, uno de: ${known}`
-    return { element: notice(message), problems: [...problems, message] }
+    return {
+      element: componentNotice(ENTITIES, message),
+      problems: [...problems, message],
+    }
   }
   const type = context.catalog.get(options.type)
   if (type === undefined) {
     const message = `<${ENTITIES} type="${options.type}">: no hay ese tipo en catalog/ (hay: ${known})`
-    return { element: notice(message), problems: [...problems, message] }
+    return {
+      element: componentNotice(ENTITIES, message),
+      problems: [...problems, message],
+    }
   }
   for (const problem of type.problems)
     problems.push(`${problem.file}: ${problem.message}`)
@@ -136,14 +127,6 @@ export function typeTable(
   return element("div", { className: ["doc-entities"] }, [
     table(columns, sorted, shown),
   ])
-}
-
-function notice(message: string): Element {
-  return element(
-    "div",
-    { className: ["doc-component-notice"], dataComponent: ENTITIES },
-    [text(message)]
-  )
 }
 
 function readOptions(
@@ -407,14 +390,4 @@ function rankOf(value: unknown, field: FieldDefinition): number {
 function byRankThenKey(a: Group, b: Group): number {
   if (a.rank !== b.rank) return a.rank - b.rank
   return collator.compare(a.key, b.key)
-}
-
-function textOf(content: readonly ElementContent[]): string {
-  return content
-    .map((node) => {
-      if (node.type === "text") return node.value
-      if (node.type === "element") return textOf(node.children)
-      return ""
-    })
-    .join("")
 }

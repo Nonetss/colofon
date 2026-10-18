@@ -3,8 +3,16 @@ import type { Graphic, LegendEntry } from "#diagrams/model"
 import { salvagedList } from "#diagrams/report"
 import { HUES, type Hue, type References } from "#diagrams/schema"
 import { checkBudget } from "#diagrams/types/kit/budget"
+import {
+  lineShape,
+  rectShape,
+  roleWidth,
+  shape,
+  textShape,
+} from "#diagrams/types/kit/flow"
 import { formSchema, itemList } from "#diagrams/types/kit/form"
 import { type Item, itemFields } from "#diagrams/types/kit/items"
+import { withDatum, withLink } from "#diagrams/types/kit/marks"
 import {
   emptyScene,
   type Scene,
@@ -19,15 +27,6 @@ import {
   monthTick,
   parseDate,
 } from "#diagrams/types/kit/values"
-import {
-  lineShape,
-  rectShape,
-  roleWidth,
-  shape,
-  textShape,
-  withDatum,
-  withLink,
-} from "#diagrams/types/layout/flow-draw"
 import { type Box, overlaps } from "#diagrams/types/layout/labels"
 import { exactScale, timeTicks } from "#diagrams/types/layout/scale"
 

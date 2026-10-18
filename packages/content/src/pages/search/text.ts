@@ -1,4 +1,5 @@
 import type { ElementContent, Root, RootContent } from "hast"
+import { textOf } from "#pages/hast"
 
 // The text of a page as the search reads it: split into sections at its
 // headings (the ones with an id, which the reader can link to) and into
@@ -93,7 +94,7 @@ export function sectionsOf(tree: Root | null): SearchSection[] {
       const anchor = node.properties.id
       if (SECTION_TAGS.has(node.tagName) && typeof anchor === "string") {
         close()
-        current = { anchor, heading: textOf(node.children), parts: [] }
+        current = { anchor, heading: headingText(node.children), parts: [] }
         continue
       }
       visit(node.children)
@@ -106,17 +107,9 @@ export function sectionsOf(tree: Root | null): SearchSection[] {
   return sections
 }
 
-/** The text of a heading's content. */
-function textOf(nodes: readonly ElementContent[]): string {
-  const parts: string[] = []
-  const visit = (children: readonly ElementContent[]) => {
-    for (const node of children) {
-      if (node.type === "text") parts.push(node.value)
-      if (node.type === "element") visit(node.children)
-    }
-  }
-  visit(nodes)
-  return collapse(parts.join(""))
+/** The text of a heading's content, its whitespace collapsed. */
+function headingText(nodes: readonly ElementContent[]): string {
+  return collapse(textOf(nodes))
 }
 
 function collapse(text: string): string {

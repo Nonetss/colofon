@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test"
 import type { ElementContent, Root } from "hast"
-import { foldTerm, sectionsOf, tokensOf } from "#pages/search-text"
+import { foldTerm, sectionsOf, tokensOf } from "#pages/search/text"
 
 function element(
   tagName: string,

@@ -17,9 +17,10 @@ import {
   shownValue,
   typeTable,
 } from "#pages/entities"
+import { element, link, text, textOf } from "#pages/hast"
+import type { Page, PageHeader, PageHeading } from "#pages/page"
 import type { ReverseRefs } from "#pages/references"
 import { SANITIZE_SCHEMA } from "#pages/to-hast"
-import type { Page, PageHeader, PageHeading } from "#pages/types"
 
 // The reader pages the platform makes for the catalog, with no MDX behind
 // them: `catalog` (every type), `catalog/<type>` (its table) and
@@ -30,7 +31,7 @@ import type { Page, PageHeader, PageHeading } from "#pages/types"
 // reading order and the citations, so they are filled in afterwards.
 
 /** The title of the catalog's own page and section. */
-export const CATALOG_TITLE = "Catálogo"
+const CATALOG_TITLE = "Catálogo"
 
 /**
  * Every generated catalog page, by path, with its header and no body yet.
@@ -158,22 +159,6 @@ function dateOf(value: unknown): string | null {
   return null
 }
 
-function element(
-  tagName: string,
-  properties: Element["properties"],
-  children: ElementContent[]
-): Element {
-  return { type: "element", tagName, properties, children }
-}
-
-function text(value: string): ElementContent {
-  return { type: "text", value }
-}
-
-function link(href: string, value: string): Element {
-  return element("a", { href }, [text(value)])
-}
-
 function row(tagName: "th" | "td", contents: ElementContent[][]): Element {
   return element(
     "tr",
@@ -208,7 +193,11 @@ function catalogBody(context: CatalogBodyContext): ElementContent[] {
     const entities = [...type.entities.values()]
     const withPage = entities.filter((entity) => entity.page !== null)
     return [
-      [link(context.routeOf(catalogTypePath(type.id)), type.definition.plural)],
+      [
+        link(context.routeOf(catalogTypePath(type.id)), [
+          text(type.definition.plural),
+        ]),
+      ],
       [text(type.definition.description ?? "")],
       [text(String(entities.length))],
       [text(String(withPage.length))],
@@ -260,7 +249,9 @@ function entityBody(
     body.push(
       element("p", {}, [
         text("Página: "),
-        link(context.routeOf(entity.page), context.titleOf(entity.page)),
+        link(context.routeOf(entity.page), [
+          text(context.titleOf(entity.page)),
+        ]),
       ])
     )
   }
@@ -274,7 +265,7 @@ function entityBody(
         {},
         citing.map((citer) =>
           element("li", {}, [
-            link(context.routeOf(citer), context.titleOf(citer)),
+            link(context.routeOf(citer), [text(context.titleOf(citer))]),
           ])
         )
       )
@@ -330,7 +321,7 @@ function headingsOf(tree: Root): PageHeading[] {
     if (node.type !== "element") continue
     const depth = headingDepth(node.tagName)
     if (depth === null) continue
-    const value = plainText(node.children)
+    const value = textOf(node.children)
     const id = slugger.slug(value)
     node.properties = { ...node.properties, id }
     headings.push({ depth, id, text: value })
@@ -342,14 +333,4 @@ function headingDepth(tagName: string): 2 | 3 | null {
   if (tagName === "h2") return 2
   if (tagName === "h3") return 3
   return null
-}
-
-function plainText(children: readonly ElementContent[]): string {
-  return children
-    .map((child) => {
-      if (child.type === "text") return child.value
-      if (child.type === "element") return plainText(child.children)
-      return ""
-    })
-    .join("")
 }

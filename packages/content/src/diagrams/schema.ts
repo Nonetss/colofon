@@ -41,7 +41,7 @@ export const ANCHORS = ["middle", "start", "end"] as const
 export const ROUTES = ["orthogonal", "curve"] as const
 
 /** What an arrow ends in. */
-export const HEADS = ["arrow", "triangle", "diamond", "open-diamond"] as const
+const HEADS = ["arrow", "triangle", "diamond", "open-diamond"] as const
 
 /** The colours a box, zone or arrow can take. */
 export const HUES = [
@@ -105,7 +105,7 @@ const point = z
 
 const id = idSchema
 
-export const rowSchema = z.strictObject({
+const rowSchema = z.strictObject({
   key: text.optional().meta({ description: "Una marca corta: PK, FK, UQ…" }),
   name: text.meta({ description: "El nombre de la columna" }),
   type: text.optional().meta({ description: "Su tipo, a la derecha" }),

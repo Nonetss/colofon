@@ -3,7 +3,8 @@ import { tmpdir } from "node:os"
 import path from "node:path"
 import { CONFIG_FILE } from "#contract/read/files"
 import { contentPathProblem } from "#git/content-root"
-import { redactCredentials, spawnGit } from "#git/source"
+import { spawnGit } from "#git/run"
+import { redactCredentials } from "#git/urls"
 
 // The folders of a repository that can be read as a site: the ones holding a
 // doc.config.yaml. Only the tree of one ref is read, never file contents, so

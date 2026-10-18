@@ -4,6 +4,7 @@ import type { References } from "#diagrams/schema"
 import { checkBudget } from "#diagrams/types/kit/budget"
 import { formSchema, itemList } from "#diagrams/types/kit/form"
 import { itemFields } from "#diagrams/types/kit/items"
+import { itemDatum, markIds } from "#diagrams/types/kit/marks"
 import {
   emptyScene,
   type Scene,
@@ -11,13 +12,11 @@ import {
   type TypeModule,
 } from "#diagrams/types/kit/scene"
 import {
-  itemDatum,
   itemPaint,
   itemTextClass,
-  markIds,
   rectAt,
   textAt,
-} from "#diagrams/types/layout/shapes"
+} from "#diagrams/types/kit/shapes"
 
 // Layer stack (diagram-design's `type-layers.md`): full-width bands stacked
 // from top to bottom, each with its index on the left, its name, its notes

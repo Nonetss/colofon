@@ -1,5 +1,5 @@
 import { tmpdir } from "node:os"
-import { spawnGit } from "#git/source"
+import { spawnGit } from "#git/run"
 
 // Reads the folders and files of a bare repository on one of its branches
 // with the git CLI, without checking anything out. Every object name starts

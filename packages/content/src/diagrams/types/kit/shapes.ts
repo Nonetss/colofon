@@ -1,6 +1,5 @@
-import type { Datum, Graphic, Point, TextRole } from "#diagrams/model"
+import type { Graphic, Point, TextRole } from "#diagrams/model"
 import type { Anchor, Hue } from "#diagrams/schema"
-import type { Item } from "#diagrams/types/kit/items"
 import { paint } from "#diagrams/types/kit/scene"
 
 // Shorthands for the shapes the concept forms draw (quadrant, Venn, pyramid,
@@ -35,10 +34,6 @@ export function lineAt(
   ...classes: string[]
 ): Graphic {
   return { kind: "line", x1, y1, x2, y2, ...paint(...classes) }
-}
-
-export function pathOf(d: string, ...classes: string[]): Graphic {
-  return { kind: "path", d, ...paint(...classes) }
 }
 
 export function polygonOf(points: Point[], ...classes: string[]): Graphic {
@@ -85,26 +80,6 @@ export function arrowheadAt(
     ],
     ...classes
   )
-}
-
-/** Hands out the drawing's mark ids: `m0`, `m1`… */
-export function markIds(): () => string {
-  let next = 0
-  return () => {
-    const id = `m${next}`
-    next += 1
-    return id
-  }
-}
-
-/** A datum for an item: its name, the value shown and its `info`. */
-export function itemDatum(
-  id: string,
-  item: Item,
-  value: string,
-  series: string | null = null
-): Datum {
-  return { id, label: item.name, series, value, info: item.info }
 }
 
 /** The fill and line classes of an item: accent when focal, its hue's tint, or `plain`. */

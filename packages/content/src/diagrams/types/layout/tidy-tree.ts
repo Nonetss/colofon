@@ -18,7 +18,7 @@ export type Placed = {
 }
 
 /** The space between two neighbouring subtrees. */
-export const SIBLING_GAP = 24
+const SIBLING_GAP = 24
 
 /** Each node's centre along its level and its depth. */
 export function tidyTree(root: TreeNode): {

@@ -124,19 +124,6 @@ function itemName(
   return id
 }
 
-/** The item with id `id` among `items`, reporting at `at` when none. */
-export function knownItem<T extends { id: string | null }>(
-  items: readonly T[],
-  id: string,
-  at: string,
-  report: Report
-): T | null {
-  const found = items.find((item) => item.id === id)
-  if (found !== undefined) return found
-  report(at, `\`${id}\` no es ninguna de las partes del diagrama`)
-  return null
-}
-
 /** Where a box is drawn and how. */
 export type BoxPlace = {
   x: number

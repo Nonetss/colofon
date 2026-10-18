@@ -1,94 +1,60 @@
-import type { Dirent } from "node:fs"
-import { readdir, readFile } from "node:fs/promises"
+import { readFile } from "node:fs/promises"
 import path from "node:path"
 import type { Element } from "hast"
-import { entityPath, isCatalogPath } from "#contract/catalog/paths"
+import { entityPath } from "#contract/catalog/paths"
 import type { Catalog } from "#contract/catalog/read"
 import type { ContentDeclarations } from "#contract/read/declarations"
-import { DOCS_DIR, isReservedDocsPath } from "#contract/read/files"
+import {
+  DOCS_DIR,
+  docFolderPaths,
+  isReservedDocsPath,
+  listFiles,
+  pagePathOf,
+} from "#contract/read/files"
 import type { PageProblem } from "#contract/read/problems"
 import type { Menu } from "#contract/schema/meta-schema"
 import type { ContractVersion } from "#contract/versions/detect"
-import { contractKey } from "#contract/versions/v1"
+import { formerNameProblems, v1Problems } from "#contract/versions/former-names"
 import { diagramFigure } from "#diagrams/figure"
 import type { DiagramFile } from "#diagrams/model"
 import { diagramsByEntity, readDiagrams } from "#diagrams/read"
+import { arrange, homeEntry, type Site } from "#pages/arrange"
 import {
   type CatalogBodyContext,
   catalogPages,
   withCatalogBody,
 } from "#pages/catalog-pages"
-import { formerNameProblems, v1Problems } from "#pages/former-names"
 import { type HeaderSchema, headerSchema, readHeader } from "#pages/header"
+import { overridden, withOverride } from "#pages/menu-overrides"
 import {
   folderNav,
-  joinPath,
-  type MenuOverride,
   type MenuTargets,
   menuNav,
-  type NavEntry,
   type NavNode,
   type NavSource,
   OTHERS_TITLE,
   type ResolvedMenu,
   resolveMenu,
 } from "#pages/nav"
+import { fallbackTitleOf, type Page, type PageHeader } from "#pages/page"
 import { type ParsedPage, parsePage } from "#pages/parse"
 import { refsIn, reverseRefs } from "#pages/references"
 import { pageToHast } from "#pages/to-hast"
-import { pagePathOf, transformPage } from "#pages/transform"
-import type { Page, PageHeader } from "#pages/types"
-import { type ContentSkill, readSkills } from "#skills/read"
+import { transformPage } from "#pages/transform"
+import { readSkills } from "#skills/read"
 import { readStyles } from "#styles/read"
 
 // Reads every page of a repository's docs/, adds the generated catalog pages
-// and arranges them: the home (docs/index.mdx), then the navigation (the
-// groups of menu.yaml, or the folders and the catalog without one). The
-// reading order (depth first, each section's index before its pages) gives
-// every page its previous and next page; catalog pages are left out of it.
-// Pages are read in two passes: every header first, with what menu.yaml says
-// about it applied (the YAML wins), so a page can show another page's title,
-// then every body. The repository's style modules (`styles/`) are read with
+// and hands them to `#pages/arrange`, which lays them out behind the home in
+// the navigation's order (the groups of menu.yaml, or the folders and the
+// catalog without one). Pages are read in two passes: every header first,
+// with what menu.yaml says about it applied (`#pages/menu-overrides`), so a
+// page can show another page's title, then every body. The repository's style modules (`styles/`) are read with
 // them, so their stylesheet follows the same checkout, and so are its skills
 // (`skills/`), whose problems go on the home with the site's own.
 
+export type { Breadcrumb, PageLink, Site, SitePage } from "#pages/arrange"
 export type { NavEntry, NavNode } from "#pages/nav"
-
-/** A page as a link: previous and next page. */
-export type PageLink = { path: string; title: string }
-
-/** A step of a page's breadcrumbs; a group of the menu has no path. */
-export type Breadcrumb = { path: string | null; title: string }
-
-export type SitePage = Page & {
-  /**
-   * `file` for an `.mdx`; `folder` for a section without `index.mdx`;
-   * `generated` for a catalog page.
-   */
-  source: "file" | "folder" | "generated"
-  /** The groups and sections above the page, outermost first. */
-  breadcrumbs: Breadcrumb[]
-  previous: PageLink | null
-  next: PageLink | null
-  /** A section's pages and subsections; empty for a page. */
-  children: NavNode[]
-}
-
-export type Site = {
-  /** The home, then the top-level groups, sections and pages in order. */
-  home: NavEntry
-  nav: NavNode[]
-  /** Every page and section by path (`""` is the home). */
-  pages: ReadonlyMap<string, SitePage>
-  /** Every page's problems, in reading order. */
-  problems: PageProblem[]
-  /** The cleaned stylesheet of `styles/` (`content-styles`); empty without. */
-  styles: string
-  /** The valid skills of `skills/`, by name; empty without. */
-  skills: ContentSkill[]
-  /** The valid catalog entities by type, as the catalog pages show them. */
-  catalog: Catalog
-}
 
 export type SiteRoutes = {
   /** The reader route of a page path. */
@@ -125,7 +91,7 @@ export async function readSite(
   siteProblems.push(...(await formerNameProblems(root)))
   siteProblems.push(...v1Problems(contract))
   const pagePaths = new Set(mdxFiles.map(pagePathOf))
-  const folders = foldersWithPages(mdxFiles)
+  const folders = new Set(docFolderPaths(mdxFiles))
   for (const folder of folders) pagePaths.add(folder)
   pagePaths.add("")
 
@@ -156,7 +122,7 @@ export async function readSite(
     headed.push(
       withOverride(
         headPage(source, file, schema, editDates),
-        resolved,
+        resolved.overrides,
         contract
       )
     )
@@ -355,70 +321,6 @@ function headPage(
   }
 }
 
-/**
- * A page with the title and icon its menu entry gives (the YAML wins), and a
- * problem for each header value the menu overrides with another one.
- */
-function withOverride(
-  page: HeadedPage,
-  menu: ResolvedMenu,
-  contract: ContractVersion
-): HeadedPage {
-  const override = menu.overrides.get(page.path)
-  if (override === undefined) return page
-  const problems = [...page.problems]
-  const report = (message: string) =>
-    problems.push({ file: page.contentFile, line: null, message })
-  const { header } = page
-  if (
-    override.title !== null &&
-    header.title !== override.title &&
-    header.title !== fallbackTitleOf(page.path)
-  )
-    report(
-      `${contractKey(contract, "title")}: la cabecera dice «${header.title}», pero manda menu.yaml («${override.title}»)`
-    )
-  if (
-    override.icon !== null &&
-    header.icon !== null &&
-    header.icon !== override.icon
-  )
-    report(
-      `${contractKey(contract, "icon")}: la cabecera dice \`${header.icon}\`, pero manda menu.yaml (\`${override.icon}\`)`
-    )
-  return { ...page, header: applyOverride(header, override), problems }
-}
-
-function overridden(
-  page: Page,
-  overrides: ReadonlyMap<string, MenuOverride>
-): Page {
-  const override = overrides.get(page.path)
-  if (override === undefined) return page
-  return { ...page, header: applyOverride(page.header, override) }
-}
-
-function applyOverride(header: PageHeader, override: MenuOverride): PageHeader {
-  return {
-    ...header,
-    title: overriddenTitle(header, override),
-    icon: overriddenIcon(header, override),
-  }
-}
-
-function overriddenTitle(header: PageHeader, override: MenuOverride): string {
-  if (override.title === null) return header.title
-  return override.title
-}
-
-function overriddenIcon(
-  header: PageHeader,
-  override: MenuOverride
-): string | null {
-  if (override.icon === null) return header.icon
-  return override.icon
-}
-
 function withLeftOutProblem(page: Page, file: string): Page {
   return {
     ...page,
@@ -489,202 +391,4 @@ function byLine(a: PageProblem, b: PageProblem): number {
 function lineValue(problem: PageProblem): number {
   if (problem.line === null) return 0
   return problem.line
-}
-
-function fallbackTitleOf(pagePath: string): string {
-  const name = path.posix.basename(pagePath)
-  if (name === "") return "Inicio"
-  return name
-}
-
-/** Every folder that holds a page at any depth (`red`, `red/vpn`). */
-function foldersWithPages(mdxFiles: readonly string[]): Set<string> {
-  const folders = new Set<string>()
-  for (const file of mdxFiles) {
-    let folder = path.posix.dirname(file)
-    while (folder !== ".") {
-      folders.add(folder)
-      folder = path.posix.dirname(folder)
-    }
-  }
-  return folders
-}
-
-function homeEntry(
-  read: ReadonlyMap<string, Page>,
-  siteName: string
-): NavEntry {
-  const page = read.get("")
-  if (page === undefined)
-    return { path: "", title: siteName, description: "", icon: null }
-  return {
-    path: "",
-    title: page.header.title,
-    description: page.header.description,
-    icon: page.header.icon,
-  }
-}
-
-type Visit = { entry: NavEntry; breadcrumbs: Breadcrumb[]; children: NavNode[] }
-
-function arrange(
-  home: NavEntry,
-  nav: NavNode[],
-  read: ReadonlyMap<string, Page>,
-  siteProblems: readonly PageProblem[],
-  { styles, skills, catalog }: Pick<Site, "styles" | "skills" | "catalog">
-): Site {
-  const visits: Visit[] = [{ entry: home, breadcrumbs: [], children: nav }]
-  const walk = (nodes: NavNode[], breadcrumbs: Breadcrumb[]) => {
-    for (const node of nodes) {
-      if (node.kind === "group") {
-        walk(node.children, [...breadcrumbs, { path: null, title: node.title }])
-        continue
-      }
-      const entry = {
-        path: node.path,
-        title: node.title,
-        description: node.description,
-        icon: node.icon,
-      }
-      if (node.kind === "page") {
-        visits.push({ entry, breadcrumbs, children: [] })
-        continue
-      }
-      visits.push({ entry, breadcrumbs, children: node.children })
-      walk(node.children, [
-        ...breadcrumbs,
-        { path: node.path, title: node.title },
-      ])
-    }
-  }
-  walk(nav, [])
-
-  // Catalog pages are reference, not reading: no previous or next page.
-  const reading = visits.filter((visit) => !isCatalogPath(visit.entry.path))
-  const pages = new Map<string, SitePage>()
-  const problems: PageProblem[] = []
-  for (const visit of visits) {
-    const page = read.get(visit.entry.path)
-    const base = withSiteProblems(pageOrFolder(page, visit.entry), siteProblems)
-    problems.push(...base.problems)
-    const at = reading.indexOf(visit)
-    pages.set(visit.entry.path, {
-      ...base,
-      source: sourceOf(page, visit.entry.path),
-      breadcrumbs: visit.breadcrumbs,
-      previous: linkAt(reading, at, -1),
-      next: linkAt(reading, at, 1),
-      children: visit.children,
-    })
-  }
-
-  // Pages outside the navigation (an entity, the catalog when the menu only
-  // shows some types) hang from the closest page above them.
-  for (const [pagePath, page] of read) {
-    if (pages.has(pagePath)) continue
-    problems.push(...page.problems)
-    pages.set(pagePath, {
-      ...page,
-      source: sourceOf(page, pagePath),
-      breadcrumbs: breadcrumbsAbove(pagePath, pages),
-      previous: null,
-      next: null,
-      children: [],
-    })
-  }
-  return { home, nav, pages, problems, styles, skills, catalog }
-}
-
-/** The site's own problems (menu.yaml, reserved files, styles) go on the home. */
-function withSiteProblems(
-  page: Page,
-  siteProblems: readonly PageProblem[]
-): Page {
-  if (page.path !== "" || siteProblems.length === 0) return page
-  return { ...page, problems: [...siteProblems, ...page.problems] }
-}
-
-function breadcrumbsAbove(
-  pagePath: string,
-  pages: ReadonlyMap<string, SitePage>
-): Breadcrumb[] {
-  let parent = path.posix.dirname(pagePath)
-  while (parent !== ".") {
-    const above = pages.get(parent)
-    if (above !== undefined)
-      return [...above.breadcrumbs, { path: parent, title: above.header.title }]
-    parent = path.posix.dirname(parent)
-  }
-  return []
-}
-
-function sourceOf(
-  page: Page | undefined,
-  pagePath: string
-): SitePage["source"] {
-  if (isCatalogPath(pagePath)) return "generated"
-  if (page === undefined) return "folder"
-  return "file"
-}
-
-function pageOrFolder(page: Page | undefined, entry: NavEntry): Page {
-  if (page !== undefined) return page
-  return {
-    path: entry.path,
-    header: folderHeader(entry),
-    tree: null,
-    headings: [],
-    problems: [],
-  }
-}
-
-function folderHeader(entry: NavEntry): PageHeader {
-  return {
-    title: entry.title,
-    description: "",
-    icon: entry.icon,
-    order: null,
-    updated: null,
-    editado: null,
-    fields: {},
-  }
-}
-
-function linkAt(
-  reading: readonly Visit[],
-  at: number,
-  step: number
-): PageLink | null {
-  if (at === -1) return null
-  const visit = reading[at + step]
-  if (visit === undefined) return null
-  return { path: visit.entry.path, title: visit.entry.title }
-}
-
-/** Every regular file under `dir`, relative to it, skipping hidden entries. */
-async function listFiles(dir: string, prefix = ""): Promise<string[]> {
-  const entries = await listDir(dir)
-  const files: string[] = []
-  for (const entry of entries) {
-    if (entry.name.startsWith(".")) continue
-    const relative = joinPath(prefix, entry.name)
-    if (entry.isDirectory()) {
-      files.push(...(await listFiles(path.join(dir, entry.name), relative)))
-      continue
-    }
-    if (entry.isFile()) files.push(relative)
-  }
-  return files
-}
-
-async function listDir(dir: string): Promise<Dirent[]> {
-  try {
-    const entries = await readdir(dir, { withFileTypes: true })
-    return entries.sort((a, b) => a.name.localeCompare(b.name))
-  } catch (error) {
-    if (error instanceof Error && "code" in error && error.code === "ENOENT")
-      return []
-    throw error
-  }
 }

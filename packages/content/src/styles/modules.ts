@@ -3,11 +3,8 @@
 // (`apps/frontend/src/styles/`), and they are joined in the order the
 // platform imports its own, so a later module wins where their rules meet.
 
-/** The folder of a content repository that holds its style modules. */
-export const STYLES_DIR = "styles"
-
 /** The style modules, in the order they are joined. */
-export const STYLE_MODULES = [
+const STYLE_MODULES = [
   { name: "theme", restyles: "theme.css" },
   { name: "page", restyles: "doc/page.css" },
   { name: "controls", restyles: "doc/hints.css" },

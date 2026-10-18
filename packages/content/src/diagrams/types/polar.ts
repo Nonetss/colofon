@@ -2,14 +2,9 @@ import { z } from "zod"
 import type { Graphic } from "#diagrams/model"
 import { optional } from "#diagrams/report"
 import { checkBudget } from "#diagrams/types/kit/budget"
-import {
-  datumOf,
-  label,
-  markIds,
-  readFormat,
-  shape,
-} from "#diagrams/types/kit/chart-kit"
+import { label, readFormat, shape } from "#diagrams/types/kit/charts"
 import { formSchema } from "#diagrams/types/kit/form"
+import { datumOf, markIds } from "#diagrams/types/kit/marks"
 import {
   emptyScene,
   type Scene,

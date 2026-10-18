@@ -12,6 +12,7 @@ import {
 import { salvagedList } from "#diagrams/report"
 import type { Hue, References } from "#diagrams/schema"
 import { checkBudget } from "#diagrams/types/kit/budget"
+import { rectShape, roleWidth, textShape } from "#diagrams/types/kit/flow"
 import { formSchema, itemList } from "#diagrams/types/kit/form"
 import { type Item, itemBox, itemFields } from "#diagrams/types/kit/items"
 import {
@@ -26,11 +27,6 @@ import {
   type Tools,
   type TypeModule,
 } from "#diagrams/types/kit/scene"
-import {
-  rectShape,
-  roleWidth,
-  textShape,
-} from "#diagrams/types/layout/flow-draw"
 import {
   type Cell,
   type Grid,

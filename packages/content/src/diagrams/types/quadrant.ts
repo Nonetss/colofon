@@ -5,22 +5,21 @@ import type { References } from "#diagrams/schema"
 import { checkBudget } from "#diagrams/types/kit/budget"
 import { formSchema, itemList } from "#diagrams/types/kit/form"
 import { itemFields } from "#diagrams/types/kit/items"
+import { itemDatum, markIds } from "#diagrams/types/kit/marks"
 import {
   emptyScene,
   type Scene,
   type Tools,
   type TypeModule,
 } from "#diagrams/types/kit/scene"
-import { type Box, placeLabels, type Spot } from "#diagrams/types/layout/labels"
 import {
   arrowheadAt,
   circleAt,
-  itemDatum,
   lineAt,
-  markIds,
   rectAt,
   textAt,
-} from "#diagrams/types/layout/shapes"
+} from "#diagrams/types/kit/shapes"
+import { type Box, placeLabels, type Spot } from "#diagrams/types/layout/labels"
 
 // Quadrant (diagram-design's `type-quadrant.md`): a 2×2 frame, an axis cross
 // through its centre with one word at each tip, the four quadrants named in
@@ -92,7 +91,7 @@ function quadrantsOf(value: unknown, tools: Tools): string[] {
 }
 
 /** The quadrant an item at (x, y) falls in, as an index of `quadrants`. */
-export function quadrantIndex(x: number, y: number): number {
+function quadrantIndex(x: number, y: number): number {
   const right = x >= 50 ? 1 : 0
   const bottom = y < 50 ? 2 : 0
   return right + bottom

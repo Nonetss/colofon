@@ -5,13 +5,14 @@ import {
   CATALOG_PATH,
   DOCS_DIR,
   MENU_FILE,
+  pagePathOf,
 } from "#contract/read/files"
 import type { PageProblem } from "#contract/read/problems"
 import type { Menu, MenuEntry } from "#contract/schema/meta-schema"
 import type { ContractVersion } from "#contract/versions/detect"
 import { contractKey } from "#contract/versions/v1"
-import { pagePathOf } from "#pages/transform"
-import type { Page } from "#pages/types"
+import { type MenuOverride, titleFrom } from "#pages/menu-overrides"
+import type { Page } from "#pages/page"
 
 // The navigation of a repository. Without `menu.yaml` it is the folders of
 // docs/ (each folder a section, or a page when it holds only its index,
@@ -45,7 +46,6 @@ export type NavNode =
   | NavGroup
 
 /** The title and icon `menu.yaml` gives an entry; they win over its header. */
-export type MenuOverride = { title: string | null; icon: string | null }
 
 /** What a menu entry names. */
 type EntryTarget = "page" | "folder" | "catalog" | "type"
@@ -291,18 +291,10 @@ function entryOf(
   const override = source.overrides.get(pagePath)
   return {
     path: pagePath,
-    title: overriddenTitle(override, fallbackTitle),
+    title: titleFrom(override, fallbackTitle),
     description: "",
     icon: override?.icon ?? null,
   }
-}
-
-function overriddenTitle(
-  override: MenuOverride | undefined,
-  fallback: string
-): string {
-  if (override === undefined || override.title === null) return fallback
-  return override.title
 }
 
 /** The sections and pages directly in `folder`, ordered. */

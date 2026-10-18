@@ -10,8 +10,8 @@ import {
 } from "#diagrams/types/kit/values"
 
 // Small pieces the area, grid and flow charts share (heatmap, treemap,
-// radar, polar, Sankey): data marks with an id each, texts, and the hues a
-// series takes when it has none of its own.
+// radar, polar, Sankey): shapes and texts painted by classes, how their
+// values print, and the hues a series takes when it has none of its own.
 
 /** The hues the series take in order, when they have none of their own. */
 export const SERIES_HUES: readonly Hue[] = [
@@ -23,30 +23,18 @@ export const SERIES_HUES: readonly Hue[] = [
   "indigo",
 ]
 
-/** The hue of the `index`th series: its own, or the next of the palette. */
-export function seriesHue(own: Hue | undefined, index: number): Hue {
+/**
+ * The hue of the `index`th series: its own, or the next of `palette`.
+ * The area and flow charts take `SERIES_HUES`; the axis charts take every
+ * hue (`HUES`), so each keeps the colours it has always drawn.
+ */
+export function seriesHue(
+  index: number,
+  own: Hue | undefined,
+  palette: readonly Hue[]
+): Hue {
   if (own !== undefined) return own
-  return SERIES_HUES[index % SERIES_HUES.length] ?? "blue"
-}
-
-/** Gives each data mark of a drawing its own id: `m0`, `m1`… */
-export function markIds(): () => string {
-  let next = 0
-  return () => {
-    const id = `m${next}`
-    next += 1
-    return id
-  }
-}
-
-export function datumOf(
-  id: string,
-  label: string,
-  series: string | null,
-  value: string,
-  info: string | null = null
-): Datum {
-  return { id, label, series, value, info }
+  return palette[index % palette.length] ?? "blue"
 }
 
 /** A shape painted with `classes`, optionally a data mark. */
@@ -81,11 +69,6 @@ export function label(
   mask = false
 ): Graphic {
   return shape({ kind: "text", x, y, text, role, anchor, mask }, classes)
-}
-
-/** A coordinate rounded to a tenth of a pixel. */
-export function round(value: number): number {
-  return Math.round(value * 10) / 10
 }
 
 const formatSchema = z.object(formatFields())

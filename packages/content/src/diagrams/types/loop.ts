@@ -54,7 +54,7 @@ const indexes = z.array(z.number().int().min(0))
 type Station = { item: Item; id: string; centre: Point; angle: number }
 
 /** Where a ray from a box's centre along (ux, uy) leaves the box. */
-export function boxExit(
+function boxExit(
   centre: Point,
   w: number,
   h: number,
@@ -177,7 +177,7 @@ function read(data: Record<string, unknown>, tools: Tools): Scene {
  * The smallest radius from `least` up, on a 4px step, at which every step
  * stays a full gap away from the hub, across or along.
  */
-export function ringRadius(
+function ringRadius(
   count: number,
   step: { w: number; h: number },
   hub: { w: number; h: number },

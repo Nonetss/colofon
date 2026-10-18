@@ -3,16 +3,10 @@ import type { Graphic, LegendEntry } from "#diagrams/model"
 import { listOf, salvagedList } from "#diagrams/report"
 import type { References } from "#diagrams/schema"
 import { checkBudget } from "#diagrams/types/kit/budget"
-import {
-  datumOf,
-  label,
-  markIds,
-  readFormat,
-  round,
-  shape,
-} from "#diagrams/types/kit/chart-kit"
+import { label, readFormat, shape } from "#diagrams/types/kit/charts"
 import { formSchema, itemList } from "#diagrams/types/kit/form"
 import { type Item, itemFields } from "#diagrams/types/kit/items"
+import { datumOf, markIds, tenth, tenthText } from "#diagrams/types/kit/marks"
 import {
   emptyScene,
   type Scene,
@@ -280,9 +274,9 @@ function placeNodes(columns: readonly Node[][]) {
       GAP * (column.length - 1)
     let y = TOP + (PLOT_H - height) / 2
     for (const node of column) {
-      node.x = round(x)
-      node.y = round(y)
-      node.h = round(quantity(node) * scale)
+      node.x = tenth(x)
+      node.y = tenth(y)
+      node.h = tenth(quantity(node) * scale)
       y += quantity(node) * scale + GAP
     }
   })
@@ -355,20 +349,16 @@ export function ribbonPath(
   y1: number,
   thickness: number
 ): string {
-  const mx = n((x0 + x1) / 2)
+  const mx = tenthText((x0 + x1) / 2)
   const b0 = y0 + thickness
   const b1 = y1 + thickness
   return [
-    `M${n(x0)} ${n(y0)}`,
-    `C${mx} ${n(y0)} ${mx} ${n(y1)} ${n(x1)} ${n(y1)}`,
-    `L${n(x1)} ${n(b1)}`,
-    `C${mx} ${n(b1)} ${mx} ${n(b0)} ${n(x0)} ${n(b0)}`,
+    `M${tenthText(x0)} ${tenthText(y0)}`,
+    `C${mx} ${tenthText(y0)} ${mx} ${tenthText(y1)} ${tenthText(x1)} ${tenthText(y1)}`,
+    `L${tenthText(x1)} ${tenthText(b1)}`,
+    `C${mx} ${tenthText(b1)} ${mx} ${tenthText(b0)} ${tenthText(x0)} ${tenthText(b0)}`,
     "Z",
   ].join(" ")
-}
-
-function n(value: number): string {
-  return String(round(value))
 }
 
 function ribbonShape(

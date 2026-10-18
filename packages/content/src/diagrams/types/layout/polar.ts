@@ -1,5 +1,6 @@
 import type { Point } from "#diagrams/model"
 import type { Anchor } from "#diagrams/schema"
+import { tenthText } from "#diagrams/types/kit/marks"
 
 // Angles and points around a centre for the radial charts (radar, polar):
 // the first spoke at twelve o'clock, the rest clockwise and evenly spaced.
@@ -54,10 +55,6 @@ export function wedgePath(
   const [x1, y1] = polarPoint(cx, cy, radius, start)
   const [x2, y2] = polarPoint(cx, cy, radius, end)
   const large = end - start > Math.PI ? 1 : 0
-  const r = n(radius)
-  return `M${n(cx)} ${n(cy)} L${n(x1)} ${n(y1)} A${r} ${r} 0 ${large} 1 ${n(x2)} ${n(y2)} Z`
-}
-
-function n(value: number): string {
-  return String(Math.round(value * 10) / 10)
+  const r = tenthText(radius)
+  return `M${tenthText(cx)} ${tenthText(cy)} L${tenthText(x1)} ${tenthText(y1)} A${r} ${r} 0 ${large} 1 ${tenthText(x2)} ${tenthText(y2)} Z`
 }

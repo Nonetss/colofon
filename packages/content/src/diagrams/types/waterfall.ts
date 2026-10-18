@@ -2,8 +2,19 @@ import { z } from "zod"
 import { textWidth } from "#diagrams/measure"
 import type { LegendEntry, Paint } from "#diagrams/model"
 import { optional, salvaged, salvagedList } from "#diagrams/report"
+import {
+  label,
+  type Plot,
+  rule,
+  shape,
+  signed,
+  tickWidth,
+  tinted,
+  valueAxis,
+} from "#diagrams/types/kit/axes"
 import { checkBudget } from "#diagrams/types/kit/budget"
 import { formSchema } from "#diagrams/types/kit/form"
+import { datumOf, markIds } from "#diagrams/types/kit/marks"
 import {
   emptyScene,
   type Scene,
@@ -16,18 +27,6 @@ import {
   numberSchema,
   type ValueFormat,
 } from "#diagrams/types/kit/values"
-import {
-  datum,
-  label,
-  markIds,
-  type Plot,
-  rule,
-  shape,
-  signed,
-  tickWidth,
-  tinted,
-  valueAxis,
-} from "#diagrams/types/layout/axes"
 import { linearScale } from "#diagrams/types/layout/scale"
 
 // Waterfall (diagram-design's `type-waterfall.md`): a start total, signed
@@ -202,7 +201,7 @@ function read(data: Record<string, unknown>, tools: Tools): Scene | null {
         },
         {
           ...barPaint(bar),
-          datum: datum(next(), bar.name, null, bar.text, bar.info),
+          datum: datumOf(next(), bar.name, null, bar.text, bar.info),
         }
       )
     )

@@ -3,14 +3,9 @@ import { textWidth } from "#diagrams/measure"
 import type { Graphic, LegendEntry } from "#diagrams/model"
 import { listOf, optional } from "#diagrams/report"
 import { checkBudget } from "#diagrams/types/kit/budget"
-import {
-  datumOf,
-  label,
-  markIds,
-  readFormat,
-  shape,
-} from "#diagrams/types/kit/chart-kit"
+import { label, readFormat, shape } from "#diagrams/types/kit/charts"
 import { formSchema } from "#diagrams/types/kit/form"
+import { datumOf, markIds } from "#diagrams/types/kit/marks"
 import {
   emptyScene,
   type Scene,

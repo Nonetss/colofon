@@ -2,6 +2,8 @@ import { mkdir, readdir, rm } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import path from "node:path"
 import { CATALOG_DIR, DOCS_DIR } from "#contract/read/files"
+import { spawnGit } from "#git/run"
+import { publicUrl, redactCredentials } from "#git/urls"
 
 // Where the content comes from: git repositories, each kept in its own clone
 // folder under one clone root with the git CLI. Credentials only travel
@@ -53,64 +55,6 @@ async function entriesOf(folder: string): Promise<string[]> {
 /** A line describing `repository` for the logs, without credentials. */
 export function describeRepository(repository: RepositorySource): string {
   return `content repository ${repository.slug} (${publicUrl(repository.url)}) at ${repository.ref}`
-}
-
-/** `url` with its user and password, if any, replaced by `***`. */
-export function publicUrl(url: string): string {
-  const parsed = parseUrl(url)
-  if (parsed === undefined) return url
-  if (parsed.username === "" && parsed.password === "") return url
-  parsed.username = "***"
-  parsed.password = ""
-  return parsed.href
-}
-
-/**
- * `url` with `username` and `token` as its credentials, replacing any it
- * carried; `url` as is when it isn't a URL.
- */
-export function withCredentials(
-  url: string,
-  username: string,
-  token: string
-): string {
-  const parsed = parseUrl(url)
-  if (parsed === undefined) return url
-  parsed.username = username
-  parsed.password = token
-  return parsed.href
-}
-
-/** The host (with its port) of `url`, lowercase; `undefined` if not a URL. */
-export function hostOf(url: string): string | undefined {
-  return parseUrl(url)?.host
-}
-
-/** `text` with every credential of `url` replaced by `***`. */
-export function redactCredentials(text: string, url: string): string {
-  return credentialsOf(url).reduce(
-    (redacted, secret) => redacted.split(secret).join("***"),
-    text
-  )
-}
-
-function credentialsOf(url: string): string[] {
-  const parsed = parseUrl(url)
-  if (parsed === undefined) return []
-  const secrets: string[] = []
-  for (const part of [parsed.password, parsed.username]) {
-    if (part === "") continue
-    secrets.push(part, decodeURIComponent(part))
-  }
-  return secrets
-}
-
-function parseUrl(url: string): URL | undefined {
-  try {
-    return new URL(url)
-  } catch {
-    return undefined
-  }
 }
 
 export type SyncResult =
@@ -249,35 +193,6 @@ function gitRunner(options: {
 function transportEnv(httpsOnly: boolean | undefined) {
   if (httpsOnly === true) return { GIT_ALLOW_PROTOCOL: "https" }
   return {}
-}
-
-export type SpawnGitOptions = {
-  cwd: string
-  env: Record<string, string | undefined>
-  timeoutMs: number
-}
-
-/** Runs git and returns its stdout, throwing with its stderr on failure. */
-export async function spawnGit(
-  args: string[],
-  options: SpawnGitOptions
-): Promise<string> {
-  const child = Bun.spawn(["git", ...args], {
-    cwd: options.cwd,
-    env: options.env,
-    stdout: "pipe",
-    stderr: "pipe",
-    signal: AbortSignal.timeout(options.timeoutMs),
-  })
-  const [stdout, stderr, exitCode] = await Promise.all([
-    new Response(child.stdout).text(),
-    new Response(child.stderr).text(),
-    child.exited,
-  ])
-  if (exitCode !== 0) {
-    throw new Error(`git ${args[0]} failed: ${stderr.trim()}`)
-  }
-  return stdout
 }
 
 async function originOf(git: Git): Promise<string | undefined> {

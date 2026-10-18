@@ -13,9 +13,8 @@ import {
   walk,
 } from "css-tree"
 import { isImageFile } from "#contract/images"
-import { DOCS_DIR } from "#contract/read/files"
+import { DOCS_DIR, STYLES_DIR } from "#contract/read/files"
 import type { PageProblem } from "#contract/read/problems"
-import { STYLES_DIR } from "#styles/modules"
 
 // Cleans one style module of a content repository (`content-styles`). The
 // repository may be written by anyone, so its CSS is parsed and only an

@@ -1,12 +1,6 @@
 import { z } from "zod"
 import { textWidth } from "#diagrams/measure"
-import type {
-  Datum,
-  Graphic,
-  GraphicShape,
-  Paint,
-  TextRole,
-} from "#diagrams/model"
+import type { Graphic, GraphicShape, Paint, TextRole } from "#diagrams/model"
 import type { Report } from "#diagrams/report"
 import { type Anchor, HUES, type Hue } from "#diagrams/schema"
 import { paint } from "#diagrams/types/kit/scene"
@@ -19,9 +13,8 @@ import {
 } from "#diagrams/types/kit/values"
 import type { Scale } from "#diagrams/types/layout/scale"
 
-// What the chart forms share (bar, waterfall, line, scatter, heatmap,
-// treemap, radar, polar and Sankey): series and their hues, data marks with
-// the identity the reader's card shows, and the value axis (faint gridlines
+// What the axis charts share (bar, waterfall, line, scatter): the series
+// schema, shapes and texts painted by classes, and the value axis (faint gridlines
 // on round ticks, a baseline at zero and the tick labels), after
 // diagram-design's bar chart frame.
 
@@ -41,33 +34,6 @@ export const seriesSchema = z.strictObject({
 })
 
 export type SeriesWritten = z.infer<typeof seriesSchema>
-
-/** The hue of the series at `index`: its own, or the next of HUES. */
-export function seriesHue(index: number, own: Hue | undefined): Hue {
-  if (own !== undefined) return own
-  return HUES[index % HUES.length] ?? "blue"
-}
-
-/** Numbers the data marks of one drawing: `m0`, `m1`… */
-export function markIds(): () => string {
-  let next = 0
-  return () => {
-    const id = `m${next}`
-    next += 1
-    return id
-  }
-}
-
-/** A data mark's identity. */
-export function datum(
-  id: string,
-  label: string,
-  series: string | null,
-  value: string,
-  info: string | null = null
-): Datum {
-  return { id, label, series, value, info }
-}
 
 /** A shape with `paint`. */
 export function shape(geometry: GraphicShape, look: Paint): Graphic {
@@ -137,7 +103,7 @@ export function rule(
 }
 
 /** How many decimals a tick of `step` needs. */
-export function tickDecimals(step: number): number {
+function tickDecimals(step: number): number {
   if (step >= 1) return 0
   return Math.min(6, Math.ceil(-Math.log10(step)))
 }
@@ -184,7 +150,7 @@ export function valueAxis(
 }
 
 /** The value the baseline sits on: zero when the domain holds it. */
-export function baseOf(scale: Pick<Scale, "min" | "max">): number {
+function baseOf(scale: Pick<Scale, "min" | "max">): number {
   if (scale.min <= 0 && scale.max >= 0) return 0
   return scale.min
 }

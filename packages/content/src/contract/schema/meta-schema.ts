@@ -12,7 +12,7 @@ import { iconName } from "#contract/schema/icon-name"
 export const CONTRACT_VERSIONS = ["2"] as const
 
 /** Field kinds that take no parameters. */
-export const SCALAR_FIELD_KINDS = [
+const SCALAR_FIELD_KINDS = [
   "text",
   "number",
   "integer",
@@ -34,7 +34,7 @@ export const PAGE_HEADER_FIELDS = [
 ] as const
 
 /** Fields every entity accepts without declaring them. */
-export const ENTITY_RESERVED_FIELDS = ["source", "updated"] as const
+const ENTITY_RESERVED_FIELDS = ["source", "updated"] as const
 
 /** Column that shows an entity's id, available in every type's `view`. */
 export const ID_COLUMN = "id"

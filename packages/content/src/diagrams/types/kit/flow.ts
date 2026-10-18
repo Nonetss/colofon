@@ -1,6 +1,5 @@
 import { textWidth } from "#diagrams/measure"
 import {
-  type Datum,
   type DiagramEdge,
   type Graphic,
   type GraphicShape,
@@ -72,16 +71,6 @@ export function maskedText(
   )
 }
 
-/** `graphic` as a data mark. */
-export function withDatum(graphic: Graphic, datum: Datum): Graphic {
-  return { ...graphic, datum }
-}
-
-/** `graphic` linking to `link`, when there is one. */
-export function withLink(graphic: Graphic, link: string | null): Graphic {
-  return { ...graphic, link }
-}
-
 /** How wide `text` is drawn in `role`. */
 export function roleWidth(text: string, role: TextRole): number {
   const face = TEXT_ROLES[role]
@@ -135,9 +124,4 @@ export function arrowEdge(arrow: {
     route: "orthogonal",
     badge: null,
   }
-}
-
-/** Rounded up to the 4px grid. */
-export function grid4(value: number): number {
-  return Math.ceil(value / 4) * 4
 }

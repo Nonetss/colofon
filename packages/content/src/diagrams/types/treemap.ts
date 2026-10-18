@@ -4,16 +4,10 @@ import type { Datum, Graphic, LegendEntry } from "#diagrams/model"
 import { listOf, optional } from "#diagrams/report"
 import type { References } from "#diagrams/schema"
 import { checkBudget } from "#diagrams/types/kit/budget"
-import {
-  datumOf,
-  label,
-  markIds,
-  readFormat,
-  round,
-  shape,
-} from "#diagrams/types/kit/chart-kit"
+import { label, readFormat, shape } from "#diagrams/types/kit/charts"
 import { formSchema, itemList } from "#diagrams/types/kit/form"
 import { type Item, itemFields } from "#diagrams/types/kit/items"
+import { datumOf, markIds, tenth } from "#diagrams/types/kit/marks"
 import {
   emptyScene,
   type Scene,
@@ -243,10 +237,10 @@ function groupsOf(
 
 function inset(rect: Rect, by: number): Rect {
   return {
-    x: round(rect.x + by),
-    y: round(rect.y + by),
-    w: Math.max(0, round(rect.w - 2 * by)),
-    h: Math.max(0, round(rect.h - 2 * by)),
+    x: tenth(rect.x + by),
+    y: tenth(rect.y + by),
+    w: Math.max(0, tenth(rect.w - 2 * by)),
+    h: Math.max(0, tenth(rect.h - 2 * by)),
   }
 }
 
@@ -323,13 +317,13 @@ function marimekko(
   let x = PLOT.x
   written.forEach((entry, index) => {
     const columnTotal = totals[index] ?? 0
-    const w = round((columnTotal / total) * width)
+    const w = tenth((columnTotal / total) * width)
     let y = PLOT.y
     const parts = [...entry.parts].sort(
       (a, b) => series.indexOf(a.name) - series.indexOf(b.name)
     )
     for (const item of parts) {
-      const h = round((item.value / columnTotal) * PLOT.h)
+      const h = tenth((item.value / columnTotal) * PLOT.h)
       const box = { x, y, w, h }
       const share = formatPercent(item.value / columnTotal)
       const datum = datumOf(
