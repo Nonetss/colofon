@@ -1,0 +1,35 @@
+---
+titulo: Helpers compartidos
+descripcion: Qué ofrece packages/api/src/shared antes de escribir un helper nuevo, y cuándo un helper se mueve ahí
+orden: 4
+workspaces: [api]
+actualizado: 2026-10-18
+---
+
+Antes de escribir un helper, mira `packages/api/src/shared/`. Un helper que
+solo usa una feature se queda en su `handler.ts`; se mueve a `shared/` cuando
+lo necesita una segunda, y entonces lleva su test en
+`packages/api/tests/shared/<helper>.test.ts`.
+
+| Fichero | Qué ofrece |
+| --- | --- |
+| `pagination.ts` | Paginación por cursor (`paginate`, `paginateWithTotal`), el cursor de keyset por fecha (`encodeKeysetCursor`, `decodeKeysetCursor`), el cursor de las listas que ordena quien llama (`sortedCursor`, `sortedPaginationCursor`) y los esquemas de entrada `paginationLimit` y `paginationCursor` (ver [Paginación y orden](paginacion.mdx)). |
+| `sorted-keyset.ts` | `cursorFor`, que comprueba que un cursor es de la misma ordenación, y `sortedKeyset`, reexportado de `@nonete/db/sorted-keyset`. |
+| `search.ts` | Las entradas de los procedimientos `search` (`searchQuery`, `searchLimit`) y `likePattern`, que escapa el texto para `ilike` (ver [Búsquedas](busqueda.mdx)). |
+| `dates.ts` | `toIso` y `toIsoOrNull`, para devolver fechas como texto ISO. |
+| `not-found.ts` | `assertFound(fila, mensaje?)`: devuelve la fila o lanza `NOT_FOUND`. |
+| `procedure-docs.ts` | La documentación OpenAPI y el JSON Schema de entrada de un procedimiento (lo usa el descubrimiento de crons). |
+
+## Fuera de `shared/`
+
+- `src/lib/permissions.ts` envuelve la comprobación de permisos de
+  organización que usa `permissionProcedure`.
+- Lo que solo tiene sentido dentro de una feature vive en su carpeta aunque
+  lo importen otras: el lector de contenido (`v1/content/reader.ts`, con el
+  público de cada repositorio), los escritores de Markdown y `llms.txt`
+  (`v1/docs/`) o el ejecutor de peticiones con secretos
+  (`v1/secret/request/`).
+- Lo que no depende de la API está en su propio paquete: el parser de MDX,
+  la navegación y el catálogo en `@nonete/content`; el keyset ordenado en
+  `@nonete/db`, para que `packages/cron` lo use sin depender de
+  `packages/api`.

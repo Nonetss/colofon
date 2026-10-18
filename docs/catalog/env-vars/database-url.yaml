@@ -1,0 +1,7 @@
+name: "DATABASE_URL"
+area: "database"
+required: true
+meaning: "La conexión a PostgreSQL; bun run dev la sustituye por la de su propio servicio db"
+page: "configuracion"
+fuente: packages/env/src/server.ts
+actualizado: 2026-10-18

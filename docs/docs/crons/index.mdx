@@ -1,0 +1,57 @@
+---
+titulo: Crons
+descripcion: El planificador de tareas que corre dentro del backend, donde un job es una llamada programada a un procedimiento de la API
+orden: 7
+workspaces: [cron, api, backend]
+actualizado: 2026-10-18
+---
+
+El proyecto trae un planificador de tareas propio que corre **dentro del
+backend**. La idea central: **un job de cron es una llamada programada a un
+procedimiento de la API**. No hay un sistema aparte de «tareas»; cualquier
+procedimiento puede convertirse en una.
+
+Hoy colofon programa dos jobs desde el código: la **sincronización de los
+repositorios de contenido**, cada cinco minutos, y la **purga del uso de
+secretos**, una vez al día ([Jobs de colofon](jobs.mdx#los-jobs-de-colofon)).
+
+## Las piezas
+
+| Pieza | Dónde | Qué hace |
+| --- | --- | --- |
+| Planificador | `packages/cron` | Dispara los jobs a su hora (con `Bun.cron`, siempre en UTC) y guarda cada ejecución. No sabe nada de oRPC. |
+| Descubrimiento | `packages/api/src/v1/cron/discovery.ts` | Recorre el router de v1 y encuentra qué procedimientos se pueden programar y cuáles traen su horario declarado. |
+| API de crons | `packages/api/src/v1/cron/` | Crear, editar, pausar, borrar y ejecutar jobs, y consultar su historial. Las escrituras son de admin; las lecturas, de cualquiera con sesión. |
+| Cableado | `apps/backend/src/cron/` | Construye el servicio con el planificador y lo enlaza con la API al arrancar el backend (`v1/cron/runtime.ts` es el hueco donde se enchufa). |
+
+En la base de datos, `cron_job` guarda la definición de cada job (el
+procedimiento, su origen `manual` o `code`, la expresión en UTC, si está
+activo, el usuario con el que corre y la entrada) y `cron_run` una fila por
+cada ejecución.
+
+## No hay interfaz web
+
+Las páginas de crons se quitaron cuando el frontend pasó a ser el lector de
+documentación. Los jobs se consultan y gestionan por la API (`v1.cron`): un
+admin puede probar sus endpoints desde `/scalar`, o llamarlos con
+`/api/v1/cron/...` desde un script con una API key. La sincronización del
+contenido muestra su resultado por repositorio en `/admin/content`.
+
+| Procedimiento | Quién | Qué hace |
+| --- | --- | --- |
+| `cron.list`, `cron.get` | Con sesión | Los jobs y uno de ellos. |
+| `cron.listRuns` | Con sesión | El historial de un job, paginado, con filtro por estado y orden por inicio, estado o duración. |
+| `cron.handlers` | Con sesión | Los procedimientos que se pueden programar a mano. |
+| `cron.watchRuns`, `cron.watchJobs` | Con sesión | Los streams en vivo ([Cómo se ejecuta un job](ejecucion.mdx#historial-en-vivo)). |
+| `cron.create`, `cron.update`, `cron.setEnabled`, `cron.remove`, `cron.runNow` | Admin | Crear, editar, pausar o reanudar, borrar y ejecutar al momento. |
+
+## ¿Dónde encuentro…?
+
+| Quiero… | Página |
+| --- | --- |
+| Saber qué jobs corren hoy y cada cuánto | [Jobs de colofon](jobs.mdx#los-jobs-de-colofon) |
+| Hacer que un procedimiento se pueda programar a mano | [Jobs manuales](jobs.mdx#jobs-manuales) |
+| Que el código fije el horario de un procedimiento | [Jobs declarados en código](jobs.mdx#jobs-declarados-en-código) |
+| Saber con qué usuario corre un job y qué permisos tiene | [Cómo se ejecuta un job](ejecucion.mdx) |
+| Entender por qué no conviene tener dos réplicas del backend | [Cosas a tener en cuenta](ejecucion.mdx#cosas-a-tener-en-cuenta) |
+| Saber cómo se sincronizan los repositorios de contenido | [Repositorios de contenido](../contenido/repositorios.mdx) |

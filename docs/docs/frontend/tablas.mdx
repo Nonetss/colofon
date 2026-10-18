@@ -1,0 +1,96 @@
+---
+titulo: Tablas
+descripcion: Cómo se monta una tabla de recursos con TanStack Table (columnas, orden en la URL, filtros por valor, preferencias de columnas) y cómo se vuelven interactivas las tablas de las páginas del lector
+orden: 5
+workspaces: [frontend]
+actualizado: 2026-10-18
+---
+
+Hay dos clases de tabla, las dos sobre TanStack Table v9
+(`@tanstack/react-table`):
+
+| Tabla | Dónde | Quién la pinta |
+| --- | --- | --- |
+| **De recursos** | `/admin/users` y `/admin/api-keys` | `DataTableView`, una isla React con los datos de la API |
+| **Del lector** | Toda tabla de una página de documentación, salvo las de clave y valor | El servidor pinta el HTML y la isla `DocTables` la hace interactiva encima |
+
+## Tablas de recursos
+
+| Pieza | Dónde | Qué hace |
+| --- | --- | --- |
+| `useDataTable` | `src/hooks/use-data-table.ts` | La instancia de la tabla con visibilidad, orden, ancho y redimensionado de columnas; el orden de las filas se hace fuera |
+| `useColumnPreferences` | `src/hooks/use-column-preferences.ts` | Guarda las columnas visibles, su orden y su ancho en `localStorage` (`nonete:table-columns:<tableId>`) |
+| `useSortQueryParam` | `src/hooks/use-sort-query-param.ts` | El orden de la tabla en la URL (`?sort=` y `?order=`), que desaparece cuando es el de por defecto |
+| `sortRows` | `src/lib/sort-rows.ts` | Ordena en el navegador las filas cargadas de una vez; las que no tienen valor van al final |
+| `DataTableView` | `components/shared/data-display/data-table-view.tsx` | Todo el pintado: cabecera, menú de columnas, filas, filtros, filas expandibles y la vista compacta |
+| `DataTableColumnFilter` | `components/shared/data-display/data-table-column-filter.tsx` | El filtro por valores de una columna, al estilo de una hoja de cálculo |
+| `RowActions` | `components/shared/data-display/row-action-items.tsx` | Las acciones de la fila en un menú, a partir de descriptores |
+
+### Montar una tabla
+
+1. Declara las columnas en un `*-columns.definition.tsx` del slice
+   (`features/admin/users/definitions/user-columns.definition.tsx` es el
+   ejemplo), como constantes del módulo, con `createColumnHelper`.
+2. Da a cada columna un `id`, un `size` y un `meta` con su `label`. Ocultar y
+   ordenar se activan por columna (`enableHiding`, `enableSorting`); el `id`
+   de una columna ordenable es su clave de orden.
+3. Guarda el orden en la URL con `useSortQueryParam` y crea la tabla con
+   `useDataTable`.
+4. Píntala con `DataTableView`, con `emptyMessage` para que la tabla y sus
+   filtros sigan ahí cuando nada coincide.
+
+### Orden y filtros
+
+- **Una lista cargada de una vez** se ordena y se filtra en el navegador
+  (`sortRows` después de los filtros). Así está la de API keys.
+- **Una lista por páginas** manda el orden y los filtros al procedimiento, que
+  forman parte de la clave de la consulta, y carga más filas con scroll
+  infinito, nunca con botones de página. Así está la de usuarios, con sus
+  filtros por usuario, rol y estado en la URL.
+- Los filtros por valores se pasan como datos a `DataTableView`
+  (`filters`), con el recuento de cada valor.
+
+### Ancho y móvil
+
+`DataTableView` es un contenedor con nombre: a partir de `@4xl/table` pinta la
+tabla; por debajo, una lista compacta en la que cada fila enseña todos sus
+campos y el orden se elige con `SortControls`. En el móvil, los filtros bajan
+a la barra inferior (`mobileFilters`) con un botón «Ordenar».
+
+## Las tablas del lector
+
+El servidor pinta la tabla como HTML; en el navegador, `DocTables`
+(`features/docs/tables`, montada por `doc-body.astro`) la convierte en una
+tabla de TanStack sobre esas mismas filas: mueve, oculta y marca los `tr` del
+servidor en vez de volver a pintarlos.
+
+| Pieza | Fichero | Qué hace |
+| --- | --- | --- |
+| Preparar el DOM | `model/table-dom.ts` | Convierte cada cabecera en un botón de orden y añade los huecos de la barra y el paginador |
+| La tabla | `hooks/use-doc-table.ts`, `model/doc-table.ts` | Orden, filtros, facetas, paginación y visibilidad de columnas |
+| Orden por tipo | `model/table-kinds.ts` | Ordena según lo que lleva la columna: IP, fechas, tamaños, versiones, números o texto |
+| La caja de filtro | `model/table-query.ts` | `columna:valor` filtra solo esa columna |
+| La vista en la URL | `model/table-url.ts` | Orden y filtros en `?tabla=…`, para «Copiar enlace a esta vista» |
+| Exportar | `model/table-export.ts` | «Copiar en Markdown» y «Descargar CSV» |
+| Redimensionar | `model/table-resize.ts` | Arrastrar el borde de una cabecera, flechas de 16 px, doble clic para volver al ancho automático |
+
+- La barra sale desde 2 filas, y con más de 50 filas se paginan de 25 en 25
+  (`model/table-view.ts`).
+- Las tablas de clave y valor (con la primera celda de la cabecera vacía) se
+  quedan como están.
+- Los controles son React montado con portales dentro del HTML del servidor.
+  Una tabla de página nunca lleva un control propio fuera de la isla, ni un
+  `title`.
+
+Cómo se usan desde el punto de vista de quien lee está en
+[El lector](../contenido/lector.mdx#tablas).
+
+## Si algo falla
+
+| Síntoma | Causa | Qué hacer |
+| --- | --- | --- |
+| Una columna vuelve a su ancho o desaparece al recargar | Las preferencias se guardan en `localStorage`; en otro navegador o tras borrarlo vuelven las de por defecto | Es lo esperado |
+| Las columnas de una tabla cambian de golpe tras renombrar una | El `id` de la columna es la clave de sus preferencias guardadas | No cambies el `id` de una columna existente sin necesidad |
+| Una tabla del lector no tiene barra ni orden | Tiene la primera celda de la cabecera vacía: es de clave y valor | Es lo esperado |
+| Una tabla del lector no tiene barra | Tiene una sola fila | Es lo esperado: la barra sale desde 2 filas |
+| Una columna no tiene filtro por valores | Algún valor pasa de 40 caracteres, y la columna no cabe en el panel | Es lo esperado; la caja `columna:valor` sigue filtrándola |

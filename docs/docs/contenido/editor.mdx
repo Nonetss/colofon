@@ -1,8 +1,10 @@
 ---
 titulo: Editor
 descripcion: Cómo conseguir autocompletado y validación de los YAML y los diagramas de un repositorio de contenido en VS Code
-orden: 4
-actualizado: 2026-10-17
+workspaces: [content, api]
+env_vars: [cors-origin]
+orden: 9
+actualizado: 2026-10-18
 ---
 
 El backend sirve, sin login, un **catálogo de schemas** por repositorio, con su
@@ -51,6 +53,31 @@ vale poner `"$schema"` con esa URL como primera clave de un diagrama.
 
 Nadie genera ni commitea schemas: un tipo, una entidad o una página nuevos
 salen en el catálogo después de la sincronización que los trae.
+
+## Qué sirve el backend
+
+Todo es `GET`, sin sesión ni API key, y lo genera
+`packages/content/src/editor/schemas.ts` a partir de las declaraciones
+válidas del repositorio:
+
+| Ruta, bajo `/api/v1/content/schemas/<slug>` | Qué es |
+| --- | --- |
+| (la raíz) | El catálogo en formato SchemaStore: una entrada para `doc.config.yaml`, otra para `menu.yaml`, otra para `diagrams/*.json`, otra para `catalog/*/_type.yaml` y una por tipo para `catalog/<tipo>/*.yaml` (sin los `_*.yaml`). |
+| `/config` | El schema de `doc.config.yaml`. |
+| `/menu` | El de `menu.yaml`, con las rutas de páginas, carpetas, `catalog` y `catalog/<tipo>` que existen. |
+| `/diagram` | El de un diagrama en cualquiera de sus formas, con los ids de las entidades para `entity` y las rutas para `page`. |
+| `/type` | El de un `_type.yaml`, con los tipos que existen para cada `ref`. |
+| `/entities/<tipo>` | El de una entidad de ese tipo: sus campos con su `etiqueta` y su `descripcion`, los ids válidos de cada `ref`, las rutas de cada `ficha` y los valores de cada `enum`. |
+
+Las URL de dentro del catálogo son absolutas y salen del origen público,
+`CORS_ORIGIN`. Todos los `icono` ofrecen los nombres de Lucide que la
+plataforma acepta. Un slug o un tipo desconocidos dan `NOT_FOUND`, y un
+repositorio sin contenido válido todavía tiene un catálogo vacío.
+
+Estas rutas tienen su propio manejador en `apps/backend/src/routers/docs.ts`,
+sin la protección CSRF del resto de `/api`, para que se puedan abrir desde la
+barra de direcciones o desde el editor: son públicas, solo leen y nunca usan
+la sesión.
 
 ## Cuando algo falla
 

@@ -1,0 +1,38 @@
+---
+titulo: PWA
+descripcion: Cómo se instala colofon como aplicación, qué guarda su service worker y por qué en desarrollo se desactiva solo
+orden: 7
+workspaces: [frontend]
+compose_files: [local]
+actualizado: 2026-10-18
+---
+
+La app se puede instalar: tiene `public/manifest.webmanifest` (nombre
+«colofon», iconos en `public/pwa/`) y un service worker, `public/sw.js`, que
+`Layout.astro` y `Admin.astro` registran a través de
+`src/layouts/service-worker.astro`, **solo en producción**.
+
+## Qué hace el service worker
+
+- Va **primero a la red** en todo, y solo tira de la caché
+  (`colofon-shell-v1`) cuando la red falla de verdad: la documentación cambia
+  a menudo y una copia vieja es peor que un fallo de caché. Sin red, una
+  navegación que no está en caché cae en la copia guardada de `/`.
+- Nunca toca `/rpc`, `/api`, `/scalar` ni `/openapi.json`: son datos vivos y de
+  sesión que siempre se piden de nuevo.
+- Solo atiende peticiones `GET` del propio origen.
+- Al activarse borra las cachés de versiones anteriores.
+
+## En desarrollo
+
+`service-worker.astro` hace lo contrario: desregistra cualquier worker y
+borra su caché. Un worker interceptaría cada uno de los cientos de módulos sin
+empaquetar que sirve Vite en desarrollo, lo que vuelve el desarrollo muy lento
+y a veces rompe la carga de módulos.
+
+## Si algo falla
+
+| Síntoma | Causa | Qué hacer |
+| --- | --- | --- |
+| Tras un despliegue, el navegador sigue enseñando una versión vieja sin red | Es la copia de la caché, que solo se usa cuando la red falla | Vuelve a cargar con red; la copia se renueva en cada petición que sale bien |
+| Para probar el worker, en desarrollo no está registrado | Solo se registra en un build de producción | Pruébalo con el stack local de producción (`compose.yml`) |

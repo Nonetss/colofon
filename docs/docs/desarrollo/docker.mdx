@@ -1,0 +1,58 @@
+---
+titulo: Con Docker
+descripcion: Arrancar la pila de desarrollo en contenedores con recarga en caliente, y qué pasa al editar cada fichero
+commands: [dev, dev-down]
+compose_files: [dev]
+env_vars: [backend-url, database-url, postgres-password]
+workspaces: [frontend, backend, gateway]
+orden: 2
+actualizado: 2026-10-18
+---
+
+```bash
+bun run dev        # construye, arranca y vigila cambios; Ctrl+C para parar
+bun run dev:down   # elimina los contenedores
+```
+
+Levanta con `compose.dev.yml` (proyecto `colofon-dev`) el frontend (`astro dev` en `:4320`), el backend (`bun --hot`), el gateway (con `Caddyfile.dev`, que sirve la app en `https://localhost:4321`) y PostgreSQL 17 (el servicio `db`).
+
+- **Solo el gateway publica un puerto**, como en producción. Las apps y PostgreSQL quedan en la red interna de la pila y se encuentran por nombre de servicio: el compose sobrescribe `BACKEND_URL` y `DATABASE_URL`, y el resto sale del `.env` sin cambios.
+- **Trae su propia base de datos**: el backend espera a que `db` esté sana y se conecta a ella diga lo que diga el `.env` (ver [Base de datos](base-de-datos.mdx)).
+- **No se monta el repositorio**: `docker compose watch` copia tus cambios dentro de los contenedores. Solo hay volúmenes con nombre:
+
+| Volumen | Qué guarda |
+| --- | --- |
+| `db_data` | Los datos de PostgreSQL, compartidos con el `db-native` del modo nativo. |
+| `content_data` | Los clones de los repositorios de contenido (`/app/.content`), que se pueden volver a clonar. |
+| `hosted_data` | Los repositorios *bare* de los repositorios alojados en la plataforma (`/app/.hosted`): pueden ser la única copia de ese contenido. |
+| `frontend_vite_cache` | La caché de dependencias optimizadas de Vite, para que un `bun run dev` nuevo no recargue la primera página. |
+| `gateway_data` | La autoridad de certificación local del gateway (ver [Confiar en el certificado local](certificado.mdx)). |
+
+`bun run dev:down` los conserva; `bun run dev:down -v` los borra todos.
+
+> [!CAUTION]
+> `bun run dev:down -v` borra también `hosted_data` y `db_data`: los repositorios alojados en tu entorno de desarrollo y todos sus datos desaparecen.
+
+## Qué pasa al editar
+
+| Si editas… | Pasa esto |
+| --- | --- |
+| `apps/frontend/src`, `apps/frontend/public` y el `src` de los paquetes que usa el frontend (`api`, `auth`, `env`, `logger`) | Se sincroniza y la recarga en caliente de `astro dev` lo recoge |
+| `apps/backend/src` | Se sincroniza y `bun --hot` lo recarga |
+| El `src` de los paquetes que usa el backend (`api`, `auth`, `content`, `cron`, `db`, `env`, `logger`) y `packages/api/skills` | Se sincroniza y se reinicia el backend, en unos segundos (`bun --hot` no recargaba esos cambios) |
+| `apps/frontend/astro.config.mjs`, `apps/gateway/Caddyfile.dev`, `apps/gateway/routes.caddy` | Se sincroniza y se reinicia ese servicio |
+| `package.json`, `bun.lock` o el `package.json` de una app | Se reconstruyen las imágenes afectadas |
+
+> [!WARNING]
+> Cuando un servicio empieza a importar un paquete o una carpeta nueva, hay que añadir su entrada `sync` en `compose.dev.yml`, o los cambios no llegarán al contenedor.
+
+Las skills de escritura de `doc-example/.agents/skills/` que sirve el backend no tienen entrada `sync`: se copian al construir la imagen, así que un cambio en ellas pide reconstruirla.
+
+## Si algo falla
+
+| Síntoma | Causa | Qué hacer |
+| --- | --- | --- |
+| Un puerto está ocupado al arrancar | El modo nativo (o su gateway) está en marcha y usa los mismos puertos | Para el otro modo antes de arrancar este |
+| Cambias código y el contenedor no lo recoge | La carpeta no tiene entrada `sync` en `compose.dev.yml` | Añádela |
+| El backend tarda en arrancar o no arranca | Espera a que `db` pase su healthcheck (`pg_isready`) | Mira los logs de `db` en la salida de `bun run dev` |
+| `docker compose` no reconoce `--watch` | Compose anterior a 2.23.1 | Actualiza Docker Compose |

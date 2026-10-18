@@ -1,0 +1,59 @@
+---
+titulo: CSRF y protecciones
+descripcion: Las capas que impiden que otra web use tu sesión, cómo se protegen el MCP y los esquemas del editor, y los límites que el backend aplica a cada petición
+orden: 3
+workspaces: [backend, gateway]
+env_vars: [cors-origin]
+actualizado: 2026-10-18
+---
+
+CSRF es el ataque en que otra web hace que tu navegador envíe una petición a
+esta app con tu cookie. Se evita con tres capas, sin plugin en el cliente:
+
+1. **`/rpc` nunca acepta `GET`.** Las escrituras exigen `POST`, `PUT`,
+   `PATCH` o `DELETE`, y las lecturas `QUERY`, que el navegador no puede
+   enviar desde otra web sin pasar un *preflight* de CORS que solo supera el
+   origen configurado (`CORS_ORIGIN`). Además, `QUERY` solo se acepta en
+   procedimientos de lectura (declarados `GET` o `QUERY`).
+2. **`/api` rechaza navegaciones desde otra web.** Si un `GET` llega como
+   navegación de nivel superior desde otro sitio (según las cabeceras
+   `Sec-Fetch-*`), responde `403`. Las peticiones sin esas cabeceras
+   (scripts, clientes con API key) pasan.
+3. **La cookie es `SameSite=Lax`**, así que el navegador no la envía en
+   peticiones cross-site con métodos que modifican datos.
+
+Además, todo va por el mismo origen gracias al gateway (también en
+desarrollo), así que el navegador nunca necesita CORS (ver
+[Arquitectura](../arquitectura/index.mdx)).
+
+## Las rutas fuera de oRPC
+
+| Ruta | Cómo se protege |
+| --- | --- |
+| `/mcp` | Rechaza con `403` una petición cuyo `Origin` no sea el origen público, para que una web ajena no pueda usar las herramientas con la cookie. Sin usuario, `401`. |
+| `/api/v1/content/schemas/...` | Los esquemas del editor son públicos, de solo lectura y no usan la sesión, así que no hay nada que falsificar: no pasan por la capa 2, que rechazaría una URL abierta desde la barra de direcciones o desde un enlace fuera del navegador. |
+| `/git/*` | El servidor git de los repositorios que aloja la plataforma no usa sesión ni cookie (ver [Repositorios de contenido](../contenido/repositorios.mdx)). |
+| `/api/auth/*` | Better Auth, que solo confía en `CORS_ORIGIN` (`trustedOrigins`). |
+
+## Protecciones del backend
+
+Los manejadores de oRPC (`/rpc`, `/api` y la documentación) comparten
+plugins, en `apps/backend/src/routers/handler-plugins.ts`:
+
+| Protección | Respuesta |
+| --- | --- |
+| El cuerpo pasa de 1 MiB | `413` |
+| El cuerpo intenta contaminar prototipos (`__proto__`, `constructor.prototype`) | `400` |
+| Un stream SSE lleva tiempo sin enviar nada | Un *ping* cada 5 segundos, para que Bun no cierre la conexión a los 10 segundos de inactividad |
+| Un procedimiento falla | Se registra una sola vez, con el nivel según la causa ([Errores](../backend-api/errores.mdx)) |
+
+`/scalar` y `/openapi.json` solo responden a admins: sin sesión, `401`; sin
+el rol, `403`.
+
+## Qué falla
+
+| Síntoma | Causa | Qué hacer |
+| --- | --- | --- |
+| Un enlace a `/api/v1/...` abierto desde otra web responde `403` | Es una navegación cross-site de nivel superior | Es lo esperado; llama a la API desde un script o con el método correcto |
+| Un cliente MCP recibe `403` | Envía un `Origin` distinto del origen público | Conéctalo a la URL de `CORS_ORIGIN` |
+| Una llamada responde `413` | El cuerpo pasa de 1 MiB | Reduce la entrada |

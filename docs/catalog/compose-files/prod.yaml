@@ -1,0 +1,6 @@
+path: "compose.prod.yml"
+purpose: "Producción, con las imágenes ya publicadas en el registro"
+start: "En el servidor, con scripts/bootstrap.sh"
+page: "docker-despliegue/produccion"
+fuente: compose.prod.yml
+actualizado: 2026-10-18

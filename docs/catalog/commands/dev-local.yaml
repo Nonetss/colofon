@@ -1,0 +1,6 @@
+command: "bun run dev:local"
+area: "dev"
+purpose: "Arranca todas las apps en nativo con turbo watch"
+page: "desarrollo/nativo"
+fuente: package.json
+actualizado: 2026-10-18

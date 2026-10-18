@@ -1,0 +1,6 @@
+command: "bun run tailwind:fix"
+area: "validation"
+purpose: "Corrige las clases de Tailwind de apps/frontend y apps/site con tailwint"
+page: "desarrollo/validacion"
+fuente: package.json
+actualizado: 2026-10-18

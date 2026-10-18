@@ -1,0 +1,115 @@
+---
+titulo: Navegación
+descripcion: Cómo se declara una página una sola vez para que salga en el sidebar de su sección, qué marca un enlace como activo y qué lista la búsqueda ⌘K
+orden: 2
+workspaces: [frontend]
+actualizado: 2026-10-18
+---
+
+Cada página con identidad propia (una **superficie**) se declara **una sola
+vez** en `src/lib/app-surfaces.ts`: ruta, título de la pestaña, etiqueta,
+descripción, icono y si es solo para admins. Las secciones anidan a sus
+subpáginas en `children`, y `id` y `parentId` se derivan solos.
+
+La navegación principal de colofon no sale de ahí: es el **sidebar del
+lector**, que se construye con el `menu.yaml` de cada repositorio
+(`v1.docs.nav`; ver [El lector](../contenido/lector.mdx#navegación)). El
+registro de superficies da la identidad de las demás páginas: `/admin`, el
+perfil, login, registro y 404.
+
+## Añadir una página al perfil o a `/admin`
+
+1. Añade la superficie como hija de `profile` o de `admin` en
+   `app-surfaces.ts`, con su ruta, etiqueta, descripción e icono (de
+   `icon-registry.ts`). Si es de admin, `adminOnly: true`.
+2. Crea la ruta en `src/pages/` con el layout de la sección
+   (`WithSidebar.astro` con `section="profile"`, o `Admin.astro`) y monta la
+   página de su slice con `client:only="react"`.
+3. En el contenido, encabeza la página con `PageHero` y el id de la superficie,
+   que pone el título y la descripción del registro.
+
+El sidebar de la sección la lista sola, en el orden del registro. No hay que
+tocar ningún componente de navegación.
+
+## Lo que se deriva de `app-surfaces.ts`
+
+Todo lo demás sale de ahí, en `src/lib/site-nav.ts`. Nunca se escribe a mano
+una etiqueta, un icono o una descripción en un sidebar, un menú o una cabecera.
+
+- `sectionSidebarLinks(id, etiqueta)` da las filas del sidebar de una sección:
+  su propia página con esa etiqueta y después sus hijas. Así salen
+  `adminSidebarLinks` («Resumen», «Usuarios», «API keys», «Contenido», «Git»)
+  y el sidebar del perfil («Cuenta», «API keys», «Secretos», «Repositorios»,
+  «Skills para tu IA»).
+- `sectionSidebars` dice qué secciones usan `WithSidebar.astro`. Hoy solo
+  `profile`; para dar ese layout a otra sección, se añade ahí.
+- Para saber si un enlace está activo se usa `isNavLinkActive(href, pathname)`,
+  nunca un `startsWith` suelto. Dentro de una sección solo se marca la fila más
+  específica (`currentNavHref`): en `/admin/users` se marca Usuarios, no
+  Resumen.
+- En el lector, el sidebar marca la propia página si el menú la lista, o la
+  más profunda que la contiene (una ficha de entidad marca su tipo del
+  catálogo), y abre las secciones que la contienen (`currentHref`, en
+  `features/docs/shared/model/nav.ts`).
+- Los iconos se resuelven por nombre en `src/lib/icon-registry.ts` (ver
+  [Sistema visual](sistema-visual.mdx#iconos)).
+
+## El navbar y la entrada a `/admin`
+
+El navbar con sesión (`NavbarAuthenticated`, en `features/app-shell/authenticated`)
+lleva la marca, la búsqueda, el menú del tema y el de la cuenta. **No tiene
+enlaces de sección.**
+
+- Los admins llegan a `/admin` desde «Administración» en el menú de la cuenta,
+  y el sidebar de `/admin` acaba en «Volver a la documentación».
+- En las páginas con sidebar propio (el lector y el perfil), por debajo de
+  `md` el navbar muestra un botón de menú que abre ese sidebar como panel. Se
+  comunican con un evento (`page-sidebar:toggle`, en `src/lib/page-sidebar.ts`)
+  y no comparten nada más.
+
+## La búsqueda del navbar (`⌘K` / `Ctrl+K`)
+
+Busca **solo en la documentación**: las páginas de los repositorios de
+contenido del ámbito elegido en el selector del lector, o de todos con
+«Todos». No lista la portada, el perfil ni las pantallas de admin.
+
+- Es una búsqueda de texto completo en el servidor (`v1.docs.search`),
+  150 ms después de dejar de escribir, desde 2 caracteres y con hasta 10
+  resultados, en el orden de relevancia que da el servidor. Cómo puntúa y qué
+  campos mira está en [El lector](../contenido/lector.mdx#búsqueda).
+- Cada resultado muestra antes su rastro de secciones
+  (`Infraestructura › Red › DNS`), y con «Todos» empieza por el repositorio.
+- Si la coincidencia está en el cuerpo, enseña un extracto en lugar de la
+  descripción.
+- Con la búsqueda vacía no muestra nada: «Escribe para buscar en la
+  documentación».
+
+### Cómo está montada
+
+La búsqueda es genérica: lista los registros de las superficies con ruta
+dinámica que declaran una **fuente de búsqueda** (`searchSource`). Hoy la única
+es `doc-pages`, la de `/[repo]/[...path]`, en
+`features/app-shell/authenticated/model/surface-search-sources.ts`.
+
+| La entidad… | Fuente | Cómo carga |
+| --- | --- | --- |
+| Se lista entera | `defineSearchSource`, con el `list` de su página | Una vez mientras el diálogo está abierto, compartiendo la caché de la lista |
+| Se lista por páginas | `defineServerSearchSource`, con su procedimiento `search` | 150 ms después de dejar de escribir, desde 2 caracteres, 5 resultados (10 en la documentación) |
+
+La fuente siempre llama al procedimiento de su propia entidad. El diálogo
+exige además que cada palabra aparezca en algún texto del resultado
+(etiqueta, descripción, grupo, rastro o `keywords`), sin importar mayúsculas
+ni acentos.
+
+`site-nav.ts` sigue proyectando también las superficies con ruta fija
+(`getSearchableSurfaces`), y las que no son un destino llevan `search: false`
+(login, signup, 404), pero el diálogo de hoy no las pinta.
+
+## Si algo falla
+
+| Síntoma | Causa | Qué hacer |
+| --- | --- | --- |
+| Una página nueva de `/me` no sale en el sidebar | No está como hija de `profile` en `app-surfaces.ts` | Declárala ahí; el sidebar sale del registro |
+| Se marcan dos filas a la vez en un sidebar | Se comparó con `startsWith` a mano | Usa `isNavLinkActive` o `currentNavHref` |
+| La búsqueda no encuentra una página que existe | Está fuera del ámbito elegido en el selector, o es la ficha de una entidad del catálogo (no se indexan) | Cambia el selector a «Todos» o a su repositorio |
+| Un usuario sin rol `admin` abre una ruta de `/admin` | El middleware lo manda a `/` | Es lo esperado: `/admin` solo es para el rol `admin` |

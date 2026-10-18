@@ -1,0 +1,74 @@
+---
+titulo: Frontend
+descripcion: Cómo está hecha la web de colofon, qué hay en cada carpeta de apps/frontend/src y por qué las islas React nunca se renderizan en el servidor
+orden: 6
+workspaces: [frontend]
+commands: [dev-frontend, check-types, tailwind-check, test]
+actualizado: 2026-10-18
+---
+
+`apps/frontend` es una app Astro 7 con renderizado en servidor. Las páginas
+(`src/pages/`) son ficheros `.astro`, y todo lo interactivo es React 19
+montado como isla. Los estilos son Tailwind v4 y los componentes base vienen
+de shadcn/ui (estilo `base-nova`, sobre Base UI). Habla con la API con el
+cliente oRPC tipado de `src/lib/orpc.ts` y TanStack Query.
+
+Tiene dos caras: el **lector de documentación** (`/`, `/<slug>` y sus
+páginas), que se renderiza en el servidor a partir de los árboles de página del
+backend, y la **aplicación** alrededor (`/admin`, el perfil en `/me`, login y
+registro), hecha de islas React. Lo que ve quien lee está en
+[El lector](../contenido/lector.mdx); esta sección explica el código.
+
+## Islas React: siempre `client:only="react"`
+
+Cuando una página `.astro` monta un componente React, **siempre** lo hace con
+`client:only="react"`, nunca con `client:load` ni otra directiva `client:*`.
+El componente no se renderiza en el servidor: Astro envía el HTML de la página
+y React pinta la isla en el navegador. Así no hay errores de hidratación y todo
+el estado de la isla vive en un solo sitio.
+
+La excepción es el cuerpo de las páginas de documentación: son componentes
+Astro que se renderizan en el servidor para que el texto esté en el HTML. Lo
+interactivo de esas páginas (sidebar, tablas, visor de imágenes) son islas
+encima de ese HTML (ver [Layouts](layouts.mdx#docsastro-el-lector)).
+
+## Estructura de carpetas
+
+<Diagram id="frontend-estructura" />
+
+| Carpeta o fichero | Qué contiene |
+| --- | --- |
+| `pages/` | Las rutas de Astro, un fichero por URL (`[repo]/[...path].astro`, `admin/users/index.astro`, `me/secrets.astro`…), más las rutas de texto para IAs (`llms.txt`, `[repo]/[...path]/llm.txt`) y las skills servidas en `.well-known/agent-skills/` |
+| `layouts/` | Los marcos de página: ver [Layouts](layouts.mdx) |
+| `middleware.ts` | La sesión, la API key de `x-api-key` y las redirecciones: ver [Autenticación](../autenticacion/index.mdx) |
+| `features/` | El código de la interfaz, por dominio y caso de uso: ver [Features y slices](features.mdx) |
+| `components/ui/` | Las primitivas de shadcn |
+| `components/shared/` | Los patrones de la aplicación |
+| `hooks/` | Los hooks compartidos (mutaciones, scroll infinito, diálogos, parámetros de la URL, tablas…) |
+| `lib/` | Los helpers: clientes oRPC (navegador y servidor), clientes de auth, formato, superficies, iconos, tema |
+| `providers/` | El `QueryProvider` de TanStack Query |
+| `styles/` | `theme.css` con los tokens y el tema, `global.css` como entrada de Tailwind, `app/` con los estilos de la aplicación y `doc/` con los del cuerpo de las páginas |
+
+Los dominios de `features/` son los de la app: `docs` (el lector), `admin`,
+`profile`, `auth`, `app-shell`, los que comparten admin y perfil
+(`api-keys`, `secrets`, `content-repositories`) y los transversales
+`comments` y `entity-icons`.
+
+Los tests del frontend están en `apps/frontend/tests/unit/`, con la misma
+estructura que `src/` (`components`, `features`, `hooks`, `lib`), y corren
+con `bun run test` junto a los del resto del monorepo (ver
+[Desarrollo](../desarrollo/index.mdx)).
+
+## ¿Dónde encuentro…?
+
+| Quiero… | Página |
+| --- | --- |
+| Saber dónde va un componente nuevo o qué importar de otro dominio | [Features y slices](features.mdx) |
+| Añadir una página al perfil o a `/admin`, o entender la búsqueda `⌘K` | [Navegación](navegacion.mdx) |
+| Elegir el layout de una ruta | [Layouts](layouts.mdx) |
+| Leer o escribir datos de la API desde una isla, o desde una página del lector | [Datos con TanStack Query](datos.mdx) |
+| Montar una tabla de recursos con orden, filtros y columnas configurables | [Tablas](tablas.mdx) |
+| Dar estilo a un texto, explicar un botón de solo icono o hacer responsive un componente | [Sistema visual](sistema-visual.mdx) |
+| Saber por qué el service worker no funciona en desarrollo | [PWA](pwa.mdx) |
+| Saber cómo se ve y se usa el lector | [El lector](../contenido/lector.mdx) |
+| Añadir comentarios o iconos a una entidad | [Funcionalidades transversales](../transversales/index.mdx) |

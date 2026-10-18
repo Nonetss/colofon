@@ -1,0 +1,88 @@
+---
+titulo: Producción
+descripcion: Cómo instalar colofon en un servidor con scripts/bootstrap.sh, qué genera, qué levanta compose.prod.yml con las imágenes publicadas y qué hay que copiar de seguridad
+compose_files: [prod]
+env_vars: [frontend-port, cors-origin, better-auth-url, database-url, postgres-password, better-auth-secret, secrets-encryption-key, trusted-git-hosts, admin-name, admin-email, admin-password]
+orden: 2
+actualizado: 2026-10-18
+open_questions:
+  - ¿Hay una forma recomendada de hacer copias de seguridad de una instalación (herramienta, frecuencia, dónde se guardan)? El repositorio no trae ninguna.
+---
+
+## Instalar en un servidor nuevo
+
+Hace falta `docker` con el plugin `docker compose`, `openssl` y `curl`.
+
+1. Crea un directorio para la instalación y entra en él: el script lo escribe todo en el directorio actual.
+2. Ejecuta el instalador:
+
+   ```bash
+   curl -fsSL https://raw.githubusercontent.com/Nonetss/colofon/main/scripts/bootstrap.sh | bash
+   ```
+
+3. Responde a las preguntas: el puerto del host (por defecto `4444`), la URL pública que verá el navegador, los hosts git internos de confianza (opcional, ver más abajo) y el nombre, email y contraseña del administrador (al menos 8 caracteres, sin comillas simples).
+4. Revisa el resumen y confirma. El script genera los secretos con `openssl` y escribe el `.env` con permisos `600`.
+5. Si no hay `compose.prod.yml` en el directorio, lo descarga. Con `PB_REF=<rama o tag>` delante de `bash` eliges de qué versión (las imágenes siguen siendo `:main`).
+6. Acepta arrancar el stack (hace `pull` y `up -d`), o hazlo después desde ese directorio:
+
+   ```bash
+   docker compose -f compose.prod.yml --env-file .env up -d
+   ```
+
+7. En uno o dos minutos, entra en la URL pública con el email del administrador. El backend aplica las migraciones y crea el administrador al arrancar: no hay ningún paso manual de base de datos.
+
+<Callout type="warning" title="Guarda la clave de los secretos">
+`SECRETS_ENCRYPTION_KEY` cifra los secretos que los usuarios guardan para la herramienta `request` del MCP. Haz copia de ella junto con la base de datos: si se pierde o se cambia, ningún secreto guardado se puede leer y cada usuario tiene que volver a guardarlos.
+</Callout>
+
+## Qué genera
+
+El `.env` lleva `FRONTEND_PORT`, `CORS_ORIGIN` (la URL pública), `POSTGRES_PASSWORD`, `DATABASE_URL` (ya resuelta, apuntando al servicio `db`), `BETTER_AUTH_SECRET`, `SECRETS_ENCRYPTION_KEY`, `TRUSTED_GIT_HOSTS` (o una línea de ejemplo comentada si lo dejaste vacío) y los `ADMIN_*`. Todos los valores van entre comillas simples para que compose los lea tal cual, sin interpolar `$` ni cortar en `#`; consérvalas si lo editas. Qué significa cada variable: [Configuración](../configuracion/index.mdx).
+
+`TRUSTED_GIT_HOSTS` es la excepción a una regla de seguridad: el backend rechaza un repositorio cuyo host resuelve a una dirección privada, porque lo clonaría desde dentro de tu red. Los hosts de la lista (un Gitea de casa, por ejemplo) se aceptan igualmente. Van separados por comas, con el nombre exacto, sin comodines ni puertos.
+
+Para usar una base de datos externa, se cambia `DATABASE_URL` en el `.env` y se quita el servicio `db` de `compose.prod.yml`.
+
+## Cuándo se niega o avisa
+
+| Situación | Qué hace |
+| --- | --- |
+| Ya hay un `.env` en el directorio | Se niega a seguir antes de preguntar nada: no machaca una instalación existente. Bórralo a mano si quieres regenerarlo |
+| Falta `docker`, el plugin `docker compose`, `openssl` o `curl` | Sale antes de preguntar nada |
+| No hay terminal interactiva (`/dev/tty`) | Sale: ejecútalo desde una shell |
+| La URL pública es `http://` y no es `localhost` ni `127.0.0.1` | Avisa de que las cookies `Secure` no funcionarán y pregunta si seguir; por defecto, no |
+| El puerto, la URL, los hosts o el email no son válidos, o el nombre o la contraseña llevan comillas simples | Lo rechaza |
+| `PB_REF` no es ninguna rama ni tag | El `.env` ya está escrito, pero no descarga el compose: corrige `PB_REF` y descárgalo a mano |
+
+Por eso nunca se ejecuta dentro de tu copia de trabajo: para probar producción en local usa otro directorio, o [`bun run docker:up`](compose-local.mdx).
+
+## `compose.prod.yml`
+
+Usa las imágenes publicadas `ghcr.io/nonetss/colofon-{frontend,backend,gateway}:main` ([CI](ci.mdx)) y los mismos cuatro servicios que [`compose.yml`](compose-local.mdx), en una red `colofon` (proyecto `colofon`, contenedores `colofon-<servicio>`). Toda la configuración sale del `.env` del directorio.
+
+- **Solo el gateway publica un puerto** (`${FRONTEND_PORT:-4444}` → 80). Delante del servidor va un proxy inverso con https que apunta a ese puerto. Una ruta pública nueva se añade en `routes.caddy`, nunca publicando el puerto de otro servicio.
+- `BETTER_AUTH_URL` se toma de `CORS_ORIGIN`, así que las dos coinciden siempre.
+- La contraseña de PostgreSQL no tiene valor por defecto: sale de `POSTGRES_PASSWORD`.
+
+## Actualizar
+
+Las imágenes siguen la etiqueta `:main`, así que actualizar es traer las nuevas y recrear los contenedores desde el directorio de la instalación:
+
+```bash
+docker compose -f compose.prod.yml --env-file .env pull
+docker compose -f compose.prod.yml --env-file .env up -d
+```
+
+El backend aplica al arrancar las migraciones nuevas que traiga la imagen.
+
+## Qué copiar de seguridad
+
+El repositorio no trae ninguna herramienta de copias. Lo que no se puede perder es:
+
+| Qué | Dónde | Por qué |
+| --- | --- | --- |
+| La base de datos | Volumen `db_data` (o una copia con `pg_dump`) | Usuarios, repositorios registrados, credenciales git, secretos cifrados, comentarios |
+| Los repositorios alojados | Volumen `hosted_data` (`/app/.hosted` del backend) | Un repositorio que la plataforma aloja puede no tener otra copia |
+| El `.env` | El directorio de la instalación | Sobre todo `SECRETS_ENCRYPTION_KEY`; sin ella los secretos de la base de datos no se pueden leer |
+
+El volumen `content_data` (`/app/.content`) no necesita copia: son clones que el backend vuelve a hacer en la siguiente sincronización.

@@ -1,0 +1,67 @@
+---
+titulo: Paginación y orden
+descripcion: Cómo pagina una lista con cursor y cómo deja que quien llama elija la columna y la dirección del orden sin perder ni repetir filas
+orden: 5
+workspaces: [api, db]
+actualizado: 2026-10-18
+---
+
+Las listas que pueden crecer se paginan **por cursor** (keyset), nunca por
+número de página: cada respuesta trae un `nextCursor` opaco que se pasa en la
+siguiente llamada. Hoy paginan `sessionHistory.list`, `adminUser.list`,
+`cron.listRuns` y `secret.usage`. Las que devuelven todas sus filas de una
+vez (`organization.list`, `cron.list`…) no llevan cursor ni orden: el
+frontend las ordena en el navegador.
+
+## Elegir el mecanismo
+
+| La lista pagina por… | Orden que ofrece | Qué se usa |
+| --- | --- | --- |
+| Una fecha y el id | Esa fecha, de nueva a vieja o al revés | `withKeysetPagination` (`packages/db/src/keyset-pagination.ts`) con `encodeKeysetCursor` y `decodeKeysetCursor`. Ejemplo: `secret.usage`. |
+| Un keyset, y quien llama elige la columna | Varias columnas, en las dos direcciones | `sortedKeyset` con `cursorFor` y el códec `sortedCursor`. Ejemplos: `sessionHistory.list`, `adminUser.list`, `cron.listRuns`. |
+| Filas que se cargan todas a la vez | Cualquier columna | Ninguno en el servidor: el frontend ordena con `sortRows`. |
+
+## La entrada
+
+- `limit` con `paginationLimit(porDefecto, máximo)`: por ejemplo 25 y 100
+  en `sessionHistory.list` y `adminUser.list`, 50 y 200 en `cron.listRuns`.
+- `cursor` con `paginationCursor()` (keyset por fecha) o
+  `sortedPaginationCursor()` (orden elegido). El segundo decodifica el cursor
+  al validar la entrada, así que uno mal formado es `BAD_REQUEST` antes de
+  llegar al handler.
+- En las listas que ordena quien llama, `sort` (un `z.enum` con las claves,
+  que son los ids de las columnas ordenables del frontend) y `order` (`asc` o
+  `desc`), los dos con su valor natural por defecto.
+
+## Un keyset que ordena quien llama, paso a paso
+
+1. `cursorFor(input.cursor, input.sort, input.order, tamañoDelDesempate)`: un
+   cursor emitido para otro `sort`, otro `order` u otro desempate es
+   `BAD_REQUEST`, antes de leer nada.
+2. Cada clave de orden se traduce a una expresión SQL; los joins que
+   necesite (el nombre del usuario para ordenar por usuario) van en la
+   consulta.
+3. `sortedKeyset({ primary, order, tiebreak })`. El desempate es el orden
+   natural de la lista y acaba en una columna única, para que el orden sea
+   total.
+4. Se selecciona `sortValue` con la fila, se filtra con `keyset.after(cursor)`,
+   se ordena con `keyset.orderBy`, se piden `limit + 1` filas y se pasa por
+   `paginate()`.
+5. Si hay más, el `nextCursor` codifica la clave, la dirección, el valor de
+   la última fila y su desempate.
+
+Las filas sin valor para la columna elegida van al final en las dos
+direcciones, y los valores viajan como texto para que las fechas y los
+enteros grandes no pierdan precisión. La implementación de referencia es
+`packages/api/src/v1/session-history/handler.ts`.
+
+Si además se quiere el total de filas (para el contador de una tabla),
+`paginateWithTotal` lanza en paralelo la página y un `count()` con los mismos
+filtros, sin la condición del cursor.
+
+## Qué falla
+
+| Síntoma | Causa | Qué hacer |
+| --- | --- | --- |
+| Una página responde `BAD_REQUEST` «Invalid pagination cursor» | Se cambió el orden de la tabla y se reutilizó el cursor de la anterior | Al cambiar `sort` u `order`, empieza sin cursor |
+| Faltan o se repiten filas entre páginas | El desempate no acaba en una columna única | Añade el id al final del desempate |

@@ -1,0 +1,8 @@
+name: "POSTGRES_PORT"
+area: "database"
+required: false
+default: "5432"
+meaning: "Puerto del host en el que bun run postgres:start publica la base de datos de desarrollo"
+page: "desarrollo/base-de-datos"
+fuente: compose.dev.yml
+actualizado: 2026-10-18

@@ -1,0 +1,44 @@
+---
+titulo: Funcionalidades transversales
+descripcion: Los comentarios y los iconos de entidad, las piezas que se enganchan a cualquier recurso, y el truco que comparten
+orden: 8
+workspaces: [api, frontend, db]
+actualizado: 2026-10-18
+---
+
+Son piezas que no pertenecen a una página concreta sino que se pueden
+enganchar a cualquier entidad. Vienen de la plantilla: **hoy ninguna pantalla
+de colofon las usa**. Úsalas si encajan con el producto, y pregunta antes de
+engancharlas a algo nuevo.
+
+| Pieza | Hoy se usa en | Para activarla |
+| --- | --- | --- |
+| [Comentarios](comentarios.mdx) | Ningún sitio | Basta con pintar `CommentsButton` |
+| [Iconos de entidad](iconos-entidad.mdx) | Ningún sitio; el registro de entidades está vacío | Hay que registrar el tipo de entidad en la API |
+
+Colofon no tiene registro de actividad: no hay `/admin/logs`, y los logs
+solo salen por la salida estándar de cada proceso.
+
+## Referencias polimórficas
+
+Comentarios e iconos usan el mismo truco: en vez de una clave foránea a una
+tabla concreta, guardan una **referencia polimórfica** con dos campos:
+
+- `entityType`: qué tipo de cosa es, un nombre libre de hasta 64 caracteres
+  (por ejemplo `"content-repository"`).
+- `entityId`: su identificador. En `comments` es un UUID; en `entity_icons` es
+  texto, para que valgan tanto UUIDs como los ids de Better Auth.
+
+Así se puede comentar o poner icono a una entidad sin tocar el esquema. La
+contrapartida es que la base de datos no puede borrar en cascada: el handler
+que borra una entidad tiene que borrar también sus comentarios o su icono, en
+la misma transacción.
+
+## ¿Dónde encuentro…?
+
+| Quiero… | Página |
+| --- | --- |
+| Añadir un hilo de comentarios a una entidad | [Comentarios](comentarios.mdx) |
+| Dejar que el usuario elija icono y color para una entidad | [Iconos de entidad](iconos-entidad.mdx) |
+| Saber de dónde salen los iconos de la interfaz o los `icono` de un repositorio | [Sistema visual](../frontend/sistema-visual.mdx#iconos) |
+| Saber dónde van los componentes de estas piezas en el frontend | [Features y slices](../frontend/features.mdx) |

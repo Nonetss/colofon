@@ -1,0 +1,7 @@
+name: "ADMIN_EMAIL"
+area: "auth"
+required: false
+meaning: "Email del admin que el backend crea al arrancar cuando están las tres variables ADMIN_*"
+page: "autenticacion"
+fuente: packages/env/src/server.ts
+actualizado: 2026-10-18

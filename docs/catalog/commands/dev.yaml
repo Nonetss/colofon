@@ -1,0 +1,6 @@
+command: "bun run dev"
+area: "dev"
+purpose: "Construye y arranca el stack de desarrollo en Docker, con su propia base de datos, y vigila los cambios"
+page: "desarrollo/docker"
+fuente: package.json
+actualizado: 2026-10-18

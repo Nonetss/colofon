@@ -1,0 +1,7 @@
+name: "SKIP_ENV_VALIDATION"
+area: "runtime"
+required: false
+meaning: "Desactiva la validación de packages/env; solo para builds y tareas de CLI"
+page: "configuracion/trampas"
+fuente: packages/env/src/server.ts
+actualizado: 2026-10-18

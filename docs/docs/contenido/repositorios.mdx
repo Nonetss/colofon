@@ -1,8 +1,10 @@
 ---
 titulo: Repositorios
-descripcion: Qué repositorios lee la plataforma, quién los gestiona, cómo se sincronizan y cómo se aloja uno en la propia plataforma
+descripcion: Qué repositorios lee la plataforma, quién los gestiona y quién los ve, qué datos tiene cada uno, cómo se añade uno privado y qué límites tienen los de usuario
+workspaces: [content, api, frontend, db]
+env_vars: [trusted-git-hosts, secrets-encryption-key]
 orden: 1
-actualizado: 2026-10-17
+actualizado: 2026-10-18
 ---
 
 Los repositorios de contenido se guardan en la base de datos, no en variables
@@ -16,86 +18,128 @@ de entorno. Sin ninguno, el backend arranca y todo lo demás funciona.
 
 Un repositorio de usuario no aparece en el lector, la búsqueda, las skills,
 `llm.txt` ni el MCP de nadie más, y tampoco tiene catálogo de schemas para el
-editor. Para el resto de usuarios responde como si no existiera.
+editor. Para el resto de usuarios responde como si no existiera (`NOT_FOUND`).
+El job de cinco minutos sincroniza todos, sean de quien sean, y al borrar un
+usuario se borran sus repositorios y sus clones.
+
+## Añadir un repositorio
+
+1. Abre `/admin/content` (para todos) o `/me/repositories` (solo para ti) y
+   pulsa el botón de añadir.
+2. Escribe el **nombre** y el **slug**. El slug no se puede cambiar después.
+3. Elige el **origen**: una URL externa o, solo los administradores,
+   «Alojado en la plataforma» (ver [Servidor git](servidor-git.mdx)).
+4. Escribe la **URL** sin credenciales. Si el repositorio es privado, elige o
+   añade una credencial (ver abajo).
+5. Con la URL completa, el formulario lee las ramas del remoto y convierte el
+   **ref** en una lista con la rama por defecto ya elegida. Si no puede
+   leerlas, el ref se escribe a mano.
+6. Elige la **carpeta del contenido**: con la URL y la rama, el formulario
+   busca las carpetas que tienen un `doc.config.yaml` y las ofrece en una
+   lista, con «Raíz del repositorio» para la raíz. Al crear empieza siempre en
+   la raíz, aunque solo haya una carpeta: hay que elegirla.
+7. Guarda. La petición responde sin esperar al clon y la primera
+   sincronización empieza en segundo plano; su resultado sale en la tarjeta.
+
+Desde un agente, la herramienta `add_repository` del MCP hace lo mismo para
+los repositorios del usuario (ver [El MCP](mcp.mdx)).
 
 ## Los datos de un repositorio
 
 | Campo | Qué es |
 | --- | --- |
-| Nombre | Cómo se muestra. |
-| Slug | Su nombre en las URL (`documentacion`, `homelab`…). Minúsculas, números y guiones; no se puede cambiar después de crearlo y no puede ser un nombre que la plataforma ya usa (`admin`, `api`, `rpc`, `git`, `login`, `signup`, `me`, `scalar`…). Es único entre todos los usuarios. |
+| Nombre | Cómo se muestra. Obligatorio, hasta 100 caracteres. |
+| Slug | Su nombre en las URL (`/<slug>/…`, los schemas del editor y la URL git de un alojado). De 1 a 63 caracteres: minúsculas, números y guiones sueltos, sin empezar ni acabar en guion. No se puede cambiar después de crearlo y es único entre todos los usuarios. No puede ser un nombre que la plataforma ya usa: `404`, `admin`, `api`, `git`, `health`, `login`, `mcp`, `me`, `pwa`, `rpc`, `scalar` y `signup` (la lista está en `packages/content/src/contract/reserved-slugs.ts`, y un test falla si una ruta nueva no está en ella). |
 | Origen | **URL externa** (GitHub, Gitea…) o **Alojado en la plataforma**. Los usuarios solo pueden usar la URL externa. |
-| URL | La URL `https://` del repositorio git. Para uno privado, las credenciales van en la URL (`https://usuario:token@host/org/repo.git`). La plataforma nunca las muestra, ni las escribe en el log. |
-| Ref | La rama, el tag o el commit que se descarga. Al escribir la URL completa, el formulario lee las ramas del remoto y las ofrece en una lista; si no puede leerlas, se escribe a mano. |
+| URL | La URL del repositorio git. Los administradores pueden usar `https://` o `http://`; los usuarios solo `https://`. |
+| Credencial | Opcional. Una credencial git guardada del mismo servidor que la URL, con la que se clona. |
+| Ref | La rama, el tag o el commit que se descarga. Por defecto `main`. |
+| Carpeta del contenido | Opcional. La carpeta del repositorio donde está el contenido, vacía para la raíz. Ruta relativa con `/`, hasta 255 caracteres, sin segmentos vacíos, `.`, `..` ni que empiecen por punto. Se puede cambiar. |
 
-### Límites de los repositorios de usuario
+Cada tarjeta muestra el nombre, el slug, la URL sin credenciales (o que está
+alojado), el ref, la carpeta cuando no es la raíz y la última sincronización:
+la hora y el commit corto, o el error entero. En `/admin/content` muestra
+además la URL del catálogo de schemas para el editor, lista para copiar, y la
+URL git de los alojados.
 
-El backend descarga estas URL desde dentro de la red de la plataforma, así
-que las acota:
+### Qué cambia al editar
 
-- Un usuario puede tener **10 repositorios** como máximo.
-- La URL tiene que ser `https://`, y su servidor no puede ser una dirección
-  de loopback, privada o local, ya sea escrita como IP o resuelta desde un
-  nombre. Se comprueba al crear, al editar y antes de cada sincronización.
-- Si un nombre pasa a resolver dentro, la sincronización falla y registra el
-  error, sin intentar clonar.
+| Cambio | Qué pasa |
+| --- | --- |
+| Nombre | Nada más. |
+| URL, ref o pasar a alojado | Empieza una sincronización sin esperarla. Una URL de otro repositorio sustituye el clon entero. |
+| Solo la carpeta | No sincroniza: el clon es el mismo, y la siguiente lectura usa la carpeta nueva. |
+| URL vacía al editar | Se conserva la guardada, credenciales incluidas. |
+| Borrar | Se borra su clon y, si es alojado, su historial. Sus schemas responden `NOT_FOUND`. |
 
-## Cómo se sincronizan
+## Repositorios privados
 
-El backend guarda un clon de cada repositorio en `.content/<id>/` (en Docker,
-el volumen `content_data`) y lo sincroniza:
+Hay dos formas de dar acceso a un repositorio privado. En las dos, el token se
+crea en tu servidor git con permiso de lectura del repositorio, y la plataforma
+nunca lo devuelve, ni en las respuestas ni en el log ni en los errores: la URL
+sale como `https://***@host/…`.
 
-- al arrancar el backend;
-- cada cinco minutos, con el job `Sincronizar contenido`, declarado en código
-  (sin pantalla; el resultado de cada repositorio se ve en su tarjeta);
-- al crearlo o cambiarle la URL o el ref;
-- cuando pulsas **Sincronizar** en su tarjeta, o un agente usa la herramienta
-  `sync` del MCP (solo administradores).
+### Con una credencial guardada
 
-Cada sincronización deja el clon exactamente como el remoto: los cambios a mano
-en el clon se pierden. Al borrar un repositorio se borra también su clon. No
-hay fuente de carpeta local: para ver un cambio hay que hacer push y
-sincronizar, o esperar a los cinco minutos.
+Es la forma normal cuando el servidor tiene `SECRETS_ENCRYPTION_KEY`. Una
+credencial guarda un servidor (`host` y puerto opcional), un usuario y un
+token cifrado con esa clave, y es de un solo usuario.
 
-Cada sincronización trae el historial completo, porque la fecha de última
-edición de cada página sale de su último commit.
+1. En el formulario del repositorio, escribe la URL sin credenciales.
+2. Si ya guardaste una credencial para ese servidor, sale elegida (la que usa
+   el repositorio, o la última guardada). Si no, pulsa **Añadir credencial**,
+   escribe el usuario y el token, y guarda: queda elegida.
+3. Guarda el repositorio. Su URL se guarda sin credenciales, y cada clon,
+   sincronización o lectura de ramas y carpetas la compone con la credencial.
 
-### Si la sincronización falla
+Las credenciales se gestionan también en `/me/repositories`, debajo de los
+repositorios: añadir, cambiar el token o borrar. Hay una sola por servidor y
+usuario, así que guardar otra igual cambia el token, y **la siguiente
+sincronización de todos los repositorios que la usan ya clona con el nuevo**.
+Una credencial que algún repositorio usa no se puede borrar. Solo se gestionan
+desde el navegador: con una API key se pueden listar, pero no guardar ni
+borrar.
 
-| Síntoma | Qué pasa | Qué hacer |
+### Con el token en la URL
+
+Sin `SECRETS_ENCRYPTION_KEY` no se pueden guardar credenciales. El formulario
+pide entonces usuario y token y los mete en la URL
+(`https://usuario:token@host/org/repo.git`, codificados), sustituyendo los que
+ya llevara. Sin token, la URL se manda tal cual, así que una URL pegada con
+credenciales también vale. Los repositorios guardados así siguen funcionando
+aunque después se active la clave.
+
+Al editar, un token nuevo necesita volver a escribir la URL: la guardada solo
+se conoce enmascarada.
+
+## Límites de los repositorios de usuario
+
+El backend descarga estas URL desde dentro de la red de la plataforma, así que
+las acota:
+
+- No hay límite de cuántos repositorios tiene un usuario.
+- La URL tiene que ser `https://`, y su servidor no puede ser una dirección de
+  loopback, privada, de enlace local o sin especificar, ya sea escrita como IP
+  o resuelta desde un nombre. Se comprueba al crear, al editar, al leer ramas o
+  carpetas y antes de cada sincronización.
+- Si un nombre pasa a resolver dentro, la sincronización falla sin intentar
+  clonar y registra un error que no revela la dirección.
+- Los nombres de `TRUSTED_GIT_HOSTS` (separados por comas, exactos, sin
+  comodines) quedan exentos de esa regla, por ejemplo un Gitea de casa. Siguen
+  necesitando `https://`. Sin la variable, nada cambia.
+
+Los repositorios de los administradores no tienen estas restricciones.
+
+## Si algo falla
+
+| Síntoma | Causa | Qué hacer |
 | --- | --- | --- |
-| La tarjeta muestra un error de git | Se sigue sirviendo lo último que se descargó. El error sale sin credenciales | Revisa la URL, el token y que el ref exista |
-| El remoto rechaza las credenciales | Igual que arriba | Edita el repositorio y escribe la URL con el token nuevo; si dejas la URL vacía al editar, se conserva la anterior |
-| Un commit deja `doc.config.yaml`, `menu.yaml` o un `_type.yaml` inválidos | Se sigue sirviendo la última versión válida y cada problema se registra con el fichero | Corrige el fichero y haz push |
-| Un repositorio falla | Los demás se sincronizan igualmente | — |
+| «Ese slug está reservado por la plataforma» | El slug es una ruta de la web o del gateway | Elige otro |
+| El slug da conflicto | Otro repositorio, de cualquier usuario, ya lo usa | Elige otro |
+| «Esa dirección no está permitida» | URL `http://` o un servidor interno en un repositorio de usuario | Usa una URL `https` pública, o pide al operador que añada el servidor a `TRUSTED_GIT_HOSTS` |
+| La credencial no se puede elegir | Es de otro servidor que el de la URL | Añade una credencial para ese servidor |
+| «La credencial guardada no se puede leer: guárdala de nuevo» | Su token no se puede descifrar (cambió `SECRETS_ENCRYPTION_KEY`) | Vuelve a guardar la credencial con su token |
+| El ref no sale como lista | El remoto no se puede leer con esa URL y credencial | Revisa la URL y el token; mientras, escribe el ref a mano |
+| La carpeta no sale como lista | No hay ningún `doc.config.yaml` en esa rama, o el remoto no se puede leer (el campo dice por qué) | Escribe la carpeta a mano o revisa la rama |
 
-## Repositorios alojados en la plataforma
-
-Con origen **Alojado en la plataforma**, la propia plataforma es el servidor
-git: no hace falta GitHub ni nada más. La tarjeta en `/admin/content` muestra
-la **URL de git**, `<origen de la plataforma>/git/<slug>.git`, para clonarlo y
-hacer push:
-
-```sh
-git remote add origen https://docs.example.com/git/manual.git
-git push origen main
-```
-
-- **Sin credenciales.** Cualquiera que llegue a la plataforma puede clonarlo y
-  hacer push, `--force` incluido. Es a propósito; no lo expongas donde eso sea
-  un problema.
-- Cada push se sincroniza al momento. Se publica la rama del campo Ref; los
-  push a otras ramas se guardan pero no cambian el contenido.
-- Recién creado está vacío, y su última sincronización queda en blanco hasta
-  el primer push.
-- **`/admin/git`** lista los repositorios alojados con un buscador por nombre
-  o slug. Al abrir uno vas a `/admin/git/<slug>`, donde eliges la rama,
-  entras en las carpetas y abres los ficheros como texto. Es solo lectura; los
-  binarios y los ficheros de más de 512 KB no se muestran. La URL guarda lo que
-  estás viendo.
-- Los repositorios bare se guardan en `.hosted/<id>/` (en Docker, el volumen
-  `hosted_data`). Puede que sea la única copia del historial: inclúyelo en las
-  copias de seguridad.
-- Al borrar un repositorio alojado se borra su historial. Si le pones una URL
-  externa, la plataforma deja de leerlo pero conserva su repositorio bare hasta
-  que lo borres.
+Lo que pasa después de guardar está en [Sincronización](sincronizacion.mdx).

@@ -1,0 +1,101 @@
+---
+titulo: Features y slices
+descripcion: Dónde va cada pieza de la interfaz, qué puede importar de qué y dónde buscar antes de crear un componente, un hook o un helper
+orden: 1
+workspaces: [frontend]
+actualizado: 2026-10-18
+---
+
+El código de la interfaz se agrupa por **dominio** en
+`src/features/<dominio>/` (`docs`, `admin`, `profile`, `secrets`…). Dentro de
+cada dominio, cada carpeta es un **caso de uso** (slice), un `shared/` del
+dominio o su `index.ts`. Nunca una capa técnica.
+
+<Diagram id="slices-admin" />
+
+## Los dominios
+
+| Dominio | Slices | Para qué |
+| --- | --- | --- |
+| `docs` | `home`, `page`, `sidebar`, `tables`, `diagrams`, `lightbox`, `llm-text`, `shared` | El lector: la portada «Todos», el cuerpo de una página, el sidebar con el selector de repositorio, las tablas interactivas, el resaltado de los diagramas, el visor de imágenes y las respuestas de texto para IAs |
+| `admin` | `overview`, `users`, `api-keys`, `content`, `git`, `git-repository`, `shell`, `shared` | Una pantalla de `/admin` por slice, más el marco (`shell`) y lo común |
+| `profile` | `account`, `api-keys`, `secrets`, `repositories`, `agent-skills` | Las páginas de `/me` |
+| `auth` | `sign-in`, `sign-up` | Login y registro |
+| `app-shell` | `authenticated`, `guest`, `sidebar` | El navbar (con sesión o de invitado), la búsqueda `⌘K`, el pie y el sidebar de las secciones con `WithSidebar.astro` |
+| `api-keys`, `secrets` | `manage` | Lo que comparten la pantalla de admin y la del perfil del mismo recurso |
+| `content-repositories` | `manage` | Lo que comparten `/admin/content` y `/me/repositories`: el estado de la última sincronización, el campo de rama, el acceso con una credencial git guardada (`CredentialField`, `useRepositoryAccess`) |
+| `comments`, `entity-icons` | `thread`, `picker` | Las [funcionalidades transversales](../transversales/index.mdx) |
+
+## Reglas de un slice
+
+- Dentro de un slice solo existen las carpetas técnicas que hacen falta:
+  `components/` (vistas React, o componentes Astro en el lector),
+  `definitions/` (descriptores de presentación tipados, como las columnas de
+  una tabla), `hooks/`, `model/` (tipos y transformaciones sin React) y
+  `schemas/`. Nunca carpetas vacías por simetría.
+- **Cada slice expone un `index.ts` estrecho.** Las páginas Astro y los demás
+  dominios importan desde ahí, nunca desde las carpetas internas de otro
+  slice. Dentro del propio slice se importa por ruta directa, nunca su barrel.
+- Una ruta Astro importa su página del barrel **del slice**
+  (`@/features/admin/users`), nunca de un barrel de dominio que reexporte
+  varias páginas: una isla `client:only` carga el módulo que importó su
+  página, y un barrel compartido haría descargar a cada ruta las páginas de
+  sus hermanas.
+- Un dominio solo tiene `index.ts` en la raíz si alguien lo importa
+  (`@/features/profile`, `@/features/comments`). Los dominios contenedores
+  (`admin`, `app-shell`, `auth`, `docs`) no lo tienen.
+- Un slice tiene una sola capacidad. Si junta varias que no dependen entre sí,
+  se parte en slices hermanos y el que las compone importa sus barrels:
+  `docs/page` pinta la página y monta `docs/tables`, mientras que
+  `docs/diagrams` y `docs/lightbox` van por su cuenta.
+- Un `shared/` dentro de un dominio solo existe si lo usan al menos dos slices.
+- Cuando dos slices se necesitan mutuamente, sus `index.ts` formarían un
+  ciclo. El slice publica entonces un `public.ts` con la parte sin páginas
+  (tipos, hooks) y el otro importa desde ahí. Hoy ningún slice lo necesita.
+- Dentro del frontend se importa con el alias `@/`, nunca con rutas
+  relativas.
+
+## Página y contenido
+
+Una página de React se parte en dos ficheros:
+
+- **`*-page.tsx`** solo monta los providers (`QueryProvider` y, si hace falta,
+  `PageShell`) alrededor del contenido.
+- **`*-content.tsx`** tiene todo lo demás: consultas, estado, diálogos y
+  marcado.
+
+Por ejemplo, `users-page.tsx` y `users-content.tsx` en
+`features/admin/users`. Así se ve de un vistazo dónde está la frontera de
+providers y el contenido se puede reutilizar.
+
+Las páginas del lector no siguen este patrón: son componentes Astro del
+servidor (`DocBody`, `DocHero`, `DocToc`… en `features/docs/page`) y las islas
+que montan encima.
+
+## `components/ui` y `components/shared`
+
+- **`components/ui`** son las primitivas de shadcn, sin nada específico del
+  producto. No pueden importar ni `shared` ni `features`.
+- **`components/shared`** son patrones de la aplicación, agrupados en
+  `brand`, `data-display`, `feedback`, `form`, `layout`, `navigation`,
+  `resource` y `user`. No pueden importar `features`, y nunca pintan el marco
+  de navegación (eso vive en `features/app-shell`, `features/docs/sidebar` y
+  `features/admin/shell`).
+
+Un componente nuevo nace dentro de su slice, aunque parezca reutilizable. Se
+sube a `components/shared` cuando **tres** sitios distintos lo usan con la
+misma intención; que se parezcan visualmente no basta.
+
+## Antes de crear algo, busca
+
+| Necesitas… | Mira en… |
+| --- | --- |
+| Una primitiva visual (botón, diálogo, select, tooltip, sheet…) | `src/components/ui/`. Si no está, en el registro de shadcn para `base-nova`; después de `shadcn add`, cambia su import de `cn` a `@/lib/utils` |
+| Un patrón de la app (cabecera y marco de página, filas de lista, filtros, metadatos, menú de acciones, botón de copiar, selector de entidades, buscador…) o una receta de clases que usan también los `.astro` (`textVariants`, `surfaceVariants`, `inlineLinkClass`) | `src/components/shared/<dominio>/` |
+| Algo que ya hizo otra feature | El `index.ts` de su slice. Si lo necesita un segundo dominio, se promueve en vez de copiarlo |
+| Un hook (mutaciones oRPC, scroll infinito, estado de diálogos y formularios, parámetros de la URL, debounce, portapapeles…) | `src/hooks/` |
+| Un helper (clientes oRPC, clientes de auth, formato, búsqueda sin acentos, toasts, navegación, tema, superficies) | `src/lib/` |
+
+Un helper de `src/lib`, un hook de `src/hooks` o un componente de
+`components/shared` nuevo o cambiado lleva su test en
+`apps/frontend/tests/unit/` en el mismo cambio.

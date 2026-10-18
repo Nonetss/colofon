@@ -1,0 +1,137 @@
+---
+titulo: Sistema visual
+descripcion: Cómo se da estilo a un texto con Text, cómo se explica un botón de solo icono, cuándo usar container queries, de dónde salen los iconos y dónde viven el tema y los estilos
+orden: 6
+workspaces: [frontend]
+commands: [icons-catalog, tailwind-check]
+actualizado: 2026-10-18
+---
+
+Las reglas visuales completas están en `DESIGN.md`, en la raíz del
+repositorio. Aquí va lo que más se usa al escribir componentes.
+
+## Tipografía con `Text`
+
+El texto del producto no se estiliza a mano con utilidades de Tailwind. Se usa
+el componente `Text` (`components/shared/brand/typography.tsx`) con un **rol**
+y un **tono**:
+
+```tsx
+<Text as="h2" variant="label" tone="muted">Miembros</Text>
+<Text as="p" variant="meta" tone="muted">{description}</Text>
+```
+
+| Rol | Para |
+| --- | --- |
+| `display` | El título de la página (`PageHero`) y de diálogos y paneles |
+| `headline` | Títulos de tarjetas |
+| `title` | El nombre de una fila de lista, de un resultado o de la entidad elegida |
+| `body` | Texto normal (el rol por defecto) |
+| `meta` | Texto secundario: descripciones, ayudas, contadores, errores en línea |
+| `meta-sm` | Metadatos pequeños en filas densas |
+| `label` | Etiquetas en versalitas de secciones y campos |
+| `status` | Texto de estado en versalitas («Vigente») |
+| `stat` | Un número grande en un resumen |
+| `data` | Valores en monoespaciada: ids, expresiones cron, fechas, JSON |
+| `compact` | Cualquier otro texto pequeño |
+
+- Los tonos son `default`, `muted`, `primary` y `destructive`.
+- Cuando `Text` no puede ser el elemento (un `Input`, un `DialogDescription`,
+  un `button`), se aplica el mismo estilo con `textVariants({ role, tone })`
+  en su `className`.
+- Los patrones compuestos ya usan `Text`: `FieldLabel`, `SectionHeading`,
+  `MenuItemText` y `MetadataCell`.
+- Un enlace dentro de una línea de texto lleva `inlineLinkClass`
+  (`components/shared/brand/inline-link.ts`).
+- En el lector, la columna de la página agranda el título
+  (`--font-size-display`); un tamaño distinto en un sitio se consigue así, no
+  con un rol nuevo.
+
+Las fuentes son Space Grotesk para el texto y Space Mono para la
+monoespaciada, precargadas por `layouts/font-preload.astro`.
+
+## Botones de solo icono: `Hint`
+
+Un botón que solo tiene un icono se explica con `Hint`
+(`components/shared/feedback/hint.tsx`), un globo con flecha que aparece al
+pasar el ratón o al enfocar con teclado. Nunca con el atributo `title`. El
+botón conserva su `aria-label` para los lectores de pantalla:
+
+```tsx
+<Hint label="Editar nombre">
+  <Button variant="ghost" size="icon-sm" aria-label="Editar nombre">
+    <Pencil aria-hidden="true" />
+  </Button>
+</Hint>
+```
+
+- El hijo es el disparador: con un menú o un popover, `Hint` envuelve el
+  propio `DropdownMenuTrigger` o `PopoverTrigger`.
+- No se usa en controles que ya muestran su texto, en el `×` de un chip, en
+  controles solo táctiles ni en las opciones de un menú.
+- Los botones de icono que el servidor escribe en una página del lector
+  (copiar un bloque de código, «Ampliar» un diagrama) no tienen React: llevan
+  `aria-label` y `data-hint`, y `styles/doc/hints.css` dibuja el mismo globo.
+
+## Responsive: container queries
+
+El ancho que tiene una página no es el de la ventana: un sidebar ocupa
+espacio y un mismo componente puede aparecer a pantalla completa o en un
+panel estrecho. Por eso:
+
+- **El contenido de la página** (rejillas, filas de lista, formularios) se
+  adapta a **su contenedor**: un ancestro con `@container` y variantes como
+  `@md:` o `@xl:`.
+- **El marco de la app** (navbar, sidebars, barra de filtros en móvil), el
+  tamaño de los diálogos y el padding de la página siguen los breakpoints de
+  la ventana (`sm:`, `lg:`).
+
+```tsx
+<div className="@container min-w-0">
+  <div className="grid grid-cols-1 gap-3 @xl:grid-cols-2 @4xl:grid-cols-3">…</div>
+</div>
+```
+
+La pregunta que decide: ¿se vería mal si se abre el sidebar o si el
+componente se mete en una caja más estrecha? Entonces necesita container
+queries.
+
+## Iconos
+
+Los iconos de la interfaz (Lucide) se resuelven por nombre a través de
+`src/lib/icon-registry.ts`, agrupados por uso (`navigation`, `entities`,
+`actions`, `status`, `docSections`…), para que el mismo concepto use siempre
+el mismo icono.
+
+Hay otros dos usos de Lucide que no pasan por el registro:
+
+- Los `icono` que escribe un repositorio de contenido (en `menu.yaml`, en sus
+  tipos o en la cabecera de una página). `packages/content` solo acepta los nombres que el `lucide-react`
+  instalado sabe dibujar, listados en
+  `packages/content/src/contract/lucide-icons.generated.ts`.
+- Los que elige el usuario para una entidad: ver
+  [Iconos de entidad](../transversales/iconos-entidad.mdx).
+
+Las dos listas se regeneran con `bun run icons:catalog` después de
+actualizar `lucide-react`, y el resultado se commitea.
+
+## Tema y estilos
+
+- **Tema**: claro, oscuro o el del sistema (por defecto). Se guarda en
+  `localStorage` (`theme`) y `Layout.astro` lo aplica con la clase `dark`
+  antes de pintar, para que no parpadee.
+- **`styles/theme.css`** tiene los tokens de claro (`:root`) y oscuro
+  (`.dark`). Es el fichero al que apunta shadcn, así que las variables de un
+  componente añadido caen ahí.
+- **`styles/global.css`** es solo la entrada de Tailwind: importa el
+  tipografiado, el tema, los módulos de la aplicación (`styles/app/`) y los
+  del cuerpo de las páginas (`styles/doc/`: `page`, `hints`, `code`, `tables`,
+  `diagrams`, `images`, `callouts`, `sections`, en ese orden).
+- Los módulos de `styles/doc/` son CSS normal con las variables del tema, sin
+  directivas de Tailwind, y cada selector empieza en `.typeset.doc`.
+- Un repositorio de contenido puede añadir su propia hoja (`styles/` del
+  repositorio), que el backend limpia y el lector aplica después de la de la
+  plataforma. Las clases y variables que puede tocar están documentadas en la
+  guía «Escribir documentación»; renombrar una es un cambio de contrato.
+
+Las clases de Tailwind se comprueban con `bun run tailwind:check`.

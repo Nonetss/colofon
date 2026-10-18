@@ -1,28 +1,53 @@
-# La barra lateral. Cada grupo lista, en orden, las páginas de docs/ que muestra.
+# La barra lateral. Cada grupo lista, en orden, las páginas y carpetas de docs/
+# que muestra (una carpeta trae todas sus páginas) y las páginas del catálogo
+# (catalog, o catalog/<tipo>). Lo que ningún grupo muestra acaba en un último
+# grupo "Otros". Los títulos e iconos escritos aquí mandan sobre los de las
+# cabeceras de las páginas.
 
 secciones:
   - titulo: Empezar
     icono: rocket
-    descripcion: Las piezas del sistema, cómo arrancarlo y cómo se configura
+    descripcion: Las piezas del sistema, cómo se arranca en local y cómo se configura
     paginas:
       - { ruta: arquitectura, icono: blocks }
       - { ruta: desarrollo, icono: terminal }
       - { ruta: configuracion, icono: settings }
 
-  - titulo: Código
-    icono: code
-    descripcion: El backend, la autenticación, el frontend y las piezas que comparten
+  - titulo: La plataforma
+    icono: book-open
+    descripcion: Los repositorios de contenido, el lector, el editor y lo que se sirve a los agentes
     paginas:
-      - { ruta: backend-api, icono: server }
+      - { ruta: contenido, icono: book-open }
+
+  - titulo: Backend
+    icono: server
+    descripcion: La API, la autenticación y las tareas programadas
+    paginas:
+      - { ruta: backend-api, icono: braces }
       - { ruta: autenticacion, icono: shield-check }
-      - { ruta: frontend, icono: layout-dashboard }
       - { ruta: crons, icono: clock }
+
+  - titulo: Frontend
+    icono: app-window
+    descripcion: La web y las piezas que se enganchan a cualquier entidad
+    paginas:
+      - { ruta: frontend, icono: layout-dashboard }
       - { ruta: transversales, icono: puzzle }
 
   - titulo: Operación
-    icono: package
-    descripcion: El despliegue, las reglas del repositorio y el contenido que publica
+    icono: container
+    descripcion: Los compose, las imágenes, el CI y la instalación en un servidor
     paginas:
-      - { ruta: docker-despliegue, icono: container }
-      - { ruta: convenciones, icono: scroll-text }
-      - { ruta: contenido, icono: book-open }
+      - { ruta: docker-despliegue, icono: ship }
+
+  - titulo: Trabajar en el repositorio
+    icono: git-branch
+    descripcion: Estilo de código, idiomas, commits, migraciones y el flujo de OpenSpec
+    paginas:
+      - { ruta: convenciones, icono: book-check }
+
+  - titulo: Referencia
+    icono: table
+    descripcion: Los workspaces, las variables de entorno, los comandos y los compose, como tablas
+    paginas:
+      - { ruta: catalog, titulo: Catálogo }

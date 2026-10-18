@@ -1,102 +1,107 @@
 ---
 titulo: Agentes de IA
-descripcion: Cómo leen la documentación las IA, con llm.txt, el MCP y las skills, cómo se autentican y cómo usan los secretos de un usuario sin verlos
-orden: 3
-actualizado: 2026-10-17
+descripcion: Por qué puertas leen la documentación las IA, cómo se autentican con una API key y qué sirven llm.txt y los índices llms.txt
+workspaces: [frontend, api, auth]
+env_vars: [cors-origin]
+orden: 10
+actualizado: 2026-10-18
 ---
 
-La plataforma da a los agentes tres puertas, y las tres respetan lo que el
+La plataforma da a los agentes varias puertas, y todas respetan lo que el
 usuario puede leer en el lector: nunca enseñan un repositorio o una página que
 ese usuario no vería.
 
-| Puerta | Para qué | Dónde |
-| --- | --- | --- |
-| Markdown por página | Leer una página sin HTML | `/<slug>/<ruta>/llm.txt` |
-| Índices | Encontrar las páginas | `/llms.txt` y `/<slug>/llms.txt` |
-| MCP | Buscar, leer y consultar el catálogo con herramientas | `/mcp` |
-| Skills | Instalar en el agente cómo trabajar con el sitio | `/.well-known/agent-skills/` |
+| Puerta | Para qué | Dónde | Página |
+| --- | --- | --- | --- |
+| Markdown por página | Leer una página sin HTML | `/<slug>/<ruta>/llm.txt` | Esta |
+| Índices | Encontrar las páginas y saber cómo conectarse | `/llms.txt` y `/<slug>/llms.txt` | Esta |
+| MCP | Buscar, leer, consultar el catálogo, gestionar sus repositorios y llamar a servicios | `/mcp` | [El MCP](mcp.mdx) |
+| Skills | Instalar en el agente cómo trabajar con el sitio y con cada proyecto | `/.well-known/agent-skills/` | [Skills](skills.mdx) |
+| Secretos | Llamar a la API de un servicio con las credenciales del usuario sin verlas | Herramientas `secrets` y `request` del MCP | [Secretos](secretos.mdx) |
+
+Para una persona, el camino corto es `/me/skills` o crear una API key en
+`/me/api-keys`: las dos pantallas dan el texto listo para pegarle a su IA.
 
 ## Credencial
 
 Un agente se autentica con una **API key** en la cabecera `x-api-key`. Cada
-usuario crea las suyas en `/me/api-keys` y, al crearla, la pantalla le da las
-instrucciones listas para pegarle a su IA. La key lee con los permisos de su
-dueño. Las API keys se crean sin límite de peticiones; las creadas antes de
-ese cambio conservan el límite del plugin (10 al día, y cada `llm.txt` gasta
-dos), así que la que use un agente hay que volver a crearla.
+usuario crea las suyas en `/me/api-keys` (nombre y caducidad de 30, 90, 180 o
+365 días, o sin caducidad), y la key lee con los permisos de su dueño: sus
+repositorios privados incluidos, y solo los suyos. Al crearla, la pantalla la
+enseña **una sola vez** y, al lado, una pestaña por forma de conectar una IA,
+cada una con el texto para copiar:
+
+1. el texto de configuración, que instala todas las skills que ve el usuario
+   (ver [Skills](skills.mdx));
+2. el comando que añade el MCP a Claude Code;
+3. la entrada de `config.toml` para Codex;
+4. el JSON `mcpServers` que leen Cursor y la mayoría de clientes;
+5. para una IA sin MCP, la dirección de `/llms.txt`, que cada página se lee en
+   su `llm.txt` y la cabecera `x-api-key`.
+
+Las API keys se crean sin límite de peticiones. Las creadas antes de ese cambio
+conservan el límite del plugin de Better Auth (10 peticiones al día, y cada
+`llm.txt` gasta dos), así que la que use un agente hay que volver a crearla.
 
 | Ruta | Sin credencial |
 | --- | --- |
 | `/llms.txt`, el índice de skills y las skills de la plataforma | Responden, mostrando solo lo que no necesita clave |
-| `llm.txt` de una página y `/<slug>/llms.txt` | `401` con una línea que explica cómo enviar la key, en lugar de mandar al login |
+| `llm.txt` de una página y `/<slug>/llms.txt` | `401` con una línea en español que explica cómo enviar la key y remite a `/llms.txt`, en lugar de mandar al login |
 | `/mcp` | `401` con la misma explicación |
 
-El MCP rechaza con `403` una petición cuyo `Origin` no sea el origen público.
-Las direcciones completas de los textos salen de `CORS_ORIGIN`.
+El MCP rechaza además con `403` una petición cuyo `Origin` no sea el origen
+público, para que una página de otro sitio no pueda usar la cookie de sesión.
+Las direcciones completas de todos los textos salen de `CORS_ORIGIN`.
 
-## `llm.txt` y los índices
+## `llm.txt`
 
 Cada página se lee en Markdown añadiendo `/llm.txt` a su dirección
-(`/<slug>/red/dns/llm.txt`, o `/<slug>/llm.txt` para la portada). Es el mismo
-texto que copia «Copiar en Markdown», con los enlaces como direcciones
-completas. Los índices siguen [llmstxt.org](https://llmstxt.org): `/llms.txt`
-lista todos los repositorios que el usuario puede leer, uno por sección, y
-`/<slug>/llms.txt` uno solo, cada página enlazada a su `llm.txt` con su
-descripción.
+(`/<slug>/red/dns/llm.txt`, o `/<slug>/llm.txt` para la portada), con tipo
+`text/plain`. Es el mismo texto que copia «Copiar en Markdown»: el título como
+encabezado de nivel 1, la descripción y el cuerpo, con los enlaces e imágenes
+como direcciones completas. Un diagrama queda como su título, su descripción y
+su versión en texto, sin el dibujo; una tabla de `Entities`, como tabla de
+Markdown; una alerta, como cita con su título en negrita; y los avisos de la
+plataforma (componentes que no existen) se quitan. Las páginas generadas del catálogo también tienen el suyo. Un
+repositorio o página que no existe da 404.
 
-## El MCP
+## Los índices
 
-`/mcp` es un servidor MCP sin estado (Streamable HTTP; un `GET` o `DELETE`
-responde `405`) que solo declara herramientas de lectura:
+Los dos índices siguen [llmstxt.org](https://llmstxt.org).
 
-| Herramienta | Qué hace |
-| --- | --- |
-| `repositories` | Lista los repositorios que el usuario puede leer. |
-| `index` | El índice `llms.txt`, global o de un repositorio. |
-| `search` | Busca en las páginas, con las mismas reglas que el navbar. |
-| `read` | Lee una página en Markdown, o solo una sección si la ruta lleva `#sección`. |
-| `entity` | Lee la ficha de una entidad del catálogo por su tipo y su id. |
-| `skills` y `skill` | Lista las skills visibles y lee una o uno de sus ficheros. |
-| `sync` | Solo administradores: sincroniza un repositorio tras un push. |
-| `secrets` y `request` | Solo con los secretos activados (ver abajo). |
+**`/llms.txt`** es la entrada pública para un agente al que solo le han dado la
+dirección del sitio. Empieza con el nombre y un resumen, y sigue con una guía
+en español:
 
-## Skills
+- que cada página tiene su Markdown en `llm.txt` y que las páginas, los
+  índices de repositorio, el MCP y las skills de los proyectos necesitan una
+  sesión o una API key en `x-api-key`;
+- dónde se crea la key (`/me/api-keys`, con su dirección completa);
+- cómo conectar el MCP, con un comando `claude mcp add` y los nombres de sus
+  herramientas;
+- un **procedimiento de configuración** que el agente sigue solo: leer el
+  índice de skills, instalarlas todas comprobando su `digest`, decir cuáles
+  instaló y **preguntar** si se quiere también el MCP, sin conectarlo hasta
+  tener un sí;
+- las skills de la plataforma, cada una con su enlace y su descripción.
 
-La plataforma sirve skills en el formato Agent Skills, por el descubrimiento
-`/.well-known/agent-skills/` (el índice, cada skill y su archivo `.tar.gz`):
+Sin credencial termina ahí, con una línea que dice que con una API key lista
+también los repositorios, y no nombra ninguno. Con credencial, sigue con una
+sección por repositorio que el usuario puede leer, en el orden del lector:
+cada página enlazada a su `llm.txt` con su descripción, etiquetada con su grupo
+del menú y las secciones de encima («Red / DNS»), y al final, si el
+repositorio sirve skills, un apartado «Skills».
 
-- **Las de la plataforma** (`colofon` y las `colofon-*`) son las mismas en
-  todos los sitios: cómo trabajar con la plataforma y cómo escribir un
-  repositorio de contenido. Salen de `packages/api/skills/` y de
-  `doc-example/.agents/skills/`. Se sirven sin credencial.
-- **Las de cada repositorio** son las de su carpeta `skills/`, y solo las ve
-  quien puede leer ese repositorio. Una skill con un nombre repetido entre
-  repositorios se distingue por el repositorio.
+**`/<slug>/llms.txt`** es el índice de un solo repositorio: su título, su
+descripción, una línea que explica `llm.txt` y la credencial y remite a
+`/llms.txt` para el MCP y las skills, y sus páginas y skills como arriba.
 
-En `/me/skills`, la sección «Skills para tu IA» muestra un texto para pegar en la IA:
-con él se configura sola e instala las skills que el usuario ve. Sin una key
-solo instala las de la plataforma.
+## Si algo falla
 
-Una skill rota (sin `SKILL.md`, con un `name` distinto de su carpeta o sin
-`description`) se deja fuera y se avisa; el resto del repositorio se lee igual.
-
-## Secretos
-
-Un usuario guarda en `/me/secrets` las credenciales de los servicios que la
-documentación describe, y la herramienta `request` del MCP llama a esos
-servicios con ellas **sin que el agente vea nunca un valor**.
-
-- Los valores se cifran en la base de datos (AES-256-GCM) y no se vuelven a
-  mostrar una vez guardados.
-- El agente escribe la petición con marcadores, como `{{nombre.campo}}`, y la
-  plataforma los rellena y envía ella misma. La respuesta se devuelve con los
-  valores enmascarados.
-- Cada secreto declara los orígenes a los que puede enviarse y si se permite
-  usarlo en escrituras, en la URL o en el cuerpo. Antes de enviar se comprueba
-  todo, y una petición sin marcadores se rechaza: no es un proxy general.
-- La herramienta `secrets` lista los secretos (nombre, campos, orígenes y
-  permisos, nunca valores) y se registra cada uso.
-
-La función está **apagada mientras no exista `SECRETS_ENCRYPTION_KEY`** (ver
-[Configuración](../configuracion.mdx)). Perder o cambiar esa clave deja ilegibles
-todos los secretos guardados, y hay que volver a escribirlos.
+| Síntoma | Causa | Qué hacer |
+| --- | --- | --- |
+| `401` en un `llm.txt` o en `/mcp` | No llega la key, o está deshabilitada o caducada | Envía una key válida en `x-api-key` |
+| El agente deja de leer tras unas pocas peticiones | La key es anterior al cambio y conserva el límite de 10 al día | Crea una key nueva |
+| `/llms.txt` no lista ningún repositorio | Se pidió sin key | Envía la key |
+| Un repositorio no sale para el agente | Es privado de otra persona, o aún no tiene contenido legible | Es lo esperado, o sincronízalo |
+| `403` en `/mcp` | La petición trae un `Origin` que no es el del sitio | Conecta desde un cliente MCP, no desde una página web de otro origen |

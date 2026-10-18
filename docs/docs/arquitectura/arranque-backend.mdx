@@ -1,0 +1,68 @@
+---
+titulo: Arranque y apagado del backend
+descripcion: Qué hace el backend al arrancar, en qué orden se apaga y por qué sobrevive a la recarga en caliente
+workspaces: [backend, db, cron, content]
+env_vars: [admin-email, admin-password, admin-name, database-url]
+orden: 2
+actualizado: 2026-10-18
+---
+
+## Al arrancar
+
+`apps/backend/src/index.ts` empieza a servir HTTP enseguida (en el puerto de
+`PORT`, o 3000) y, en paralelo, hace esto una sola vez:
+
+1. **Lanza la primera sincronización de los repositorios de contenido**, sin
+   esperarla: un remoto lento o caído no retrasa el arranque. Cada fallo queda
+   en el log y en el estado del repositorio, y el cron «Sincronizar contenido»
+   lo vuelve a intentar cada 5 minutos (ver
+   [Repositorios](../contenido/repositorios.mdx)).
+2. **Aplica las migraciones pendientes** de `packages/db/src/migrations/`.
+3. **Crea el administrador** si `ADMIN_EMAIL` y `ADMIN_PASSWORD` están
+   definidas y todavía no existe un usuario con ese email (`ADMIN_NAME` es
+   opcional, por defecto `Admin`). Reiniciar no lo duplica ni le cambia la
+   contraseña.
+4. **Arranca el planificador de crons**: recupera las ejecuciones que quedaron
+   a medias en un apagado anterior, sincroniza los jobs declarados en código
+   con la base de datos (se ejecutan como el usuario de `ADMIN_EMAIL`), avisa
+   en el log de los jobs cuyo procedimiento ya no existe y empieza a
+   dispararlos (ver [Crons](../crons/index.mdx)).
+
+Si las migraciones, el administrador o el planificador fallan, el backend lo
+registra (`bootstrap failed`) y sale con código 1. Un fallo de la
+sincronización de contenido nunca para el arranque.
+
+## Al apagarse
+
+Al recibir `SIGINT` o `SIGTERM` se apaga en este orden:
+
+1. **Cierra los streams de eventos** de los crons, que no terminan solos y
+   retendrían el resto; los clientes se reconectan a la siguiente instancia.
+2. **Deja hasta 5 segundos** a las peticiones HTTP en curso; las que sigan
+   abiertas se cortan.
+3. **Para el planificador** de crons.
+4. **Cierra el pool** de la base de datos, el último porque peticiones y crons
+   pueden usarlo hasta entonces.
+
+Si un paso falla, lo registra y sigue con el siguiente, y al final sale con
+código 1. Si algo se cuelga, a los 8 segundos sale igualmente con código 1,
+antes de que Docker mande `SIGKILL` (10 segundos por defecto).
+
+## Con `bun --hot`
+
+En desarrollo, el script `dev` del backend es `bun run --hot src/index.ts`,
+que vuelve a ejecutar el fichero de entrada con cada cambio (también con un
+`bun run format` de todo el repositorio). Para no repetir las migraciones, el
+seed y el planificador, ni acumular manejadores de señales en cada recarga, el
+servidor y una marca de «ya arrancado» se guardan en `globalThis`, que
+sobrevive a las recargas. El servidor se recarga en el mismo puerto gracias a
+un `id` fijo.
+
+## Cuando algo falla
+
+| Síntoma | Causa | Qué hacer |
+| --- | --- | --- |
+| El backend sale con `bootstrap failed` | No llega a PostgreSQL o una migración falla | Comprueba `DATABASE_URL` y que la base de datos esté arrancada (`bun run postgres:start` en desarrollo nativo) |
+| El log dice `admin seed skipped` | Falta `ADMIN_EMAIL` o `ADMIN_PASSWORD` | Defínelas en el `.env` si quieres el administrador; no es un error |
+| Un aviso dice que los jobs declarados en código no tienen usuario | `ADMIN_EMAIL` no está definida o no es de un usuario existente | Defínela con el email del administrador; sin ella, los jobs protegidos fallan como `Unauthorized` |
+| El backend tarda 8 segundos en pararse | Algún paso del apagado se colgó | El log `shutdown timed out` lo dice; mira la línea anterior |

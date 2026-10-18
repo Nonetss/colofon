@@ -1,0 +1,31 @@
+nombre: Variable de entorno
+plural: Variables de entorno
+icono: variable
+descripcion: Las variables del .env de la raíz y de los compose. El id es el nombre de la variable en minúsculas y con guiones (DATABASE_URL → database-url)
+etiqueta: name
+
+campos:
+  name:
+    tipo: texto
+    descripcion: El nombre tal como se escribe en el .env
+  area:
+    tipo: enum
+    valores: [runtime, database, auth, secrets, content, services, web, gateway, compose]
+    descripcion: "La sección de .env.example en la que está; web: las variables de cliente de packages/env/src/web.ts; compose: la base de datos y el puerto publicado de los compose"
+  required:
+    tipo: booleano
+    descripcion: Si el backend o el frontend no arrancan sin ella
+  default:
+    tipo: texto
+    opcional: true
+    descripcion: El valor que toma si no se define, cuando tiene uno
+  meaning:
+    tipo: texto
+    descripcion: Qué significa, en una línea
+  page:
+    tipo: ficha
+    opcional: true
+    descripcion: La página que la explica
+
+vista:
+  columnas: [name, required, meaning]

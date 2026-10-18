@@ -1,0 +1,90 @@
+---
+titulo: Skills
+descripcion: Qué Agent Skills sirve la plataforma, las suyas y las de cada repositorio, por qué rutas las descubre e instala un agente y cómo se configura uno solo con un texto
+workspaces: [api, frontend, content]
+orden: 12
+actualizado: 2026-10-18
+---
+
+La plataforma sirve **skills** en el formato Agent Skills (una carpeta con un
+`SKILL.md` que empieza con `name` y `description`) para que un agente sepa
+trabajar con el sitio sin que nadie se lo explique. Las descubre por el
+borrador de descubrimiento de Agent Skills, en `/.well-known/agent-skills/`.
+Hay dos clases:
+
+| Clase | Qué son | De dónde salen | Quién las ve |
+| --- | --- | --- | --- |
+| **De la plataforma** | Las mismas en todos los sitios: `colofon` (cómo usar el sitio: `llms.txt`, `llm.txt`, el MCP y sus herramientas, las skills y la API key) y las `colofon-*` (cómo escribir un repositorio de contenido) | `packages/api/skills/` (`colofon`) y `doc-example/.agents/skills/` (las `colofon-*`), con todos sus ficheros | Todo el mundo, con o sin credencial |
+| **De un repositorio** | Las de su carpeta `skills/`: cómo trabajar con el proyecto que documenta | El `skills/<nombre>/SKILL.md` del repositorio, en su último commit | Solo quien puede leer ese repositorio, con credencial |
+
+`doc-example/.agents/skills/` es la **única copia** de las skills de escritura
+en el repositorio de la plataforma: se cambian ahí y llegan a todos los sitios
+con la siguiente instalación. Una skill de la plataforma rota hace fallar los
+tests de la plataforma en lugar de servirse.
+
+## Las skills de un repositorio
+
+Se sirven con el nombre **`<slug>-<nombre>`**: `skills/deploy/` del repositorio
+`casa` es `casa-deploy`. El `SKILL.md` servido es el del repositorio con el
+`name` cambiado a ese nombre, y el resto idéntico. Los demás ficheros de la
+carpeta se ignoran: una skill de repositorio es solo su `SKILL.md`.
+
+Una skill se deja fuera, y se avisa como problema del sitio en la portada del
+repositorio, si:
+
+- su carpeta no se llama con minúsculas, números y guiones (hasta 64
+  caracteres);
+- no tiene `SKILL.md`, o este no empieza con el bloque YAML;
+- su `name` no es el nombre de la carpeta, o falta `description` (o pasa de
+  1024 caracteres);
+- es un fichero suelto directamente en `skills/`.
+
+Tampoco se sirve una cuyo nombre publicado coincide con una de la plataforma o
+pasa de 64 caracteres. El resto del repositorio se lee igual.
+
+## Las rutas
+
+| Ruta | Qué devuelve |
+| --- | --- |
+| `/.well-known/agent-skills/index.json` | El índice (borrador v0.2.0): primero las de la plataforma por nombre, después las de cada repositorio en el orden del lector. Cada entrada lleva `name`, `type`, `description`, `url` y `digest` (el SHA-256 de lo que sirve `url`). |
+| `/.well-known/agent-skills/<nombre>/SKILL.md` | El `SKILL.md` de una skill. |
+| `/.well-known/agent-skills/<nombre>/<ruta>` | Otro fichero de una skill de la plataforma, como `references/…`. |
+| `/.well-known/agent-skills/<nombre>.tar.gz` | El archivo de una skill de la plataforma con más ficheros, con su `SKILL.md` en la raíz. |
+
+Una skill de un solo fichero es de tipo `skill-md` y su `url` es su
+`SKILL.md`; una de la plataforma con más ficheros es de tipo `archive` y su
+`url` es el `.tar.gz`. El archivo sale siempre igual byte a byte para los
+mismos ficheros, así que su `digest` no cambia entre peticiones ni reinicios.
+
+Todas se sirven con `Access-Control-Allow-Origin: *` y sin caché compartida,
+porque lo que devuelven depende de la credencial. Sin credencial, el índice
+solo lista las de la plataforma. Un nombre o una ruta que el usuario no ve da
+404 con una línea en español. Las sirve el frontend
+(`apps/frontend/src/pages/.well-known/agent-skills/`) con los procedimientos de
+`packages/api/src/v1/skills/`, y el MCP las da también con `skills` y `skill`.
+
+## Configurar un agente con un texto
+
+En `/me/skills`, la sección «Skills para tu IA» enseña un texto en español para
+pegar en la IA, con un botón de copiar. El mismo texto, ya con la key, es la
+primera pestaña al crear una API key en `/me/api-keys`. El texto:
+
+1. le pide a la IA que se configure para la documentación de este sitio;
+2. lleva el hueco de la API key (sin key solo se instalan las de la
+   plataforma);
+3. la manda al procedimiento de configuración de `/llms.txt`.
+
+Siguiendo ese procedimiento, la IA lee el índice de skills, instala cada una en
+su carpeta personal de skills (en Claude Code, `~/.claude/skills/`)
+sustituyendo la copia anterior y comprobando que lo descargado coincide con su
+`digest`, dice cuáles instaló y pregunta si se quiere también el MCP. Repetirlo
+refresca las que cambiaron.
+
+## Si algo falla
+
+| Síntoma | Causa | Qué hacer |
+| --- | --- | --- |
+| El índice solo trae las skills de la plataforma | Se pidió sin API key | Envía la key en `x-api-key` |
+| Una skill del repositorio no sale | Está rota (nombre, `name` o `description`), o su nombre publicado choca con una de la plataforma | Mira los problemas en la portada del repositorio |
+| Un fichero de `references/` de una skill del repositorio no se sirve | Las skills de repositorio son solo su `SKILL.md` | Pon el contenido en el `SKILL.md` o enlaza a las páginas del sitio |
+| El agente se salta una skill al instalar | Lo descargado no coincide con su `digest` | Vuelve a lanzar el procedimiento |

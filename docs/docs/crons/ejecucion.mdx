@@ -1,0 +1,73 @@
+---
+titulo: Cómo se ejecuta un job
+descripcion: Con qué usuario y qué entrada corre un job, qué hace el backend con los crons al arrancar, cómo se sigue su historial en vivo y los límites del planificador
+orden: 2
+workspaces: [cron, api, auth, backend]
+env_vars: [admin-email]
+actualizado: 2026-10-18
+---
+
+1. El planificador decide que toca ejecutar un job. Si su ejecución
+   anterior sigue en marcha, no la solapa: guarda una ejecución `skipped`.
+2. Si el job está asociado a un usuario, se crea una **sesión real** de ese
+   usuario solo para esta ejecución (`createUserSession()`, en
+   `packages/auth/src/session.ts`), y se revoca al terminar. Así todos los
+   middlewares y comprobaciones de permisos ven a ese usuario como quien
+   llama: el cron no se salta ninguna autorización.
+3. Se llama al procedimiento con `call()` de oRPC, con un contexto que lleva
+   `cron` (el id y el nombre del job) y la entrada guardada del job (`{}` si
+   no tiene).
+4. Se guarda el resultado, o el error, en `cron_run`, y se calculan la última
+   y la siguiente ejecución.
+
+Existe también el builder `cronProcedure` para procedimientos que **solo**
+debe poder llamar el planificador: ninguna petición HTTP lleva
+`context.cron`, así que ni siquiera un admin puede ejecutarlos (ver
+[Quién puede llamar](../backend-api/builders.mdx)). Como no miran el
+usuario, funcionan aunque el job corra sin él.
+
+## Al arrancar el backend
+
+`startCron()` (`apps/backend/src/cron/index.ts`) se ejecuta después de las
+migraciones y del seed del admin, en este orden:
+
+1. Marca como fallidas las ejecuciones que quedaron `running` por un
+   reinicio («Process restarted while run was in progress»).
+2. Sincroniza los jobs declarados en código, ligados al usuario de
+   `ADMIN_EMAIL` ([Jobs de colofon](jobs.mdx#jobs-declarados-en-código)).
+3. Avisa en el log de los jobs manuales cuyo procedimiento ya no es
+   programable, y de los procedimientos que no se pueden resolver.
+4. Arranca el planificador.
+
+## Historial en vivo
+
+`cron.watchRuns` es un stream SSE que avisa cada vez que una ejecución de un
+job cambia: empieza, termina bien, falla o se salta. `cron.watchJobs` avisa
+de cualquier cambio en la lista. Con cada aviso, el cliente vuelve a pedir el
+job y su historial, en lugar de consultar periódicamente.
+
+Los eventos no se guardan: al conectarse, el cliente recibe `subscribed` y
+vuelve a cargar los datos para no perderse nada. Los publica un publisher en
+memoria (`packages/api/src/v1/cron/events.ts`); al apagarse, el backend
+cierra estos streams antes de esperar a las peticiones en curso. Hoy ninguna
+pantalla los usa (ver [Eventos en vivo](../backend-api/eventos-en-vivo.mdx)).
+
+## Cosas a tener en cuenta
+
+- **Una sola instancia.** No hay bloqueo distribuido. Si hubiera dos
+  réplicas del backend, cada job se ejecutaría dos veces, y los eventos en
+  vivo solo llegarían a quien esté conectado a la réplica que lo ejecutó.
+- **El nombre de un procedimiento programable es su identidad.** `cron_job`
+  guarda la ruta del procedimiento (por ejemplo `plugins.list`). Renombrarlo,
+  moverlo o quitarle `eligible` rompe los jobs que lo usan, así que necesita
+  una migración de datos. Con un job declarado en código, renombrarlo empieza
+  un job nuevo y parte su historial.
+- **Si el admin del seed no existe**, los jobs declarados en código se
+  ejecutan sin usuario y solo funcionan los procedimientos públicos y los
+  `cronProcedure` (los dos jobs de hoy lo son). El arranque lo avisa en los
+  logs. Un `ADMIN_EMAIL` que no es admin se usa tal cual, con un aviso, y
+  nunca se eleva.
+- **Si el usuario del job está baneado**, no se puede crear su sesión y la
+  ejecución falla.
+- **Borrar un job es un borrado lógico** (`deleted_at`): el historial se
+  conserva y su nombre puede volver a usarse.

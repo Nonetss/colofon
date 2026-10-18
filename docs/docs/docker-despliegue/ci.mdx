@@ -1,0 +1,40 @@
+---
+titulo: CI
+descripcion: Qué construyen y publican los workflows de GitHub en cada push a main, las imágenes multi-arquitectura y la web del proyecto en GitHub Pages
+workspaces: [backend, frontend, gateway, site]
+orden: 4
+actualizado: 2026-10-18
+---
+
+Hay dos workflows en `.github/workflows/`: `docker-build.yml` publica las imágenes de la aplicación y `pages.yml` publica la web del proyecto. **Ninguno ejecuta lint, tipos ni tests**: eso se valida en local antes del push ([Desarrollo local](../desarrollo/index.mdx)).
+
+## Las imágenes: `docker-build.yml`
+
+Se ejecuta en cada push a `main`, o a mano desde la pestaña Actions. Un push nuevo a la misma rama cancela el build que esté en marcha, para que uno más antiguo nunca termine el último y deje la etiqueta apuntando a código viejo.
+
+### Qué imagen se reconstruye
+
+| Imagen | Se reconstruye si cambia… |
+| --- | --- |
+| backend | `apps/backend/`, `packages/`, `doc-example/.agents/skills/`, `package.json`, `bun.lock` o `bunfig.toml` |
+| frontend | `apps/frontend/`, `packages/`, `package.json`, `bun.lock` o `bunfig.toml` |
+| gateway | `apps/gateway/` |
+
+Si cambia el propio workflow o `.dockerignore`, se reconstruyen las tres. También todas cuando no hay un commit anterior con el que comparar: una ejecución manual, una rama nueva o un *force push*. Si cambian estas reglas, se edita la tabla `PATHS` del workflow.
+
+### Cómo se construye y publica
+
+1. Cada imagen se construye para `amd64` y `arm64`, cada arquitectura de forma nativa en su propio runner (`ubuntu-26.04` y `ubuntu-26.04-arm`, sin emulación), con una caché de capas en el propio registro (una por rama y arquitectura, que cae a la de `main`).
+2. Un último paso junta las dos arquitecturas en una imagen multi-arquitectura y la sube al GitHub Container Registry como `ghcr.io/nonetss/colofon-<app>`, con las etiquetas `latest`, el nombre de la rama y `<rama>-<sha>`. Así el mismo `compose.prod.yml` vale para un servidor x86 y para uno ARM (una Raspberry Pi, por ejemplo).
+3. Ese paso se ejecuta aunque falle el build de otra app, así que una imagen rota no retiene a las demás.
+
+Se autentica con el `GITHUB_TOKEN` del workflow, así que no hay que configurar ningún secreto.
+
+## La web del proyecto: `pages.yml`
+
+No construye ninguna imagen: publica [`apps/site`](catalog:workspaces/site), la web estática del proyecto, en GitHub Pages (`https://nonetss.github.io/colofon/`).
+
+- Se ejecuta en los push a `main` que tocan `apps/site/`, `bun.lock` o el propio workflow, o a mano.
+- Instala Bun con la versión del `packageManager` raíz, instala el workspace entero (`bun install --frozen-lockfile`), ejecuta `bun run --filter site build` y despliega `apps/site/dist`.
+- Hay un solo despliegue a la vez, y nunca se cancela uno que ya está publicando.
+- En GitHub, Settings → Pages → Source tiene que ser «GitHub Actions».

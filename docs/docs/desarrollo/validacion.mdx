@@ -1,0 +1,53 @@
+---
+titulo: Validar un cambio
+descripcion: Los comandos que comprueban un cambio antes de subirlo y cómo funcionan los tests sin base de datos ni red
+workspaces: [api, content, cron, frontend, db]
+commands: [check-types, check, format, tailwind-check, tailwind-fix, test]
+orden: 6
+actualizado: 2026-10-18
+---
+
+```bash
+bun run check-types     # tipos en todo el repo (tsc y astro check)
+bun run check           # Biome: formato, lint y orden de imports (corrige lo que puede)
+bun run tailwind:check  # clases de Tailwind mal escritas o redundantes (tailwint)
+bun run test            # los tests unitarios
+```
+
+- Un solo workspace: `bun run --filter @nonete/api check-types`, o `turbo run test --filter=@nonete/api` para una sola suite (`@nonete/api`, `@nonete/content`, `@nonete/cron` o `frontend`).
+- `bun run format` solo formatea y ordena los imports, sin lint; `bun run tailwind:fix` arregla las clases que `tailwind:check` marca, en `apps/frontend` y `apps/site`.
+- `check-types` incluye `astro check` del frontend y de la web del proyecto (`apps/site`).
+- No hay git hooks ni un CI que ejecute nada de esto: el CI solo construye las imágenes Docker y publica la web del proyecto. Se valida en local antes de hacer push.
+
+## Los tests
+
+`bun run test` ejecuta, con Turbo, las cuatro suites de `bun test --only-failures` que hay. Solo imprime los fallos y los totales; `bun test` dentro de un workspace lista cada test.
+
+| Suite | Qué prueba |
+| --- | --- |
+| `packages/api/tests/` | Los builders de procedimientos (`index.test.ts`), los helpers (`shared/`) y los handlers de cada feature (`v1/<feature>/`) |
+| `packages/content/tests/` | El contrato del contenido (meta-esquema, catálogo, skills), los clones y el alojamiento git, las páginas (MDX, cabeceras, búsqueda, páginas del catálogo), los diagramas, los estilos y los esquemas del editor |
+| `packages/cron/tests/` | El planificador, el servicio de crons, las expresiones cron y la sincronización de los jobs declarados |
+| `apps/frontend/tests/unit/` | Los helpers de `src/lib`, los hooks, los componentes compartidos y algunas features, sobre happy-dom |
+
+No hay tests del backend (`apps/backend`) ni de la web del proyecto, ni tests de extremo a extremo.
+
+### Son herméticos
+
+No se conectan a la base de datos, no hacen peticiones de red y no necesitan nada arrancado, ni siquiera un `.env`:
+
+- **`packages/api/tests/setup.ts`** se carga antes que nada y **sobrescribe** las variables de entorno con valores de mentira: `DATABASE_URL` apunta a un puerto cerrado y las variables opcionales (administrador, OIDC, `SECRETS_ENCRYPTION_KEY`) se vacían. Así importar `@nonete/auth` o `@nonete/db` no falla al validar el entorno y nunca toca tu base de datos real.
+- **La base de datos es falsa**: `@nonete/db/testing` da un `fakeDb` en el que cada test encola los resultados de sus consultas y después comprueba las escrituras.
+- **Los procedimientos** se ejecutan con `call(procedimiento, input, { context })` de oRPC, que pasa por los mismos middlewares que una petición real, con contextos de `tests/fixtures/context.ts`.
+- **`packages/content`** trabaja sobre carpetas temporales y ejecuta el `git` real contra repositorios *bare* en una carpeta temporal, por `file://`: necesita `git` instalado, pero nada sale de tu máquina.
+- **`apps/frontend/tests/unit/setup.ts`** registra una ventana de happy-dom en el origen de desarrollo y fija la zona horaria a UTC.
+
+La carpeta `tests/` de cada suite replica la de `src/`. Un procedimiento, helper, hook o componente nuevo o cambiado lleva sus tests en el mismo cambio; qué test acompaña a cada tipo de cambio está en la skill `stack` (`.agents/skills/stack/references/writing-unit-tests.md`, y el montaje de cada suite en `testing.md`).
+
+## Si algo falla
+
+| Síntoma | Causa | Qué hacer |
+| --- | --- | --- |
+| Falla `lucide-icon-names.test.ts` del frontend | Se actualizó `lucide-react` sin regenerar el catálogo de iconos | `bun run icons:catalog` (necesita red) y commitea el resultado |
+| Fallan los tests de `packages/content/tests/git/` | No hay `git` en tu máquina | Instálalo |
+| `check` deja ficheros cambiados | Biome corrige formato e imports solo | Revisa el diff y commitéalo con el cambio |

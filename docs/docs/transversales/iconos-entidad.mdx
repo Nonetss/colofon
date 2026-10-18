@@ -1,0 +1,64 @@
+---
+titulo: Iconos de entidad
+descripcion: Cómo se deja que el usuario elija un icono de Lucide y un color para una entidad, y cómo se activa para un tipo de entidad nuevo
+orden: 2
+workspaces: [api, frontend, db, content]
+commands: [icons-catalog]
+actualizado: 2026-10-18
+---
+
+Permiten que el usuario elija un icono de Lucide y un color para una entidad.
+**Hoy el registro de entidades está vacío**, así que cualquier llamada
+responde `BAD_REQUEST` («Este tipo de elemento no admite iconos») hasta que
+una entidad lo use.
+
+| Pieza | Qué es |
+| --- | --- |
+| Tabla `entity_icons` | Un icono por `(entity_type, entity_id)`, con el nombre del icono en kebab-case y una clave de color de una paleta fija: `orange` (por defecto), `amber`, `green`, `teal`, `blue`, `violet`, `rose` o `neutral`. |
+| API `orpc.v1.entityIcon.*` | `getMany` (`QUERY`, hasta 100 entidades, para listas), `set` (`PUT`, crea o cambia) y `clear` (`DELETE`), todos con `protectedProcedure`. |
+| Frontend `@/features/entity-icons` | `IconPicker` (selector controlado), `EntityIconPicker` (carga y guarda solo), `EntityIcon` (lo muestra, con un icono de reserva), `useEntityIcons` (carga los de una lista en una petición), `useSetEntityIcon` y `useClearEntityIcon` (para formularios que guardan al enviar). |
+
+## Activarlos para otra entidad
+
+A diferencia de los comentarios, **cada tipo de entidad tiene que
+registrarse** en `packages/api/src/v1/entity-icon/targets.ts`, que dice qué
+entidades puede ver y modificar cada usuario:
+
+1. Escribe un `EntityIconTarget` con las funciones `readable` y `writable`,
+   que reciben los ids pedidos y devuelven los que el usuario puede tocar
+   (con la consulta de permisos que ya tenga la entidad, una por lote).
+2. Añádelo a `entityIconTargets` con su tipo de entidad.
+3. En el handler que borra esa entidad, llama a `deleteEntityIcons(...)` de
+   `#v1/entity-icon/handler`, pasándole la transacción.
+4. En la interfaz, usa `EntityIconPicker` o `IconPicker` en el formulario y
+   `EntityIcon` donde se muestre (las listas, con `useEntityIcons`).
+
+No hace falta tocar el esquema ni generar una migración.
+
+## Qué falla
+
+| Mensaje | Causa |
+| --- | --- |
+| «Este tipo de elemento no admite iconos» (`BAD_REQUEST`) | El tipo de entidad no está en `entityIconTargets` (hoy, cualquiera) |
+| «Elemento no encontrado» (`NOT_FOUND`) | `set` o `clear` sobre una entidad que el usuario no puede modificar |
+| Una entidad de la lista sale sin icono | `getMany` omite en silencio las que el usuario no puede ver, y `EntityIcon` pinta su icono de reserva |
+
+## El catálogo de iconos
+
+El catálogo del selector (`picker/model/icon-catalog.generated.json` y
+`icon-categories.generated.ts`) se genera con `bun run icons:catalog` a partir
+de los metadatos de Lucide para la versión instalada de `lucide-react`. Ese
+paso necesita red (descarga los metadatos de GitHub), y el resultado se
+commitea; los builds nunca descargan nada. El selector lo pide solo cuando se
+abre.
+
+El mismo comando escribe primero, sin red, la lista de nombres que
+`packages/content` acepta en los `icono` de un repositorio de contenido
+(`packages/content/src/contract/lucide-icons.generated.ts`). Se vuelve a
+ejecutar tras actualizar `lucide-react`; un test del frontend falla si esa
+lista ya no coincide con la versión instalada.
+
+Los colores se guardan como clave, nunca como valor: cada clave tiene su token
+`--icon-<clave>` (claro y oscuro) en `src/styles/theme.css` y su entrada en
+`picker/model/palette.ts`. Una clave nueva en la API no compila hasta que
+tiene las dos.

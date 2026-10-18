@@ -1,0 +1,34 @@
+---
+titulo: Commits
+descripcion: Cómo se escribe el mensaje de un commit, cómo se reparten los cambios entre commits y qué no puede aparecer nunca en el historial
+orden: 2
+actualizado: 2026-10-18
+---
+
+Se sigue Conventional Commits: `tipo(ámbito): resumen corto en imperativo`, en inglés, en minúsculas y sin punto final.
+
+```txt
+feat(frontend): add 404 page
+fix(api): use proper HTTP methods on destructive oRPC routes
+ci(site): publish apps/site to github pages on every push to main that touches it
+```
+
+- Tipos habituales: `feat`, `fix`, `refactor`, `chore`, `docs`, `ci`, `style`.
+- El ámbito es el área afectada (`api`, `frontend`, `auth`, `db`, `docker`, `site`, `openspec`, `deps`, `config`…); si son varias, separadas por comas (`docs(agents,stack): …`).
+- El resumen cuenta por qué se hace el cambio, no repite el diff.
+- Un commit por unidad de trabajo coherente; los cambios que no tienen relación van en commits separados (el código de una app, el de un paquete, la configuración de Docker o del CI), nunca en un «misc updates».
+- Las migraciones que ya existen en la copia de trabajo se commitean junto al esquema o al código al que pertenecen.
+- Se añaden los ficheros por su nombre, nunca con `git add -A` ni `git add .`, y nunca un fichero con secretos.
+
+## Nunca
+
+- **Ninguna atribución a una herramienta de IA**: ni un `Co-Authored-By:` que nombre a un asistente o modelo, ni pies del tipo «Generated with…», ni insignias o enlaces, en el asunto, el cuerpo, los trailers o la descripción de un PR. Los commits son solo de su autor.
+- Ni `amend`, ni `force`, ni saltarse hooks, ni deshacer cambios (`reset`, `restore`, `revert`, `clean`…) para dejar limpio el árbol. No hay git hooks instalados: nada se ejecuta solo al hacer commit, así que se valida antes.
+
+## Con Claude Code
+
+| Comando | Qué hace |
+| --- | --- |
+| `/commit` | Reparte los cambios pendientes en commits que siguen estas reglas (`.claude/commands/commit.md`) |
+| `/tag` | Crea la etiqueta anotada de una versión con un resumen de lo que cambió |
+| `/worktree` | Implementa una funcionalidad en un *worktree* de git aislado, en su propia rama |

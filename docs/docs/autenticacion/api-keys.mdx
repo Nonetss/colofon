@@ -1,0 +1,71 @@
+---
+titulo: API keys
+descripcion: Cómo se crea una API key, cómo se convierte en una sesión de su dueño para agentes y scripts, y qué no puede hacer
+orden: 2
+workspaces: [auth, api, backend]
+actualizado: 2026-10-18
+---
+
+Una API key **actúa como su dueño**: quien la envía en la cabecera
+`x-api-key` lee y hace lo mismo que ese usuario con su sesión, salvo lo que
+solo se permite desde la web. Es la credencial de los agentes de IA (los
+`llm.txt`, el MCP y las skills, ver [Agentes de IA](../contenido/agentes.mdx))
+y de cualquier script que llame a `/api/v1/...`.
+
+## Crear una
+
+1. Entra en `/me/api-keys` (un admin tiene la misma lista en
+   `/admin/api-keys`).
+2. Pulsa «Nueva API key», ponle un nombre y elige cuándo caduca: 30, 90, 180 o 365
+   días, o «Sin caducidad». Por defecto, 30 días.
+3. Copia la clave del diálogo que aparece. **Solo se muestra esta vez**: no
+   se guarda en claro y no se puede recuperar.
+4. En el mismo diálogo, «Conecta tu IA» da el texto listo para cada agente,
+   con la clave ya puesta: «Skills» (un texto que instala solas las skills
+   de la documentación), «Claude Code», «Codex», «Cursor y otros» (el MCP en
+   la configuración de cada cliente) y «Sin MCP».
+
+La lista muestra cada clave con su nombre, su estado, cuándo se creó y cuándo caduca.
+Desde ella se renombra (hasta 32 caracteres; la clave y la caducidad no
+cambian) o se borra. Todo esto son los procedimientos de `v1.apiKey`
+(`create`, `list`, `update`, `delete` y `search`), que solo tocan las claves
+de quien llama.
+
+## Cómo funciona
+
+- El plugin `apiKey()` de Better Auth está configurado con sesión para cada
+  clave (`enableSessionForAPIKeys`): una petición con `x-api-key` se resuelve
+  como una sesión del dueño, y el backend no distingue esa sesión de un
+  inicio de sesión normal ([La sesión](sesiones.mdx)).
+- El id de esa sesión es el id de la clave. El registro de uso de los
+  secretos lo usa para saber qué clave hizo cada llamada.
+- **Sin límite de peticiones.** Un agente lee muchas páginas y cada una
+  valida la clave dos veces (frontend y backend), así que el límite por
+  clave está desactivado.
+- Vale en todas las puertas: `/api`, `/rpc`, `/mcp` y las rutas de
+  Markdown del frontend. Con la clave de un admin, también `/scalar` y
+  `/openapi.json`.
+
+## Qué no puede hacer
+
+Los procedimientos `sessionProcedure` rechazan cualquier petición con
+`x-api-key` con `FORBIDDEN` («Esta operación solo está disponible desde la
+web»), aunque la clave sea válida. Así un agente puede **usar** lo que su
+dueño le prepara, pero no cambiarlo:
+
+| Puede (con API key) | Solo desde la web |
+| --- | --- |
+| Listar los secretos (`secret.list`) y usarlos con la herramienta `request` del MCP | Crear, editar o borrar secretos, y ver su historial de uso |
+| Listar las credenciales git (`gitCredential.list`) y añadir un repositorio con una de ellas | Guardar o borrar una credencial git |
+
+La regla está en el builder, no en cada handler (ver
+[Quién puede llamar](../backend-api/builders.mdx)).
+
+## Qué falla
+
+| Síntoma | Causa | Qué hacer |
+| --- | --- | --- |
+| Un agente recibe `401` | No envía la cabecera, o la clave caducó, está desactivada o se borró | Crea otra clave y vuelve a configurar el agente |
+| Una llamada responde `403` «Esta operación solo está disponible desde la web» | Es un `sessionProcedure` y la petición lleva `x-api-key` | Hazlo desde la web con tu sesión |
+| Una clave antigua se queda sin peticiones | Se creó cuando el plugin todavía tenía límite | Créala de nuevo ([Agentes de IA](../contenido/agentes.mdx)) |
+| Se perdió la clave recién creada | Solo se muestra una vez | Bórrala y crea otra |

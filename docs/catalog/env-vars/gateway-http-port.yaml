@@ -1,0 +1,8 @@
+name: "GATEWAY_HTTP_PORT"
+area: "gateway"
+required: false
+default: "80"
+meaning: "Puerto en el que escucha el gateway dentro de su contenedor"
+page: "arquitectura/peticion"
+fuente: apps/gateway/Caddyfile
+actualizado: 2026-10-18

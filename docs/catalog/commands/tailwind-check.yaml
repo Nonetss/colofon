@@ -1,0 +1,6 @@
+command: "bun run tailwind:check"
+area: "validation"
+purpose: "Revisa las clases de Tailwind de apps/frontend y apps/site con tailwint"
+page: "desarrollo/validacion"
+fuente: package.json
+actualizado: 2026-10-18

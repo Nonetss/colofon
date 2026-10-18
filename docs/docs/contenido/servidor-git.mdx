@@ -1,0 +1,115 @@
+---
+titulo: Servidor git
+descripcion: Cómo aloja la plataforma sus propios repositorios de contenido, cómo se clonan y se hace push a ellos por HTTP sin credenciales y cómo se miran por dentro desde /admin/git
+workspaces: [content, api, backend, gateway, frontend]
+orden: 3
+actualizado: 2026-10-18
+---
+
+Con origen **Alojado en la plataforma**, la propia plataforma es el servidor
+git del repositorio: no hace falta GitHub, Gitea ni nada más. Solo los
+administradores pueden crear repositorios alojados; los de usuario siempre son
+externos.
+
+## Crear uno y hacer el primer push
+
+1. En `/admin/content`, añade un repositorio y elige «Alojado en la
+   plataforma». El campo de la URL desaparece y el ref se escribe a mano, con
+   `main` por defecto.
+2. Guarda. La plataforma crea un repositorio bare vacío con su `HEAD`
+   apuntando a ese ref. No sincroniza: no hay nada que descargar, y su última
+   sincronización queda en blanco hasta el primer push.
+3. Copia la **URL de git** de su tarjeta: `<origen de la plataforma>/git/<slug>.git`.
+4. Desde el repositorio de contenido, añádela como remoto y haz push del ref:
+
+```sh
+git remote add origen https://docs.example.com/git/manual.git
+git push origen main
+```
+
+5. El push responde enseguida y, sin esperarlo, el backend sincroniza el
+   repositorio: en unos segundos el lector sirve lo que se acaba de subir.
+
+Clonarlo en otra máquina es un `git clone` normal de esa URL, que deja
+elegida la rama del ref.
+
+## Cómo funciona
+
+- **Protocolo smart HTTP de git.** El backend sirve en `/git/<slug>.git` el
+  anuncio de refs (`GET …/info/refs?service=…`) y los dos servicios,
+  `git-upload-pack` (clone, fetch, ls-remote) y `git-receive-pack` (push),
+  ejecutando el propio git con `--stateless-rpc`. Acepta cuerpos con
+  `Content-Encoding: gzip`. No sirve el protocolo «dumb».
+- **Fuera de oRPC.** `apps/backend/src/routers/git.ts` monta `/git/*`, y el
+  gateway lo manda al backend. Las respuestas bajo `/git/*` no se vuelven a
+  comprimir, porque los packs ya lo están.
+- **Todo lo demás da 404**: un slug que no existe, un repositorio externo,
+  otro servicio u otra ruta bajo `/git/`. Un push a un slug desconocido no
+  crea nada.
+- **Cada push sincroniza**, aunque sea a otra rama. Se publica la rama del
+  campo Ref; los push a otras ramas se guardan pero no cambian lo que se
+  sirve.
+- **La sincronización lee del disco**: el clon de `.content/` se hace desde el
+  repositorio bare, nunca a través del endpoint HTTP de la propia plataforma.
+
+<Callout type="danger" title="Sin credenciales, a propósito">
+Cualquiera que llegue a la plataforma puede clonar y hacer push a todos los
+repositorios alojados, `--force` y borrar ramas incluidos, en todos los
+entornos, también en producción. No los uses donde eso sea un problema; para
+controlar quién escribe, usa un repositorio externo.
+</Callout>
+
+## Dónde se guardan
+
+Los repositorios bare están en `.hosted/<id>/` (en Docker, el volumen
+`hosted_data`, montado en `/app/.hosted`), aparte de los clones de
+`.content/`. Si la carpeta de uno falta (por ejemplo, porque el volumen se
+recreó vacío), el endpoint la crea vacía antes de atender la petición, y un
+push la vuelve a llenar.
+
+Puede que sea **la única copia del historial**: incluye `hosted_data` en las
+copias de seguridad.
+
+| Cambio | Qué pasa con el repositorio bare |
+| --- | --- |
+| Borrar el repositorio | Se borra con todo su historial. La pantalla de borrado lo avisa. |
+| Ponerle una URL externa | La plataforma deja de leerlo y el siguiente clon sale de la URL nueva, pero el repositorio bare se conserva hasta que se borre el repositorio. |
+| Volver a hacerlo alojado | Se usa el repositorio bare que hubiera, o se crea uno vacío. |
+
+## Mirarlo por dentro: `/admin/git`
+
+**`/admin/git`** («Git») lista los repositorios alojados como tarjetas, con su
+nombre, slug, ref publicado y URL de git para copiar, y un buscador por nombre
+o slug que ignora mayúsculas y acentos y se guarda en la URL. Sin ningún
+alojado, enlaza a `/admin/content` para crear uno.
+
+Al abrir una tarjeta vas a **`/admin/git/<slug>`**, la pantalla de código:
+
+- un selector de rama, que empieza en el ref del repositorio (o en la rama de
+  su `HEAD`, o en la primera);
+- la carpeta actual como tabla, con el tamaño de cada fichero y unas migas
+  desde la raíz;
+- un fichero abierto se muestra como texto con números de línea. Los binarios
+  (con un byte nulo en sus primeros 8000 bytes) y los ficheros de más de
+  512 KB solo enseñan su tamaño y por qué no se muestran;
+- la rama, la carpeta y el fichero van en la URL: recargar o compartir abre lo
+  mismo y el botón atrás del navegador vuelve a la vista anterior. Si ya no
+  existen, vuelve a la raíz de la rama inicial;
+- un repositorio sin ningún push dice que está vacío y enseña la URL a la que
+  hacer push.
+
+Es **solo lectura**: no ofrece ninguna acción que escriba, y no crea el
+repositorio bare si falta. Solo la ven los administradores; los demás vuelven a
+la portada. Lo sirven dos procedimientos `GET` de `v1.content` que leen
+carpetas y ficheros directamente del repositorio bare, sin clonarlo, y que solo
+funcionan con repositorios alojados.
+
+## Si algo falla
+
+| Síntoma | Causa | Qué hacer |
+| --- | --- | --- |
+| `git push` responde 404 | El slug no existe o el repositorio es externo | Copia la URL de git de su tarjeta en `/admin/content` |
+| El push funciona pero el lector no cambia | Se hizo push a una rama que no es la del ref | Haz push a la rama del ref, o cambia el ref |
+| La tarjeta dice que el ref no existe | Aún no se ha hecho push a esa rama | Haz el primer push |
+| El historial desapareció tras recrear los volúmenes | `hosted_data` se recreó vacío | Vuelve a hacer push desde un clon, o restaura la copia de seguridad |
+| `/admin/git/<slug>` dice que no existe | El slug no es de un repositorio alojado | Vuelve a `/admin/git` |

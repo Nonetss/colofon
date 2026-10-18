@@ -1,0 +1,116 @@
+---
+titulo: Sincronización
+descripcion: Cuándo se descarga cada repositorio, qué hace el backend con el clon, cómo se queda con la última versión válida y dónde se ven los problemas del contenido
+workspaces: [content, api, backend, cron]
+orden: 2
+actualizado: 2026-10-18
+---
+
+El backend guarda **un clon por repositorio** en `.content/<id>/` (en Docker,
+el volumen `content_data`, montado en `/app/.content`) y sirve siempre lo que
+ese clon tiene en su última sincronización buena. No hay fuente de carpeta
+local: para ver un cambio hay que hacer push y sincronizar, o esperar a los
+cinco minutos.
+
+## Cuándo se sincroniza
+
+| Momento | Quién | Espera a que acabe |
+| --- | --- | --- |
+| Al arrancar el backend | Todos los repositorios, sin retrasar el arranque | No |
+| Cada cinco minutos | El job `Sincronizar contenido` (`*/5 * * * *`), declarado en código y sin pantalla | No |
+| Al crearlo, o al cambiarle la URL, el ref o pasarlo a alojado | Ese repositorio | No: la petición responde antes |
+| Al pulsar **Sincronizar** en su tarjeta | Ese repositorio, para quien puede leerlo | Sí, y responde el commit o el error |
+| Con la herramienta `sync` del MCP | Cualquier usuario, para los repositorios que puede leer | Sí |
+| Con un push a un repositorio alojado | Ese repositorio, aunque el push sea a otra rama | No: el push responde antes |
+
+El job y el arranque sincronizan los repositorios **uno detrás de otro**, los
+de la plataforma y los de todos los usuarios. Si uno falla, los demás se
+sincronizan igualmente. Sin ningún repositorio, el job no hace nada.
+
+## Qué hace una sincronización
+
+1. Para un repositorio de usuario, comprueba otra vez que su servidor no
+   resuelve a una dirección interna (ver [Repositorios](repositorios.mdx)). Si
+   usa una credencial guardada, la descifra y compone la URL con ella.
+2. Si la carpeta no tiene un clon de la fuente actual, clona; si lo tiene,
+   hace fetch. Una URL que ahora apunta a otro repositorio sustituye el clon
+   entero. La fuente de un repositorio alojado es su repositorio bare en disco,
+   nunca la URL HTTP de la propia plataforma.
+3. Pone el clon en el commit del ref **exactamente** como está en el remoto:
+   los cambios hechos a mano en el clon se pierden.
+4. Guarda el resultado en la base de datos (cuándo, el commit o el error) y
+   olvida las páginas construidas de ese repositorio, que se vuelven a leer en
+   la siguiente petición.
+
+Cada comando git tiene un minuto de plazo y nunca pide contraseña por
+terminal. Los repositorios de usuario solo se clonan por `https`.
+
+Cada sincronización trae **el historial completo** del ref, y un clon que se
+quedó a medias (de una versión anterior que clonaba solo el último commit) se
+completa. Hace falta porque la fecha «Editado el…» de cada página y entidad
+sale de su último commit, leída en una sola pasada del historial. Si esa
+pasada falla, la sincronización cuenta como buena, se escribe en el log y las
+páginas salen sin fecha hasta la siguiente.
+
+Al sincronizar todos, se borran las carpetas de `.content/` que no son de
+ningún repositorio guardado. Las de `.hosted/` nunca se tocan.
+
+## La carpeta del contenido
+
+El contenido se lee de la carpeta del repositorio que se indicó al registrarlo
+(vacía para la raíz). Todo sale de ahí: las declaraciones, las páginas, los
+diagramas, los estilos, las skills, las imágenes y las fechas; los problemas
+nombran los ficheros relativos a ella. Un `catalog/` en la raíz del
+repositorio, fuera de esa carpeta, no se lee.
+
+Si la carpeta no existe en el commit, no es una carpeta o sale del clon (un
+enlace simbólico que apunta fuera), el repositorio se queda sin contenido y el
+log lo dice una vez, sin la ruta resuelta. La sincronización, el servidor git
+y el navegador de `/admin/git` siguen trabajando con el repositorio entero.
+
+## La última versión válida
+
+El contenido se lee en dos partes, y cada una falla de forma distinta:
+
+| Qué | Si un commit lo rompe |
+| --- | --- |
+| **Declaraciones**: `doc.config.yaml`, `menu.yaml` y cada `_type.yaml` | Se siguen usando las últimas declaraciones válidas de ese repositorio, y cada problema se escribe en el log con el slug, el fichero y el mensaje. |
+| **Contenido**: páginas, entidades, diagramas, estilos y skills | Se comprueba uno a uno: lo roto se avisa y se deja fuera, y lo demás se publica. |
+
+Una entrada de `menu.yaml` que apunta a una página que no existe no invalida
+las declaraciones: se avisa y se deja fuera del menú.
+
+<Callout type="warning" title="La última versión válida vive en memoria">
+El backend recuerda las últimas declaraciones válidas mientras está en marcha.
+Si se reinicia con el commit actual roto, no tiene ninguna que recordar y ese
+repositorio sale sin contenido hasta que un commit lo arregle.
+</Callout>
+
+## Dónde se ven los problemas
+
+| Problema | Dónde se ve |
+| --- | --- |
+| La sincronización falla (git, red, credenciales) | En la tarjeta del repositorio, con el error de git sin credenciales, y en el log. Se sigue sirviendo el último clon. |
+| Declaraciones inválidas | Solo en el log del backend, una vez por cada lista distinta de problemas. |
+| `menu.yaml` con entradas rotas, `styles/`, `diagrams/`, `skills/` y nombres antiguos | En la portada del repositorio, en un aviso que solo ven los administradores. |
+| Una página (cabecera, MDX, enlaces, componentes) | En un aviso sobre la página, con fichero, línea y mensaje, que solo ven los administradores. Los demás solo saben que tiene problemas. |
+| Una entidad inválida | En las páginas que la muestran con `Entities` y en la página de su tipo. |
+
+Los problemas de las páginas, los diagramas, los estilos y las entidades
+también se escriben en el log, una vez por cada commit sincronizado. Para
+comprobarlos antes de hacer push, el sitio «Escribir documentación» explica
+cómo validar el contenido, y la skill `colofon-check` lista lo que la
+plataforma avisaría.
+
+## Si la sincronización falla
+
+| Síntoma | Qué pasa | Qué hacer |
+| --- | --- | --- |
+| La tarjeta muestra un error de git | Se sigue sirviendo lo último que se descargó. El error sale sin credenciales | Revisa la URL, el token y que el ref exista |
+| El remoto rechaza las credenciales | Igual que arriba | Guarda la credencial otra vez con el token nuevo, o edita el repositorio con la URL y el token nuevos |
+| «La credencial guardada no se puede leer: guárdala de nuevo» | El token guardado no se puede descifrar | Vuelve a guardar la credencial |
+| «El host del repositorio resuelve a una dirección interna y no está permitido» | Un repositorio de usuario cuyo nombre resuelve a una dirección interna | Usa un servidor público o añádelo a `TRUSTED_GIT_HOSTS` |
+| El ref no existe en el remoto | La sincronización falla como cualquier otra; en un alojado, pasa hasta el primer push a esa rama | Corrige el ref o haz push a esa rama |
+| Un commit deja `doc.config.yaml`, `menu.yaml` o un `_type.yaml` inválidos | Se sigue sirviendo la última versión válida; el problema está en el log | Corrige el fichero y haz push |
+| Tras reiniciar, un repositorio sale sin contenido | Su commit actual tiene declaraciones inválidas y el backend ya no recuerda las anteriores | Corrige el fichero y haz push |
+| Las páginas salen sin «Editado el…» | No se pudo leer el historial | Mira el log; la siguiente sincronización lo vuelve a intentar |

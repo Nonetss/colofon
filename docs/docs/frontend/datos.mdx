@@ -1,0 +1,101 @@
+---
+titulo: Datos con TanStack Query
+descripcion: Cómo lee y escribe una isla los datos de la API con TanStack Query sobre oRPC, qué claves invalida cada mutación y cómo lee el lector en el servidor
+orden: 4
+workspaces: [frontend, api]
+env_vars: [backend-url]
+actualizado: 2026-10-18
+---
+
+Toda lectura y escritura de una isla pasa por TanStack Query v5, con las
+opciones y las claves que genera oRPC (`orpc`, en `src/lib/orpc.ts`). Un solo
+`QueryClient` (`src/lib/query-client.ts`) lo comparten todas las islas del
+navegador, y lo monta el `QueryProvider` de cada `*-page.tsx`.
+
+```tsx
+const { data, isError, refetch } = useQuery(
+  orpc.v1.secret.list.queryOptions()
+)
+```
+
+## Lecturas
+
+- **Con los hooks de TanStack Query sobre las opciones de oRPC**:
+  `useQuery(orpc.v1.<feature>.<método>.queryOptions({ input }))`, y para listas
+  por páginas `useInfiniteQuery` con `infiniteOptions` y el cursor. Nunca se
+  carga en un `useState` desde un `useEffect`.
+- **Todo lo que afecta a la lectura va en `input`**, así forma parte de la
+  clave: cada combinación de filtros y orden es su propia entrada, y una lista
+  infinita vuelve a la primera página cuando cambian.
+- **Una lectura que espera un valor** (un id elegido) recibe `skipToken` como
+  input hasta que existe, y oRPC la desactiva sola. Nunca un id de relleno con
+  `enabled`.
+- **Lo derivado se calcula en la consulta**: `select` para transformar lo
+  cacheado y `placeholderData: keepPreviousData` para dejar el resultado
+  anterior en pantalla mientras carga el siguiente.
+- **Frescura**: el `staleTime` por defecto es de 60 s; no se cambia por
+  consulta sin motivo, ni se sondea con `refetchInterval`.
+- **Reintentos**: un error 4xx sale enseguida (salvo 408 y 429); cualquier
+  otro se reintenta hasta 3 veces (`shouldRetryQuery`). No se pone `retry` por
+  consulta.
+- No hay error boundaries: cada pantalla pinta su estado `isError` con
+  `refetch` como reintento.
+
+## Escrituras
+
+- **`useOrpcMutation`** (`src/hooks/use-orpc-mutation.ts`) llama al
+  procedimiento, avisa del resultado con un toast e invalida las claves que se
+  le dan cuando sale bien.
+- **`useResourceMutation`** añade un cambio optimista sobre una lista
+  cacheada: lo aplica antes de la respuesta y lo deshace si falla. Se usa en
+  altas y bajas cuya forma se deduce del input (las API keys).
+- Las dos esperan a sus invalidaciones, así que un diálogo que se cierra al
+  terminar ya enseña los datos nuevos.
+- **Cada mutación nombra lo que deja viejo**: la lista y cualquier otra
+  lectura que muestre la entidad cambiada. Se invalida con los prefijos
+  `.key()` de oRPC, que cubren la versión normal y la infinita.
+- Los títulos de los toasts van en español; el mensaje del error es la
+  descripción.
+
+## Claves
+
+- **oRPC es la fábrica de claves**: `.queryKey({ input })` es la clave exacta
+  de una consulta, `.infiniteKey(…)` la de una infinita y `.key()` un prefijo
+  que casa con ambas.
+- Las claves escritas a mano son solo para lo que no pasa por oRPC: el
+  cliente de Better Auth (`authClient.admin.*`), con su fábrica en
+  `src/lib/admin-user-keys.ts`, que invalida toda mutación de usuarios.
+
+## El lector lee en el servidor
+
+Las páginas del lector son el único sitio que lee en el frontmatter de Astro,
+para que el texto llegue en el HTML: `pages/index.astro`,
+`pages/[repo]/[...path].astro` y las rutas de texto (`llms.txt`,
+`[repo]/llms.txt`, `[repo]/[...path]/llm.txt`).
+
+- Leen con `createServerClient(Astro.request)` (`src/lib/orpc-server.ts`): un
+  cliente oRPC que llama directamente al backend en `BACKEND_URL`, manda cada
+  llamada como `QUERY` y solo reenvía las credenciales del visitante (`cookie`
+  y `x-api-key`). Solo lee: el backend rechaza `QUERY` en un procedimiento que
+  escribe.
+- Un `NOT_FOUND` se convierte en la página 404.
+- Lo que la página pasa a una isla entra como prop y se usa como
+  `initialData` de su consulta (el sidebar recibe `v1.docs.nav`), así la isla
+  pinta sin pedir nada y comparte la caché del navegador desde ahí.
+- Las islas nunca usan el cliente del servidor.
+
+## Cambios empujados por el servidor
+
+Los datos que cambian en el servidor con la página abierta llegan por un
+stream `watch*` (con los helpers de `src/lib/event-stream.ts`), que invalida las
+claves afectadas en cada evento. Hoy ninguna página se suscribe a uno; el
+helper y sus tests se quedan para la próxima.
+
+## Si algo falla
+
+| Síntoma | Causa | Qué hacer |
+| --- | --- | --- |
+| Tras guardar, la lista sigue igual hasta recargar | La mutación no invalida esa lectura | Añade su prefijo `.key()` a las claves que invalida la mutación |
+| Una lectura pide datos con un id vacío | Se usó `enabled` con un id de relleno | Pasa `skipToken` como input hasta que el valor exista |
+| Una página del lector responde 404 a una ruta que existe | El backend respondió `NOT_FOUND`: el repositorio es privado de otra persona o la página no está en el último commit sincronizado | Comprueba la sesión y el estado de sincronización del repositorio |
+| Un error de permisos no se reintenta | Es lo esperado: los 4xx salen enseguida | Pinta el `isError` de la consulta |

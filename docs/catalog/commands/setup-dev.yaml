@@ -1,0 +1,6 @@
+command: "bun run setup:dev"
+area: "dev"
+purpose: "Crea el .env de la raíz desde .env.example con secretos aleatorios y el admin inicial"
+page: "desarrollo/primera-vez"
+fuente: package.json
+actualizado: 2026-10-18

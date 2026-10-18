@@ -1,0 +1,89 @@
+---
+titulo: Jobs de colofon
+descripcion: Los jobs que colofon programa hoy, cómo se marca un procedimiento para que un admin lo programe y cómo fija el código su propio horario
+orden: 1
+workspaces: [cron, api, content]
+env_vars: [admin-email]
+actualizado: 2026-10-18
+---
+
+## Los jobs de colofon
+
+Hoy todos los jobs que corren los declara el código; no hay ninguno manual
+salvo que un admin lo cree.
+
+| Job | Procedimiento | Cuándo (UTC) | Qué hace |
+| --- | --- | --- | --- |
+| Sincronizar contenido | `content.sync` | Cada cinco minutos (`*/5 * * * *`) | Trae cada repositorio de contenido de su remoto y deja la rama configurada en los clones del backend; luego borra los clones de los repositorios eliminados. Un repositorio que falla no para a los demás, pero la ejecución acaba como fallida si alguno falló. |
+| Purgar uso de secretos | `secret.purgeUsage` | Cada día a las 03:30 (`30 3 * * *`) | Borra las entradas del registro de uso de secretos de más de 90 días. |
+
+Los dos son `cronProcedure`: ninguna petición HTTP puede ejecutarlos, ni
+siquiera la de un admin. Para sincronizar un repositorio al momento está
+`content.syncRepository` (el botón «Sincronizar» o la herramienta `sync` del
+MCP), que es un procedimiento normal y solo sincroniza lo que quien llama
+puede leer.
+
+Además, el backend lanza una sincronización completa nada más arrancar, antes
+de crear el admin y de arrancar el planificador. Esa primera no pasa por el
+planificador, así que no deja fila en `cron_run`. Qué hace una sincronización
+con cada repositorio está en
+[Repositorios de contenido](../contenido/repositorios.mdx).
+
+<Callout type="warning" title="No los renombres">
+El nombre del procedimiento es la identidad del job (`content.sync`, `secret.purgeUsage`). Renombrarlo o moverlo empieza un job nuevo y parte su historial.
+</Callout>
+
+## Jobs manuales
+
+Un admin los crea con `cron.create`: elige un **handler** (un procedimiento
+marcado como programable, de los que lista `cron.handlers`), le pasa una
+entrada que cumpla el esquema de ese procedimiento y le pone una expresión
+cron. Se pueden editar, pausar, borrar y ejecutar al momento.
+
+Para que un procedimiento aparezca como handler disponible, se marca en sus
+metadatos con `cronMeta`, de `#index`:
+
+```ts
+.meta(openapi({ ... }), cronMeta({ eligible: true }))
+```
+
+No hay que registrarlo en ningún otro sitio. Hoy el único es `plugins.list`.
+
+## Jobs declarados en código
+
+Un procedimiento puede fijar su propio horario, en UTC:
+
+```ts
+.meta(openapi({ ... }), cronMeta({ schedule: "*/5 * * * *", name: "Sincronizar contenido" }))
+```
+
+`name` toma por defecto la clave del procedimiento y `description` la de su
+`openapi()` (o su `summary`).
+
+Al arrancar, el backend sincroniza estas declaraciones con la tabla
+`cron_job` (`syncDeclaredJobs`, en `packages/cron/src/declared.ts`): crea las
+que faltan, actualiza en su sitio las que cambiaron (expresión, nombre,
+descripción o usuario), desactiva las que tienen una expresión inválida y
+borra (de forma lógica) las que ya no están en el código.
+
+Estos jobs:
+
+- se ejecutan con `{}` como entrada, así que el procedimiento no puede tener
+  entrada obligatoria;
+- se ejecutan como el **administrador del seed** (`ADMIN_EMAIL`), así que
+  pueden llamar a procedimientos protegidos o de admin con su autorización
+  normal;
+- son **de solo lectura**: no salen en `cron.handlers`, y la API responde
+  `CONFLICT` si alguien intenta editarlos, pausarlos, borrarlos o
+  ejecutarlos al momento.
+
+Las dos formas, `eligible` y `schedule`, son excluyentes.
+
+## Qué falla
+
+| Síntoma | Causa | Qué hacer |
+| --- | --- | --- |
+| Un job declarado aparece desactivado | Su expresión cron es inválida | Corrige la expresión en el `cronMeta` y reinicia el backend |
+| Un job falla con `UNAUTHORIZED` o `FORBIDDEN` | No existe el admin del seed, o `ADMIN_EMAIL` es un usuario sin rol admin, y el procedimiento no es público ni `cronProcedure` | Crea ese admin (ver [Configuración](../configuracion/index.mdx)); el arranque avisa en los logs |
+| Un job manual deja de encontrar su handler | Se renombró o movió el procedimiento, o se le quitó `eligible` | Ver [Cosas a tener en cuenta](ejecucion.mdx#cosas-a-tener-en-cuenta) |
+| La sincronización acaba como fallida | Al menos un repositorio no se pudo traer | Mira el resultado de cada repositorio en `/admin/content` |

@@ -1,0 +1,6 @@
+command: "bun run check-types"
+area: "validation"
+purpose: "Comprueba los tipos de todos los workspaces con Turbo"
+page: "desarrollo/validacion"
+fuente: package.json
+actualizado: 2026-10-18

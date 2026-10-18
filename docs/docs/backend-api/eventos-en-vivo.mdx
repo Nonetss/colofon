@@ -1,0 +1,57 @@
+---
+titulo: Eventos en vivo
+descripcion: Cómo una feature avisa de sus cambios por SSE en lugar de obligar al cliente a consultar periódicamente, y qué límites tiene
+orden: 7
+workspaces: [api, backend, frontend]
+actualizado: 2026-10-18
+---
+
+Un procedimiento puede devolver un **stream SSE** en lugar de una respuesta:
+el cliente lo abre una vez y recibe un evento cada vez que algo cambia, sin
+consultar cada pocos segundos. Hoy los únicos son los de los crons:
+
+| Procedimiento | Qué avisa |
+| --- | --- |
+| `cron.watchRuns` | Las ejecuciones de un job: `subscribed` al empezar a escuchar, y luego un `run` con el id y el estado nuevo cada vez que una empieza, termina o se salta. |
+| `cron.watchJobs` | Cualquier cambio en la lista de jobs: `subscribed`, y luego `changed` cuando una ejecución cambia o un job se crea, edita, activa, desactiva o borra. |
+
+Ninguna pantalla los usa todavía: se quitaron las páginas de crons cuando el
+frontend pasó a ser el lector, y se conservan para una futura pantalla de
+admin.
+
+## Las reglas
+
+- **Nada se repite.** Los eventos no se guardan: al conectarse, el cliente
+  recibe `subscribed` y vuelve a cargar los datos para no perderse nada.
+- **Se declaran `GET`**, como cualquier lectura, y sin `cronMeta`. La
+  `description` dice qué significa cada evento y que no se repiten.
+- **El handler se suscribe antes de enviar el primer evento**, y termina sin
+  error cuando el cliente se va o el backend se apaga.
+- **Todo está en memoria.** Un único publisher por feature
+  (`packages/api/src/v1/cron/events.ts`), guardado en `globalThis` para que
+  `bun --hot` no lo duplique. Supone una sola instancia del backend: con dos
+  réplicas, un evento solo llega a quien está conectado a la que lo produjo.
+- **Un *ping* cada 5 segundos** mantiene viva la conexión: Bun cierra a los
+  10 segundos una conexión que no envía nada
+  (`apps/backend/src/routers/handler-plugins.ts`).
+
+## Añadir un stream a una feature
+
+1. Crea `<feature>/events.ts` con el publisher, el tipo de cada evento, las
+   funciones que publican (las llama quien produce el cambio, nunca un
+   router), las que suscriben, y un `close<Feature>Events()` que corta todas
+   las suscripciones.
+2. Registra ese cierre en `src/v1/lifecycle.ts`. El backend llama a
+   `closeStreams()` al apagarse, antes de esperar a las peticiones en curso;
+   hoy cierra los streams de crons y las conversaciones del MCP.
+3. En `output.ts`, declara los eventos como una unión discriminada por
+   `type` dentro de `eventIterator(...)`, con `subscribed` primero.
+4. En `handler.ts`, escribe el stream como un `async function*`.
+5. En el frontend, ábrelo con una llamada directa marcada como lectura
+   (`read: true`) y mantenlo con `keepConnected`
+   (`apps/frontend/src/lib/event-stream.ts`), que vuelve a cargar en cada
+   `subscribed` y reconecta con una espera que crece.
+
+<Callout type="warning">
+No lo consumas con `liveOptions` o `streamedOptions` de TanStack Query: esas llamadas salen como `POST` y no como lectura.
+</Callout>

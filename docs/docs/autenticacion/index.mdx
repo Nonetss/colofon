@@ -1,0 +1,85 @@
+---
+titulo: Autenticación y permisos
+descripcion: Cómo se inicia sesión en colofon, qué plugins de Better Auth están activos, los dos niveles de permisos y cómo se crea el primer administrador
+orden: 5
+workspaces: [auth, backend]
+env_vars: [better-auth-secret, better-auth-url, cors-origin, admin-email, admin-password, admin-name, oidc-client-id, oidc-client-secret, oidc-discovery-url]
+open_questions:
+  - ¿Se acepta un token Bearer en la API? La documentación OpenAPI y `private.getPrivateData` lo anuncian y CORS deja pasar la cabecera Authorization, pero Better Auth no tiene activo el plugin `bearer()`
+actualizado: 2026-10-18
+---
+
+La autenticación la hace [Better Auth](https://www.better-auth.com),
+configurado en `packages/auth/src/index.ts`. El backend expone sus rutas bajo
+`/api/auth/*` y solo confía en el origen público (`CORS_ORIGIN`).
+
+## Formas de iniciar sesión
+
+- **Email y contraseña**, siempre disponible (`/login`, `/signup`). El
+  registro está abierto: cualquiera que llegue a `/signup` puede crearse una
+  cuenta.
+- **OIDC genérico** (Keycloak, Authentik, Google o cualquier proveedor
+  compatible), activo solo cuando están definidas `OIDC_CLIENT_ID`,
+  `OIDC_CLIENT_SECRET` y `OIDC_DISCOVERY_URL`. `OIDC_DISCOVERY_URL` es la URL
+  base del emisor, sin `/.well-known/openid-configuration`, que se añade
+  sola. Pide los scopes `openid`, `profile` y `email`. `authConfig.get` dice
+  al frontend si está configurado, para que esconda el botón si no.
+- **API key** en la cabecera `x-api-key`, para agentes y scripts: cuenta
+  como una sesión de su dueño ([API keys](api-keys.mdx)).
+
+## Plugins activos
+
+| Plugin | Qué añade |
+| --- | --- |
+| `admin()` | El rol global `admin` y la gestión de usuarios: crear, borrar, cambiar rol o contraseña, banear y desbanear. Es lo que usa `/admin/users`. |
+| `organization()` | Organizaciones con miembros, invitaciones, equipos y roles con permisos configurables (control de acceso dinámico). Solo por la API: ninguna pantalla las usa todavía. |
+| `apiKey()` | Claves de API, con sesión para cada clave y sin límite de peticiones ([API keys](api-keys.mdx)). |
+| `genericOAuth` | El inicio de sesión OIDC, solo si está configurado. |
+
+`plugins.list` (solo admins) devuelve los plugins instalados.
+
+## Dos niveles de permisos
+
+1. **Rol global.** Un usuario es `admin` o no. Los admins ven `/admin`, la
+   documentación de la API (`/scalar`), gestionan los repositorios de la
+   plataforma en `/admin/content` y pueden llamar a los `adminProcedure`.
+2. **Permisos de organización.** Dentro de una organización, cada miembro
+   tiene un rol (`owner`, `admin`, `member` o uno personalizado) con
+   permisos sobre recursos. Los recursos y acciones se definen en
+   `appStatements`, en `packages/auth/src/permissions.ts`, y los
+   procedimientos los comprueban con `permissionProcedure(recurso, acción)`
+   contra la organización activa de la sesión. Un admin global pasa siempre.
+   Hoy `appStatements` solo tiene un recurso de ejemplo (`prueba`) y ningún
+   procedimiento lo usa.
+
+Lo que puede leer cada usuario en el lector no depende de estos permisos
+sino del dueño de cada repositorio: los de la plataforma los lee cualquiera
+con sesión, y los añadidos en `/me/repositories` solo su dueño (ver
+[Repositorios de contenido](../contenido/repositorios.mdx)).
+
+Los builders de procedimientos están en
+[Quién puede llamar](../backend-api/builders.mdx).
+
+## El primer administrador
+
+Al arrancar, después de aplicar las migraciones, el backend crea un usuario
+con `ADMIN_EMAIL`, `ADMIN_PASSWORD` (al menos 8 caracteres) y `ADMIN_NAME`
+(por defecto «Admin») si todavía no existe uno con ese email, y le da el rol
+`admin` (`packages/db/src/seed/admin.ts`).
+
+- Es idempotente: reiniciar no lo duplica ni le cambia la contraseña ni el
+  rol.
+- Sin `ADMIN_EMAIL` o sin `ADMIN_PASSWORD` no crea nada, y el log dice
+  `admin seed skipped`.
+- Los crons declarados en código se ejecutan como este usuario
+  ([Cómo se ejecuta un job](../crons/ejecucion.mdx)).
+
+## ¿Dónde encuentro…?
+
+| Quiero… | Página |
+| --- | --- |
+| Saber cómo viaja la sesión y qué hace el middleware del frontend | [La sesión](sesiones.mdx) |
+| Crear una API key para un agente o saber qué puede hacer con ella | [API keys](api-keys.mdx) |
+| Entender la protección CSRF y los límites del backend | [CSRF y protecciones](csrf.mdx) |
+| Elegir quién puede llamar a un procedimiento | [Quién puede llamar](../backend-api/builders.mdx) |
+| Configurar las variables de OIDC o del admin | [Configuración](../configuracion/index.mdx) |

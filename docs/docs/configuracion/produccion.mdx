@@ -1,0 +1,52 @@
+---
+titulo: El .env de producción
+descripcion: Qué escribe scripts/bootstrap.sh en el .env de un servidor y por qué nunca se ejecuta dentro de la copia de trabajo
+env_vars: [frontend-port, cors-origin, trusted-git-hosts, admin-name, admin-email, admin-password, postgres-password, database-url, better-auth-secret, secrets-encryption-key, better-auth-url]
+compose_files: [prod]
+commands: [docker-up]
+orden: 2
+actualizado: 2026-10-18
+---
+
+Un despliegue tiene **su propio `.env`**, junto a `compose.prod.yml`, en el
+directorio del servidor. Lo genera `scripts/bootstrap.sh` en el directorio
+desde el que se lanza (ver
+[Docker y despliegue](../docker-despliegue/index.mdx) para la instalación).
+
+## Qué escribe
+
+| Pregunta o genera | Variables |
+| --- | --- |
+| Pregunta el puerto del host y la URL pública | `FRONTEND_PORT` (por defecto `4444`), `CORS_ORIGIN` |
+| Pregunta los servidores git internos de confianza (opcional) | `TRUSTED_GIT_HOSTS`; si se deja vacío, queda una línea comentada de ejemplo |
+| Pregunta las credenciales del admin | `ADMIN_NAME`, `ADMIN_EMAIL`, `ADMIN_PASSWORD` (8 caracteres como mínimo) |
+| Genera secretos aleatorios con `openssl` | `POSTGRES_PASSWORD`, `BETTER_AUTH_SECRET`, `SECRETS_ENCRYPTION_KEY` |
+| Escribe con valores fijos | `DATABASE_URL`, que apunta al servicio `db` del compose |
+
+- Los valores van entre comillas simples para que docker compose los lea tal
+  cual, sin interpolar `$` ni cortar en un `#`. Mantén las comillas si los
+  editas; por eso las respuestas no pueden llevar una comilla simple.
+- El fichero se crea con permisos `600`.
+- `BETTER_AUTH_URL` no se escribe: `compose.prod.yml` le da el valor de
+  `CORS_ORIGIN`. `NODE_ENV=production` también lo pone el compose.
+- Si la URL pública es `http://` y no es `localhost`, el script avisa de que
+  no se podrá iniciar sesión (las cookies son `Secure`) y pide confirmación.
+- Para una base de datos externa, se cambia la línea de `DATABASE_URL` y se
+  quita el servicio `db` de `compose.prod.yml`.
+
+Si en el directorio no está `compose.prod.yml`, el script lo descarga de la
+rama `main` del repositorio (o de la rama o etiqueta de `PB_REF`), y al final
+ofrece arrancar el stack. Las migraciones y el administrador los hace el
+backend al arrancar.
+
+## Nunca dentro de la copia de trabajo
+
+`bootstrap.sh` se niega a ejecutarse si ya hay un `.env` en el directorio
+donde se lanza, antes de preguntar nada. Por eso no debe ejecutarse en tu
+copia de trabajo, donde ya está el `.env` de desarrollo: para probar
+producción en local usa otro directorio, o `bun run docker:up` aquí, que usa
+`compose.yml` con tu `.env` de desarrollo.
+
+<Callout type="warning" title="Copias de seguridad">
+Guarda `SECRETS_ENCRYPTION_KEY` junto con las copias de la base de datos. Sin ella, los secretos y las credenciales git guardados por los usuarios no se pueden descifrar.
+</Callout>

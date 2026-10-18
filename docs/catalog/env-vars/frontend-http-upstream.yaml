@@ -1,0 +1,8 @@
+name: "FRONTEND_HTTP_UPSTREAM"
+area: "gateway"
+required: false
+default: "frontend:4321"
+meaning: "Dónde reenvía el gateway el resto de rutas, al frontend"
+page: "arquitectura/peticion"
+fuente: apps/gateway/routes.caddy
+actualizado: 2026-10-18

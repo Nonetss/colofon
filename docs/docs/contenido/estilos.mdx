@@ -1,0 +1,104 @@
+---
+titulo: Estilos
+descripcion: Cómo junta y limpia la plataforma los ficheros de styles/ de un repositorio, qué quita para que no carguen nada de fuera ni filtren lo que muestra la página, qué límites tienen y dónde se aplican
+workspaces: [content, frontend]
+orden: 7
+actualizado: 2026-10-18
+---
+
+Un repositorio puede reestilar el lector **en sus propias páginas** con la
+carpeta opcional `styles/`. La plataforma junta sus ficheros en una sola hoja,
+la limpia de todo lo que podría cargar algo de fuera, filtrar lo que enseña la
+página o escaparse de la hoja, y la sirve con cada página del repositorio. El
+código está en `packages/content/src/styles/`.
+
+Qué variables y clases se pueden tocar en cada módulo lo explica el sitio
+«Escribir documentación» (`doc-example/`) y la skill `colofon-styles`.
+
+## Los módulos
+
+Cada fichero se llama como un módulo de la plataforma, y se juntan en este
+orden, de modo que uno posterior gana a uno anterior donde coinciden:
+
+| Orden | Fichero | Qué estiliza |
+| --- | --- | --- |
+| 1 | `theme.css` | Los tokens del tema: las variables de `:root` y `.dark`. |
+| 2 | `page.css` | El cuerpo de la página: encabezados, enlaces, negritas, código en línea, anclas e iconos. |
+| 3 | `controls.css` | Los botones de solo icono de la página y su burbuja. |
+| 4 | `code.css` | Los bloques de código. |
+| 5 | `tables.css` | Las tablas del catálogo, las de las páginas y las interactivas. |
+| 6 | `diagrams.css` | Los diagramas y su tarjeta. |
+| 7 | `images.css` | Las imágenes de la página y el visor. |
+| 8 | `callouts.css` | Las alertas y las citas. |
+| 9 | `sections.css` | Las secciones repetidas de una página. |
+
+Todos son opcionales, y un repositorio sin `styles/` no tiene ningún problema.
+Cualquier otra cosa dentro de `styles/` (otro nombre, una subcarpeta, los
+nombres antiguos en español como `tema.css`) se avisa con la lista de módulos y
+se ignora.
+
+## Qué se limpia
+
+Cada módulo se lee como CSS y solo llega a la hoja lo permitido:
+
+- **Reglas `@`**: solo `@media`, `@supports`, `@container`, `@layer`,
+  `@keyframes`, `@font-face`, `@property`, `@scope` y `@starting-style`. Las
+  demás, `@import` incluida, se quitan.
+- **Recursos**: cada `url()` (y cada recurso de `image-set()` o `src()`) tiene
+  que ser un `data:` de imagen o de fuente, o una ruta relativa a una imagen que
+  existe bajo `docs/` del repositorio, que se reescribe a la ruta de imágenes
+  del lector. Cualquier otro (una URL absoluta o sin protocolo, otro esquema,
+  una ruta fuera de `docs/`, un fichero que no existe o que no es una imagen)
+  quita la declaración entera.
+- **Variables CSS**: sus valores se comprueban como cualquier otro, así que
+  una `url()` escondida en una variable también se quita.
+- **Escapes**: los nombres se comparan como los lee el navegador, con los
+  escapes de CSS resueltos (`u\72l(` es `url(`).
+- **Propiedades peligrosas**: `behavior` y `-moz-binding` se quitan.
+- **El carácter `<`** se escribe siempre como el escape `\3c `, para que nada
+  pueda cerrar el elemento `style`.
+- **Comentarios**: no se conservan.
+- **Lo que no se puede leer** se quita: la regla, la declaración o el trozo.
+
+Cada cosa que se quita se avisa con el fichero, la línea y lo que se quitó. El
+resto del módulo y los demás módulos se usan igual.
+
+Con esto, una hoja de un repositorio escrito por cualquiera no puede pedir
+nada a otro servidor: un selector como `input[value^="a"]` con un fondo
+externo, que serviría para filtrar lo que hay en la página, se queda sin su
+`url()`.
+
+## Límites de tamaño
+
+- Un módulo de más de **64 KiB** se deja fuera entero y se avisa.
+- Los módulos se añaden en orden mientras la hoja limpia no pase de
+  **128 KiB**. El que la haría pasar se deja fuera y se avisa, y también todos
+  los que van detrás.
+
+## Dónde se aplica
+
+La hoja se lee y se limpia con las páginas, una vez por commit: tras una
+sincronización que cambia el clon, la siguiente lectura ya trae la nueva, y si
+la sincronización falla se queda la del último commit.
+
+El backend la devuelve con cada página del repositorio y el lector la pone
+**en el HTML de la página**, después de los estilos de la plataforma: donde
+los dos fijan lo mismo con el mismo peso de selector, gana el repositorio,
+incluidos los tokens de `:root` y `.dark`. Así se aplica desde el primer
+pintado y se va con la página al navegar a otro repositorio. La portada
+«Todos», las páginas de otros repositorios y todo lo que está fuera del lector
+nunca la reciben.
+
+Los problemas de `styles/` son problemas del sitio: salen en la portada del
+repositorio para los administradores y en el log, y nunca impiden mostrar una
+página.
+
+## Si algo falla
+
+| Síntoma | Causa | Qué hacer |
+| --- | --- | --- |
+| Un fichero de `styles/` no hace nada | No se llama como un módulo | Usa uno de los nueve nombres |
+| Una fuente o un fondo de otra web no carga | Las URL externas se quitan | Pon la imagen bajo `docs/` y enlázala con una ruta relativa, o usa un `data:` |
+| Un módulo entero no se aplica | Pasa de 64 KiB, o la hoja ya llegó a 128 KiB | Recórtalo; los módulos de después también se quedan fuera |
+| Un estilo no gana al de la plataforma | El selector de la plataforma pesa más | Usa las variables del tema o un selector del mismo peso |
+| Los estilos salen en un repositorio y no en otro | Cada hoja solo se aplica a las páginas de su repositorio | Es lo esperado |

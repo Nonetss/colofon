@@ -1,0 +1,124 @@
+---
+titulo: Catálogo
+descripcion: Cómo lee y valida la plataforma los tipos y las entidades de catalog/, qué tablas pinta el componente Entities y qué páginas genera para el catálogo, cada tipo y cada entidad
+workspaces: [content, api]
+orden: 5
+actualizado: 2026-10-18
+---
+
+El catálogo son los datos estructurados de un repositorio: una carpeta por
+**tipo** bajo `catalog/`, con su declaración `_type.yaml` y un `.yaml` por
+**entidad**. La plataforma no trae ningún tipo propio: los nombres de tipos y
+campos los decide cada repositorio, y ella solo comprueba que lo escrito cumple
+lo declarado. El código está en `packages/content/src/contract/` (lectura y
+esquemas) y `packages/content/src/pages/` (tablas y páginas generadas).
+
+Cómo se diseña un tipo o se escribe una entidad lo explica el sitio «Escribir
+documentación» (`doc-example/`), con la tabla de los tipos de campo.
+
+## Cómo se lee
+
+1. **Los tipos**, con las demás declaraciones. Cada carpeta de `catalog/` es un
+   tipo cuyo id es el nombre de la carpeta (minúsculas, números y guiones). Su
+   `_type.yaml` declara `nombre`, `plural`, los `campos` y, opcionales,
+   `icono`, `descripcion`, `etiqueta` (el campo que hace de nombre de la
+   entidad) y `vista.columnas`. Si alguno es inválido, se sigue usando la
+   última versión válida de **todas** las declaraciones.
+2. **Las entidades**, con las páginas, en la primera lectura tras cada
+   sincronización. Cada `.yaml` de la carpeta del tipo es una entidad cuyo id
+   es el nombre del fichero; los que empiezan por `_` no lo son, y un `.yml` se
+   avisa. Cada una se valida contra el esquema que sale de su tipo.
+
+Una entidad es válida cuando tiene todos los campos sin `opcional: true`,
+ningún campo sin declarar y cada valor de su tipo: un `ref` tiene que ser el id
+de una entidad que existe del tipo al que apunta, y una `ficha` la ruta de una
+página que existe. Sin declararlos, toda entidad acepta `fuente` (de dónde salen
+los datos) y `actualizado` (de qué fecha son).
+
+Una entidad inválida **se deja fuera** de las tablas y de sus páginas, y se
+avisa en cada página que la mostraría. Las demás se publican.
+
+Para que un fallo no arrastre a otros, un tipo con el `_type.yaml` roto sigue
+contando como existente: las referencias a él no se avisan otra vez.
+
+## La tabla de `Entities`
+
+El componente `Entities` se convierte, dentro del árbol de la página, en una
+tabla de las entidades válidas del tipo que nombra `type`:
+
+- **Columnas**: las de `columns`, en ese orden; si no, las de `vista.columnas`
+  del tipo; si no, la `etiqueta` (o `id`) y después todos los campos en el
+  orden en que se declaran. Cada cabecera es la `etiqueta` del campo, o su
+  nombre.
+- **Filas** ordenadas por la etiqueta de cada entidad (su id si no tiene).
+- **La columna de la etiqueta enlaza** a la página de la entidad (su primer
+  campo `ficha`) o, si no tiene, a su página generada.
+- **Cada valor según su tipo**: `booleano` como «Sí» o «No», `ref` como la
+  etiqueta de la entidad enlazada, `ficha` como enlace con el título de la
+  página, `url` y `email` como enlaces, `lista` separada por comas, `objeto`
+  como pares `nombre: valor` separados por punto y coma, y el resto tal cual.
+- **`group`** parte la tabla en un bloque por cada valor de ese campo (en el
+  orden de `valores` si es un `enum`), con un último bloque para las entidades
+  que no lo tienen, y quita esa columna.
+
+Una columna o `group` que el tipo no declara se avisa y se deja fuera. Un
+`type` que no existe se avisa nombrando los tipos que hay, y en lugar de la
+tabla sale un aviso. Un tipo sin entidades válidas pinta una línea que lo dice.
+
+En el lector, esta tabla es como cualquier otra: se ordena, se filtra y se
+exporta (ver [El lector](lector.mdx#tablas)).
+
+## Las páginas generadas
+
+Para cada repositorio con declaraciones válidas, la plataforma genera páginas
+sin ningún MDX detrás, que se leen por las mismas rutas y procedimientos que
+las de `docs/` y tienen su `llm.txt`:
+
+| Ruta | Qué es |
+| --- | --- |
+| `/<slug>/catalog` | «Catálogo»: una fila por tipo con su plural (enlazado), su descripción, cuántas entidades válidas tiene y cuántas tienen página. |
+| `/<slug>/catalog/<tipo>` | La página del tipo: titulada con su `plural`, descrita con su `descripcion` (o «Datos de…»), con su `icono`, y cuyo cuerpo es la tabla de `Entities` del tipo. Avisa de sus entidades inválidas. |
+| `/<slug>/catalog/<tipo>/<id>` | La ficha de una entidad válida. |
+
+La ficha de una entidad lleva, en este orden y dejando fuera lo que esté vacío:
+
+1. una tabla de campo y valor, en el orden en que se declaran, sin `fuente` ni
+   `actualizado`;
+2. la nota «Fuente: …» si tiene `fuente`;
+3. el enlace a su página, si tiene;
+4. **«Páginas que la citan»**: las páginas que la nombran en un campo `ref` de
+   su cabecera o la enlazan con `catalog:<tipo>/<id>`, en orden de lectura;
+5. **«Referencias»**: por cada tipo con un campo `ref` que la nombra, a
+   cualquier profundidad, la tabla de las entidades que lo hacen;
+6. **«Diagramas»**: los diagramas en que sale como caja.
+
+Su título es su etiqueta; su fecha, el `actualizado` de la entidad; y su
+«Editado el…», el último commit de su fichero. Las páginas del catálogo y de
+cada tipo no tienen fecha de edición.
+
+Las páginas de los tipos salen en la navegación donde las ponga el menú (o en
+la sección «Catálogo» sin menú) y se buscan; las de cada entidad no salen en la
+navegación ni en la búsqueda, y no tienen anterior ni siguiente. Un tipo o una
+entidad que no existe, o una entidad inválida, da 404.
+
+`docs/catalog/` está **reservada** para estas páginas: una carpeta con ese
+nombre se avisa y sus páginas no se sirven ni se listan.
+
+## Fuera del lector
+
+- La herramienta `entity` del MCP devuelve la ficha de una entidad en Markdown,
+  la misma que su página generada (ver [El MCP](mcp.mdx)).
+- Los schemas del editor ofrecen los ids de las entidades en cada `ref` y las
+  rutas de las páginas en cada `ficha`, pero nunca los valores de las entidades
+  (ver [Editor](editor.mdx)).
+
+## Si algo falla
+
+| Síntoma | Causa | Qué hacer |
+| --- | --- | --- |
+| Una entidad no sale en la tabla | No cumple su tipo: falta un campo obligatorio, sobra uno o un valor no encaja | Mira el aviso en la página del tipo; nombra el fichero y el campo |
+| Una entidad nueva da 404 | Es inválida, o aún no se ha sincronizado | Igual que arriba, o sincroniza |
+| Un `ref` dice que la entidad no existe | El id está mal escrito o la entidad es de otro tipo | Corrige el id |
+| Un campo nuevo no sale en ninguna entidad | El `_type.yaml` quedó inválido y se sirve el anterior | Mira el log del backend y corrige el `_type.yaml` |
+| Un `.yml` no sale | Las entidades son `.yaml` | Renómbralo |
+| Una carpeta `docs/catalog/` no se ve | La ruta es de las páginas generadas | Mueve esas páginas a otra carpeta |

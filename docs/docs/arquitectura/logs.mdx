@@ -1,0 +1,49 @@
+---
+titulo: Logs
+descripcion: Cómo se ven los logs en desarrollo y en producción, cómo seguir una petición y qué nivel lleva cada error
+workspaces: [logger, backend, frontend]
+env_vars: [log-level, node-env]
+orden: 4
+actualizado: 2026-10-18
+---
+
+Todos los workspaces usan el mismo logger, `@nonete/logger`, sobre pino, y
+todos escriben **solo en la salida estándar**: no se envían a ningún sitio, no
+hay trazas ni una interfaz para consultarlos. En Docker se leen con
+`bun run docker:logs` o `docker compose logs`.
+
+- **En desarrollo** sale formateado y con colores; **en producción**
+  (`NODE_ENV=production`) como JSON, una línea por evento.
+- **Cada línea lleva el campo `service`**: `backend` o `frontend`. Las del
+  contenido llevan además `module: content`.
+- **El nivel mínimo del backend** lo fija `LOG_LEVEL` (por defecto `info`). El
+  frontend registra siempre desde `info` y decide el formato por su propio
+  build (JSON en el compilado, con colores en `astro dev`).
+
+## Seguir una petición
+
+- **Cada petición HTTP** recibe un id generado por el backend
+  (`requestId`); nunca se acepta uno que venga del cliente (`x-request-id`).
+  Todas las líneas de esa petición, también las de los errores de oRPC, lo
+  llevan, así que se puede seguir de principio a fin.
+- **Al entrar** se escribe `request received` con el método y la ruta.
+- **Al terminar** se escribe `request completed` con el estado, lo que tardó
+  (`latencyMs`) y el usuario (`userId`, `email`), si lo hay. Sale como `info`,
+  como `warn` si el estado es 4xx y como `error` si es 5xx.
+
+## Errores de los procedimientos
+
+Se registran una sola vez, con un nivel según la causa:
+
+| Nivel | Cuándo |
+| --- | --- |
+| `warn` | Un rechazo deliberado (un 4xx: permisos, no encontrado, entrada no válida) |
+| `error` | Un fallo del servidor: un 5xx, también `BAD_GATEWAY` cuando falla un remoto, o una excepción inesperada |
+| `info` | El cliente canceló la petición |
+
+## En el frontend
+
+El middleware del frontend escribe un `error` (`session resolution failed`)
+cuando no puede consultar la sesión al backend; es la línea que acompaña a las
+páginas que responden `503` (ver
+[El camino de una petición](peticion.mdx)).

@@ -1,0 +1,37 @@
+---
+titulo: Trampas habituales
+descripcion: Por qué el backend no arranca, no se puede iniciar sesión o un contenedor no encuentra a otro, y cómo arreglarlo
+env_vars: [admin-email, better-auth-secret, secrets-encryption-key, better-auth-url, cors-origin, trusted-git-hosts, postgres-port, backend-url, database-url, gateway-http-port, backend-http-upstream, frontend-http-upstream]
+commands: [setup-dev, postgres-start]
+orden: 1
+actualizado: 2026-10-18
+---
+
+| Síntoma | Causa | Qué hacer |
+| --- | --- | --- |
+| El backend no arranca y el error de validación nombra `ADMIN_EMAIL` | No es un email válido: `admin@localhost` no pasa la validación | Usa un email con dominio; `bun run setup:dev` pone `admin@colofon.local` |
+| El backend no arranca y el error nombra `BETTER_AUTH_SECRET` | Tiene menos de 32 caracteres | Genera uno con `openssl rand -base64 48` |
+| El backend no arranca y el error nombra `SECRETS_ENCRYPTION_KEY` | No es el Base64 de exactamente 32 bytes | Genera una con `openssl rand -base64 32`, o déjala sin definir para apagar los secretos |
+| En un servidor por `http`, el inicio de sesión no hace nada | Las cookies de sesión son `Secure`: sobre `http` plano el navegador solo las guarda en `localhost` | Sirve la web por `https` |
+| El retorno de OIDC va a una dirección que no existe | `BETTER_AUTH_URL` apunta al puerto del backend y no al origen público | Ponle el mismo valor que `CORS_ORIGIN` |
+| Los enlaces de `llms.txt` llevan otro origen o `http` en vez de `https` | El frontend no tiene `CORS_ORIGIN` y usa el de la petición, que detrás de un proxy TLS puede venir mal | Define `CORS_ORIGIN` con la URL pública |
+| Añadir un repositorio de un servidor git de casa se rechaza | Su host resuelve a una dirección privada y no está en `TRUSTED_GIT_HOSTS` | Añade el nombre exacto del host a `TRUSTED_GIT_HOSTS` y reinicia el backend |
+| Los secretos o las credenciales git aparecen desactivados | Falta `SECRETS_ENCRYPTION_KEY` | Defínela (ver [Configuración](index.mdx)) |
+| `bun run postgres:start` falla porque el puerto 5432 está ocupado | Ya hay otro PostgreSQL en la máquina | Pon otro puerto en `POSTGRES_PORT` y el mismo en `DATABASE_URL` |
+
+## Las direcciones entre contenedores no van en el `.env`
+
+Cuando las apps corren en contenedores, los compose sobrescriben las
+direcciones con los nombres de servicio: `BACKEND_URL` del frontend pasa a
+`http://backend:3000` en los tres compose, y `DATABASE_URL` del backend apunta
+al servicio `db` en `compose.dev.yml` y `compose.yml`. `compose.yml` además
+fija `CORS_ORIGIN` y `BETTER_AUTH_URL` a `http://localhost` con su
+`FRONTEND_PORT`. El `.env` de desarrollo siempre usa `localhost`.
+
+## Las variables del gateway
+
+`BACKEND_HTTP_UPSTREAM` y `FRONTEND_HTTP_UPSTREAM` las ponen los compose del
+gateway y de desarrollo (en desarrollo, el frontend es `astro dev` en el
+`:4320`); `GATEWAY_HTTP_PORT` no la pone ninguno. No hace falta tocarlas: sus
+valores por defecto (`backend:3000`, `frontend:4321` y el puerto `80`) son las
+direcciones de los servicios de Docker en producción.

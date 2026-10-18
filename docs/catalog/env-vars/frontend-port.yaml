@@ -1,0 +1,8 @@
+name: "FRONTEND_PORT"
+area: "compose"
+required: false
+default: "4444"
+meaning: "Puerto del host que publica el gateway en compose.yml y compose.prod.yml"
+page: "docker-despliegue/compose-local"
+fuente: .env.example
+actualizado: 2026-10-18

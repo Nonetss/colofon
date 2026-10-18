@@ -1,0 +1,62 @@
+---
+titulo: Desarrollo local
+descripcion: Qué necesitas para trabajar en colofon, dónde queda cada servicio en tu máquina y qué comandos hay
+workspaces: [frontend, backend, gateway, site]
+commands: [dev, dev-local, check-types, check, test]
+actualizado: 2026-10-18
+---
+
+colofon se arranca de dos formas equivalentes: [con Docker](docker.mdx) (`bun run dev`) o [en nativo](nativo.mdx) (`bun run dev:local` con el gateway y PostgreSQL en Docker). Las dos sirven la app en `https://localhost:4321` y usan los mismos puertos, así que solo puede estar una en marcha a la vez.
+
+## Requisitos
+
+- [Bun](https://bun.sh) 1.4.2 (el `packageManager` de la raíz): es runtime, gestor de paquetes y test runner a la vez.
+- Docker con Compose 2.23.1 o superior (`docker compose watch`): para la pila de desarrollo, el gateway en nativo y el PostgreSQL de desarrollo.
+- `openssl`, que usan los scripts que generan secretos.
+- `git`, que el backend en nativo usa para clonar los repositorios de contenido y la suite de `packages/content` para sus tests. Con Docker ya viene en la imagen del backend.
+
+No hace falta ningún PostgreSQL propio: el de desarrollo lo levanta el propio proyecto (ver [Base de datos](base-de-datos.mdx)).
+
+## Dónde está cada cosa
+
+| Dirección | Qué es |
+| --- | --- |
+| `https://localhost:4321` | La app, a través del gateway de desarrollo (HTTPS + HTTP/2). Es el único puerto que se expone y el único origen en el que funciona el inicio de sesión. |
+| `https://localhost:4321/scalar` | La documentación interactiva de la API; requiere sesión de admin. |
+| `:3000` y `:4320` | El backend y `astro dev`, detrás del gateway. Con Docker solo existen en la red interna; en nativo son procesos del host. |
+| `127.0.0.1:5432` | El PostgreSQL de desarrollo en nativo (`bun run postgres:start`), o el puerto de `POSTGRES_PORT`. |
+| `http://localhost:4322/colofon/` | La web pública del proyecto (`apps/site`), solo en nativo (`bun run dev:site` o `bun run dev:local`). |
+
+El gateway manda `/rpc`, `/api`, `/git`, `/mcp`, `/scalar` y `/openapi.json` al backend y el resto a `astro dev`, igual que en producción (`apps/gateway/routes.caddy`, compartido por los dos).
+
+## Los comandos
+
+<Entities type="commands" group="area" />
+
+No hay git hooks: nada se ejecuta solo al hacer commit.
+
+## Contenido de ejemplo
+
+`doc-example/` es un repositorio de contenido real, la guía «Escribir documentación», guardado en el monorepo como *git subtree* de su propio repositorio de GitHub. No es un workspace y la plataforma nunca lo lee del disco: para verlo en tu entorno, regístralo como repositorio de contenido desde `/admin/content` (ver [Repositorios](../contenido/repositorios.mdx)). Sirve para comprobar contra él cualquier cambio en cómo se leen o pintan las páginas, los menús o los diagramas.
+
+Sus cambios se commitean en este repositorio, nunca mezclados con cambios de código en el mismo commit, y se sincronizan con el suyo desde la raíz, con el árbol de trabajo limpio:
+
+```bash
+git subtree pull --prefix=doc-example git@github.com:Nonetss/doc-example.git main --squash  # traer sus commits
+git subtree push --prefix=doc-example git@github.com:Nonetss/doc-example.git main           # publicar los hechos aquí
+```
+
+El `pull` siempre lleva `--squash`, porque el subtree se añadió así.
+
+## ¿Dónde encuentro…?
+
+| Quiero… | Página |
+| --- | --- |
+| Preparar el proyecto la primera vez | [Primera vez](primera-vez.mdx) |
+| Arrancarlo todo en contenedores con recarga en caliente | [Con Docker](docker.mdx) |
+| Arrancar el frontend y el backend como procesos de mi máquina | [En nativo](nativo.mdx) |
+| Que el navegador confíe en `https://localhost:4321` | [Confiar en el certificado local](certificado.mdx) |
+| Saber qué base de datos uso y cómo cambia el esquema | [Base de datos](base-de-datos.mdx) |
+| Comprobar un cambio antes de subirlo | [Validar un cambio](validacion.mdx) |
+| Ver qué variables tiene el `.env` | [Configuración](../configuracion/index.mdx) |
+| Levantar la pila tipo producción desde el código | [Docker y despliegue](../docker-despliegue/index.mdx) |

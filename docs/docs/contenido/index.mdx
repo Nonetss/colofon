@@ -1,7 +1,9 @@
 ---
 titulo: Contenido
-descripcion: Qué es un repositorio de contenido, cómo lo lee la plataforma y dónde está cada parte, de los repositorios al lector y a los agentes
-actualizado: 2026-10-17
+descripcion: Qué es un repositorio de contenido, qué hace la plataforma con él de la sincronización al lector y a los agentes, y en qué parte del código vive cada pieza
+workspaces: [content, api, backend, frontend]
+commands: [icons-catalog]
+actualizado: 2026-10-18
 ---
 
 La documentación no vive en este repositorio: vive en **repositorios de
@@ -13,11 +15,38 @@ proveedores…) y sus campos los decide cada repositorio.
 Cómo se **escribe** un repositorio de contenido (cabeceras, componentes,
 menú, catálogo, diagramas, estilos) lo explica el sitio de ejemplo
 `doc-example/`, «Escribir documentación», que es a la vez un repositorio de
-contenido. Esta sección cuenta lo que la plataforma hace con él. Las reglas
-exactas están en las specs `content-*` de `openspec/specs/` y en
-`packages/content`.
+contenido y se lee publicado en la plataforma como el repositorio
+`doc-example`. Esta sección cuenta lo que la plataforma **hace** con él. Las
+reglas exactas están en las specs `content-*`, `documentation-*`,
+`agent-skills`, `secret-*`, `git-credentials` y `user-content-repositories` de
+`openspec/specs/`, y en `packages/content`.
+
+## El recorrido de un repositorio
+
+1. **Se registra.** Un administrador lo añade para todos en `/admin/content`,
+   o un usuario lo añade para sí mismo en `/me/repositories`. Se guarda en la
+   base de datos con su slug, su URL, su ref y su carpeta del contenido.
+2. **Se sincroniza.** El backend lo clona en `.content/<id>/` y lo pone en el
+   commit del ref: al arrancar, cada cinco minutos, al guardarlo, al pulsar
+   **Sincronizar**, desde el MCP o con un push si lo aloja la propia
+   plataforma.
+3. **Se lee y se valida.** Primero las declaraciones (`doc.config.yaml`,
+   `menu.yaml`, cada `_type.yaml`); si fallan, se sigue sirviendo la última
+   versión válida. Después, en la primera lectura tras la sincronización, las
+   páginas, las entidades, los diagramas, los estilos y las skills, uno a uno:
+   lo roto se avisa y lo demás se publica.
+4. **Se sirve.** Al lector (HTML generado en el servidor), a la búsqueda, a
+   los agentes (`llm.txt`, `llms.txt`, el MCP y las skills) y al editor (los
+   schemas de autocompletado).
+
+Nada del repositorio se ejecuta en ningún paso: el MDX se lee como datos, los
+estilos se limpian y los diagramas los dibuja la plataforma.
 
 ## Forma de un repositorio de contenido
+
+Las rutas son relativas a la **raíz del contenido**: la raíz del repositorio
+git, o la carpeta que se indique al registrarlo (este monorepo se registra con
+la carpeta `docs`).
 
 | Ruta | Qué hay |
 | --- | --- |
@@ -26,9 +55,9 @@ exactas están en las specs `content-*` de `openspec/specs/` y en
 | `catalog/<tipo>/_type.yaml` | El esquema de un tipo: sus campos y cómo se muestra. El nombre de la carpeta es el id del tipo. |
 | `catalog/<tipo>/<id>.yaml` | Una entidad. El nombre del fichero es su id. |
 | `menu.yaml` | Opcional. Los grupos del sidebar y las páginas que muestra cada uno. |
-| `diagrams/<id>.json` | Opcional. Un diagrama, que las páginas muestran con el componente `Diagram`. |
+| `diagrams/<id>.json` o `diagrams/<id>.svg` | Opcional. Un diagrama, que las páginas muestran con el componente `Diagram`. |
 | `styles/` | Opcional. Los estilos propios del repositorio, un fichero por módulo de la plataforma. |
-| `skills/<nombre>/SKILL.md` | Opcional. Skills que la plataforma sirve a los agentes. |
+| `skills/<nombre>/SKILL.md` | Opcional. Skills que la plataforma sirve a los agentes que leen el sitio. |
 
 Dos reglas que se notan a diario:
 
@@ -40,22 +69,57 @@ Dos reglas que se notan a diario:
   avisa con el nombre al que se movió.
 
 Todo `icono` es un nombre de Lucide, el de la versión que dibuja el lector.
-La lista sale de `lucide-react` con `bun run icons:catalog`.
+La lista sale de `lucide-react` con `bun run icons:catalog`, que regenera
+`packages/content/src/contract/lucide-icons.generated.ts`.
+
+## Dónde vive cada pieza
+
+| Pieza | Dónde | Qué hace |
+| --- | --- | --- |
+| Contrato | `packages/content/src/contract/` | Los esquemas de `doc.config.yaml`, `menu.yaml`, `_type.yaml` y las entidades, los slugs reservados, los iconos y las skills de un repositorio. |
+| Páginas | `packages/content/src/pages/` | El MDX al árbol HTML saneado, la navegación, las páginas del catálogo, las referencias y el índice de búsqueda. |
+| Diagramas | `packages/content/src/diagrams/` | La lectura, la validación y el dibujo en SVG de los diagramas, con los 30 tipos maquetados. |
+| Estilos | `packages/content/src/styles/` | La lectura y la limpieza de `styles/`. |
+| Git | `packages/content/src/git/` | El clon y la sincronización, la raíz del contenido, el servidor git de los alojados, las ramas y carpetas de un remoto y las comprobaciones de las URL de usuario. |
+| Schemas del editor | `packages/content/src/editor/` | El catálogo de schemas para VS Code. |
+| API de contenido | `packages/api/src/v1/content/` | Gestión de repositorios, sincronización, el job de cinco minutos, los schemas públicos y el navegador git. |
+| API del lector | `packages/api/src/v1/docs/` | Navegación, páginas, imágenes, búsqueda y el Markdown de `llm.txt`. |
+| MCP | `packages/api/src/v1/mcp/` y `apps/backend/src/routers/mcp.ts` | El servidor MCP de `/mcp` y sus herramientas. |
+| Skills | `packages/api/src/v1/skills/` y `packages/api/skills/` | Las skills servidas y la skill `colofon`. |
+| Secretos y credenciales | `packages/api/src/v1/secret/` y `packages/api/src/v1/git-credential/` | Los secretos de `request` y las credenciales git guardadas. |
+| Servidor git | `apps/backend/src/routers/git.ts` | Monta `/git/*` fuera de oRPC. |
+| Lector y pantallas | `apps/frontend/src/features/docs/`, `features/admin/content`, `features/admin/git`, `features/admin/git-repository`, `features/content-repositories/` y `features/profile/` | El lector, las pantallas de administración y las del perfil. |
+| Rutas para agentes | `apps/frontend/src/pages/llms.txt.ts`, `pages/[repo]/llms.txt.ts`, `pages/[repo]/[...path]/llm.txt.ts` y `pages/.well-known/agent-skills/` | Los índices, el Markdown de cada página y el descubrimiento de skills. |
+
+El gateway manda al backend `/rpc/*`, `/api/*`, `/git/*`, `/mcp`, `/scalar*` y
+`/openapi.json`; todo lo demás, `/.well-known/` y los `llm.txt` incluidos, lo
+sirve el frontend.
 
 ## Cuando algo falla
 
 | Síntoma | Causa | Qué hacer |
 | --- | --- | --- |
-| Un cambio no aparece en el lector | Aún no se ha sincronizado, o el commit dejó el contenido inválido y se sigue sirviendo la última versión válida | Pulsa **Sincronizar** en la tarjeta del repositorio y mira los problemas en la portada del repositorio (solo los ven los administradores) y en el log |
-| Una página sale con un aviso en lugar del texto | Su cuerpo no se pudo leer (`import`, expresiones entre llaves, un componente que no existe) | Corrige la página; el resto del sitio sigue funcionando |
+| Un cambio no aparece en el lector | Aún no se ha sincronizado, o el commit dejó el contenido inválido y se sigue sirviendo la última versión válida | Pulsa **Sincronizar** en la tarjeta del repositorio y mira los problemas en la portada del repositorio (solo los ven los administradores) y en el log. Detalle en [Sincronización](sincronizacion.mdx) |
+| Una página sale con un aviso en lugar del texto | Su cuerpo no se pudo leer (`import`, expresiones entre llaves, un componente que no existe) | Corrige la página; el resto del sitio sigue funcionando. Ver [Páginas](paginas.mdx) |
 | Una página aparece en el grupo «Otros» | `menu.yaml` no la muestra | Añádela a su grupo |
+| El repositorio sale como «Sin contenido todavía» | Aún no ha terminado su primera sincronización, falta `doc.config.yaml`, nunca tuvo declaraciones válidas o la carpeta del contenido no existe en el commit | Mira el error de su tarjeta y el log del backend |
 | El repositorio de otra persona no aparece | Los repositorios de usuario son privados | Es lo esperado: solo los lee su dueño |
 
 ## ¿Dónde encuentro…?
 
 | Quiero… | Página |
 | --- | --- |
-| Añadir un repositorio, sincronizarlo o alojarlo en la plataforma | [Repositorios](repositorios.mdx) |
+| Añadir un repositorio, elegir su rama y su carpeta o guardar un token | [Repositorios](repositorios.mdx) |
+| Saber cuándo se sincroniza, qué pasa si un commit lo rompe y dónde se ven los problemas | [Sincronización](sincronizacion.mdx) |
+| Alojar un repositorio en la propia plataforma y verlo desde `/admin/git` | [Servidor git](servidor-git.mdx) |
+| Saber qué MDX se acepta, cómo se sanea y cómo se forma el sidebar | [Páginas](paginas.mdx) |
+| Saber cómo se validan los tipos y las entidades y qué páginas genera el catálogo | [Catálogo](catalogo.mdx) |
+| Saber cómo se leen, dibujan y validan los diagramas | [Diagramas](diagramas.mdx) |
+| Saber qué se queda y qué se quita de `styles/` | [Estilos](estilos.mdx) |
 | Saber cómo se muestran las páginas, las tablas y la búsqueda | [El lector](lector.mdx) |
-| Dar la documentación a una IA: `llm.txt`, API keys, MCP, skills y secretos | [Agentes de IA](agentes.mdx) |
 | Autocompletado y validación del YAML en el editor | [Editor](editor.mdx) |
+| Dar la documentación a una IA: `llm.txt`, `llms.txt` y API keys | [Agentes de IA](agentes.mdx) |
+| Conectar el MCP y saber qué hace cada herramienta | [El MCP](mcp.mdx) |
+| Saber qué skills se sirven y cómo las instala un agente | [Skills](skills.mdx) |
+| Que un agente llame a un servicio con mis credenciales sin verlas | [Secretos](secretos.mdx) |
+| Cómo se escribe un repositorio de contenido | El sitio «Escribir documentación» (`doc-example/`) |

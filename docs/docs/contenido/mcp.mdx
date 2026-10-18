@@ -1,0 +1,131 @@
+---
+titulo: El MCP
+descripcion: Cómo se conecta un agente al MCP de la documentación en /mcp, con qué credencial, y qué hace cada una de sus herramientas, de buscar y leer a gestionar los repositorios del usuario
+workspaces: [api, backend]
+env_vars: [cors-origin, secrets-encryption-key]
+orden: 11
+actualizado: 2026-10-18
+---
+
+`/mcp` es un servidor MCP llamado `colofon` que deja a cualquier agente usar
+la documentación con herramientas: buscar, leer páginas o una sola sección,
+consultar el catálogo, leer skills, gestionar los repositorios del usuario y,
+si el servidor tiene secretos, llamar a sus servicios. Cada herramienta llama a
+los mismos procedimientos que el lector, **como el usuario de la credencial**,
+así que nunca enseña nada que ese usuario no vería.
+
+## Conectarlo
+
+Con una API key de `/me/api-keys` (ver [Agentes de IA](agentes.mdx)), en
+Claude Code:
+
+```sh
+claude mcp add --transport http colofon https://docs.example.com/mcp --header "x-api-key: <tu API key>"
+```
+
+Al crear la key, la pantalla da también la entrada de `config.toml` para Codex
+y el JSON `mcpServers` para Cursor y la mayoría de clientes, ya con la key y la
+dirección del sitio. Todos salen de `packages/api/src/v1/mcp/setup.ts`, que es
+también de donde `/llms.txt` saca el comando.
+
+## Cómo funciona
+
+- **Streamable HTTP sin estado**: no hay ids de sesión ni nada guardado entre
+  peticiones, y un `GET` o `DELETE` a `/mcp` responde `405`. Sirve la revisión
+  actual del protocolo y los clientes de 2025.
+- **Credencial**: una API key en `x-api-key` o una cookie de sesión. Sin ella,
+  `401` con una línea en español que explica cómo mandar la key. Una petición
+  con un `Origin` que no es el origen público, `403`.
+- **Solo herramientas**: no declara recursos, prompts ni suscripciones. Los
+  administradores y el resto reciben las mismas herramientas.
+- **Instrucciones**: al conectarse, el servidor le dice al agente por dónde
+  empezar (`repositories` o `search`), cómo leer y cuándo sincronizar.
+- **Direcciones completas**: todo enlace de un texto es una dirección completa
+  en el origen público (`CORS_ORIGIN`), que se puede pasar tal cual a `read`.
+- **Errores que se corrigen**: unos argumentos inválidos o un repositorio o
+  página desconocidos devuelven un resultado de error con el motivo, no un
+  error del protocolo, para que el agente corrija la llamada.
+
+Está fuera de oRPC, porque MCP habla su propio JSON-RPC:
+`apps/backend/src/routers/mcp.ts` lo monta y `packages/api/src/v1/mcp/` define
+el servidor y las herramientas.
+
+## Las herramientas
+
+| Herramienta | Qué hace | Escribe |
+| --- | --- | --- |
+| `repositories` | Lista los repositorios que el usuario puede leer, con su slug, título, descripción, si tienen contenido y la dirección de su `llms.txt`. | No |
+| `index` | El índice `llms.txt`, global o de un repositorio. | No |
+| `search` | Busca con las mismas reglas que el navbar, en todos o en un repositorio. Cada resultado trae la ruta para `read`. | No |
+| `read` | Lee una página en Markdown, o solo una sección si la ruta lleva `#sección`. | No |
+| `entity` | Lee la ficha de una entidad del catálogo por repositorio, tipo e id. | No |
+| `skills` | Lista las skills que el usuario ve, con sus ficheros. | No |
+| `skill` | Lee el `SKILL.md` de una skill o uno de sus ficheros. | No |
+| `my_repositories` | Lista los repositorios propios del usuario, con su última sincronización, y sus credenciales git guardadas, sin tokens. | No |
+| `add_repository` | Añade un repositorio del usuario y empieza su primera sincronización. | Sí |
+| `sync` | Sincroniza ya un repositorio que el usuario puede leer y espera a que acabe. | Sí |
+| `secrets` | Solo con secretos: lista los secretos del usuario, sin valores. | No |
+| `request` | Solo con secretos: manda una petición HTTP con los secretos del usuario. | Sí |
+
+Todas menos `add_repository`, `sync` y `request` se declaran de solo lectura e
+idempotentes, y ninguna otra cambia nada guardado.
+
+### `read`
+
+Acepta la ruta como `/<slug>` o `/<slug>/<ruta>`, con o sin el origen delante,
+la barra final, `/llm.txt`, una query o un `#fragmento`, así que valen tal cual
+las rutas que devuelve `search` y los enlaces de `index`. Devuelve una primera
+línea `Location:` con el repositorio, los grupos y secciones de encima, el
+título y la dirección completa, y después el mismo texto que su `llm.txt`.
+
+Con `#sección` (el id de un encabezado de nivel 2 o 3), devuelve solo esa
+sección: el encabezado y todo lo que va hasta el siguiente del mismo nivel o
+superior, así que una sección de nivel 2 trae sus subsecciones. Un fragmento
+que no existe devuelve un error con la lista de secciones de la página.
+
+### `entity`
+
+Devuelve exactamente lo que `read` devolvería para la página generada de la
+entidad: sus campos, su fuente, su página, las páginas que la citan, las
+entidades que la nombran y los diagramas en que sale. Un tipo o un id
+desconocidos devuelven un error que dice qué ruta del catálogo mirar para
+encontrar los válidos.
+
+### `sync`, `my_repositories` y `add_repository`
+
+- **`sync`** sirve a todos los usuarios, para cualquier repositorio de la
+  plataforma o propio. Es lo que debe hacer un agente después de un push a un
+  repositorio externo, o después de `add_repository`, en lugar de esperar a los
+  cinco minutos. Un push a un repositorio alojado ya lo sincroniza solo.
+  Devuelve el commit, la hora y la dirección del repositorio, o el error de git
+  sin credenciales.
+- **`my_repositories`** enseña cada repositorio propio con su URL sin
+  credenciales, su ref, su carpeta, la credencial con la que clona, su última
+  sincronización y su dirección; y cada credencial con su servidor, su usuario
+  y si no se puede leer. Sin `SECRETS_ENCRYPTION_KEY`, dice que no se pueden
+  guardar credenciales.
+- **`add_repository`** crea un repositorio del usuario con `slug`, `name`,
+  `url`, y opcionales `ref` (por defecto `main`), `path` (la carpeta del
+  contenido) y `credential`, el **usuario** de una credencial guardada para el
+  servidor de la URL. **Nunca acepta un token**: una URL con usuario o
+  contraseña devuelve un error que manda a guardar el token como credencial en
+  `/me/repositories`. Se aplican las mismas reglas que en el perfil (ver
+  [Repositorios](repositorios.mdx)), y un slug en uso, una URL rechazada o una
+  credencial que no existe devuelven un error sin guardar nada.
+
+### `secrets` y `request`
+
+Solo existen si el servidor tiene `SECRETS_ENCRYPTION_KEY`; sin ella, el MCP no
+las declara. Cómo se escriben los marcadores y qué se comprueba antes de enviar
+está en [Secretos](secretos.mdx).
+
+## Si algo falla
+
+| Síntoma | Causa | Qué hacer |
+| --- | --- | --- |
+| `401` al conectar | No llega la key en `x-api-key`, o no es válida | Revisa la cabecera y crea otra key si caducó |
+| `405` | El cliente hace `GET` o `DELETE` | Usa un cliente con transporte Streamable HTTP |
+| `403` | La petición trae un `Origin` que no es el del sitio | Conecta desde un cliente MCP |
+| No salen `secrets` ni `request` | El servidor no tiene `SECRETS_ENCRYPTION_KEY` | Es lo esperado; pídeselo al operador |
+| `add_repository` rechaza la URL | Lleva credenciales, es `http://` o apunta a un servidor interno | Quita las credenciales y guarda una credencial en `/me/repositories`; usa una URL `https` pública |
+| `read` dice que la sección no existe | El fragmento no es un encabezado de nivel 2 o 3 | Usa uno de los ids que lista el error |

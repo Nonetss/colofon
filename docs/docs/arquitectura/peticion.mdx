@@ -1,0 +1,94 @@
+---
+titulo: El camino de una petición
+descripcion: Qué hace cada pieza cuando abres una página, qué ruta va a cada app y por qué todo se sirve desde un solo origen
+workspaces: [gateway, frontend, backend]
+env_vars: [backend-url, cors-origin, backend-http-upstream, frontend-http-upstream]
+compose_files: [dev, gateway]
+orden: 1
+actualizado: 2026-10-18
+---
+
+Ejemplo: abres `/admin/users` en el navegador.
+
+1. **El gateway** recibe `GET /admin/users`. Como no es una ruta del backend
+   (tabla de abajo), lo envía al frontend.
+2. **El middleware del frontend** (`apps/frontend/src/middleware.ts`) pregunta
+   al backend por la sesión con la cookie. Sin sesión, redirige a `/login`; si
+   la ruta es de `/admin` y el usuario no es admin, lo manda a `/`.
+3. **Astro renderiza** la página. La parte interactiva es una isla React que
+   solo se monta en el navegador (`client:only="react"`).
+4. **La isla pide los datos** con `orpc.v1.adminUser.list`, que sale como
+   `QUERY /rpc/v1/adminUser/list` hacia el mismo origen: el cliente manda las
+   lecturas como `QUERY` y el resto como `POST`.
+5. **El gateway** ve `/rpc/…` y lo pasa al backend.
+6. **El backend** genera un id de petición, identifica al usuario por la
+   cookie (o por la cabecera `x-api-key`), ejecuta el procedimiento y devuelve
+   el resultado.
+
+Las páginas de documentación (`/`, `/<slug>` y `/<slug>/<ruta>`) se saltan
+los pasos 3 y 4: Astro pide la navegación y la página al backend (`v1.docs`)
+desde el propio servidor, directamente a `BACKEND_URL` y no a través del
+gateway, reenviando solo la cookie y la `x-api-key` del visitante, y envía el
+texto ya renderizado (ver [El lector](../contenido/lector.mdx)).
+
+En desarrollo pasa lo mismo: el gateway de desarrollo sirve
+`https://localhost:4321` (HTTPS con HTTP/2 y una autoridad de certificación
+local) con las mismas rutas, delante de `astro dev`, que escucha en `:4320`.
+Las rutas están en un solo fichero, `apps/gateway/routes.caddy`, que importan
+tanto el `Caddyfile` de producción como el `Caddyfile.dev`, así que desarrollo
+y producción enrutan igual.
+
+## Qué ruta va a cada app
+
+| Ruta | Va a | Qué es |
+| --- | --- | --- |
+| `/rpc/*` | El backend | La API oRPC que usa la web |
+| `/api/auth/*` | El backend | Better Auth: inicio de sesión, sesión, API keys |
+| `/api/*` | El backend | La misma API en forma REST (OpenAPI), para clientes externos con API key |
+| `/api/v1/content/schemas/*` | El backend | Los schemas del editor, públicos y sin caché (ver [Editor](../contenido/editor.mdx)) |
+| `/mcp` | El backend | El MCP de documentación para agentes (ver [Agentes de IA](../contenido/agentes.mdx)) |
+| `/git/*` | El backend | El servidor git de los repositorios que aloja la plataforma (`/git/<slug>.git`) |
+| `/scalar*`, `/openapi.json` | El backend | La referencia de la API, solo para admins |
+| `/health` | El propio gateway | Responde `ok`, para el healthcheck del compose |
+| Todo lo demás | El frontend | Las páginas, el lector, `/admin`, `/me`, los `llms.txt` y las skills servidas |
+
+`routes.caddy` también comprime las respuestas (salvo las de `/git/*`, que ya
+van comprimidas), añade cabeceras de seguridad básicas y quita la cabecera
+`Server`. Los destinos salen de `BACKEND_HTTP_UPSTREAM` y
+`FRONTEND_HTTP_UPSTREAM`, que ponen los compose.
+
+## Lo que no es una página
+
+- **Las rutas de Markdown para agentes** (`/llms.txt`, `/<slug>/llms.txt` y
+  el `llm.txt` de cada página) las sirve el frontend. Sin credencial, el
+  middleware no redirige a `/login`: responde `401` con un texto que explica
+  cómo conseguir una API key. `/llms.txt` y las skills de
+  `/.well-known/agent-skills/` responden también sin credencial, mostrando
+  solo lo público.
+- **El MCP** (`/mcp`) rechaza las peticiones con un `Origin` de otro sitio y
+  responde `401` si no hay ni cookie ni `x-api-key` válida. Sus herramientas
+  llaman a los mismos procedimientos de la API como ese usuario.
+- **El servidor git** (`/git/<slug>.git`) habla el protocolo HTTP de git, fuera
+  de oRPC, y **no autentica**: quien llega al endpoint puede clonar y hacer
+  push a cualquier repositorio alojado (ver
+  [Repositorios](../contenido/repositorios.mdx)).
+
+## Un solo origen
+
+El navegador lo ve todo bajo el mismo dominio, así que no hay peticiones
+cross-origin: no hace falta CORS en el cliente y las cookies de sesión
+funcionan sin trucos. Por eso el gateway es **el único sitio** que decide qué
+app sirve cada ruta.
+
+<Callout type="warning" title="Rutas nuevas">
+Una ruta pública nueva se añade en `apps/gateway/routes.caddy`, nunca publicando el puerto de otro servicio. Si además tiene que funcionar entrando por `astro dev`, se añade al `proxy` de `apps/frontend/astro.config.mjs`.
+</Callout>
+
+## Cuando algo falla
+
+| Síntoma | Causa | Qué hacer |
+| --- | --- | --- |
+| Toda página responde `Service Unavailable` (503) | El middleware del frontend no pudo consultar la sesión: el backend no responde | Mira los logs del backend; `/login` y `/signup` siguen cargando |
+| El inicio de sesión no guarda la cookie | Estás entrando por `:4320` o `:3000` en lugar de por el gateway | Entra siempre por `https://localhost:4321` en desarrollo |
+| `git clone` de un repositorio alojado da 404 en desarrollo | Estás usando `:4320`: el proxy de `astro dev` no reenvía `/git` | Usa la URL del gateway, `https://localhost:4321/git/<slug>.git` |
+| Un agente recibe `401` en `/mcp` o en un `llm.txt` | No envía la cabecera `x-api-key`, o la key no es válida | Crea una API key en `/me/api-keys` y envíala en `x-api-key` |

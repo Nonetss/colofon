@@ -1,0 +1,88 @@
+---
+titulo: Layouts
+descripcion: Qué layout de Astro usa cada ruta según su contexto de navegación, qué opciones tiene cada uno y cómo se monta el lector
+orden: 3
+workspaces: [frontend]
+actualizado: 2026-10-18
+---
+
+El layout se elige por el contexto de navegación de la ruta, y cada ruta tiene
+exactamente un `<main>`. Están en `src/layouts/`.
+
+| Layout | Lo usan | Para qué |
+| --- | --- | --- |
+| `Layout.astro` | login, signup, 404 | El de por defecto: navbar (de invitado o con sesión), contenido y pie. Los demás, salvo `Admin.astro`, se montan sobre él. |
+| `Docs.astro` | `/`, `/<slug>` y sus páginas | El lector de documentación: sidebar del repositorio, la página en una columna de lectura y el índice «En esta página». |
+| `WithSidebar.astro` | `/me`, `/me/api-keys`, `/me/secrets`, `/me/repositories`, `/me/skills` | Una sección con subpáginas fuera de `/admin`, con el sidebar de la sección. |
+| `Admin.astro` | Todo `/admin` | La sección de administración, con su propio sidebar (`AdminShell`, de `features/admin/shell`). |
+| `Detail.astro` | Ninguna ruta hoy | Páginas de detalle cuyo padre no tiene sidebar. |
+
+## `Layout.astro`
+
+- Pinta el navbar con sesión, o el de invitado si no hay sesión o se pide con
+  `guestNavbar`; un slot
+  `head` añade etiquetas al `<head>`.
+- `hideFooter` quita el pie y fija la página a la ventana (login y signup);
+  `footer={false}` lo quita pero la ventana sigue haciendo scroll (el lector).
+- `animateContent` funde el contenido al navegar; `Docs.astro` y
+  `WithSidebar.astro` lo desactivan para animar solo la columna de la página.
+- Registra el service worker en producción (ver [PWA](pwa.mdx)), aplica el
+  tema guardado y el ancho de lectura antes de pintar.
+
+## `Docs.astro`: el lector
+
+- La ventana hace scroll, así que los anclas, el índice y la restauración de
+  scroll del navegador funcionan como en cualquier página.
+- El sidebar (`DocsSidebar`, de `features/docs/sidebar`) es una isla
+  persistente entre navegaciones: conserva sus secciones abiertas y su scroll,
+  también en `sessionStorage` al recargar. Su hueco se reserva antes de
+  hidratarse para que la página no salte.
+- Solo se mueve la columna de la página, con una entrada corta.
+- Monta una vez el visor (`DocLightbox`), que amplía las imágenes y la copia
+  de un diagrama abierta con «Ampliar».
+- Recibe `nav` (la respuesta de `v1.docs.nav`, que el sidebar usa como datos
+  iniciales), `storedScope` (la cookie `docs_scope`), `wide` (la portada
+  «Todos», sin columna de índice) y `styles` (la hoja propia del repositorio,
+  ya limpia, que se aplica después de la de la plataforma y desaparece al
+  salir de él).
+- Un slot `aside` lleva el índice, con «Copiar en Markdown» y «Ancho
+  completo».
+- Siempre muestra el botón «Volver arriba».
+
+El cuerpo de la página son componentes Astro del servidor
+(`features/docs/page`) que pintan el árbol que da la API; las tablas se
+vuelven interactivas con una isla encima (ver [Tablas](tablas.mdx#las-tablas-del-lector)).
+
+## `WithSidebar.astro`
+
+- Es `Layout.astro` sin pie, con el sidebar de la sección
+  (`SectionSidebarChrome`, de `features/app-shell/sidebar`) y la columna de la
+  página.
+- Recibe `title`, `section` (una clave de `sectionSidebars` en `site-nav.ts`;
+  hoy solo `profile`) y `scrollToTop`. Sin sesión, redirige a `/login`.
+- El sidebar se puede plegar a iconos; su estado va en la cookie
+  `sidebar_state`, compartida con el de `/admin`, para que no parpadee al
+  cargar. Por debajo de `md` es un panel que abre el botón de menú del navbar.
+- No pinta `<main>`: la página monta su `*-page.tsx` con `PageShell`.
+
+## `Admin.astro`
+
+- Sin sesión, redirige a `/login`; el middleware manda a `/` a quien no tiene
+  el rol `admin`.
+- `AdminShell` ya rellena la página y ocupa el alto de la ventana, así que
+  cada página de admin usa `PageShell` (o `ResourceOverview`) con
+  `maxWidth="full"` y `padding="none"`.
+
+## `Detail.astro`
+
+- Acepta `title`, `backHref`, `backLabel`, `maxWidth` y `scrollToTop`.
+- Como ya pinta el `<main>` y el enlace de volver, la isla que monta no se
+  envuelve en `PageShell` (habría dos `<main>`): va con `QueryProvider` y pinta
+  `PageHero` directamente.
+
+## Volver arriba
+
+`Layout.astro` y `Admin.astro` montan una vez el botón flotante «Volver
+arriba» (`ScrollToTopButton`). Solo aparece en las páginas que lo piden con
+`scrollToTop` (en `Layout`, `WithSidebar`, `Admin` o `Detail`); el lector lo
+pide siempre.

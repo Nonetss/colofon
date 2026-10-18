@@ -1,0 +1,6 @@
+path: "compose.dev.yml"
+purpose: "Desarrollo con recarga en caliente, con su propia base de datos"
+start: "bun run dev"
+page: "desarrollo/docker"
+fuente: compose.dev.yml
+actualizado: 2026-10-18

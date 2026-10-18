@@ -1,0 +1,57 @@
+---
+titulo: Las imágenes
+descripcion: Cómo se construyen las imágenes del backend, el frontend y el gateway, qué llevan dentro y qué hay que tocar al añadir un workspace
+workspaces: [backend, frontend, gateway, db, api]
+orden: 3
+actualizado: 2026-10-18
+---
+
+## Al añadir un workspace
+
+Un workspace de Bun nuevo necesita, en el mismo cambio:
+
+1. La línea que copia su `package.json` en los cuatro Dockerfiles de las apps: `apps/backend/Dockerfile`, `apps/frontend/Dockerfile` y sus dos `Dockerfile.dev`. Tienen que estar todos los `package.json`, también los de workspaces que la imagen no usa (como `apps/site`), o `bun install --frozen-lockfile` rechaza la instalación.
+2. Su entrada `sync` en `compose.dev.yml`, en cada servicio que lo importe, o sus cambios no llegarán al contenedor ([Desarrollo local](../desarrollo/index.mdx)).
+3. Si es una app con imagen propia, sus rutas en `.github/workflows/docker-build.yml` ([CI](ci.mdx)).
+
+## Backend y frontend
+
+- Se construyen y ejecutan sobre `oven/bun:<versión>-slim`, sin Node. La versión es el `ARG BUN_VERSION`, que se mantiene igual que el `packageManager` del `package.json` raíz.
+- Primero se copian solo los `package.json` de todos los workspaces, `bun.lock` y `bunfig.toml`, y se instalan las dependencias (`bun install --frozen-lockfile`, con caché de Bun); después se copia el resto. Así, cambiar código no invalida la capa de dependencias: solo cambiarlas.
+- Se compilan con `SKIP_ENV_VALIDATION=1`, porque al compilar no hay `.env`.
+- **Las imágenes finales no llevan `node_modules`.** El backend se empaqueta con `tsdown`, que mete los paquetes del workspace y todas las dependencias en `dist/` y arranca con `bun dist/index.mjs` en el puerto 3000; el frontend las deja en `dist/server` (`vite.ssr.noExternal` en `astro.config.mjs`) y arranca `dist/server/entry.mjs` en el puerto 4321.
+
+### Lo que el backend lleva además
+
+| Qué | Para qué |
+| --- | --- |
+| `git` y `ca-certificates` (con `apt-get`) | Clonar y actualizar los repositorios de contenido, también por HTTPS, y servir los que aloja la plataforma |
+| `packages/db/src/migrations` | Las migraciones que aplica al arrancar |
+| `packages/api/skills` | Las skills propias de la plataforma que sirve a los agentes |
+| `doc-example/.agents/skills` | Las skills de escritura `colofon-*`, cuya única copia vive en el repositorio de ejemplo |
+
+Las tres carpetas se leen en tiempo de ejecución con rutas relativas al directorio de trabajo (`/app/apps/backend`), así que la imagen reproduce la estructura del repositorio: `/app/packages/…` y `/app/doc-example/…`. Por la misma razón, los clones de contenido acaban en `/app/.content` y los repositorios alojados en `/app/.hosted`, que es donde los compose montan sus volúmenes.
+
+### `Dockerfile.dev`
+
+Cada app tiene un `Dockerfile.dev` para `compose.dev.yml`, con la misma capa de dependencias y su servidor de desarrollo como `CMD` (`bun run --hot src/index.ts` en el backend). El del backend instala también `git`. Producción y CI nunca los usan.
+
+## Gateway
+
+`caddy:2-alpine` más `routes.caddy`, el `Caddyfile` (producción) y el `Caddyfile.dev` (solo lo usan los compose de desarrollo, para servir `https://localhost:4321` con HTTP/2), sin paso de compilación. El `Caddyfile` escucha en `:{$GATEWAY_HTTP_PORT:80}` solo por HTTP (sin HTTPS automático ni API de administración); el TLS lo pone lo que haya delante.
+
+`routes.caddy` es el cuerpo común de los dos: reparte las rutas entre backend y frontend, responde `/health` para el *healthcheck*, comprime las respuestas salvo las de `/git/*` (ya vienen comprimidas) y añade a todas cabeceras de seguridad básicas, además de quitar la cabecera `Server`:
+
+| Cabecera | Valor |
+| --- | --- |
+| `X-Content-Type-Options` | `nosniff` |
+| `X-Frame-Options` | `SAMEORIGIN` |
+| `Referrer-Policy` | `strict-origin-when-cross-origin` |
+| `Permissions-Policy` | `camera=(), microphone=(), geolocation=(), payment=(), usb=()` |
+
+- HSTS y CSP se dejan fuera a propósito: HSTS corresponde a lo que termine el TLS delante, y una CSP necesita probarse antes en modo `Report-Only` (Astro y Scalar usan scripts en línea).
+- Si una funcionalidad necesita cámara, micrófono, geolocalización, pagos o USB, hay que relajar `Permissions-Policy` en `routes.caddy`.
+
+## Lo que no entra en el contexto
+
+`.dockerignore` deja fuera `node_modules`, `.git`, las salidas de compilación (todo `dist/`, `.astro`, `.turbo`…), los Dockerfiles, `compose.yml`, los `.content` y `.hosted` del desarrollo en nativo, todo `.env*` salvo `.env.example`, y de `doc-example/` todo menos `.agents/skills`.

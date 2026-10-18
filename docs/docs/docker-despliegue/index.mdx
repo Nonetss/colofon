@@ -1,0 +1,43 @@
+---
+titulo: Docker y despliegue
+descripcion: Qué fichero compose usar para cada forma de ejecutar colofon, la regla que comparten todos (solo el gateway publica un puerto) y dónde guardan sus datos
+compose_files: [dev, local, prod, gateway]
+workspaces: [gateway, backend, frontend]
+actualizado: 2026-10-18
+---
+
+Hay cuatro ficheros compose, uno por forma de ejecutar el proyecto:
+
+<Entities type="compose-files" />
+
+Los tres de la raíz levantan las tres imágenes de la aplicación (frontend, backend y gateway) y una PostgreSQL (`postgres:17`, base de datos `colofon`). `apps/gateway/compose.yml` levanta solo el gateway, en la red del host, delante de las apps arrancadas en nativo ([Desarrollo local](../desarrollo/index.mdx)).
+
+## Solo el gateway publica un puerto
+
+En todos los compose, el único servicio con `ports` es el gateway. El frontend, el backend y la base de datos solo se ven dentro de la red del stack (`expose`), y el gateway reparte las peticiones: `/rpc`, `/api`, `/git`, `/mcp`, `/scalar` y `/openapi.json` van al backend, y el resto al frontend ([Arquitectura](../arquitectura/index.mdx)).
+
+- Una ruta pública nueva se añade en `apps/gateway/routes.caddy`, nunca publicando el puerto de otro servicio.
+- La única excepción es de desarrollo: `bun run postgres:start` arranca `db-native` (perfil `native` de `compose.dev.yml`) en `127.0.0.1:5432`, para el backend en nativo.
+
+## Dónde viven los datos
+
+El backend y la base de datos guardan su estado en tres volúmenes con nombre, iguales en `compose.dev.yml`, `compose.yml` y `compose.prod.yml` (cada uno en su propio proyecto de compose):
+
+| Volumen | Montado en | Qué guarda | ¿Se puede perder? |
+| --- | --- | --- | --- |
+| `db_data` | `/var/lib/postgresql/data` del servicio `db` | La base de datos: usuarios, repositorios de contenido, credenciales, secretos, comentarios… | No |
+| `hosted_data` | `/app/.hosted` del backend | Un repositorio git *bare* por cada repositorio de contenido que aloja la plataforma | No: puede ser la única copia de ese contenido |
+| `content_data` | `/app/.content` del backend | Un clon por repositorio de contenido, el que lee la plataforma | Sí: se vuelve a clonar en la siguiente sincronización |
+
+Qué es cada clase de repositorio de contenido: [Repositorios](../contenido/repositorios.mdx).
+
+## ¿Dónde encuentro…?
+
+| Quiero… | Página |
+| --- | --- |
+| Arrancar el stack de desarrollo en Docker o en nativo | [Desarrollo local](../desarrollo/index.mdx) |
+| Probar en local algo parecido a producción | [Producción en local](compose-local.mdx) |
+| Instalar colofon en un servidor y saber qué copiar de seguridad | [Producción](produccion.mdx) |
+| Saber qué llevan las imágenes o qué tocar al añadir un workspace | [Las imágenes](imagenes.mdx) |
+| Saber cuándo se construyen y publican las imágenes y la web del proyecto | [CI](ci.mdx) |
+| Ver qué variables pone cada compose | [Configuración](../configuracion/index.mdx) |

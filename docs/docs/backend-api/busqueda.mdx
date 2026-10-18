@@ -1,0 +1,86 @@
+---
+titulo: Búsquedas de texto libre
+descripcion: Cómo se escribe el procedimiento search de una entidad para un selector, cómo busca el lector en las páginas y cómo se mantiene rápido cuando una tabla crece
+orden: 6
+workspaces: [api, content, db]
+actualizado: 2026-10-18
+---
+
+Cuando una entidad necesita un buscador (para un selector o una sugerencia),
+se añade un procedimiento `search` hermano de su `list`. `list` construye
+filas completas para una página; `search` solo responde qué registros
+coinciden con un texto.
+
+| Parte | Cómo es |
+| --- | --- |
+| Entrada | `query` y `limit`, con `searchQuery()` y `searchLimit()` de `#shared/search`: el texto sin espacios a los lados, mínimo 2 caracteres, 5 resultados por defecto, máximo 20. |
+| Salida | Lo mínimo: el id y los campos que se muestran o con los que se busca. Nada anidado ni calculado. |
+| Consulta | Una sola, con `ilike` y `likePattern(input.query)` (escapa `%`, `_` y `\`), ordenada primero por los que empiezan por el texto, luego alfabéticamente y por id, con `limit`. |
+| Router | El mismo builder que su `list`, para no devolver nada que la lista no enseñaría; `method: "GET"` y las mismas etiquetas. |
+
+Ejemplos que ya existen: `apiKey.search`, `organization.search` y
+`organization.searchTeams`. `adminUser.list` usa el mismo `searchQuery()`
+como filtro opcional de la lista.
+
+## Las páginas de documentación
+
+Las páginas no están en PostgreSQL sino en los clones de los repositorios de
+contenido, así que `docs.search` (la búsqueda del navbar y la herramienta
+`search` del MCP) no sigue las reglas de arriba:
+
+- Busca en memoria con MiniSearch (`packages/content/src/pages/search.ts`):
+  un índice por repositorio, construido en la primera búsqueda y guardado
+  junto al sitio leído, así que una sincronización lo rehace sola.
+- Pesa más el título, luego los encabezados, luego la descripción, los
+  campos de cabecera y la ruta, y por último el cuerpo. Cada palabra tiene
+  que aparecer, por prefijo o, desde cinco letras, con una errata.
+- Un resultado en un encabezado o en el cuerpo trae un extracto y el ancla
+  de su sección.
+- Usa la misma entrada `query` y `limit` (aquí 10 por defecto, máximo 20) y
+  un `repository` opcional; sin él busca en todos los que el usuario puede
+  leer.
+
+No copies las páginas a una tabla para buscarlas con `ilike` o `tsvector`:
+necesitaría una migración y un proceso de sincronización para datos que el
+clon ya tiene.
+
+## Varias tablas
+
+Un `OR` entre columnas de la misma tabla está bien: PostgreSQL combina sus
+índices. Pero si el texto tiene que coincidir con columnas de **varias
+tablas**, no se hace un `OR` a través de un join, porque así no puede usar
+ningún índice. En su lugar:
+
+1. Se construyen los ids que coinciden como una `union` (de
+   `drizzle-orm/pg-core`) de una consulta por columna, cada una con un
+   predicado sobre una sola tabla.
+2. La consulta de fuera filtra con `inArray(tabla.id, ids)` y conserva el
+   resto del `where` (borrados lógicos, dueño).
+3. Si el `list` de la entidad ofrece el mismo filtro de texto, usa el mismo
+   helper, para que los dos devuelvan siempre lo mismo.
+
+Hoy ninguna feature necesita una búsqueda entre tablas.
+
+## Índices de trigramas
+
+Un índice B-tree sirve para `like 'abc%'`, pero no para `ilike '%abc%'`: una
+búsqueda «contiene» lee la tabla entera. Un índice GIN de trigramas
+(`pg_trgm`) sí puede servirla, pero solo compensa en tablas grandes, desde
+decenas de miles de filas o cuando `EXPLAIN ANALYZE` muestra un recorrido
+secuencial de más de unos milisegundos. Hoy no hay ninguno.
+
+La extensión ya está activada: la crea la migración a mano
+`20261014080231_enable_pg_trgm`. Un índice nuevo se declara en el esquema de
+la tabla y su migración la genera siempre una persona, nunca un agente (ver
+[Convenciones](../convenciones/index.mdx)).
+
+Para que el índice se use:
+
+- **La misma expresión.** Un índice sobre una expresión (`ip::text`) solo se
+  usa si la consulta escribe exactamente la misma.
+- **Una tabla por predicado**, como en la `union` de arriba.
+- **Tres caracteres.** Un patrón más corto no tiene ningún trigrama completo
+  y se recorre la tabla. `searchQuery()` acepta dos, que basta mientras el
+  recorrido sea barato.
+- **Coste de escritura.** Cada insert o update de la columna indexada
+  actualiza el índice.

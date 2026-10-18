@@ -1,0 +1,43 @@
+---
+titulo: Primera vez
+descripcion: Los pasos para dejar el proyecto listo para arrancar en una copia de trabajo nueva
+commands: [setup-dev, postgres-start]
+env_vars: [database-url, better-auth-secret, secrets-encryption-key, admin-email, admin-name, admin-password]
+orden: 1
+actualizado: 2026-10-18
+---
+
+1. Instala las dependencias:
+
+   ```bash
+   bun install
+   ```
+
+2. Crea el `.env` de la raíz, el único fichero de entorno que leen todos los workspaces y los compose:
+
+   ```bash
+   bun run setup:dev
+   ```
+
+   Copia `.env.example` y rellena con `openssl` los secretos (`BETTER_AUTH_SECRET` y `SECRETS_ENCRYPTION_KEY`) y el administrador inicial (`ADMIN_EMAIL=admin@colofon.local`, `ADMIN_NAME=Admin` y una `ADMIN_PASSWORD` aleatoria). El fichero se crea con permisos `600`.
+
+3. **Guarda la contraseña del administrador**, que `setup:dev` imprime al terminar: no queda guardada en ningún otro sitio que el `.env`.
+
+4. No hay que tocar `DATABASE_URL`: ya apunta al PostgreSQL de desarrollo que levanta el propio proyecto (ver [Base de datos](base-de-datos.mdx)).
+
+5. Arranca el proyecto [con Docker](docker.mdx) (`bun run dev`, que trae su PostgreSQL) o [en nativo](nativo.mdx) (`bun run postgres:start`, `bun run gateway` y `bun run dev:local`). El backend aplica las migraciones y crea el administrador al arrancar.
+
+6. La primera vez, [confía en el certificado local](certificado.mdx) del gateway y entra en `https://localhost:4321` con el administrador.
+
+El resto de variables (OIDC, `TRUSTED_GIT_HOSTS`…) son opcionales y vienen comentadas en `.env.example`; están en [Configuración](../configuracion/index.mdx).
+
+## Si algo falla
+
+| Síntoma | Causa | Qué hacer |
+| --- | --- | --- |
+| `setup:dev` dice `.env already exists, skipping` | Ya hay un `.env`, que nunca se sobrescribe sin pedirlo | Edítalo a mano, o ejecuta `bash scripts/setup-dev.sh --force` para regenerarlo (pierdes los valores actuales, incluida la clave que cifra los secretos guardados) |
+| `error: openssl is required to generate secrets` | No tienes `openssl` | Instálalo y vuelve a ejecutarlo |
+| Avisa de `per-app env files that are no longer read` | Quedan `.env` en `apps/*` de una versión anterior | Pasa al `.env` de la raíz lo que necesites y bórralos; el script nunca los borra |
+| El backend no arranca y se queja de `ADMIN_EMAIL` | No es un email válido (`admin@localhost` no pasa la validación) | Usa uno con dominio, como `admin@colofon.local` |
+| El backend no arranca y se queja de `ADMIN_PASSWORD` | Tiene menos de 8 caracteres | Usa una más larga |
+| El log dice `admin seed skipped` | Falta `ADMIN_EMAIL` o `ADMIN_PASSWORD` (sin `ADMIN_NAME` se llama `Admin`) | Rellena las dos y reinicia el backend; si el email ya existe, no se toca |

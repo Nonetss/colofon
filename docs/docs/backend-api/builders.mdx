@@ -1,0 +1,55 @@
+---
+titulo: Quién puede llamar
+descripcion: Los seis builders de procedimientos, qué acceso deja pasar cada uno y qué error responde a quien no puede
+orden: 1
+workspaces: [api, auth]
+actualizado: 2026-10-18
+---
+
+Todo procedimiento parte de uno de estos builders, definidos en
+`packages/api/src/index.ts`. El builder decide el acceso y lo deja anotado en
+los metadatos (`access`); nunca se anota a mano.
+
+| Builder | Quién puede llamarlo | Si no puede |
+| --- | --- | --- |
+| `publicProcedure` | Cualquiera, incluso sin sesión. | — |
+| `protectedProcedure` | Cualquier usuario con sesión, también con una API key. | Sin sesión: `UNAUTHORIZED`. |
+| `sessionProcedure` | Un usuario con sesión que actúa **desde el navegador**: la petición no lleva cabecera `x-api-key`. | Sin sesión: `UNAUTHORIZED`; con API key: `FORBIDDEN` («Esta operación solo está disponible desde la web»). |
+| `adminProcedure` | Solo usuarios con el rol global `admin`. | Sin sesión: `UNAUTHORIZED`; sin el rol: `FORBIDDEN`. |
+| `permissionProcedure(recurso, acción)` | Quien tenga ese permiso en su organización activa. Los admins globales pasan siempre. | Sin sesión: `UNAUTHORIZED`; sin organización activa o sin el permiso: `FORBIDDEN`. |
+| `cronProcedure` | Solo el planificador de crons. Ni siquiera un admin puede llamarlo por HTTP. | `FORBIDDEN` («This endpoint is cron-only»). |
+
+## Cómo elegir
+
+- **El que deja pasar a menos gente** que necesite el procedimiento. Una
+  lectura que cualquiera con sesión puede ver es `protectedProcedure`; si
+  además filtra por dueño, eso lo hace el handler (y responde `NOT_FOUND` a
+  lo ajeno, ver [Errores](errores.mdx)).
+- **`sessionProcedure`** es para lo que un agente con la API key de un
+  usuario no debe poder hacer. Better Auth convierte una API key en una
+  sesión que no se distingue de un inicio de sesión, así que lo que decide es
+  la cabecera. Hoy lo usan las escrituras y el historial de uso de
+  `secret`, y `gitCredential.save` y `gitCredential.delete`; sus listas
+  (`secret.list`, `gitCredential.list`) siguen abiertas a las API keys,
+  porque las usa el MCP ([API keys](../autenticacion/api-keys.mdx)).
+- **`permissionProcedure`** comprueba los recursos y acciones de
+  `appStatements` en `packages/auth/src/permissions.ts` contra la
+  organización activa de la sesión (ver
+  [Autenticación y permisos](../autenticacion/index.mdx)). Hoy ningún
+  procedimiento lo usa.
+- **`cronProcedure`** es para lo que solo debe ejecutarse programado:
+  ninguna petición HTTP lleva el contexto del planificador. Lo usan
+  `content.sync` y `secret.purgeUsage` (ver
+  [Jobs de colofon](../crons/jobs.mdx)).
+
+## Qué se comprueba
+
+La regla de acceso de cada builder está probada en
+`packages/api/tests/index.test.ts`, que también comprueba que cada middleware
+es una función con nombre, para que una traza de error lo nombre. Los tests
+de un procedimiento solo vuelven a probar el acceso cuando el handler añade
+una comprobación propia (el dueño de una fila, por ejemplo).
+
+Fuera de oRPC, el backend tiene sus propias comprobaciones en Hono:
+`requireAdmin` protege `/scalar` y `/openapi.json` (sin sesión `401`, sin el
+rol `403`), y `/mcp` exige un usuario antes de servir nada.

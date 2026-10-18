@@ -1,0 +1,48 @@
+---
+titulo: OpenSpec
+descripcion: Cómo se hace un cambio funcional empezando por su especificación, desde la propuesta hasta archivarlo, y cómo se listan y comprueban las specs
+orden: 3
+actualizado: 2026-10-18
+---
+
+Cada capacidad del sistema tiene una spec en `openspec/specs/<capability>/spec.md` con requisitos (`SHALL`) y escenarios (`WHEN` / `THEN`). Es la descripción de referencia de cómo debe comportarse. La lista cambia con cada cambio archivado, así que no se copia en ningún sitio: se pide al CLI.
+
+```bash
+openspec list --specs          # cada capacidad con su número de requisitos
+openspec show <capability>     # una spec entera
+```
+
+Los nombres siguen el área: `content-*` para los repositorios de contenido y su contrato, `documentation-*` para el lector, la búsqueda, el MCP y `llm.txt`, `frontend-*`, `docker-*`, `cron-*`…
+
+## El ciclo de un cambio
+
+1. **Proponer:** `openspec new change <nombre>` crea la carpeta del cambio en `openspec/changes/<nombre>/`.
+2. **Escribir los artefactos:** `proposal.md` (por qué y qué cambia), los deltas de specs en `specs/` (requisitos añadidos, modificados o eliminados), `design.md` (cómo, con decisiones y riesgos) y `tasks.md` (la lista de tareas).
+3. **Implementar** las tareas, marcándolas como hechas.
+4. **Sincronizar** los deltas con las specs principales.
+5. **Archivar** el cambio en `openspec/changes/archive/<fecha>-<nombre>/`.
+
+`openspec status --change <nombre> --json` dice en qué artefacto está un cambio, y `openspec instructions <artefacto> --change <nombre> --json` da las instrucciones para escribirlo. `openspec/config.yaml` fija el esquema `spec-driven` y el contexto del proyecto que se usa al generar los artefactos, y dos reglas para `tasks.md`:
+
+- Todo grupo de tareas que añade o cambia código con reglas (un procedimiento, un helper, un hook, un componente compartido con lógica, un módulo de `packages/cron`) incluye las tareas de sus tests unitarios; un arreglo incluye un test que falla sin él.
+- El último grupo ejecuta `check-types`, Biome y `bun run test` desde la raíz.
+
+Los cambios ya archivados (`openspec/changes/archive/`) son el historial de por qué el sistema es como es.
+
+## Con Claude Code
+
+| Comando | Qué hace |
+| --- | --- |
+| `/opsx:explore` | Pensar un cambio antes de proponerlo |
+| `/opsx:propose` | Crear el cambio con todos sus artefactos |
+| `/opsx:apply` | Implementar sus tareas |
+| `/opsx:sync` | Pasar los deltas a las specs principales sin archivar |
+| `/opsx:archive` | Archivar el cambio terminado |
+
+## Comprobar las specs
+
+```bash
+openspec validate --specs --strict
+```
+
+Comprueba que cada spec está bien formada, en modo estricto. Con `--all` valida también los cambios abiertos.

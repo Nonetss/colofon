@@ -1,40 +1,78 @@
 ---
 titulo: El lector
-descripcion: Qué rutas sirve el lector de documentación, cómo se navega y se busca en él y cómo se comportan las tablas de las páginas
-orden: 2
-actualizado: 2026-10-17
+descripcion: Qué rutas sirve el lector de documentación, cómo se navega y se busca en él, qué enseña cada página y cómo se comportan sus tablas y diagramas
+workspaces: [frontend, api, content]
+orden: 8
+actualizado: 2026-10-18
 ---
 
 El lector es la parte de `apps/frontend` que muestra las páginas de los
-repositorios de contenido. Solo lo ven los usuarios con sesión (o una API key
-en `x-api-key`), y el HTML llega ya renderizado desde el servidor.
+repositorios de contenido (`apps/frontend/src/features/docs/`). Solo lo ven los
+usuarios con sesión (o una API key en `x-api-key`), y el HTML llega ya
+renderizado desde el servidor: el texto, los encabezados y los enlaces están en
+la respuesta, sin esperar a JavaScript. Los datos salen de los procedimientos
+`v1.docs` (navegación, página, imagen y búsqueda), todos `GET`.
 
 ## Rutas
 
 | Ruta | Qué es |
 | --- | --- |
-| `/` | La portada «Todos»: cada repositorio con su descripción y las entradas de primer nivel. Si el selector está en un solo repositorio que existe, redirige a `/<slug>`. |
+| `/` | La portada «Todos»: cada repositorio con su descripción y sus entradas de primer nivel (los grupos de su `menu.yaml`, o sus secciones). Si el selector está en un solo repositorio que existe, redirige a `/<slug>`. Sin ningún repositorio, dice que aún no hay documentación y, a los administradores, enlaza a `/admin/content`. |
 | `/<slug>` | La portada del repositorio (su `docs/index.mdx`, o la lista de sus secciones si no la tiene). |
-| `/<slug>/<ruta>` | Una página: `docs/red/dns.mdx` es `/<slug>/red/dns`. Una sección enseña su `index.mdx`. |
-| `/<slug>/catalog`, `/<slug>/catalog/<tipo>`, `/<slug>/catalog/<tipo>/<id>` | Las páginas del catálogo que genera la plataforma: los tipos, la tabla de un tipo y la ficha de cada entidad (sus campos, las páginas que la citan y los diagramas en que sale). |
+| `/<slug>/<ruta>` | Una página: `docs/red/dns.mdx` es `/<slug>/red/dns`. Una sección enseña su `index.mdx`, o la lista de sus páginas si no lo tiene. |
+| `/<slug>/catalog`, `/<slug>/catalog/<tipo>`, `/<slug>/catalog/<tipo>/<id>` | Las páginas del catálogo que genera la plataforma: los tipos, la tabla de un tipo y la ficha de cada entidad (ver [Catálogo](catalogo.mdx)). |
+| `/<slug>/<ruta>/llm.txt` | La misma página en Markdown, para agentes (ver [Agentes de IA](agentes.mdx)). |
+| `/api/v1/docs/<slug>/files/<ruta>` | Las imágenes de `docs/` que enlazan las páginas. |
 
 Un repositorio o una página que no existen, o que son privados de otra
 persona, muestran la página 404.
 
 ## Navegación
 
-- **El sidebar** sigue `menu.yaml`: cada grupo con sus páginas. Sin él, son las
+- **El sidebar** empieza con «Inicio» y sigue `menu.yaml`: cada grupo como un
+  encabezado con su icono, y debajo sus páginas y secciones. Sin menú, son las
   carpetas de `docs/` y al final el catálogo. Lo que el menú no muestra cae en
-  un grupo «Otros» y se avisa.
+  un grupo «Otros» y se avisa. Cómo se forma está en [Páginas](paginas.mdx#la-navegación).
+- Cada sección se pliega con su flecha, y su título enlaza a su página. Las
+  secciones que llevan a la página actual se abren solas, y la página se
+  marca. Una página que no está en la navegación (la de una entidad, por
+  ejemplo) marca la más cercana por encima.
+- Un repositorio que aún no tiene contenido legible sale como «Sin contenido
+  todavía».
 - **El selector de repositorio** va arriba del sidebar y solo existe si hay dos
   o más. «Todos» muestra cada repositorio como un grupo; uno solo, sus
   secciones. La elección se recuerda en la cookie `docs_scope`, sigue a la
   página que abres y acota también la búsqueda.
-- Cada página lleva sus migas, los campos de la cabecera, la anterior y la
-  siguiente, y en pantallas anchas el índice «En esta página». En el móvil el
-  sidebar se abre desde el navbar.
+- El sidebar se mantiene al navegar: conserva su scroll y lo que está abierto,
+  y solo se desplaza a la página actual si no está a la vista. En el móvil se
+  abre desde el botón de menú del navbar y se cierra al navegar, al tocar fuera
+  o con Escape.
 - Los estilos propios del repositorio (`styles/`) se aplican solo a sus
-  páginas, después de los de la plataforma.
+  páginas, después de los de la plataforma (ver [Estilos](estilos.mdx)).
+
+## Qué enseña una página
+
+- **Cabecera**: migas (el repositorio, los grupos como texto y las secciones
+  como enlaces), icono, título, descripción y fecha.
+- **La fecha**: su `actualizado` como «Datos del…», marcada «Revisar» si tiene
+  más de seis meses; si no tiene, la del último commit como «Editado el…», sin
+  marca; si no tiene ninguna, nada.
+- **Los campos de cabecera del sitio**, como una lista con el nombre de cada
+  campo (su `etiqueta` si la tiene); una `ficha` enlaza a la página y un `ref`
+  a la entidad.
+- **El cuerpo**, con los bloques de código con su lenguaje y un botón «Copiar»,
+  los enlaces externos en otra pestaña y un ancla en cada encabezado al pasar
+  por encima.
+- **Una sección** lista después sus páginas y subsecciones, con sus
+  descripciones.
+- **Al final**, la página anterior y la siguiente.
+
+Desde pantallas anchas hay, al lado, la columna **«En esta página»** con los
+encabezados de nivel 2 y 3 (si hay más de dos), que marca la sección que se
+está leyendo y termina con «Volver arriba». Encima tiene **«Copiar en
+Markdown»**, que copia el mismo texto que sirve su `llm.txt`, y un botón para
+pasar de ancho de lectura a ancho completo. Cada página anuncia su `llm.txt` en
+el `head` del HTML como alternativa en Markdown.
 
 ## Búsqueda
 
@@ -44,42 +82,66 @@ cabecera, los títulos de grupos y secciones, los encabezados y el cuerpo:
 
 - ignora mayúsculas y acentos;
 - cada palabra tiene que aparecer en algún sitio de la página;
-- una palabra a medio escribir coincide como prefijo, y una errata en una
-  palabra larga todavía encuentra la página; en las cortas no se aproxima;
-- el título pesa más que un encabezado, y este más que el cuerpo;
+- una palabra a medio escribir coincide como prefijo, y una palabra de cinco
+  letras o más encuentra también las que se diferencian en una letra (una
+  errata); las más cortas no se aproximan;
+- el título pesa más que un encabezado, y este más que la descripción y los
+  campos, que pesan más que el cuerpo; una palabra exacta pesa más que un
+  prefijo, y un prefijo más que una errata;
 - si la coincidencia está en un encabezado o en el cuerpo, el resultado enseña
-  un extracto y abre la página en esa sección.
+  un extracto con las palabras resaltadas y abre la página en esa sección.
 
-Las páginas generadas de cada tipo del catálogo se buscan; las de cada entidad,
-no.
+Cada resultado lleva su rastro («Red › DNS», con el repositorio delante en
+«Todos»). Las páginas generadas de cada tipo del catálogo se buscan; las de
+cada entidad, no. La misma búsqueda la usan `v1.docs.search` (10 resultados
+por defecto, 20 como mucho) y la herramienta `search` del MCP.
 
 ## Tablas
 
-Las tablas de las páginas (menos las de clave y valor) se ordenan pulsando su
-cabecera, cada columna según lo que lleva (IP, fechas, tamaños, versiones,
-números o texto), y con Mayús por varias columnas a la vez. Desde 2 filas
-tienen encima:
+Las tablas de las páginas (menos las de clave y valor, con la primera celda de
+la cabecera vacía) siguen saliendo del servidor y, en el navegador, se vuelven
+interactivas. Caben en la columna partiendo el texto, y solo se desplazan de
+lado dentro de su marco si ni así caben.
+
+Se ordenan pulsando su cabecera (ascendente, descendente y vuelta al orden
+escrito), cada columna según lo que lleva (IP, fechas, tamaños, versiones,
+números o texto), y con Mayús por varias columnas a la vez. Las celdas vacías
+(`—`, `-`, `n/a`, `?`) van siempre al final. Desde 2 filas tienen encima:
 
 - una caja que filtra (`columna:valor` mira solo esa columna), un filtro por
-  valores en cada cabecera y chips con los filtros activos;
-- un menú de columnas, «Copiar en Markdown», «Descargar CSV», «Copiar enlace a
-  esta vista» (el orden y los filtros van en la URL, `?tabla=…`) y pantalla
-  completa.
+  valores en cada cabecera, chips con los filtros activos y «Quitar filtros»;
+- un menú de columnas, «Copiar en Markdown», «Descargar CSV» (con `;` y BOM,
+  para Excel), «Copiar enlace a esta vista» y pantalla completa.
 
-Con más de 50 filas se paginan de 25 en 25.
+Con más de 50 filas se paginan de 25 en 25 (o 50, 100 o todas). El enlace a
+una vista lleva en la URL la tabla (`?tabla=…`), el orden, los filtros, las
+columnas ocultas y la página, y al abrirlo se restaura y se baja hasta ella.
 
 ## Diagramas
 
 Al pasar por una caja, una flecha, una insignia o el título de una zona, se
 ilumina lo que toca y una tarjeta dice qué es y cómo se conecta; en el móvil,
-el primer toque la muestra y el segundo sigue el enlace. Para lectores de
-pantalla y para `llm.txt`, el diagrama queda como texto: su título y
-descripción, sus zonas y una línea por conexión.
+el primer toque la muestra y el segundo sigue el enlace. «Ampliar» lo abre en
+el visor. Para lectores de pantalla y para `llm.txt`, el diagrama queda como
+texto: su título y descripción, sus zonas y una línea por conexión. Detalle en
+[Diagramas](diagramas.mdx).
 
 ## Problemas de una página
 
 Una página con problemas se muestra igualmente con lo que se pudo leer. Solo
 los administradores ven la lista (fichero, línea y mensaje) en un aviso sobre
-el cuerpo. Si el cuerpo no se pudo leer, se enseña la cabecera y un aviso de
-que no se puede mostrar. Los problemas también se escriben en el log una vez
-por cada commit sincronizado.
+el cuerpo; el resto solo recibe que la página tiene problemas, sin detalle. Si
+el cuerpo no se pudo leer, se enseña la cabecera y un aviso de que no se puede
+mostrar. Los problemas del sitio (menú, estilos, diagramas, skills) salen en la
+portada del repositorio. También se escriben en el log una vez por cada commit
+sincronizado.
+
+## Si algo falla
+
+| Síntoma | Causa | Qué hacer |
+| --- | --- | --- |
+| El lector manda al login | No hay sesión | Inicia sesión; un agente usa una API key en `x-api-key` |
+| No sale el selector de repositorio | Solo hay un repositorio visible | Es lo esperado |
+| La búsqueda no encuentra una página recién subida | Aún no se ha sincronizado | Sincroniza el repositorio |
+| No veo los problemas de una página | Solo los ven los administradores | Pide a un administrador que la abra, o mira el log |
+| La columna «En esta página» no sale | La pantalla es estrecha, o la página tiene dos encabezados o menos | Es lo esperado |

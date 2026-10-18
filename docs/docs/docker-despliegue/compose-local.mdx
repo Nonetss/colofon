@@ -1,0 +1,47 @@
+---
+titulo: Producción en local
+descripcion: Qué levanta compose.yml, en qué orden arranca cada servicio y qué variables sobrescribe, para probar en local un stack parecido a producción construido desde tu copia de trabajo
+compose_files: [local]
+commands: [docker-up, docker-build, docker-down, docker-logs]
+env_vars: [frontend-port, postgres-password, better-auth-url, cors-origin, database-url, backend-url, node-env]
+orden: 1
+actualizado: 2026-10-18
+---
+
+```bash
+bun run docker:up     # construye las imágenes desde tu copia y arranca el stack
+bun run docker:logs   # sigue los logs de todos los servicios
+bun run docker:down   # para y elimina los contenedores (los volúmenes se quedan)
+```
+
+`docker:build` solo construye las imágenes. La web queda en `http://localhost:${FRONTEND_PORT:-4444}` (proyecto de compose `colofon`). Las imágenes son las mismas que publica el [CI](ci.mdx), construidas con los Dockerfiles de producción ([Las imágenes](imagenes.mdx)).
+
+## Los servicios
+
+| Servicio | Contenedor | Puertos | Notas |
+| --- | --- | --- | --- |
+| `gateway` | `colofon-gateway` | publica `${FRONTEND_PORT:-4444}` → 80 | El único que publica un puerto. Espera a que el frontend esté sano. |
+| `frontend` | `colofon-frontend` | interno 4321 | Astro en SSR, solo accesible a través del gateway. Espera al backend. |
+| `backend` | `colofon-backend` | interno 3000 | Espera a la base de datos. Monta `content_data` en `/app/.content` y `hosted_data` en `/app/.hosted`. |
+| `db` | `colofon-db` | ninguno | `postgres:17`, base de datos `colofon`, contraseña `${POSTGRES_PASSWORD:-postgres}`, volumen `db_data`. |
+
+Cada servicio tiene su *healthcheck* (el gateway responde en `/health`, el frontend en `/login`, el backend en `/` y la base de datos con `pg_isready`), y arrancan en orden: base de datos → backend → frontend → gateway. Al arrancar, el backend aplica las migraciones pendientes y crea el administrador si el `.env` trae `ADMIN_*`.
+
+## Las variables
+
+Todas las apps leen el `.env` de la raíz (si no existe, compose no se queja, pero el backend no arranca: le faltan las variables obligatorias), y el propio compose sobrescribe lo que cambia dentro de la red de Docker:
+
+- `NODE_ENV=production` en el frontend y el backend, así que los logs salen como JSON.
+- En el frontend, `BACKEND_URL=http://backend:3000` y `CORS_ORIGIN=http://localhost:${FRONTEND_PORT:-4444}`, el origen público con el que construye los enlaces completos de `llms.txt` y de cada `llm.txt`.
+- En el backend, `DATABASE_URL` apunta al servicio `db`, y `BETTER_AUTH_URL` y `CORS_ORIGIN` a `http://localhost:${FRONTEND_PORT:-4444}`.
+
+Lo demás (`BETTER_AUTH_SECRET`, `ADMIN_*`, `SECRETS_ENCRYPTION_KEY`, `TRUSTED_GIT_HOSTS`, OIDC…) sale del `.env` sin cambios ([Configuración](../configuracion/index.mdx)).
+
+## Cuando algo falla
+
+| Síntoma | Causa | Qué hacer |
+| --- | --- | --- |
+| El backend no llega a estar sano y el gateway no arranca | Falta el `.env` o una variable obligatoria (`BETTER_AUTH_SECRET` de al menos 32 caracteres, por ejemplo) | Mira `bun run docker:logs`; crea el `.env` con `bun run setup:dev` o copiando `.env.example` |
+| El puerto 4444 ya está en uso | Otro proceso lo ocupa | Pon otro `FRONTEND_PORT` en el `.env` |
+| No se puede iniciar sesión desde otra máquina | Las cookies de sesión son `Secure` y sobre `http` solo valen en `localhost` | Pruébalo desde el propio equipo, o pon el stack detrás de https |
+| Un repositorio de una red interna se rechaza al añadirlo | Su host resuelve a una dirección privada | Añade el host a `TRUSTED_GIT_HOSTS` en el `.env` y reinicia el backend |

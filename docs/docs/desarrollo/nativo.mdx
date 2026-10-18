@@ -1,0 +1,39 @@
+---
+titulo: En nativo
+descripcion: Arrancar el frontend y el backend como procesos de tu máquina, con el gateway y PostgreSQL en Docker
+commands: [postgres-start, postgres-stop, gateway, dev-local, dev-frontend, dev-backend, dev-site]
+compose_files: [gateway, dev]
+workspaces: [frontend, backend, site, gateway]
+env_vars: [database-url, postgres-port]
+orden: 3
+actualizado: 2026-10-18
+---
+
+```bash
+bun run postgres:start  # solo PostgreSQL, en Docker, en 127.0.0.1:5432
+bun run gateway         # el gateway de desarrollo: https://localhost:4321
+bun run dev:local       # frontend, backend y la web del proyecto con Turbo
+```
+
+- **El gateway es obligatorio**: es el único que sirve `https://localhost:4321`. `astro dev` escucha en `:4320` y el inicio de sesión solo funciona en el origen del gateway. Corre en Docker con la red del host (`apps/gateway/compose.yml`) y reenvía al backend en `localhost:3000` y a `astro dev` en `localhost:4320`.
+- **PostgreSQL** es el servicio `db-native` de `compose.dev.yml` (perfil `native`), publicado solo en `127.0.0.1`, en el puerto 5432 o en `POSTGRES_PORT`. Se para con `bun run postgres:stop`, que conserva los datos (ver [Base de datos](base-de-datos.mdx)).
+- **`dev:local` es `turbo watch dev`**: arranca todo workspace con script `dev`, que hoy son el frontend (`:4320`), el backend (`:3000`, con `bun --hot`) y la web del proyecto (`apps/site`, en `:4322`). Antes construye las dependencias (`^build`).
+- **Una sola app**: `bun run dev:frontend`, `bun run dev:backend` o `bun run dev:site`.
+- **Los repositorios de contenido** se clonan en `.content/` y los alojados viven en `.hosted/`, las dos en la raíz del repositorio e ignoradas por git. Necesitas `git` instalado en tu máquina.
+
+No puedes tener a la vez el modo nativo y el [de Docker](docker.mdx): usan los mismos puertos.
+
+## La web del proyecto
+
+`apps/site` es la web pública estática de colofon (portada y documentación en inglés y español), que se publica en GitHub Pages. No forma parte de la app ni pasa por el gateway: `bun run dev:site` la sirve sola en `http://localhost:4322/colofon/`, con la ruta base de su publicación. El modo Docker no la arranca.
+
+## Si algo falla
+
+| Síntoma | Causa | Qué hacer |
+| --- | --- | --- |
+| La web no carga en `https://localhost:4321` | Sin `bun run gateway` nadie sirve `:4321` | Arranca el gateway además de `bun run dev:local` |
+| El inicio de sesión no funciona en `:4320` o `:3000` | Las cookies son `Secure` y el origen de confianza es el del gateway | Entra siempre por `https://localhost:4321` |
+| El backend no conecta con la base de datos | PostgreSQL no está en marcha, o `DATABASE_URL` no usa el puerto de `POSTGRES_PORT` | `bun run postgres:start`, y si cambiaste `POSTGRES_PORT`, cambia también el puerto de `DATABASE_URL` |
+| `postgres:start` falla porque el 5432 está ocupado | Ya tienes otro PostgreSQL en ese puerto | Pon otro puerto en `POSTGRES_PORT` y en `DATABASE_URL` |
+| Un puerto está ocupado al arrancar | `bun run dev` está en marcha | Para el otro modo antes de arrancar este |
+| Falla la sincronización de un repositorio de contenido | No hay `git` en tu máquina | Instálalo |

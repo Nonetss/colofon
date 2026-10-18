@@ -1,0 +1,156 @@
+---
+titulo: Páginas
+descripcion: Cómo convierte la plataforma cada MDX en un árbol HTML saneado sin ejecutar nada, cómo resuelve enlaces e imágenes, cómo forma la navegación desde las carpetas o menu.yaml y cómo avisa de los problemas
+workspaces: [content, api]
+orden: 4
+actualizado: 2026-10-18
+---
+
+Cada `docs/**/*.mdx` es una página, y su ruta es su ruta de fichero sin
+`.mdx`: `docs/red/dns.mdx` es `red/dns`, y el `index.mdx` de una carpeta se
+llama como la carpeta. La plataforma **lee** el MDX, nunca lo ejecuta: lo
+convierte en un árbol de datos, lo transforma y lo sanea, y el lector pinta ese
+árbol. El código está en `packages/content/src/pages/`.
+
+Qué se puede escribir en una página, con ejemplos, lo explica el sitio
+«Escribir documentación» (`doc-example/`). Aquí está lo que hace la plataforma
+con lo que se escribe.
+
+## De MDX a HTML
+
+1. **Se separa la cabecera.** El bloque YAML del principio se valida: `titulo`
+   y `descripcion` obligatorios; `icono`, `orden` y `actualizado` opcionales; y
+   los campos que el sitio declara en `cabecera` de `doc.config.yaml`, con sus
+   tipos (un `ref` contra el catálogo, una `ficha` contra las páginas).
+   Cualquier otra clave se avisa, `editado` incluida.
+2. **Se lee el cuerpo** como MDX con lo de GitHub (tablas, listas de tareas,
+   tachado, enlaces automáticos y notas al pie), con `micromark` y `mdast`. No
+   se compila ni se evalúa nada.
+3. **Se transforma.** Lo que no se permite se quita y se avisa con su línea:
+   `import` y `export`, las expresiones entre llaves (salvo un comentario solo,
+   que se quita sin aviso) y cualquier componente que no sea uno de los tres de
+   la plataforma, que se sustituye por un aviso visible con su nombre. Un
+   bloque de código con lenguaje `diagram` se sustituye por un aviso de que los
+   diagramas van en `diagrams/`.
+4. **Se resuelven los componentes**: `Callout` se convierte en una alerta,
+   `Entities` en la tabla del catálogo y `Diagram` en el dibujo del diagrama,
+   ya dentro del árbol.
+5. **Se pasa a HTML y se sanea** con una lista cerrada de elementos, atributos
+   y URL: nada de HTML del contenido, ni `script`, ni `style`, ni atributos de
+   eventos, y solo enlaces `http:`, `https:`, `mailto:`, relativos y `#`. Un
+   enlace `javascript:` se queda sin `href`.
+
+El resultado es la página: su cabecera, su árbol, sus encabezados de nivel 2 y
+3 (para «En esta página») y sus problemas. El backend la sirve ya construida y
+el lector la pinta en el servidor.
+
+### Lo que añade el árbol
+
+- **Encabezados con id.** Los de nivel 2 a 4 llevan un id hecho con su texto:
+  minúsculas, acentos conservados, espacios como guiones y un sufijo numérico
+  si se repite (`configuración`, `configuración-1`). Un encabezado de nivel 1 en
+  el cuerpo se avisa: el título es `titulo`.
+- **Alertas.** `Callout` sale como alerta del tipo de su `type` (`note` por
+  defecto; `info`, `tip`, `important`, `warning`, `caution` y `danger`) con su
+  `title` o el nombre del tipo. Una cita que empieza por `[!NOTE]`, `[!TIP]`,
+  `[!IMPORTANT]`, `[!WARNING]` o `[!CAUTION]` sale como alerta «Nota»,
+  «Consejo», «Importante», «Aviso» o «Precaución».
+- **Bloques de código** con su lenguaje, que el lector enseña con un botón
+  «Copiar».
+
+Un componente escrito dentro de una frase, y no en un bloque propio, se avisa
+y se muestra como aviso.
+
+### Enlaces e imágenes
+
+| Se escribe | Se convierte en |
+| --- | --- |
+| Un enlace relativo a otra página `.mdx`, con ancla o sin ella | La ruta del lector de esa página en el mismo repositorio, con el ancla. |
+| `catalog:<tipo>/<id>` | La página de la entidad (su primer campo `ficha`) o, si no tiene, su página generada del catálogo. |
+| `catalog:<tipo>` | La página generada del tipo. |
+| Una imagen relativa bajo `docs/` (`png`, `jpg`, `jpeg`, `gif`, `webp`, `avif`, `svg`) | La URL de ficheros del repositorio, `/api/v1/docs/<slug>/files/<ruta>`. |
+| Un enlace `http` o `https` absoluto | Se deja igual; el lector lo abre en otra pestaña. |
+
+Un enlace a una página, tipo o entidad que no existe se avisa y se muestra como
+texto sin enlace. Una imagen que no existe, o un enlace o imagen relativo a
+otro tipo de fichero o fuera de `docs/`, se avisa.
+
+## La navegación
+
+Sin `menu.yaml`, la navegación sale de las carpetas:
+
+- `docs/index.mdx` es la portada del repositorio.
+- Cada carpeta con alguna página además de su `index.mdx` es una **sección**,
+  con el título y la descripción de su `index.mdx` (o el nombre de la carpeta
+  si no lo tiene). Una carpeta con solo `index.mdx` es una **página** sin
+  hijos.
+- Dentro de una sección se ordena por `orden` (las que no lo tienen, al final)
+  y después por título, con orden alfabético en español.
+- El orden de lectura recorre cada sección en profundidad, empezando por su
+  `index.mdx`, y da a cada página su anterior, su siguiente y sus migas.
+- Al final va la sección «Catálogo», si hay algún tipo.
+
+Con un `menu.yaml` válido, **manda el menú**:
+
+- Cada grupo de `secciones` es un grupo del sidebar, con su título, su icono y
+  su descripción. Los grupos no son rutas: en las migas salen como texto sin
+  enlace.
+- Cada entrada es una página, una carpeta (con todo lo que tiene dentro,
+  ordenado como arriba), `catalog` (una página por tipo) o `catalog/<tipo>`. La
+  URL de cada página sigue siendo su ruta de fichero, esté en el grupo que esté.
+- El orden de lectura sigue el menú y se salta las páginas del catálogo.
+- El `titulo` y el `icono` de una entrada mandan en el sidebar, la cabecera,
+  las migas, los listados de sección, la búsqueda y los `llms.txt`. Si la
+  cabecera de la página dice otra cosa, se avisa nombrando los dos valores.
+- Una entrada que no apunta a nada, que nombra la portada o que repite,
+  contiene o está dentro de otra anterior se avisa y se deja fuera; el resto del
+  menú se usa.
+- Lo que ningún grupo muestra va a un último grupo **«Otros»**, y cada página
+  de ahí se avisa. Se sigue sirviendo en su ruta.
+
+Un `menu.yaml` con claves desconocidas, sin claves obligatorias o con un icono
+que no existe es una declaración inválida: se sigue usando el último válido
+(ver [Sincronización](sincronizacion.mdx)).
+
+## Las fechas de una página
+
+Una página puede mostrar dos fechas que no se mezclan:
+
+- **`actualizado`**, de la cabecera: cuándo se comprobó lo que dice. El lector
+  la enseña como «Datos del…» y la marca «Revisar» cuando tiene más de seis
+  meses.
+- **`editado`**, que pone la plataforma con la fecha del último commit que tocó
+  el fichero (un fichero movido toma la del commit que lo movió). Se enseña
+  como «Editado el…» solo si la página no tiene `actualizado`. No se puede
+  escribir en la cabecera.
+
+Una carpeta sin `index.mdx` no tiene fecha.
+
+## Problemas de una página
+
+Se avisan **todos** los problemas de cada página, no solo el primero, con el
+fichero relativo a la raíz del contenido, la línea cuando la hay y un mensaje
+en español. Una página con problemas se publica igualmente con lo que se pudo
+leer:
+
+| Problema | Qué se ve |
+| --- | --- |
+| Falta la cabecera o es inválida | La página sale con el nombre del fichero como título. |
+| Un `icono` que no existe en Lucide | La página sale sin ese icono. |
+| `import`, una expresión o un componente desconocido | El resto de la página sale; en su lugar no hay nada o hay un aviso. |
+| Un enlace roto | El texto sale sin enlace. |
+| El MDX no se puede leer (por ejemplo un `div` sin cerrar) | Solo la cabecera y un aviso de que no se puede mostrar. |
+| Una página bajo `docs/catalog/` | No se sirve ni se lista: esas rutas son de las páginas generadas. |
+
+Los problemas de una página no impiden leer las demás. Dónde se ven está en
+[Sincronización](sincronizacion.mdx#dónde-se-ven-los-problemas).
+
+## El índice de búsqueda
+
+Con las páginas se construye también el índice de la búsqueda de cada
+repositorio: título, encabezados, descripción, campos de cabecera, títulos de
+los grupos y secciones de encima, y el texto del cuerpo. Entran la portada, las
+secciones, las páginas y las páginas de cada tipo del catálogo, pero no las de
+cada entidad. Se rehace cada vez que se reconstruyen las páginas, así que una
+sincronización se nota en la siguiente búsqueda. Cómo se busca está en
+[El lector](lector.mdx#búsqueda).

@@ -1,0 +1,46 @@
+---
+titulo: Base de datos
+descripcion: Qué PostgreSQL usa el desarrollo, dónde guarda los datos y cómo se cambia el esquema
+workspaces: [db]
+commands: [postgres-start, postgres-stop, db-studio, db-generate, db-custom, db-push, db-migrate]
+compose_files: [dev]
+env_vars: [database-url, postgres-port, postgres-password]
+orden: 5
+actualizado: 2026-10-18
+---
+
+El desarrollo usa su propio PostgreSQL 17, en Docker, definido en `compose.dev.yml` con la misma imagen, base de datos (`colofon`) y healthcheck que la pila tipo producción:
+
+- **Con Docker**, `bun run dev` lo levanta como el servicio `db`, solo en la red interna, y el backend se conecta a él diga lo que diga el `.env`.
+- **En nativo**, `bun run postgres:start` levanta el mismo PostgreSQL como `db-native` y lo publica en `127.0.0.1:5432` (o en `POSTGRES_PORT`), que es el `DATABASE_URL` de `.env.example`. `bun run postgres:stop` lo para.
+- **Los dos guardan los datos en el volumen `db_data`**, así que ven los mismos datos. Por eso no deben estar en marcha a la vez. `bun run dev:down` y `bun run postgres:stop` no borran el volumen; `bun run dev:down -v`, sí.
+- La contraseña del usuario `postgres` es `POSTGRES_PASSWORD`, que en desarrollo vale `postgres` si no la cambias (la misma que lleva `DATABASE_URL`).
+
+La base de datos empieza vacía: el backend aplica las migraciones y crea el administrador al arrancar. Si prefieres otro PostgreSQL (uno compartido en otro servidor, por ejemplo), apunta a él `DATABASE_URL` y usa el modo nativo; con Docker el compose lo sobrescribe.
+
+> [!CAUTION]
+> No apuntes `DATABASE_URL` a la base de datos de producción.
+
+`bun run db:studio` abre Drizzle Studio para explorar los datos de la base de datos de `DATABASE_URL`. Como el resto de comandos de Drizzle, lee el `.env` de la raíz, así que necesita la base de datos publicada en el host (`bun run postgres:start`).
+
+## Cambiar el esquema
+
+**No hay que aplicar el esquema a mano**: el backend aplica las migraciones pendientes al arrancar, antes de crear el administrador. Cuando cambias el esquema en `packages/db/src/schema/`:
+
+1. `bun run db:generate` crea una carpeta nueva `packages/db/src/migrations/<timestamp>_<nombre>/` con `migration.sql` y `snapshot.json`.
+2. Revisas el SQL generado.
+3. Lo commiteas junto al cambio de esquema.
+4. Reinicias el backend, que la aplica.
+
+`bun run db:custom` crea una migración vacía para rellenar a mano (datos, extensiones); se le da nombre con `bun run db:custom -- --name=<nombre>`. `bun run db:push` (aplicar el esquema sin migración) y `bun run db:migrate` existen, pero lo que se despliega son las migraciones: `db:push` es solo para experimentos.
+
+> [!IMPORTANT]
+> Las migraciones las genera y revisa siempre una persona. Los agentes de código tienen prohibido generarlas, aplicarlas o editarlas (ver [Convenciones](../convenciones/index.mdx)).
+
+## Si algo falla
+
+| Síntoma | Causa | Qué hacer |
+| --- | --- | --- |
+| El backend nativo no conecta | `db-native` no está en marcha, o el puerto de `DATABASE_URL` no es el de `POSTGRES_PORT` | `bun run postgres:start` y revisa los dos puertos |
+| `db:studio`, `db:push` o `db:migrate` no conectan con Docker en marcha | El `db` de `bun run dev` no publica ningún puerto | Usa el modo nativo con `bun run postgres:start` |
+| Los datos han desaparecido | Se borró el volumen con `bun run dev:down -v` | Se recrean vacíos al arrancar: migraciones y administrador vuelven solos, el resto no |

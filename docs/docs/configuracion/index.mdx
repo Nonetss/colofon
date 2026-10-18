@@ -1,0 +1,92 @@
+---
+titulo: Configuración
+descripcion: El único .env de la raíz, quién lo lee, cómo lo encuentra cada workspace y qué significa cada variable
+workspaces: [env]
+env_vars: [node-env, database-url, better-auth-url, better-auth-secret, cors-origin, backend-url, secrets-encryption-key, trusted-git-hosts, oidc-discovery-url, skip-env-validation, public-server-url]
+commands: [setup-dev]
+actualizado: 2026-10-18
+---
+
+Todo el proyecto se configura con **un único fichero `.env` en la raíz**. No
+hay `.env` por app ni por paquete. `.env.example` documenta cada variable con
+su valor por defecto (las líneas sin comentar son lo que necesita el
+desarrollo local; las comentadas son opcionales); `bun run setup:dev` lo copia
+a `.env` y rellena los secretos (ver [Desarrollo](../desarrollo/index.mdx)).
+
+## Las variables
+
+<Entities type="env-vars" group="area" columns="name,required,default,meaning" />
+
+Cada concepto tiene **un solo nombre**: no inventes un segundo nombre para algo
+que ya existe. Las que más se confunden:
+
+- **`DATABASE_URL`** es la única configuración de base de datos que leen las
+  apps. En desarrollo nativo apunta al PostgreSQL de `bun run postgres:start`
+  (`localhost:5432`); los compose de Docker la sobrescriben para usar su propio
+  servicio `db`.
+- **`BETTER_AUTH_URL`** solo la lee el backend, pero tiene que ser el origen
+  público que usa el navegador (el mismo valor que `CORS_ORIGIN`), no la
+  dirección del backend: con ella se construyen las URL de retorno de
+  OAuth/OIDC (`<BETTER_AUTH_URL>/api/auth/callback/oidc`). En desarrollo,
+  `https://localhost:4321`, el gateway de desarrollo.
+- **`CORS_ORIGIN`** es ese origen público. El backend lo usa para CORS, como
+  origen de confianza de Better Auth y para aceptar peticiones en `/mcp`; el
+  frontend, para escribir los enlaces completos de `llms.txt` y de cada
+  `llm.txt` (sin él, usa el origen de la petición).
+- **`BACKEND_URL`** es cómo llega el frontend al backend: las consultas de
+  sesión y de páginas en SSR y el proxy de `astro dev`.
+- **`ADMIN_EMAIL`**, `ADMIN_PASSWORD` y `ADMIN_NAME` crean el administrador al
+  arrancar el backend si no existe. Los jobs de cron declarados en código se
+  ejecutan como el usuario de `ADMIN_EMAIL`.
+- **`OIDC_CLIENT_ID`**, `OIDC_CLIENT_SECRET` y `OIDC_DISCOVERY_URL` activan el
+  inicio de sesión con un proveedor OIDC solo si están las tres.
+  `OIDC_DISCOVERY_URL` es la URL base del emisor (`https://idp.example.com`);
+  el backend le añade `/.well-known/openid-configuration`.
+- **`TRUSTED_GIT_HOSTS`** lista, separados por comas y sin comodines, los
+  servidores git internos desde los que un usuario puede añadir repositorios.
+  Cualquier otro host que resuelva a una dirección privada se rechaza, porque
+  el backend clona desde dentro de tu red.
+- **`SKIP_ENV_VALIDATION`** desactiva la validación. Solo para builds y tareas
+  de CLI; los Dockerfiles lo usan al compilar.
+
+<Callout type="warning" title="Guarda la clave de los secretos">
+`SECRETS_ENCRYPTION_KEY` (el Base64 de 32 bytes, `openssl rand -base64 32`) cifra los secretos de los usuarios que usa la herramienta `request` del MCP y las credenciales git guardadas. Sin ella, esas funciones están apagadas. Perderla o cambiarla deja ilegible todo lo guardado, que habría que volver a guardar: haz copia de ella junto con la base de datos y no la reutilices entre entornos.
+</Callout>
+
+## Quién lo lee
+
+| Lector | Qué valida |
+| --- | --- |
+| `packages/env/src/server.ts` (`@nonete/env/server`) | Las variables del backend y de los paquetes, con zod. Si falta una obligatoria o no tiene el formato esperado, el backend no arranca. |
+| `packages/db/drizzle.config.ts` | `DATABASE_URL`, para los comandos de Drizzle. |
+| `apps/frontend/astro.config.mjs` | Las variables de servidor del frontend (`BACKEND_URL` y `CORS_ORIGIN`), con `astro:env`. |
+| Los compose | Las suyas: `POSTGRES_PASSWORD`, `POSTGRES_PORT`, `FRONTEND_PORT` y las del gateway. |
+
+`packages/env/src/web.ts` (`@nonete/env/web`) valida `PUBLIC_SERVER_URL`, pero
+hoy no lo importa nadie.
+
+## Cómo se encuentra el fichero
+
+- `@nonete/env/server` y `drizzle.config.ts` abren `../../.env` **relativo a
+  su directorio de trabajo**. Funciona porque todos los workspaces están dos
+  niveles por debajo de la raíz y Turbo y `bun --filter` ejecutan los scripts
+  desde ahí.
+- El frontend lo busca a partir de la ubicación de `astro.config.mjs` (dos
+  carpetas por encima), y Vite lo carga para `astro:env` con `envDir`.
+
+Consecuencias:
+
+- Una variable ya definida en el entorno del proceso **gana** al fichero.
+- Si el fichero no existe no pasa nada. Es lo que ocurre en los contenedores,
+  donde las variables las ponen los compose.
+- Si ejecutas un script del backend desde otro directorio (por ejemplo
+  `bun apps/backend/src/index.ts` desde la raíz), no encontrará el `.env`.
+
+## ¿Dónde encuentro…?
+
+| Quiero… | Página |
+| --- | --- |
+| Saber por qué el backend no arranca o no puedo iniciar sesión | [Trampas habituales](trampas.mdx) |
+| Entender el `.env` de un servidor de producción | [El .env de producción](produccion.mdx) |
+| Añadir una variable nueva | [Añadir una variable](anadir-variable.mdx) |
+| Crear el `.env` de desarrollo por primera vez | [Desarrollo](../desarrollo/index.mdx) |

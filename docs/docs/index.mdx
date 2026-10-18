@@ -1,44 +1,50 @@
 ---
 titulo: Documentación de colofon
-descripcion: Cómo funciona el proyecto por dentro y dónde encontrar cada pieza, para leerlo de principio a fin o por partes
-actualizado: 2026-10-17
+descripcion: Qué es colofon, de qué piezas está hecho y por dónde empezar a leer para arrancarlo, cambiarlo o desplegarlo
+actualizado: 2026-10-18
 ---
 
-Esta documentación explica el porqué de cada pieza del monorepo y cómo se trabaja con ella. El `README.md` de la raíz es el resumen rápido (qué es y cómo arrancarlo).
+colofon es una plataforma para documentar sistemas que sirve a la vez a **personas** y a **agentes de IA**. La documentación vive en repositorios de contenido aparte (páginas en MDX, datos en YAML y diagramas en JSON); la plataforma los clona, los valida, los muestra en su lector y se los da a los agentes por `llms.txt`, por su MCP y como skills, sin que la IA vea nunca un secreto.
 
-Las reglas que deben seguir los agentes de código están en `AGENTS.md` y en la skill `.agents/skills/stack/`. Estas páginas cuentan lo mismo con más contexto y menos jerga. Si alguna vez no coinciden, mandan las specs de `openspec/specs/` y el código.
+Por dentro es un monorepo de TypeScript sobre Bun, coordinado con Turborepo: un frontend Astro y un backend Hono con oRPC detrás de un gateway Caddy, sobre PostgreSQL. Nace de la plantilla `stack` y conserva sus paquetes (`@nonete/*`), sus convenciones y su sistema visual, de modo que el código se puede mover entre los dos repositorios sin reescribirlo. Lo que trajo la plantilla (autenticación, panel de administración, API tipada, planificador de crons, comentarios, iconos de entidad, Docker) sigue aquí; el producto encima es `packages/content` y todo lo que lo rodea.
 
 <Diagram id="arquitectura" />
 
-## ¿Dónde encuentro…?
+## Qué hay en esta documentación
 
-| Si buscas… | Lee |
-| --- | --- |
-| Las piezas del sistema y el camino de una petición | [Arquitectura](arquitectura.mdx) |
-| Arrancar el proyecto, los comandos del día a día y la base de datos | [Desarrollo local](desarrollo.mdx) |
-| El `.env` y el significado de cada variable | [Configuración](configuracion.mdx) |
-| Cómo se organiza `packages/api` y cómo se añade un procedimiento | [Backend y API](backend-api.mdx) |
-| Better Auth, sesiones, roles, organizaciones y API keys | [Autenticación y permisos](autenticacion.mdx) |
-| La estructura de features, los componentes y el sistema visual | [Frontend](frontend.mdx) |
-| El planificador y cómo convertir un procedimiento en un job | [Crons](crons.mdx) |
-| Comentarios e iconos de entidad | [Funcionalidades transversales](transversales.mdx) |
-| Los cuatro compose, las imágenes, el CI y el instalador | [Docker y despliegue](docker-despliegue.mdx) |
-| Estilo de código, idiomas, commits, migraciones y OpenSpec | [Convenciones](convenciones.mdx) |
-| Los repositorios de contenido, el lector, el MCP y las skills para agentes | [Contenido](contenido/index.mdx) |
+Estas páginas explican cómo funciona el proyecto y cómo se trabaja con él, con el porqué de cada pieza. El `README.md` de la raíz es el resumen rápido, en inglés, y `VISION.md` cuenta para qué existe el proyecto y qué viene después. Las reglas para los agentes de código están en `AGENTS.md` y en la skill `stack` (`.agents/skills/stack/`); aquí se cuenta lo mismo con más contexto. Si alguna vez no coinciden, mandan las specs de `openspec/specs/` y el código.
 
-## Glosario rápido
+Cómo se **escribe** un repositorio de contenido no está aquí: lo explica la guía «Escribir documentación», el sitio de `doc-example/`. Esta documentación cuenta lo que la plataforma hace con él.
 
 | Término | Qué es |
 | --- | --- |
+| **Repositorio de contenido** | Un repositorio git con la documentación de un sistema: `doc.config.yaml`, `menu.yaml`, `docs/`, `catalog/`, `diagrams/`, `styles/` y `skills/`. |
 | **Workspace** | Cada carpeta de `apps/*` y `packages/*` con su propio `package.json`. Bun las enlaza entre sí. |
 | **Procedimiento** | Una operación de la API (por ejemplo `cron.list`). Se define una vez y se puede llamar por RPC o por HTTP. |
-| **Feature (API)** | Un grupo de procedimientos relacionados (`cron`, `comment`…), en su carpeta `packages/api/src/v1/<feature>/`. |
-| **Feature (frontend)** | Un dominio de la interfaz (`docs`, `admin`…) en `apps/frontend/src/features/<dominio>/`. |
+| **Feature (API)** | Un grupo de procedimientos relacionados, en su carpeta `packages/api/src/v1/<feature>/`. |
+| **Feature (frontend)** | Un dominio de la interfaz (`docs`, `admin`…), en `apps/frontend/src/features/<dominio>/`. |
 | **Slice** | Un caso de uso dentro de un dominio del frontend (`overview`, `detail`…). |
-| **Superficie** | Cualquier página con identidad propia (título, etiqueta, icono). Se declaran en `app-surfaces.ts`. |
+| **Superficie** | Cualquier página con identidad propia (título, etiqueta, icono), declarada en `app-surfaces.ts`. |
 | **Isla** | Un componente React montado dentro de una página Astro. |
-| **Capability (OpenSpec)** | Un área funcional documentada con requisitos en `openspec/specs/<capability>/spec.md`. |
+| **Capability (OpenSpec)** | Un área funcional con sus requisitos en `openspec/specs/<capability>/spec.md`. |
+
+## ¿Dónde encuentro…?
+
+| Quiero… | Página |
+| --- | --- |
+| Entender las piezas del sistema y el camino de una petición | [Arquitectura](arquitectura/index.mdx) |
+| Arrancar el proyecto en mi máquina por primera vez | [Primera vez](desarrollo/primera-vez.mdx) |
+| Saber qué significa una variable del `.env` | [Configuración](configuracion/index.mdx) |
+| Saber qué hace la plataforma con un repositorio de contenido | [Contenido](contenido/index.mdx) |
+| Dar la documentación a una IA: `llms.txt`, MCP, skills y secretos | [Agentes de IA](contenido/agentes.mdx) |
+| Añadir un procedimiento a la API | [Añadir un procedimiento](backend-api/anadir-procedimiento.mdx) |
+| Entender quién puede llamar a qué, y las API keys | [Autenticación y permisos](autenticacion/index.mdx) |
+| Programar una tarea | [Crons](crons/index.mdx) |
+| Saber dónde va un componente nuevo del frontend | [Features y slices](frontend/features.mdx) |
+| Instalar colofon en un servidor | [Producción](docker-despliegue/produccion.mdx) |
+| Conocer las reglas de estilo, commits y OpenSpec | [Convenciones](convenciones/index.mdx) |
+| Ver todos los workspaces, variables, comandos y compose | [Catálogo](catalog:workspaces) |
 
 ## Cómo se mantiene esta documentación
 
-Esta carpeta es un repositorio de contenido de colofon: `doc.config.yaml`, `menu.yaml`, las páginas en `docs/` y los diagramas en `diagrams/`. Los diagramas son JSON que la plataforma dibuja con el sistema visual del frontend, así que se editan como datos y no se exportan. Los `.svg` de `img/` son los diagramas del `README.md` de la raíz y ya no tienen fuente editable en este repositorio.
+Esta carpeta es un repositorio de contenido de colofon, registrado con la carpeta del contenido `docs`: `doc.config.yaml`, `menu.yaml`, las páginas en `docs/`, los datos en `catalog/` y los diagramas en `diagrams/`. Los diagramas son JSON que la plataforma dibuja con el sistema visual del frontend, así que se editan como datos y no se exportan. Los `.svg` de `img/` son los diagramas del `README.md` de la raíz; la plataforma no los lee. Las convenciones del sitio están en `AGENTS.md`, sección «Documentation site (`docs/`)».

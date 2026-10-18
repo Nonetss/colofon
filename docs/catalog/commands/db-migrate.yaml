@@ -1,0 +1,6 @@
+command: "bun run db:migrate"
+area: "database"
+purpose: "Aplica las migraciones pendientes"
+page: "desarrollo/base-de-datos"
+fuente: package.json
+actualizado: 2026-10-18

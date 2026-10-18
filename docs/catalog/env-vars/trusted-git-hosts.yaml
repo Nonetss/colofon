@@ -1,0 +1,7 @@
+name: "TRUSTED_GIT_HOSTS"
+area: "content"
+required: false
+meaning: "Hosts git internos, separados por comas, desde los que se pueden añadir repositorios aunque resuelvan a una dirección privada"
+page: "contenido/repositorios"
+fuente: packages/env/src/server.ts
+actualizado: 2026-10-18

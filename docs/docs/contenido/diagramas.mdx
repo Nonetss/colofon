@@ -1,0 +1,126 @@
+---
+titulo: Diagramas
+descripcion: Qué formas de diagrama lee la plataforma, cómo los valida contra el catálogo y las páginas, cómo los dibuja e ilumina en el lector y qué deja de una ilustración SVG
+workspaces: [content, frontend]
+orden: 6
+actualizado: 2026-10-18
+---
+
+Un diagrama es un fichero de `diagrams/`, uno por diagrama, y cualquier página
+lo muestra con el componente `Diagram` y su `id`. Se escribe una vez y se usa
+en tantas páginas como haga falta. El repositorio describe el diagrama como
+datos; **la plataforma lo dibuja** en SVG con su propio estilo, así que todos
+los diagramas de todos los sitios se ven igual y siguen el tema claro u oscuro.
+El código está en `packages/content/src/diagrams/` (lectura, validación y
+dibujo) y `apps/frontend/src/features/docs/diagrams/` (la interacción).
+
+Cuándo merece la pena un diagrama, qué forma elegir y las claves de cada una
+las explica el sitio «Escribir documentación» (`doc-example/`) y la skill
+`colofon-diagrams`.
+
+## Las formas
+
+| Forma | Fichero | Quién coloca las piezas |
+| --- | --- | --- |
+| **Dibujado** | `<id>.json` sin `type`, con `width`, `height`, `nodes` y, opcionales, `edges`, `zones` y `notes` | El repositorio: cada caja lleva su posición. |
+| **Cadena** | `<id>.json` sin `type`, con `items` | La plataforma, en una fila de izquierda a derecha. |
+| **Tipado** | `<id>.json` con `type` | La plataforma, con la maqueta de ese tipo. |
+| **Ilustración** | `<id>.svg` | El repositorio: un SVG dibujado a mano, que la plataforma sanea. |
+
+Los 30 tipos son `flowchart`, `state`, `tree`, `org-chart`, `dependency`,
+`sequence`, `timeline`, `gantt`, `swimlane`, `kanban`, `story-map`, `journey`,
+`quadrant`, `wardley`, `venn`, `pyramid`, `layers`, `loop`, `fishbone`,
+`matrix`, `bar`, `waterfall`, `line`, `scatter`, `heatmap`, `treemap`, `radar`,
+`polar`, `sankey` y `architecture-delta`. Sus maquetas, sus límites y su
+aspecto vienen de diagram-design (licencia MIT), y cada uno vive en
+`packages/content/src/diagrams/types/`.
+
+Todo diagrama tiene `title` y `desc`, y puede llevar `$schema` para que el
+editor lo autocomplete (ver [Editor](editor.mdx)).
+
+## Cómo se valida
+
+Los diagramas se leen con las páginas, del mismo commit:
+
+- **El fichero**: un id en minúsculas, números y guiones; un `.yaml` o `.yml`
+  se avisa como diagrama que ahora es `.json`; si hay un `.json` y un `.svg`
+  con el mismo id, se avisa el `.svg` y vale el `.json`.
+- **Las claves**: las de su forma y nada más. Un `type` desconocido se avisa
+  con la lista de los que hay y ese diagrama no se dibuja.
+- **Los enlaces**: una caja o un elemento con `entity` tiene que nombrar una
+  entidad que existe (`<tipo>/<id>`), y con `page`, una página que existe.
+- **Las medidas**: la plataforma mide cada texto con un ancho medio por letra y
+  avisa del nombre, la línea, la columna o la etiqueta que no cabe en su caja.
+  Avisa también cuando más de dos elementos llevan el acento (un camino
+  principal de flechas seguidas cuenta como uno) y, en los tipados, cuando se
+  pasa del presupuesto de su tipo (por ejemplo, ocho estados y catorce
+  transiciones en `state`).
+
+Los problemas de medida y de presupuesto **no impiden dibujarlo**. Un diagrama
+roto no impide leer las páginas ni los demás diagramas, y cada página que lo
+muestra avisa también de sus problemas, nombrando el fichero del diagrama. Un
+`Diagram` con un id que no existe, otro atributo que no sea `id` o dentro de
+una frase se avisa, y en su lugar sale un aviso.
+
+## Cómo se dibuja
+
+- **Sobre papel**, con cajas redondeadas (o con la forma de su `shape`),
+  flechas ortogonales o curvas, zonas con borde discontinuo, notas y, debajo,
+  una franja «LEYENDA» con solo los tipos de caja, de flecha y de insignia que
+  el diagrama usa.
+- **Con los tokens del tema**: tinta, papel, acento y diez tonos, así que el
+  dibujo cambia con el tema claro u oscuro, y los `styles/diagrams.css` del
+  repositorio pueden retocarlo (ver [Estilos](estilos.mdx)).
+- **Enlazado**: una caja con `entity` o `page` enlaza a su página.
+- **Del ancho de la columna**: nunca más ancho que su dibujo; en pantallas
+  estrechas conserva el tamaño y se desplaza de lado. El botón «Ampliar» lo
+  abre en el visor de imágenes; un clic en el dibujo no, porque las cajas y
+  flechas son suyas.
+- **Con su texto**: el título y la descripción, sus zonas y una línea por
+  conexión («origen → destino: etiqueta») quedan en la página para lectores de
+  pantalla, ocultos a la vista. Ese texto es lo que llega a `llm.txt` y al MCP,
+  sin el dibujo. Un tipado tiene su propio texto (una tabla en los gráficos,
+  una línea por transición en `state`…); una ilustración no tiene.
+
+## La interacción
+
+Al pasar por una parte del dibujo o enfocarla con el teclado, se ilumina con lo
+que toca, se apaga el resto y sale una tarjeta junto al puntero:
+
+| Parte | Qué enseña la tarjeta |
+| --- | --- |
+| Una caja | Su nombre, su etiqueta, su `info` y sus conexiones («→ destino», «← origen»). Con `needs`, «Depende de» y, para cualquier caja, «Si se cae, afecta a» con lo que depende de ella. Con `trace`, el «Camino principal». |
+| Una flecha o insignia | «origen → destino», su etiqueta y su `info`. |
+| El título de una zona | La zona, cuántas piezas tiene y sus nombres. |
+| Una marca de datos (barra, punto, celda…) | Su etiqueta, su valor formateado y su `info`, y el resto de su serie iluminada. |
+
+Salir, perder el foco o pulsar Escape lo borra. En una pantalla táctil, el
+primer toque la muestra, el segundo sigue el enlace y un toque fuera la borra.
+Funciona también en las páginas que cambia el router y en la vista ampliada,
+pero nunca en una ilustración.
+
+## Ilustraciones SVG
+
+Un `diagrams/<id>.svg` es un dibujo hecho a mano, para lo que ninguna forma
+tipada maqueta (un axonométrico, un plano). Su `svg` raíz tiene que declarar
+`viewBox`, `title` y `desc`; sin `title` o `desc` se avisa y **no se dibuja**.
+
+La plataforma se queda solo con las formas básicas (`g`, `path`, `rect`,
+`circle`, `ellipse`, `line`, `polyline`, `polygon`, `text`, `tspan`), sus
+atributos de geometría y unos pocos de trazo y texto. Los colores no se
+escriben: `fill` y `stroke` solo admiten `none`, y el color se pone con las
+clases de papel, tinta, acento y los diez tonos, que la plataforma traduce a
+sus tokens. Todo lo demás (scripts, estilos, colores en hexadecimal, imágenes,
+enlaces) se quita y se avisa una vez por tipo con cuántas veces salía, y el
+resto se dibuja. Un SVG que no se puede leer se avisa y no se dibuja.
+
+## Si algo falla
+
+| Síntoma | Causa | Qué hacer |
+| --- | --- | --- |
+| En lugar del diagrama sale un aviso | El id no existe en `diagrams/`, el `type` es desconocido o el `Diagram` está dentro de una frase | Mira el aviso de la página; pon el componente en su propio bloque |
+| Un diagrama `.yaml` dejó de verse | Los diagramas son `.json` | Pásalo a JSON |
+| Un texto se sale de su caja | El nombre no cabe en el ancho de la caja | Ensancha la caja o acorta el texto; el aviso dice cuál |
+| Un diagrama tipado avisa de su presupuesto | Tiene más piezas de las que su forma lee bien | Pártelo en dos |
+| Una ilustración sale sin colores | Usaba colores escritos en lugar de las clases | Usa las clases de tono |
+| Una ilustración no sale | Le falta `title` o `desc`, o el SVG no se puede leer | Añádelos o corrige el fichero |

@@ -1,0 +1,6 @@
+command: "bun run format"
+area: "validation"
+purpose: "Solo el formato de Biome, sin lint"
+page: "desarrollo/validacion"
+fuente: package.json
+actualizado: 2026-10-18

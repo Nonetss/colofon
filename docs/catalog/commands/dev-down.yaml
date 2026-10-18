@@ -1,0 +1,6 @@
+command: "bun run dev:down"
+area: "dev"
+purpose: "Quita los contenedores del stack de desarrollo"
+page: "desarrollo/docker"
+fuente: package.json
+actualizado: 2026-10-18
