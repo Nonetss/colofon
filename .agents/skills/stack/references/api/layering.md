@@ -19,6 +19,8 @@ The package root holds infrastructure shared by every API version:
 - `router.ts` assembles the top-level `appRouter` by nesting each version's router under its own key (`v1: v1Router`) — the only place a new version gets wired in.
 - `lifecycle.ts` exports the async `closeStreams()`, which the backend's shutdown awaits before the HTTP drain. It calls each version's own `src/<version>/lifecycle.ts`, which ends that version's streams that outlive their requests (today the `v1.cron.watchRuns`/`watchJobs` watchers and the MCP exchanges still open). A feature that adds such a stream registers its closer in its version's `lifecycle.ts`, never in `apps/backend`. A new version adds one call here.
 
+- `server.ts` re-exports what the backend mounts and starts (the git endpoint, the MCP's HTTP handler and request executor, the editor schema path, the first content sync, the cron run and startup checks). The backend imports this package only through its root modules (`context`, `router`, `lifecycle`, `server`), never a `v1/` path: a feature that needs the backend to mount or start something exports it through `server.ts`.
+
 Procedure metadata (`cron`): see `references/cron-and-mcp/cron.md`.
 
 ## Before adding a procedure or helper
@@ -26,7 +28,7 @@ Procedure metadata (`cron`): see `references/cron-and-mcp/cron.md`.
 Search what exists first; don't add a near-duplicate.
 
 - **Procedures**: `src/v1/router.ts` lists every feature; each `src/v1/<feature>/router.ts` lists its procedures with `.meta(openapi({ summary, description, tags }))`. `rg -n "summary:" packages/api/src/v1` gives a quick index. If one covers the need, call it from the client; if one is close, extend it (an optional filter, an extra output field) rather than adding a sibling, unless the method or access would differ.
-- **Helpers**: reuse `src/shared/*` and `src/lib/*` (pagination, search inputs and `likePattern`, ISO dates, `assertFound`, the permission check) and the builders in `src/index.ts`. A helper only one feature uses stays in that feature's `handler.ts`; move it to `src/shared/` when a second feature needs it.
+- **Helpers**: reuse `src/shared/*` (pagination, search inputs and `likePattern`, ISO dates, `assertFound`, `requireUserId`) and `src/lib/*` (infrastructure several features use: the permission check, the secrets cipher), and the builders in `src/index.ts`. A helper only one feature uses stays in that feature's folder; move it to `src/shared/` (or `src/lib/` for infrastructure) when a second feature needs it, never import it from another feature's files. The exception is a feature's deliberate public module, such as `v1/content/reader.ts`, the content reader `docs` and `skills` read through.
 - **Where a new procedure goes**: the feature whose data it reads or writes (its `router.ts`, `input.ts`, `output.ts`, `handler.ts`), or a new feature folder wired into `src/v1/router.ts`. Model it on the closest existing procedure of the same kind (list, search, create, toggle…).
 
 ## Features
@@ -38,6 +40,7 @@ Everything version-specific lives under `src/<version>/` (currently only `src/v1
 - `<feature>/handler.ts` — business logic, exported as `<feature>Handler` keyed by method. Each method takes a single options object, `async ({ context, input }: { context: Context; input?: z.infer<typeof <feature>Input.<method>> }) => ...` (omit what it doesn't use) — no other param shapes. Calls into `@nonete/auth` / `@nonete/db` etc. live here, never in the router.
 - `<feature>/router.ts` — oRPC wiring only, exported as `<feature>Router`: builder → `.meta(openapi({ summary, description, tags, method, successStatus? }), cronMeta(...)?)` → `.input(...)` (if any, called once: v2 stacks repeated `.input`/`.output` calls) → `.output(...)` → `.handler(({ context, input }) => featureHandler.method({ context, input }))`. Choosing `method` and `successStatus`: `references/api/http-semantics.md`.
 - `<feature>/events.ts` — only in a feature that streams events: its publisher and every event it carries. See "Event streams" below.
+- `<feature>/runtime.ts` — only when a feature's handlers need live instances built once for the running app (a store over the database, a reader over the clones, process-wide roots): the instances the routers and `server.ts` import (`v1/content/runtime.ts`, `v1/cron/runtime.ts`). Factories stay in `handler.ts`, so tests build their own instances; routers never build a handler themselves.
 - `src/<version>/router.ts` nests each feature's router under its own key (`apiKey: apiKeyRouter`, `health: healthRouter`).
 - `packages/api/tests/v1/<feature>/handler.test.ts` — the unit tests of the handler, written with it (`references/writing-unit-tests.md`). A feature isn't done without them.
 

@@ -38,7 +38,7 @@ The user does not accept code that forces types or packs logic into chained oper
 
 - **Filtering and transforming.** Use `.filter().map()`, or a `for` loop that `push`es. Never `flatMap` with a ternary that returns `[]`.
 - **Objects that depend on a condition.** Use two explicit returns, not a ternary inside a property.
-- **Caches.** Before memoizing, check whether the work is worth it: the docs spec is generated per request (`apps/backend/src/routers/docs.ts`). The lazy cache with `let` in `packages/api/src/v1/cron/discovery.ts` stays, because every cron handler lookup reads it and it can't be a top-level `const` (discovery and the routers import each other).
+- **Caches.** Before memoizing, check whether the work is worth it: the docs spec is generated per request (`apps/backend/src/routers/docs.ts`). The lazy cache with `let` in `packages/api/src/v1/cron/discovery.ts` stays, because every cron handler lookup reads it and it can't be a top-level `const` (discovery and the routers import each other). The `closing ??=` in `packages/db/src/index.ts` stays too: it isn't a cache but what makes `closeDb()` safe to call twice, since `pg` rejects a second `end()` on the same pool.
 
 ## When a type doesn't fit
 

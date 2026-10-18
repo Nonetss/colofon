@@ -6,7 +6,7 @@
 
 **Shared packages** (`packages/api`, `content`, `cron`, `db`, `logger`) use Node **subpath imports** (`#` prefix) declared in their own `package.json` `imports`. They resolve per-package in tsc, Bun, Vite and tsdown with no plugins. A shared `@/` would collide because these packages export raw TS consumed by other workspaces.
 
-`packages/auth` uses `#auth/*` → `./src/*.ts` (plus one relative import, `./oauth`); `packages/env` and `packages/config` use neither.
+`packages/auth` uses `#auth/*` → `./src/*.ts`; `packages/env` and `packages/config` use neither.
 
 ### `imports` field rules
 
