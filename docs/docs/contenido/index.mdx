@@ -1,9 +1,9 @@
 ---
-titulo: Contenido
-descripcion: Qué es un repositorio de contenido, qué hace la plataforma con él de la sincronización al lector y a los agentes, y en qué parte del código vive cada pieza
+title: Contenido
+description: Qué es un repositorio de contenido, qué hace la plataforma con él de la sincronización al lector y a los agentes, y en qué parte del código vive cada pieza
 workspaces: [content, api, backend, frontend]
 commands: [icons-catalog]
-actualizado: 2026-10-18
+updated: 2026-10-18
 ---
 
 La documentación no vive en este repositorio: vive en **repositorios de
@@ -50,7 +50,7 @@ la carpeta `docs`).
 
 | Ruta | Qué hay |
 | --- | --- |
-| `doc.config.yaml` | Obligatorio. Nombre del sitio, versión del contrato (`plataforma: "1"`) y los campos extra de la cabecera de las páginas (`cabecera`). |
+| `doc.config.yaml` | Obligatorio. Nombre del sitio, versión del contrato (`contract: "2"`) y los campos extra de la cabecera de las páginas (`header`). |
 | `docs/` | Las páginas `.mdx`. Cada carpeta es una sección con su `index.mdx`. `docs/catalog/` está reservada para las páginas que genera la plataforma. |
 | `catalog/<tipo>/_type.yaml` | El esquema de un tipo: sus campos y cómo se muestra. El nombre de la carpeta es el id del tipo. |
 | `catalog/<tipo>/<id>.yaml` | Una entidad. El nombre del fichero es su id. |
@@ -64,11 +64,15 @@ Dos reglas que se notan a diario:
 - **Lo que dice un YAML manda sobre la cabecera de una página.** Si
   `menu.yaml` le pone a una entrada un título o un icono, ese es el que se ve,
   diga lo que diga la cabecera; si dice otra cosa se avisa como problema.
-- **Los nombres son en inglés.** Un repositorio con los nombres antiguos
-  (`catalogo/`, `diagramas/`, `estilos/`, `_tipo.yaml`) no se lee: cada uno se
-  avisa con el nombre al que se movió.
+- **Los nombres son en inglés.** Ficheros, carpetas, claves y tipos de campo
+  son los del contrato 2 (`contract: "2"`). Un repositorio que aún diga
+  `plataforma: "1"` sigue el contrato 1, con las mismas claves en español: se
+  lee y se publica igual, traducido a las claves del 2 antes de validarlo, y su
+  portada avisa de que el contrato está superado. Las carpetas antiguas
+  (`catalogo/`, `diagramas/`, `estilos/`, `_tipo.yaml`) no se leen en ninguno:
+  cada una se avisa con el nombre al que se movió.
 
-Todo `icono` es un nombre de Lucide, el de la versión que dibuja el lector.
+Todo `icon` es un nombre de Lucide, el de la versión que dibuja el lector.
 La lista sale de `lucide-react` con `bun run icons:catalog`, que regenera
 `packages/content/src/contract/lucide-icons.generated.ts`.
 

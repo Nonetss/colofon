@@ -1,12 +1,12 @@
 ---
-titulo: Base de datos
-descripcion: Qué PostgreSQL usa el desarrollo, dónde guarda los datos y cómo se cambia el esquema
+title: Base de datos
+description: Qué PostgreSQL usa el desarrollo, dónde guarda los datos y cómo se cambia el esquema
 workspaces: [db]
 commands: [postgres-start, postgres-stop, db-studio, db-generate, db-custom, db-push, db-migrate]
 compose_files: [dev]
 env_vars: [database-url, postgres-port, postgres-password]
-orden: 5
-actualizado: 2026-10-18
+order: 5
+updated: 2026-10-18
 ---
 
 El desarrollo usa su propio PostgreSQL 17, en Docker, definido en `compose.dev.yml` con la misma imagen, base de datos (`colofon`) y healthcheck que la pila tipo producción:

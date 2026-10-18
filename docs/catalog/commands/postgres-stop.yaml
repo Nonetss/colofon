@@ -2,5 +2,5 @@ command: "bun run postgres:stop"
 area: "services"
 purpose: "Para el PostgreSQL del desarrollo en nativo"
 page: "desarrollo/base-de-datos"
-fuente: package.json
-actualizado: 2026-10-18
+source: package.json
+updated: 2026-10-18

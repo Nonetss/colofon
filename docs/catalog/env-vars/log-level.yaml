@@ -4,5 +4,5 @@ required: false
 default: "info"
 meaning: "Severidad mínima de los logs (fatal, error, warn, info, debug o trace)"
 page: "arquitectura/logs"
-fuente: packages/env/src/server.ts
-actualizado: 2026-10-18
+source: packages/env/src/server.ts
+updated: 2026-10-18

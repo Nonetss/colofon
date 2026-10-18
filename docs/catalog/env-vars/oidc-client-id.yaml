@@ -3,5 +3,5 @@ area: "auth"
 required: false
 meaning: "Client id del proveedor OIDC; el inicio de sesión OIDC solo se activa con las tres OIDC_*"
 page: "autenticacion"
-fuente: packages/env/src/server.ts
-actualizado: 2026-10-18
+source: packages/env/src/server.ts
+updated: 2026-10-18

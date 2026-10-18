@@ -3,5 +3,5 @@ package: "@nonete/logger"
 kind: "package"
 purpose: "El logger compartido (pino): legible en desarrollo, JSON en producción"
 page: "arquitectura/logs"
-fuente: manual
-actualizado: 2026-10-18
+source: manual
+updated: 2026-10-18

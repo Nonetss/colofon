@@ -1,9 +1,9 @@
 ---
-titulo: Páginas
-descripcion: Cómo convierte la plataforma cada MDX en un árbol HTML saneado sin ejecutar nada, cómo resuelve enlaces e imágenes, cómo forma la navegación desde las carpetas o menu.yaml y cómo avisa de los problemas
+title: Páginas
+description: Cómo convierte la plataforma cada MDX en un árbol HTML saneado sin ejecutar nada, cómo resuelve enlaces e imágenes, cómo forma la navegación desde las carpetas o menu.yaml y cómo avisa de los problemas
 workspaces: [content, api]
-orden: 4
-actualizado: 2026-10-18
+order: 4
+updated: 2026-10-18
 ---
 
 Cada `docs/**/*.mdx` es una página, y su ruta es su ruta de fichero sin
@@ -18,10 +18,10 @@ con lo que se escribe.
 
 ## De MDX a HTML
 
-1. **Se separa la cabecera.** El bloque YAML del principio se valida: `titulo`
-   y `descripcion` obligatorios; `icono`, `orden` y `actualizado` opcionales; y
-   los campos que el sitio declara en `cabecera` de `doc.config.yaml`, con sus
-   tipos (un `ref` contra el catálogo, una `ficha` contra las páginas).
+1. **Se separa la cabecera.** El bloque YAML del principio se valida: `title`
+   y `description` obligatorios; `icon`, `order` y `updated` opcionales; y
+   los campos que el sitio declara en `header` de `doc.config.yaml`, con sus
+   tipos (un `ref` contra el catálogo, un campo `page` contra las páginas).
    Cualquier otra clave se avisa, `editado` incluida.
 2. **Se lee el cuerpo** como MDX con lo de GitHub (tablas, listas de tareas,
    tachado, enlaces automáticos y notas al pie), con `micromark` y `mdast`. No
@@ -49,7 +49,7 @@ el lector la pinta en el servidor.
 - **Encabezados con id.** Los de nivel 2 a 4 llevan un id hecho con su texto:
   minúsculas, acentos conservados, espacios como guiones y un sufijo numérico
   si se repite (`configuración`, `configuración-1`). Un encabezado de nivel 1 en
-  el cuerpo se avisa: el título es `titulo`.
+  el cuerpo se avisa: el título es `title`.
 - **Alertas.** `Callout` sale como alerta del tipo de su `type` (`note` por
   defecto; `info`, `tip`, `important`, `warning`, `caution` y `danger`) con su
   `title` o el nombre del tipo. Una cita que empieza por `[!NOTE]`, `[!TIP]`,
@@ -66,7 +66,7 @@ y se muestra como aviso.
 | Se escribe | Se convierte en |
 | --- | --- |
 | Un enlace relativo a otra página `.mdx`, con ancla o sin ella | La ruta del lector de esa página en el mismo repositorio, con el ancla. |
-| `catalog:<tipo>/<id>` | La página de la entidad (su primer campo `ficha`) o, si no tiene, su página generada del catálogo. |
+| `catalog:<tipo>/<id>` | La página de la entidad (su primer campo `page`) o, si no tiene, su página generada del catálogo. |
 | `catalog:<tipo>` | La página generada del tipo. |
 | Una imagen relativa bajo `docs/` (`png`, `jpg`, `jpeg`, `gif`, `webp`, `avif`, `svg`) | La URL de ficheros del repositorio, `/api/v1/docs/<slug>/files/<ruta>`. |
 | Un enlace `http` o `https` absoluto | Se deja igual; el lector lo abre en otra pestaña. |
@@ -84,7 +84,7 @@ Sin `menu.yaml`, la navegación sale de las carpetas:
   con el título y la descripción de su `index.mdx` (o el nombre de la carpeta
   si no lo tiene). Una carpeta con solo `index.mdx` es una **página** sin
   hijos.
-- Dentro de una sección se ordena por `orden` (las que no lo tienen, al final)
+- Dentro de una sección se ordena por `order` (las que no lo tienen, al final)
   y después por título, con orden alfabético en español.
 - El orden de lectura recorre cada sección en profundidad, empezando por su
   `index.mdx`, y da a cada página su anterior, su siguiente y sus migas.
@@ -92,14 +92,14 @@ Sin `menu.yaml`, la navegación sale de las carpetas:
 
 Con un `menu.yaml` válido, **manda el menú**:
 
-- Cada grupo de `secciones` es un grupo del sidebar, con su título, su icono y
+- Cada grupo de `sections` es un grupo del sidebar, con su título, su icono y
   su descripción. Los grupos no son rutas: en las migas salen como texto sin
   enlace.
 - Cada entrada es una página, una carpeta (con todo lo que tiene dentro,
   ordenado como arriba), `catalog` (una página por tipo) o `catalog/<tipo>`. La
   URL de cada página sigue siendo su ruta de fichero, esté en el grupo que esté.
 - El orden de lectura sigue el menú y se salta las páginas del catálogo.
-- El `titulo` y el `icono` de una entrada mandan en el sidebar, la cabecera,
+- El `title` y el `icon` de una entrada mandan en el sidebar, la cabecera,
   las migas, los listados de sección, la búsqueda y los `llms.txt`. Si la
   cabecera de la página dice otra cosa, se avisa nombrando los dos valores.
 - Una entrada que no apunta a nada, que nombra la portada o que repite,
@@ -116,12 +116,12 @@ que no existe es una declaración inválida: se sigue usando el último válido
 
 Una página puede mostrar dos fechas que no se mezclan:
 
-- **`actualizado`**, de la cabecera: cuándo se comprobó lo que dice. El lector
+- **`updated`**, de la cabecera: cuándo se comprobó lo que dice. El lector
   la enseña como «Datos del…» y la marca «Revisar» cuando tiene más de seis
   meses.
 - **`editado`**, que pone la plataforma con la fecha del último commit que tocó
   el fichero (un fichero movido toma la del commit que lo movió). Se enseña
-  como «Editado el…» solo si la página no tiene `actualizado`. No se puede
+  como «Editado el…» solo si la página no tiene `updated`. No se puede
   escribir en la cabecera.
 
 Una carpeta sin `index.mdx` no tiene fecha.
@@ -136,7 +136,7 @@ leer:
 | Problema | Qué se ve |
 | --- | --- |
 | Falta la cabecera o es inválida | La página sale con el nombre del fichero como título. |
-| Un `icono` que no existe en Lucide | La página sale sin ese icono. |
+| Un `icon` que no existe en Lucide | La página sale sin ese icono. |
 | `import`, una expresión o un componente desconocido | El resto de la página sale; en su lugar no hay nada o hay un aviso. |
 | Un enlace roto | El texto sale sin enlace. |
 | El MDX no se puede leer (por ejemplo un `div` sin cerrar) | Solo la cabecera y un aviso de que no se puede mostrar. |

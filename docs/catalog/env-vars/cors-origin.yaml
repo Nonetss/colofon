@@ -3,5 +3,5 @@ area: "auth"
 required: true
 meaning: "El origen público del navegador: CORS, origen de confianza de Better Auth y base de los enlaces de llms.txt"
 page: "configuracion"
-fuente: packages/env/src/server.ts
-actualizado: 2026-10-18
+source: packages/env/src/server.ts
+updated: 2026-10-18

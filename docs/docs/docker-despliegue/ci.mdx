@@ -1,9 +1,9 @@
 ---
-titulo: CI
-descripcion: Qué construyen y publican los workflows de GitHub en cada push a main, las imágenes multi-arquitectura y la web del proyecto en GitHub Pages
+title: CI
+description: Qué construyen y publican los workflows de GitHub en cada push a main, las imágenes multi-arquitectura y la web del proyecto en GitHub Pages
 workspaces: [backend, frontend, gateway, site]
-orden: 4
-actualizado: 2026-10-18
+order: 4
+updated: 2026-10-18
 ---
 
 Hay dos workflows en `.github/workflows/`: `docker-build.yml` publica las imágenes de la aplicación y `pages.yml` publica la web del proyecto. **Ninguno ejecuta lint, tipos ni tests**: eso se valida en local antes del push ([Desarrollo local](../desarrollo/index.mdx)).

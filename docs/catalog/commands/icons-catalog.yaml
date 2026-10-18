@@ -2,5 +2,5 @@ command: "bun run icons:catalog"
 area: "other"
 purpose: "Regenera el catálogo de iconos Lucide del selector de iconos"
 page: "frontend/sistema-visual"
-fuente: package.json
-actualizado: 2026-10-18
+source: package.json
+updated: 2026-10-18

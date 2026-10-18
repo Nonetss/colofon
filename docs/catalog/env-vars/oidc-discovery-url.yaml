@@ -3,5 +3,5 @@ area: "auth"
 required: false
 meaning: "URL base del emisor OIDC; el backend añade /.well-known/openid-configuration"
 page: "autenticacion"
-fuente: packages/env/src/server.ts
-actualizado: 2026-10-18
+source: packages/env/src/server.ts
+updated: 2026-10-18

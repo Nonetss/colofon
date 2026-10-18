@@ -4,50 +4,50 @@
 # grupo "Otros". Los títulos e iconos escritos aquí mandan sobre los de las
 # cabeceras de las páginas.
 
-secciones:
-  - titulo: Empezar
-    icono: rocket
-    descripcion: Las piezas del sistema, cómo se arranca en local y cómo se configura
-    paginas:
-      - { ruta: arquitectura, icono: blocks }
-      - { ruta: desarrollo, icono: terminal }
-      - { ruta: configuracion, icono: settings }
+sections:
+  - title: Empezar
+    icon: rocket
+    description: Las piezas del sistema, cómo se arranca en local y cómo se configura
+    pages:
+      - { path: arquitectura, icon: blocks }
+      - { path: desarrollo, icon: terminal }
+      - { path: configuracion, icon: settings }
 
-  - titulo: La plataforma
-    icono: book-open
-    descripcion: Los repositorios de contenido, el lector, el editor y lo que se sirve a los agentes
-    paginas:
-      - { ruta: contenido, icono: book-open }
+  - title: La plataforma
+    icon: book-open
+    description: Los repositorios de contenido, el lector, el editor y lo que se sirve a los agentes
+    pages:
+      - { path: contenido, icon: book-open }
 
-  - titulo: Backend
-    icono: server
-    descripcion: La API, la autenticación y las tareas programadas
-    paginas:
-      - { ruta: backend-api, icono: braces }
-      - { ruta: autenticacion, icono: shield-check }
-      - { ruta: crons, icono: clock }
+  - title: Backend
+    icon: server
+    description: La API, la autenticación y las tareas programadas
+    pages:
+      - { path: backend-api, icon: braces }
+      - { path: autenticacion, icon: shield-check }
+      - { path: crons, icon: clock }
 
-  - titulo: Frontend
-    icono: app-window
-    descripcion: La web y las piezas que se enganchan a cualquier entidad
-    paginas:
-      - { ruta: frontend, icono: layout-dashboard }
-      - { ruta: transversales, icono: puzzle }
+  - title: Frontend
+    icon: app-window
+    description: La web y las piezas que se enganchan a cualquier entidad
+    pages:
+      - { path: frontend, icon: layout-dashboard }
+      - { path: transversales, icon: puzzle }
 
-  - titulo: Operación
-    icono: container
-    descripcion: Los compose, las imágenes, el CI y la instalación en un servidor
-    paginas:
-      - { ruta: docker-despliegue, icono: ship }
+  - title: Operación
+    icon: container
+    description: Los compose, las imágenes, el CI y la instalación en un servidor
+    pages:
+      - { path: docker-despliegue, icon: ship }
 
-  - titulo: Trabajar en el repositorio
-    icono: git-branch
-    descripcion: Estilo de código, idiomas, commits, migraciones y el flujo de OpenSpec
-    paginas:
-      - { ruta: convenciones, icono: book-check }
+  - title: Trabajar en el repositorio
+    icon: git-branch
+    description: Estilo de código, idiomas, commits, migraciones y el flujo de OpenSpec
+    pages:
+      - { path: convenciones, icon: book-check }
 
-  - titulo: Referencia
-    icono: table
-    descripcion: Los workspaces, las variables de entorno, los comandos y los compose, como tablas
-    paginas:
-      - { ruta: catalog, titulo: Catálogo }
+  - title: Referencia
+    icon: table
+    description: Los workspaces, las variables de entorno, los comandos y los compose, como tablas
+    pages:
+      - { path: catalog, title: Catálogo }

@@ -2,5 +2,5 @@ command: "bun run dev:site"
 area: "dev"
 purpose: "Arranca solo la web del proyecto (apps/site) en nativo"
 page: "desarrollo/nativo"
-fuente: package.json
-actualizado: 2026-10-18
+source: package.json
+updated: 2026-10-18

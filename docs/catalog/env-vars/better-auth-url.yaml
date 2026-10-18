@@ -3,5 +3,5 @@ area: "auth"
 required: true
 meaning: "La URL base de Better Auth: el origen público que ve el navegador, del que salen los callbacks de OIDC"
 page: "autenticacion"
-fuente: packages/env/src/server.ts
-actualizado: 2026-10-18
+source: packages/env/src/server.ts
+updated: 2026-10-18

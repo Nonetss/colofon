@@ -3,5 +3,5 @@ package: "@nonete/content"
 kind: "package"
 purpose: "Los repositorios de contenido: clones, servidor git, catálogo y el parser de MDX a HTML saneado"
 page: "contenido"
-fuente: manual
-actualizado: 2026-10-18
+source: manual
+updated: 2026-10-18

@@ -3,5 +3,5 @@ package: "@nonete/auth"
 kind: "package"
 purpose: "La configuración de Better Auth: plugins de admin, API keys y organizaciones, roles y permisos"
 page: "autenticacion"
-fuente: manual
-actualizado: 2026-10-18
+source: manual
+updated: 2026-10-18

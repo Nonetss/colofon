@@ -1,9 +1,9 @@
 ---
-titulo: El lector
-descripcion: Qué rutas sirve el lector de documentación, cómo se navega y se busca en él, qué enseña cada página y cómo se comportan sus tablas y diagramas
+title: El lector
+description: Qué rutas sirve el lector de documentación, cómo se navega y se busca en él, qué enseña cada página y cómo se comportan sus tablas y diagramas
 workspaces: [frontend, api, content]
-orden: 8
-actualizado: 2026-10-18
+order: 8
+updated: 2026-10-18
 ---
 
 El lector es la parte de `apps/frontend` que muestra las páginas de los
@@ -54,11 +54,11 @@ persona, muestran la página 404.
 
 - **Cabecera**: migas (el repositorio, los grupos como texto y las secciones
   como enlaces), icono, título, descripción y fecha.
-- **La fecha**: su `actualizado` como «Datos del…», marcada «Revisar» si tiene
+- **La fecha**: su `updated` como «Datos del…», marcada «Revisar» si tiene
   más de seis meses; si no tiene, la del último commit como «Editado el…», sin
   marca; si no tiene ninguna, nada.
 - **Los campos de cabecera del sitio**, como una lista con el nombre de cada
-  campo (su `etiqueta` si la tiene); una `ficha` enlaza a la página y un `ref`
+  campo (su `label` si lo tiene); un campo `page` enlaza a la página y un `ref`
   a la entidad.
 - **El cuerpo**, con los bloques de código con su lenguaje y un botón «Copiar»,
   los enlaces externos en otra pestaña y un ancla en cada encabezado al pasar

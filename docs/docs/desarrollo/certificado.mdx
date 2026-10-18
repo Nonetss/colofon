@@ -1,11 +1,11 @@
 ---
-titulo: Confiar en el certificado local
-descripcion: Importar en el navegador la autoridad de certificación local del gateway, una sola vez, para abrir https://localhost:4321 sin avisos
+title: Confiar en el certificado local
+description: Importar en el navegador la autoridad de certificación local del gateway, una sola vez, para abrir https://localhost:4321 sin avisos
 commands: [dev-cert, gateway]
 compose_files: [dev, gateway]
 workspaces: [gateway]
-orden: 4
-actualizado: 2026-10-18
+order: 4
+updated: 2026-10-18
 open_questions:
   - "El gateway nativo (apps/gateway/compose.yml, proyecto stack-dev) guarda su autoridad en el volumen stack-dev_gateway_data, pero bun run dev:cert lee colofon-dev_gateway_data, el de compose.dev.yml: ¿se renombra el proyecto del gateway nativo a colofon-dev para que compartan autoridad, como dicen sus comentarios?"
 ---

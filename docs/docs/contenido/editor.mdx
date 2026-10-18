@@ -1,10 +1,10 @@
 ---
-titulo: Editor
-descripcion: Cómo conseguir autocompletado y validación de los YAML y los diagramas de un repositorio de contenido en VS Code
+title: Editor
+description: Cómo conseguir autocompletado y validación de los YAML y los diagramas de un repositorio de contenido en VS Code
 workspaces: [content, api]
 env_vars: [cors-origin]
-orden: 9
-actualizado: 2026-10-18
+order: 9
+updated: 2026-10-18
 ---
 
 El backend sirve, sin login, un **catálogo de schemas** por repositorio, con su
@@ -67,10 +67,10 @@ válidas del repositorio:
 | `/menu` | El de `menu.yaml`, con las rutas de páginas, carpetas, `catalog` y `catalog/<tipo>` que existen. |
 | `/diagram` | El de un diagrama en cualquiera de sus formas, con los ids de las entidades para `entity` y las rutas para `page`. |
 | `/type` | El de un `_type.yaml`, con los tipos que existen para cada `ref`. |
-| `/entities/<tipo>` | El de una entidad de ese tipo: sus campos con su `etiqueta` y su `descripcion`, los ids válidos de cada `ref`, las rutas de cada `ficha` y los valores de cada `enum`. |
+| `/entities/<tipo>` | El de una entidad de ese tipo: sus campos con su `label` y su `description`, los ids válidos de cada `ref`, las rutas de cada `page` y los valores de cada `enum`. |
 
 Las URL de dentro del catálogo son absolutas y salen del origen público,
-`CORS_ORIGIN`. Todos los `icono` ofrecen los nombres de Lucide que la
+`CORS_ORIGIN`. Todos los `icon` ofrecen los nombres de Lucide que la
 plataforma acepta. Un slug o un tipo desconocidos dan `NOT_FOUND`, y un
 repositorio sin contenido válido todavía tiene un catálogo vacío.
 

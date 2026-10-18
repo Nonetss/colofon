@@ -2,5 +2,5 @@ command: "bun run postgres:start"
 area: "services"
 purpose: "Arranca solo PostgreSQL en 127.0.0.1, para el desarrollo en nativo"
 page: "desarrollo/base-de-datos"
-fuente: package.json
-actualizado: 2026-10-18
+source: package.json
+updated: 2026-10-18

@@ -1,10 +1,10 @@
 ---
-titulo: Iconos de entidad
-descripcion: Cómo se deja que el usuario elija un icono de Lucide y un color para una entidad, y cómo se activa para un tipo de entidad nuevo
-orden: 2
+title: Iconos de entidad
+description: Cómo se deja que el usuario elija un icono de Lucide y un color para una entidad, y cómo se activa para un tipo de entidad nuevo
+order: 2
 workspaces: [api, frontend, db, content]
 commands: [icons-catalog]
-actualizado: 2026-10-18
+updated: 2026-10-18
 ---
 
 Permiten que el usuario elija un icono de Lucide y un color para una entidad.
@@ -53,7 +53,7 @@ commitea; los builds nunca descargan nada. El selector lo pide solo cuando se
 abre.
 
 El mismo comando escribe primero, sin red, la lista de nombres que
-`packages/content` acepta en los `icono` de un repositorio de contenido
+`packages/content` acepta en los `icon` de un repositorio de contenido
 (`packages/content/src/contract/lucide-icons.generated.ts`). Se vuelve a
 ejecutar tras actualizar `lucide-react`; un test del frontend falla si esa
 lista ya no coincide con la versión instalada.

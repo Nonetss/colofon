@@ -1,12 +1,12 @@
 ---
-titulo: En nativo
-descripcion: Arrancar el frontend y el backend como procesos de tu máquina, con el gateway y PostgreSQL en Docker
+title: En nativo
+description: Arrancar el frontend y el backend como procesos de tu máquina, con el gateway y PostgreSQL en Docker
 commands: [postgres-start, postgres-stop, gateway, dev-local, dev-frontend, dev-backend, dev-site]
 compose_files: [gateway, dev]
 workspaces: [frontend, backend, site, gateway]
 env_vars: [database-url, postgres-port]
-orden: 3
-actualizado: 2026-10-18
+order: 3
+updated: 2026-10-18
 ---
 
 ```bash
