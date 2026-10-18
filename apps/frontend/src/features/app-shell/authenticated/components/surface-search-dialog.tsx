@@ -1,5 +1,11 @@
 import { useQuery } from "@tanstack/react-query"
-import { type ReactNode, useEffect, useMemo, useState } from "react"
+import {
+  type KeyboardEvent as ReactKeyboardEvent,
+  type ReactNode,
+  useEffect,
+  useMemo,
+  useState,
+} from "react"
 import { Text, textVariants } from "@/components/shared/brand/typography"
 import { StatusDot } from "@/components/shared/data-display/status-dot"
 import { MenuItemText } from "@/components/shared/navigation/menu-item-text"
@@ -204,6 +210,17 @@ export function SurfaceSearchDialog({
     onOpenChange(next)
   }
 
+  /**
+   * Tab in the input switches between the scope's repository and "Todos"
+   * when the dialog offers both, instead of moving the focus out of it.
+   */
+  function handleInputKeyDown(event: ReactKeyboardEvent<HTMLInputElement>) {
+    if (event.key !== "Tab" || switchRepository === null) return
+    if (event.altKey || event.ctrlKey || event.metaKey) return
+    event.preventDefault()
+    setEverywhere((current) => !current)
+  }
+
   function handleSelect(href: string) {
     if (hasQuery) rememberSearchHighlight(href, searchTerms(search))
     // Close first so the dialog's portal is gone before the View Transition
@@ -376,6 +393,7 @@ export function SurfaceSearchDialog({
         placeholder="Buscar en la documentación…"
         value={search}
         onValueChange={setSearch}
+        onKeyDown={handleInputKeyDown}
       >
         <DialogClose
           aria-label="Cerrar búsqueda"
@@ -385,18 +403,25 @@ export function SurfaceSearchDialog({
         </DialogClose>
       </CommandInput>
       {switchRepository === null ? null : (
-        <Tabs
-          value={everywhere ? EVERYWHERE : switchRepository.slug}
-          onValueChange={(value) => setEverywhere(value === EVERYWHERE)}
-          className="border-b px-3 py-2"
-        >
-          <TabsList aria-label="Dónde buscar">
-            <TabsTrigger value={switchRepository.slug}>
-              {switchRepository.name}
-            </TabsTrigger>
-            <TabsTrigger value={EVERYWHERE}>Todos</TabsTrigger>
-          </TabsList>
-        </Tabs>
+        <div className="flex items-center justify-between gap-3 border-b px-3 py-2">
+          <Tabs
+            value={everywhere ? EVERYWHERE : switchRepository.slug}
+            onValueChange={(value) => setEverywhere(value === EVERYWHERE)}
+          >
+            <TabsList aria-label="Dónde buscar (Tab para cambiar)">
+              <TabsTrigger value={switchRepository.slug}>
+                {switchRepository.name}
+              </TabsTrigger>
+              <TabsTrigger value={EVERYWHERE}>Todos</TabsTrigger>
+            </TabsList>
+          </Tabs>
+          <span aria-hidden className="hidden items-center gap-1.5 sm:flex">
+            <Kbd>tab</Kbd>
+            <Text variant="compact" tone="muted">
+              cambiar
+            </Text>
+          </span>
+        </div>
       )}
       <CommandList className="max-h-[min(60vh,440px)] scroll-pt-9 p-1">
         {hasQuery ? (

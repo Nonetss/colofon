@@ -10,7 +10,7 @@ When the answer is partial, the dialog SHALL say above the pages that no page ho
 
 The matching catalog entities SHALL be listed in their own group, "Catálogo", each with its label, its type (and its repository when several are searched) and an icon marking it as catalog data; selecting one SHALL open the entity's catalog page. The group SHALL come before the pages when an entity's id or label equals the query as `documentation-search` defines that, and after them otherwise.
 
-When the reader's scope is a repository, the dialog SHALL show a switch between that repository and "Todos", set to the repository each time the dialog opens. Changing it SHALL search again in the chosen scope, for this search only: the reader's scope SHALL NOT change. When the scope is "Todos", the switch SHALL NOT be shown. When the repository finds nothing, the empty state SHALL offer to search every repository, which sets the switch to "Todos".
+When the reader's scope is a repository, the dialog SHALL show a switch between that repository and "Todos", set to the repository each time the dialog opens. Changing it SHALL search again in the chosen scope, for this search only: the reader's scope SHALL NOT change. Pressing Tab or Shift+Tab in the search field SHALL switch it to the other option while the focus stays in the field, and the dialog SHALL show that Tab does so. When the scope is "Todos", the switch SHALL NOT be shown. When the repository finds nothing, the empty state SHALL offer to search every repository, which sets the switch to "Todos".
 
 #### Scenario: Finding a page
 
@@ -66,6 +66,16 @@ When the reader's scope is a repository, the dialog SHALL show a switch between 
 
 - **WHEN** the scope is "Casa", the dialog is open and the user switches it to "Todos"
 - **THEN** the results SHALL come from every readable repository with each trail starting with the repository's name, and the reader's scope SHALL still be "Casa" once the dialog closes
+
+#### Scenario: Tab switches the scope
+
+- **WHEN** the scope is "Casa", the user has typed "dns" and presses Tab in the search field
+- **THEN** the switch SHALL be set to "Todos", the results of every repository SHALL be listed and the focus SHALL stay in the field; pressing Tab again SHALL set it back to "Casa"
+
+#### Scenario: Tab without a switch
+
+- **WHEN** the scope is "Todos" and the user presses Tab in the search field
+- **THEN** the search SHALL NOT change
 
 #### Scenario: Nothing in the scope
 
