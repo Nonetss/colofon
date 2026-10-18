@@ -1,17 +1,17 @@
 import type { Element, ElementContent } from "hast"
 import type { MdxJsxFlowElement } from "mdast-util-mdx"
+import { entityPagePath } from "#contract/catalog/paths"
 import {
   type Catalog,
   type CatalogType,
   type Entity,
   labelField,
-} from "#contract/catalog"
-import { entityPagePath } from "#contract/catalog-paths"
+} from "#contract/catalog/read"
 import {
   type FieldDefinition,
   ID_COLUMN,
   type TypeDefinition,
-} from "#contract/meta-schema"
+} from "#contract/schema/meta-schema"
 
 // `<Entities type="…" columns="…" group="…" />`: a table of the valid
 // entities of one catalog type, built as hast so cells can hold links and

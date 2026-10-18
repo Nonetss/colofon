@@ -1,6 +1,6 @@
 import MiniSearch, { type SearchResult } from "minisearch"
-import type { Catalog } from "#contract/catalog"
-import { entityPath } from "#contract/catalog-paths"
+import { entityPath } from "#contract/catalog/paths"
+import type { Catalog } from "#contract/catalog/read"
 import type { NavNode } from "#pages/nav"
 import {
   foldTerm,

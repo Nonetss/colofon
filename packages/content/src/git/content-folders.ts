@@ -1,7 +1,7 @@
 import { mkdtemp, rm } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import path from "node:path"
-import { CONFIG_FILE } from "#contract/load"
+import { CONFIG_FILE } from "#contract/read/files"
 import { contentPathProblem } from "#git/content-root"
 import { redactCredentials, spawnGit } from "#git/source"
 

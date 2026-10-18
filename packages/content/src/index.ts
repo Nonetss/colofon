@@ -1,53 +1,37 @@
 export {
+  catalogTypePath,
+  entityPath,
+  isCatalogPath,
+} from "#contract/catalog/paths"
+export {
   type Catalog,
   type CatalogType,
   type Entity,
   labelField,
   readCatalog,
-} from "#contract/catalog"
+} from "#contract/catalog/read"
+export { IMAGE_EXTENSIONS, isImageFile } from "#contract/images"
 export {
-  catalogTypePath,
-  entityPath,
-  isCatalogPath,
-} from "#contract/catalog-paths"
+  type ContentDeclarations,
+  type LoadResult,
+  loadContent,
+} from "#contract/read/declarations"
+export { CATALOG_PATH, DOCS_DIR } from "#contract/read/files"
+export type { ContentProblem, PageProblem } from "#contract/read/problems"
+export { isReservedSlug, RESERVED_SLUGS } from "#contract/reserved-slugs"
 export {
   type CatalogIndex,
   entitySchema,
   fieldSchema,
-} from "#contract/entity-schema"
-export { iconName, LUCIDE_ICON_NAMES } from "#contract/icon-name"
-export { IMAGE_EXTENSIONS, isImageFile } from "#contract/images"
-export {
-  CATALOG_PATH,
-  type ContentDeclarations,
-  type ContentProblem,
-  DOCS_DIR,
-  type LoadResult,
-  loadContent,
-} from "#contract/load"
+} from "#contract/schema/entity-schema"
+export { iconName, LUCIDE_ICON_NAMES } from "#contract/schema/icon-name"
 export {
   CONTRACT_VERSIONS,
   createMetaSchemas,
   type FieldDefinition,
   type SiteConfig,
   type TypeDefinition,
-} from "#contract/meta-schema"
-export type { PageProblem } from "#contract/problems"
-export { isReservedSlug, RESERVED_SLUGS } from "#contract/reserved-slugs"
-export {
-  type ContentSkill,
-  isSkillName,
-  MAX_SKILL_NAME,
-  type RepositorySkills,
-  readSkills,
-  readSkillsWithFiles,
-  SKILL_FILE,
-  SKILLS_DIR,
-  type SkillFile,
-  type SkillsWithFiles,
-  type SkillWithFiles,
-  withSkillName,
-} from "#contract/skills"
+} from "#contract/schema/meta-schema"
 export {
   CONFIG_SCHEMA,
   DIAGRAM_SCHEMA,
@@ -138,3 +122,17 @@ export {
 } from "#pages/site"
 export { SANITIZE_SCHEMA } from "#pages/to-hast"
 export type { Page, PageHeader, PageHeading } from "#pages/types"
+export {
+  type ContentSkill,
+  isSkillName,
+  MAX_SKILL_NAME,
+  type RepositorySkills,
+  readSkills,
+  readSkillsWithFiles,
+  SKILL_FILE,
+  SKILLS_DIR,
+  type SkillFile,
+  type SkillsWithFiles,
+  type SkillWithFiles,
+  withSkillName,
+} from "#skills/read"

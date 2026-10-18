@@ -1,5 +1,5 @@
 import type { Root } from "hast"
-import type { PageProblem } from "#contract/problems"
+import type { PageProblem } from "#contract/read/problems"
 
 /** What every page's header gives, after validation. */
 export type PageHeader = {

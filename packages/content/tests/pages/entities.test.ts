@@ -1,8 +1,8 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test"
 import { toHtml } from "hast-util-to-html"
 import type { MdxJsxFlowElement } from "mdast-util-mdx"
-import { type Catalog, readCatalog } from "#contract/catalog"
-import { loadContent } from "#contract/load"
+import { type Catalog, readCatalog } from "#contract/catalog/read"
+import { loadContent } from "#contract/read/declarations"
 import { type EntitiesContext, entitiesTable } from "#pages/entities"
 import { type ContentDir, createContentDir } from "#tests/fixtures/content-dir"
 

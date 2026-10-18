@@ -1,7 +1,7 @@
 import type { Root } from "hast"
 import { toHtml } from "hast-util-to-html"
-import { readCatalog } from "#contract/catalog"
-import { loadContent } from "#contract/load"
+import { readCatalog } from "#contract/catalog/read"
+import { loadContent } from "#contract/read/declarations"
 import { readSite, type Site, type SitePage } from "#pages/site"
 import { createContentDir } from "#tests/fixtures/content-dir"
 

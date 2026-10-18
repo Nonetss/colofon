@@ -1,15 +1,15 @@
 import GithubSlugger from "github-slugger"
 import type { Element, ElementContent, Root } from "hast"
 import { sanitize } from "hast-util-sanitize"
+import { catalogTypePath, entityPath } from "#contract/catalog/paths"
 import {
   type Catalog,
   type CatalogType,
   type Entity,
   entityFile,
-} from "#contract/catalog"
-import { catalogTypePath, entityPath } from "#contract/catalog-paths"
-import { CATALOG_PATH } from "#contract/load"
-import type { PageProblem } from "#contract/problems"
+} from "#contract/catalog/read"
+import { CATALOG_PATH } from "#contract/read/files"
+import type { PageProblem } from "#contract/read/problems"
 import {
   type EntitiesContext,
   entityName,

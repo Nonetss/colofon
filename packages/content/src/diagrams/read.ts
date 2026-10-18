@@ -1,14 +1,15 @@
 import type { Dirent } from "node:fs"
 import { readdir, readFile } from "node:fs/promises"
 import path from "node:path"
-import { entityPath } from "#contract/catalog-paths"
-import { DIAGRAMS_DIR, parseJson } from "#contract/load"
-import type { PageProblem } from "#contract/problems"
+import { entityPath } from "#contract/catalog/paths"
+import { DIAGRAMS_DIR } from "#contract/read/files"
+import { parseJson } from "#contract/read/json"
+import type { PageProblem } from "#contract/read/problems"
+import { isRecord } from "#contract/read/records"
 import { drawnDiagram } from "#diagrams/drawn"
 import { readIllustration } from "#diagrams/illustration"
 import type { Diagram, DiagramContext, DiagramFile } from "#diagrams/model"
 import {
-  isRecord,
   type Report,
   requiredText,
   unknownKeys,

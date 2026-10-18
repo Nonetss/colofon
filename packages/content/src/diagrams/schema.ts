@@ -1,5 +1,5 @@
 import { z } from "zod"
-import { enumOf } from "#contract/enum-of"
+import { enumOf } from "#contract/schema/enum-of"
 
 // The shape of a diagram file, `diagrams/<id>.json`, in the format of the
 // reference site's scheme drawer (`lib.mjs`): the content gives every

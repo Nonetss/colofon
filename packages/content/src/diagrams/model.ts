@@ -1,6 +1,6 @@
 import type { ElementContent } from "hast"
-import type { Catalog, Entity } from "#contract/catalog"
-import type { PageProblem } from "#contract/problems"
+import type { Catalog, Entity } from "#contract/catalog/read"
+import type { PageProblem } from "#contract/read/problems"
 import type {
   Anchor,
   EdgeKind,

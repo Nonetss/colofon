@@ -1,19 +1,19 @@
 import { z } from "zod"
-import { catalogTypePath } from "#contract/catalog-paths"
-import { contract1JsonSchema } from "#contract/contract-1"
-import { entitySchema } from "#contract/entity-schema"
+import { catalogTypePath } from "#contract/catalog/paths"
+import type { ContentDeclarations } from "#contract/read/declarations"
 import {
   CATALOG_DIR,
   CATALOG_PATH,
   CONFIG_FILE,
-  type ContentDeclarations,
   DIAGRAMS_DIR,
   MENU_FILE,
   TYPE_FILE,
-} from "#contract/load"
-import { createMetaSchemas } from "#contract/meta-schema"
+} from "#contract/read/files"
+import { entitySchema } from "#contract/schema/entity-schema"
+import { createMetaSchemas } from "#contract/schema/meta-schema"
 import { diagramSchemas, type References } from "#diagrams/schema"
 import { DIAGRAM_TYPES } from "#diagrams/types/index"
+import { contract1JsonSchema } from "#editor/contract-1-schemas"
 
 // JSON Schemas for the editor: the YAML language server (Red Hat's YAML
 // extension) completes, validates and documents a file once a schema is

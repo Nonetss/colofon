@@ -2,7 +2,7 @@ import type { Dirent } from "node:fs"
 import { readdir, readFile } from "node:fs/promises"
 import path from "node:path"
 import { parseDocument } from "yaml"
-import type { PageProblem } from "#contract/problems"
+import type { PageProblem } from "#contract/read/problems"
 
 // Reads a content repository's `skills/` (`content-contract`): one folder per
 // skill holding its `SKILL.md`, in the Agent Skills format (front matter with

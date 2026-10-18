@@ -14,14 +14,14 @@ import type { MdxJsxFlowElement, MdxJsxTextElement } from "mdast-util-mdx"
 import type {} from "mdast-util-to-hast"
 import { toString as textOf } from "mdast-util-to-string"
 import { SKIP, visit } from "unist-util-visit"
-import type { Catalog } from "#contract/catalog"
 import {
   catalogTypePath,
   entityPagePath,
   entityPath,
-} from "#contract/catalog-paths"
+} from "#contract/catalog/paths"
+import type { Catalog } from "#contract/catalog/read"
 import { isImageFile } from "#contract/images"
-import type { PageProblem } from "#contract/problems"
+import type { PageProblem } from "#contract/read/problems"
 import { diagramFigure } from "#diagrams/figure"
 import type { DiagramFile } from "#diagrams/model"
 import { ENTITIES, entitiesTable } from "#pages/entities"

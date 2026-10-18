@@ -1,7 +1,7 @@
 import type { Dirent } from "node:fs"
 import { readdir, readFile } from "node:fs/promises"
 import path from "node:path"
-import type { PageProblem } from "#contract/problems"
+import type { PageProblem } from "#contract/read/problems"
 import { cleanStyleModule } from "#styles/clean"
 import {
   MAX_MODULE_BYTES,

@@ -1,5 +1,8 @@
 import { afterEach, describe, expect, test } from "bun:test"
-import { type ContentDeclarations, loadContent } from "#contract/load"
+import {
+  type ContentDeclarations,
+  loadContent,
+} from "#contract/read/declarations"
 import {
   type EditorSchema,
   editorSchemas,

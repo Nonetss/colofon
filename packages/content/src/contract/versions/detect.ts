@@ -1,7 +1,9 @@
+import { isRecord } from "#contract/read/records"
+
 // The contract major versions the platform reads. Version 2 names every key
 // and fixed value in English and is what the schemas describe; version 1 is
 // the same contract with the Spanish names, read by translating its files
-// to version 2 first (`#contract/contract-1`). `doc.config.yaml` says which
+// to version 2 first (`#contract/versions/contract-1`). `doc.config.yaml` says which
 // one a repository follows, and that decides how every file of it is read.
 
 export type ContractVersion = "1" | "2"
@@ -23,8 +25,4 @@ export function contractVersionOf(config: unknown): ContractVersion {
   if (Object.hasOwn(config, CONTRACT_KEY)) return "2"
   if (Object.hasOwn(config, CONTRACT_1_KEY)) return "1"
   return "2"
-}
-
-export function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value)
 }

@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, test } from "bun:test"
-import { type Catalog, readCatalog } from "#contract/catalog"
-import { loadContent } from "#contract/load"
+import { type Catalog, readCatalog } from "#contract/catalog/read"
+import { loadContent } from "#contract/read/declarations"
 import {
   type ContentDir,
   createContentDir,

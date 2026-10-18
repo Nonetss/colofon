@@ -14,8 +14,9 @@ const ALLOWED: Record<string, readonly string[]> = {
   git: ["contract"],
   diagrams: ["contract"],
   styles: ["contract"],
-  pages: ["contract", "diagrams", "styles"],
+  pages: ["contract", "diagrams", "styles", "skills"],
   editor: ["contract", "diagrams"],
+  skills: ["contract"],
 }
 
 const BARREL = "index"
@@ -110,7 +111,7 @@ describe("packages/content structure", () => {
 
   test("styles may not import pages, while pages may import styles", () => {
     const graph = new Map([
-      ["styles/read", ["pages/site", "contract/problems"]],
+      ["styles/read", ["pages/site", "contract/read/problems"]],
       ["pages/site", ["styles/read"]],
     ])
     expect(forbiddenImports(graph)).toEqual(["styles/read → #pages/site"])

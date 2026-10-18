@@ -1,6 +1,9 @@
 import { afterEach, describe, expect, test } from "bun:test"
-import { contract1Path, translateContract1 } from "#contract/contract-1"
-import { type LoadResult, loadContent } from "#contract/load"
+import { type LoadResult, loadContent } from "#contract/read/declarations"
+import {
+  contract1Path,
+  translateContract1,
+} from "#contract/versions/contract-1"
 import { type ContentDir, createContentDir } from "#tests/fixtures/content-dir"
 import { CONTRACT_1_SITE, CONTRACT_2_TWIN } from "#tests/fixtures/contract-1"
 import { htmlOf, messagesOf, pageAt, readSiteOf } from "#tests/fixtures/site"

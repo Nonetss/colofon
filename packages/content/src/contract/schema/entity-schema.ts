@@ -1,6 +1,9 @@
 import { z } from "zod"
-import { enumOf } from "#contract/enum-of"
-import type { FieldDefinition, TypeDefinition } from "#contract/meta-schema"
+import { enumOf } from "#contract/schema/enum-of"
+import type {
+  FieldDefinition,
+  TypeDefinition,
+} from "#contract/schema/meta-schema"
 
 /** What entity fields can point at. */
 export type CatalogIndex = {

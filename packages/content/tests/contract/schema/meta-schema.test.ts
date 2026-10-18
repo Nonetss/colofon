@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test"
-import { createMetaSchemas } from "#contract/meta-schema"
+import { createMetaSchemas } from "#contract/schema/meta-schema"
 
 const meta = createMetaSchemas()
 const metaWithTypes = createMetaSchemas({ typeIds: ["maquinas", "centros"] })

@@ -6,7 +6,7 @@ import {
   readSkills,
   readSkillsWithFiles,
   withSkillName,
-} from "#contract/skills"
+} from "#skills/read"
 import { type ContentDir, createContentDir } from "#tests/fixtures/content-dir"
 
 const dirs: ContentDir[] = []

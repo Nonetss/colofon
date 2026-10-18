@@ -1,5 +1,5 @@
 import { z } from "zod"
-import { enumOf } from "#contract/enum-of"
+import { enumOf } from "#contract/schema/enum-of"
 import { salvaged, salvagedList } from "#diagrams/report"
 import {
   type Item,

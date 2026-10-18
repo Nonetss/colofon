@@ -1,12 +1,21 @@
 import { isNode, parseDocument } from "yaml"
 import { type ZodType, z } from "zod"
-import { contractKey, pathFor, translateContract1 } from "#contract/contract-1"
-import { type CatalogIndex, objectShape } from "#contract/entity-schema"
-import { iconName } from "#contract/icon-name"
-import { foreignKeyMessage, yamlErrorReason } from "#contract/load"
-import { PAGE_HEADER_FIELDS, type SiteConfig } from "#contract/meta-schema"
-import type { PageProblem } from "#contract/problems"
-import type { ContractVersion } from "#contract/versions"
+import type { PageProblem } from "#contract/read/problems"
+import { isRecord } from "#contract/read/records"
+import { yamlErrorReason } from "#contract/read/yaml"
+import { type CatalogIndex, objectShape } from "#contract/schema/entity-schema"
+import { iconName } from "#contract/schema/icon-name"
+import {
+  PAGE_HEADER_FIELDS,
+  type SiteConfig,
+} from "#contract/schema/meta-schema"
+import {
+  contractKey,
+  pathFor,
+  translateContract1,
+} from "#contract/versions/contract-1"
+import type { ContractVersion } from "#contract/versions/detect"
+import { foreignKeyMessage } from "#contract/versions/reading"
 import type { PageHeader } from "#pages/types"
 
 // The header of a page: its YAML front matter, checked against the fields
@@ -218,8 +227,4 @@ function textOrNull(value: unknown): string | null {
 function numberOrNull(value: unknown): number | null {
   if (typeof value === "number") return value
   return null
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value)
 }

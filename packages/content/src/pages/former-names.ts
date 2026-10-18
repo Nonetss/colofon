@@ -6,14 +6,14 @@ import {
   CONFIG_FILE,
   DIAGRAMS_DIR,
   TYPE_FILE,
-} from "#contract/load"
-import type { PageProblem } from "#contract/problems"
+} from "#contract/read/files"
+import type { PageProblem } from "#contract/read/problems"
 import {
   CONTRACT_1_KEY,
   CONTRACT_1_VALUE,
   CONTRACT_KEY,
   type ContractVersion,
-} from "#contract/versions"
+} from "#contract/versions/detect"
 import { STYLES_DIR } from "#styles/modules"
 
 // The folders and files the contract named in Spanish before it moved to

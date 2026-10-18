@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { isRecord } from "#contract/read/records"
 import { drawnDiagram } from "#diagrams/drawn"
 import { textWidth } from "#diagrams/measure"
 import type {
@@ -10,12 +11,7 @@ import type {
   Point,
   TextPart,
 } from "#diagrams/model"
-import {
-  isRecord,
-  type Report,
-  salvagedList,
-  unknownKeys,
-} from "#diagrams/report"
+import { type Report, salvagedList, unknownKeys } from "#diagrams/report"
 import { diagramSchemas, type References } from "#diagrams/schema"
 import { checkBudget } from "#diagrams/types/kit/budget"
 import { formSchema } from "#diagrams/types/kit/form"

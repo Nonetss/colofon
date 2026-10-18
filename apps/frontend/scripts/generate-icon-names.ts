@@ -13,7 +13,7 @@ import { iconNames } from "lucide-react/dynamic"
 const FRONTEND_DIR = fileURLToPath(new URL("..", import.meta.url))
 const OUTPUT_FILE = join(
   FRONTEND_DIR,
-  "../../packages/content/src/contract/lucide-icons.generated.ts"
+  "../../packages/content/src/contract/schema/lucide-icons.generated.ts"
 )
 
 async function installedLucideVersion() {

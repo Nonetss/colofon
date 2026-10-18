@@ -1,6 +1,6 @@
-import type { Catalog, Entity } from "#contract/catalog"
-import { entityPath } from "#contract/catalog-paths"
-import type { FieldDefinition } from "#contract/meta-schema"
+import { entityPath } from "#contract/catalog/paths"
+import type { Catalog, Entity } from "#contract/catalog/read"
+import type { FieldDefinition } from "#contract/schema/meta-schema"
 
 // Who points at an entity, for its generated page: the pages that cite it
 // (a `ref` field of their header, or a `catalog:` link in their body) and

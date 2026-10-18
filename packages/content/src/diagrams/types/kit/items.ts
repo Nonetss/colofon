@@ -1,6 +1,6 @@
 import { z } from "zod"
-import type { Catalog, Entity } from "#contract/catalog"
-import { entityPagePath } from "#contract/catalog-paths"
+import { entityPagePath } from "#contract/catalog/paths"
+import type { Catalog, Entity } from "#contract/catalog/read"
 import type { DiagramBox } from "#diagrams/model"
 import { type Report, subLines } from "#diagrams/report"
 import {

@@ -1,5 +1,6 @@
 import type { z } from "zod"
-import { spanishErrors } from "#contract/load"
+import { spanishErrors } from "#contract/read/problems"
+import { isRecord } from "#contract/read/records"
 
 // The pieces every diagram reader shares (`drawn.ts`, `read.ts` and each typed
 // form under `types/`): a report that prefixes the field path, and checks
@@ -23,10 +24,6 @@ export function joinPath(at: string, field: string): string {
 /** A report whose paths are under `at`. */
 export function under(report: Report, at: string): Report {
   return (field, message) => report(joinPath(at, field), message)
-}
-
-export function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value)
 }
 
 export function requiredText(

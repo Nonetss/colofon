@@ -1,5 +1,5 @@
-import type { Entity } from "#contract/catalog"
-import { CATALOG_PATH } from "#contract/load"
+import type { Entity } from "#contract/catalog/read"
+import { CATALOG_PATH } from "#contract/read/files"
 
 // The page paths of the generated catalog pages: `catalog`, then
 // `catalog/<type>` for each type and `catalog/<type>/<id>` for each entity.

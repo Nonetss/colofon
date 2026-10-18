@@ -1,17 +1,16 @@
 import path from "node:path"
-import { entitySchema } from "#contract/entity-schema"
+import type { ContentDeclarations } from "#contract/read/declarations"
+import { CATALOG_DIR, readText } from "#contract/read/files"
 import {
-  asContract2,
-  CATALOG_DIR,
-  type ContentDeclarations,
   type ContentProblem,
-  type ContractReading,
   describeIssue,
-  parseYaml,
-  readText,
   spanishErrors,
-} from "#contract/load"
-import { ID_COLUMN, type TypeDefinition } from "#contract/meta-schema"
+} from "#contract/read/problems"
+import { parseYaml } from "#contract/read/yaml"
+import { entitySchema } from "#contract/schema/entity-schema"
+import { ID_COLUMN, type TypeDefinition } from "#contract/schema/meta-schema"
+import type { ContractReading } from "#contract/versions/contract-1"
+import { asContract2 } from "#contract/versions/reading"
 
 // Reads every entity of a repository's catalog for the pages that show it
 // (`<Entities>`, `catalog:` links). Each file is validated against its
