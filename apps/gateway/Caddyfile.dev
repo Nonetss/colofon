@@ -11,6 +11,18 @@
 # its root for the browser to trust.
 {
 	admin off
+	# Caddy names every local CA "Caddy Local Authority - <year> ECC Root", so
+	# a browser that already trusts another project's CA picks that one by
+	# subject and fails with SEC_ERROR_BAD_SIGNATURE. Names only apply when the
+	# CA is generated: an existing one keeps its old name until
+	# /data/caddy/pki/authorities/local is removed.
+	pki {
+		ca local {
+			name "colofon dev"
+			root_cn "colofon dev Local Root"
+			intermediate_cn "colofon dev Local Intermediate"
+		}
+	}
 	# No HTTP site: never bind :80 for HTTP→HTTPS redirects
 	auto_https disable_redirects
 	# The container can't reach the host's trust store
