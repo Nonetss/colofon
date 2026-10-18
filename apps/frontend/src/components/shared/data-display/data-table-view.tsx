@@ -1,11 +1,3 @@
-import { getIcon } from "@/lib/icon-registry"
-
-const ChevronDown = getIcon("controls", "expand")
-const CheckIcon = getIcon("controls", "check")
-const SortIcon = getIcon("views", "sortable")
-const SortAscendingIcon = getIcon("views", "sortAscending")
-const SortDescendingIcon = getIcon("views", "sortDescending")
-
 import type { Cell, Row, RowData } from "@tanstack/react-table"
 import { type ReactNode, type Ref, useState } from "react"
 import { surfaceVariants } from "@/components/shared/brand/surface"
@@ -39,7 +31,14 @@ import {
 import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table"
 import type { DataTable, DataTableFeatures } from "@/hooks/use-data-table"
 import { useIsMobile } from "@/hooks/use-mobile"
+import { getIcon } from "@/lib/icon-registry"
 import { cn } from "@/lib/utils"
+
+const ChevronDown = getIcon("controls", "expand")
+const CheckIcon = getIcon("controls", "check")
+const SortIcon = getIcon("views", "sortable")
+const SortAscendingIcon = getIcon("views", "sortAscending")
+const SortDescendingIcon = getIcon("views", "sortDescending")
 
 /** The id of the display column that holds a row's expand toggle. Declare
  *  it (last, `enableResizing: false`, `reorderable: false`) in a table that

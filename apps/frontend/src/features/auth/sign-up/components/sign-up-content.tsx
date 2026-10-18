@@ -1,7 +1,3 @@
-import { getIcon } from "@/lib/icon-registry"
-
-const Loader2 = getIcon("status", "loading")
-
 import { AppLogo } from "@/components/shared/brand/app-logo"
 import { inlineLinkClass } from "@/components/shared/brand/inline-link"
 import { Text, textVariants } from "@/components/shared/brand/typography"
@@ -18,10 +14,13 @@ import {
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { useSignUp } from "@/features/auth/sign-up/hooks/use-sign-up"
+import { getIcon } from "@/lib/icon-registry"
+
+const Loader2 = getIcon("status", "loading")
 
 const ERROR_ID = "sign-up-error"
 
-export function SignUpPage() {
+export function SignUpContent() {
   const {
     name,
     setName,

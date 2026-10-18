@@ -1,13 +1,12 @@
+import { type ReactNode, useEffect } from "react"
+import { createPortal } from "react-dom"
+import { Button } from "@/components/ui/button"
 import { getIcon } from "@/lib/icon-registry"
+import { cn } from "@/lib/utils"
 
 const ChevronLeft = getIcon("controls", "previous")
 const ChevronRight = getIcon("controls", "next")
 const XIcon = getIcon("controls", "close")
-
-import { type ReactNode, useEffect } from "react"
-import { createPortal } from "react-dom"
-import { Button } from "@/components/ui/button"
-import { cn } from "@/lib/utils"
 
 export interface ModalProps {
   open: boolean

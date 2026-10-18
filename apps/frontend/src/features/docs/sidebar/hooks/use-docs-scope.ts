@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from "react"
-import { readScopeCookie } from "@/features/docs/shared/model/scope"
+import { readScopeCookie } from "@/features/docs/shared/public"
 
 /** Fired after the selector writes the scope cookie. */
 export const DOCS_SCOPE_CHANGE_EVENT = "docs-scope:change"

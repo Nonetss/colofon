@@ -1,11 +1,10 @@
-import { getIcon } from "@/lib/icon-registry"
-
-const Loader2 = getIcon("status", "loading")
-
 import type { ReactNode } from "react"
 import { surfaceVariants } from "@/components/shared/brand/surface"
 import { Text } from "@/components/shared/brand/typography"
+import { getIcon } from "@/lib/icon-registry"
 import { cn } from "@/lib/utils"
+
+const Loader2 = getIcon("status", "loading")
 
 /**
  * Shared full-width state: loading spinners, empty states, errors and

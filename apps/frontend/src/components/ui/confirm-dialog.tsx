@@ -1,7 +1,3 @@
-import { getIcon } from "@/lib/icon-registry"
-
-const Loader2 = getIcon("status", "loading")
-
 import * as React from "react"
 import { Button } from "@/components/ui/button"
 import {
@@ -12,6 +8,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { getIcon } from "@/lib/icon-registry"
+
+const Loader2 = getIcon("status", "loading")
 
 export interface ConfirmDialogProps {
   open: boolean

@@ -1,8 +1,3 @@
-import { getIcon } from "@/lib/icon-registry"
-
-const ColumnsIcon = getIcon("views", "columns")
-const ResetIcon = getIcon("actions", "reset")
-
 import type { RowData } from "@tanstack/react-table"
 import { type KeyboardEvent, type ReactNode, useEffect, useState } from "react"
 import { Text } from "@/components/shared/brand/typography"
@@ -19,7 +14,11 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 import type { DataTable } from "@/hooks/use-data-table"
+import { getIcon } from "@/lib/icon-registry"
 import { cn } from "@/lib/utils"
+
+const ColumnsIcon = getIcon("views", "columns")
+const ResetIcon = getIcon("actions", "reset")
 
 type MenuColumn = {
   id: string

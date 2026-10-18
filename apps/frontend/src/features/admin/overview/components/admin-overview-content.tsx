@@ -1,8 +1,3 @@
-import { getIcon } from "@/lib/icon-registry"
-
-const ArrowRight = getIcon("navigation", "forward")
-const Users = getIcon("admin", "users")
-
 import { Text } from "@/components/shared/brand/typography"
 import { MetadataDefinitionList } from "@/components/shared/data-display/metadata-cell"
 import { PageHero } from "@/components/shared/layout/page-hero"
@@ -10,6 +5,10 @@ import { AppLink } from "@/components/ui/app-link"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useAdminStats } from "@/features/admin/overview/hooks/use-admin-stats"
+import { getIcon } from "@/lib/icon-registry"
+
+const ArrowRight = getIcon("navigation", "forward")
+const Users = getIcon("admin", "users")
 
 export function AdminOverviewContent() {
   const { data, isPending } = useAdminStats()

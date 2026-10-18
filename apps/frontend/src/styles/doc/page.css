@@ -11,7 +11,7 @@
   }
 
   /* The words the navbar search found, on the page it opened (registered
-     with the CSS Custom Highlight API by `page-scripts.ts`). The primary
+     with the CSS Custom Highlight API by `page-scripts/search-highlight.ts`). The primary
      token follows the theme, so one rule serves light and dark. */
   ::highlight(search-match) {
     background-color: color-mix(

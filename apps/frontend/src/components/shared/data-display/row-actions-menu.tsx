@@ -1,7 +1,3 @@
-import { getIcon } from "@/lib/icon-registry"
-
-const MoreHorizontal = getIcon("views", "overflowMenu")
-
 import type { ReactNode } from "react"
 import { Hint } from "@/components/shared/feedback/hint"
 import { Button } from "@/components/ui/button"
@@ -10,6 +6,9 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { getIcon } from "@/lib/icon-registry"
+
+const MoreHorizontal = getIcon("views", "overflowMenu")
 
 interface RowActionsMenuProps {
   label?: string

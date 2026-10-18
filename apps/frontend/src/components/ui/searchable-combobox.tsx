@@ -1,8 +1,3 @@
-import { getIcon } from "@/lib/icon-registry"
-
-const Check = getIcon("controls", "check")
-const ChevronDown = getIcon("controls", "expand")
-
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import {
@@ -19,7 +14,11 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 import { foldText } from "@/lib/fold-text"
+import { getIcon } from "@/lib/icon-registry"
 import { cn } from "@/lib/utils"
+
+const Check = getIcon("controls", "check")
+const ChevronDown = getIcon("controls", "expand")
 
 export interface ComboboxOption {
   value: string

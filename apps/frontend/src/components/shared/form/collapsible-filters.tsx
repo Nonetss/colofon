@@ -1,8 +1,3 @@
-import { getIcon } from "@/lib/icon-registry"
-
-const FilterX = getIcon("views", "clearFilters")
-const SlidersHorizontal = getIcon("views", "filters")
-
 import { Children, type ReactNode, useState } from "react"
 import { Text } from "@/components/shared/brand/typography"
 import {
@@ -13,7 +8,11 @@ import {
 } from "@/components/ui/accordion"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
+import { getIcon } from "@/lib/icon-registry"
 import { cn } from "@/lib/utils"
+
+const FilterX = getIcon("views", "clearFilters")
+const SlidersHorizontal = getIcon("views", "filters")
 
 /**
  * Static lookup so Tailwind sees the full class names — a template literal

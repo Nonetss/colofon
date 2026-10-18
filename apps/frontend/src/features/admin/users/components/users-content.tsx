@@ -1,9 +1,3 @@
-import { getIcon } from "@/lib/icon-registry"
-
-const Plus = getIcon("actions", "add")
-const UsersIcon = getIcon("admin", "users")
-const UserX = getIcon("identity", "userX")
-
 import { useCallback, useState } from "react"
 import type { DataTableFilter } from "@/components/shared/data-display/data-table-column-filter"
 import { DataTableView } from "@/components/shared/data-display/data-table-view"
@@ -14,7 +8,6 @@ import { HeroCount } from "@/components/shared/layout/page-hero"
 import { ResourceOverview } from "@/components/shared/resource/resource-overview"
 import { Button } from "@/components/ui/button"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
-import { useUserFilterOptions } from "@/features/admin/shared"
 import { BanUserDialog } from "@/features/admin/users/components/ban-user-dialog"
 import { ChangePasswordDialog } from "@/features/admin/users/components/change-password-dialog"
 import { CreateUserDialog } from "@/features/admin/users/components/create-user-dialog"
@@ -30,6 +23,7 @@ import {
   userRolesOf,
   userStatusesOf,
 } from "@/features/admin/users/definitions/user-columns.definition"
+import { useUserFilterOptions } from "@/features/admin/users/hooks/use-user-filter-options"
 import { useUserMutations } from "@/features/admin/users/hooks/use-user-mutations"
 import { useUsersList } from "@/features/admin/users/hooks/use-users-list"
 import type { UserRow } from "@/features/admin/users/model/types"
@@ -46,7 +40,12 @@ import { useSortQueryParam } from "@/hooks/use-sort-query-param"
 import { useTargetConfirmDialog } from "@/hooks/use-target-confirm-dialog"
 import { useTargetDialog } from "@/hooks/use-target-dialog"
 import { authClient } from "@/lib/auth-client"
+import { getIcon } from "@/lib/icon-registry"
 import { userDisplayName } from "@/lib/user-display"
+
+const Plus = getIcon("actions", "add")
+const UsersIcon = getIcon("admin", "users")
+const UserX = getIcon("identity", "userX")
 
 function nextRole(user: UserRow): "user" | "admin" {
   if (user.role === "admin") return "user"

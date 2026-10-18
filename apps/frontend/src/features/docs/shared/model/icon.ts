@@ -1,7 +1,7 @@
 import { dynamicIconImports } from "lucide-react/dynamic"
 import type { ComponentType } from "react"
 
-// The page header and the reader's cards draw an `icono` on the server: each
+// The page header and the reader's cards draw an `icon` on the server: each
 // Lucide icon is its own module, loaded by name only for the page that uses it.
 
 type IconComponent = ComponentType<{ className?: string }>

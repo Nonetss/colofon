@@ -13,7 +13,7 @@ import type {
   DocsNavGroup,
   DocsNavLink,
   DocsNavNode,
-} from "@/features/docs/shared/model/nav"
+} from "@/features/docs/shared/public"
 import { DocIcon } from "@/features/docs/sidebar/components/doc-icon"
 import { getIcon } from "@/lib/icon-registry"
 import { cn } from "@/lib/utils"

@@ -1,10 +1,9 @@
-import { getIcon } from "@/lib/icon-registry"
-
-const Search = getIcon("views", "search")
-
 import type { KeyboardEvent } from "react"
 import { Input } from "@/components/ui/input"
+import { getIcon } from "@/lib/icon-registry"
 import { cn } from "@/lib/utils"
+
+const Search = getIcon("views", "search")
 
 export function SearchInput({
   id,

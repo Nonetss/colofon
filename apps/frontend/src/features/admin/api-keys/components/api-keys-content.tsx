@@ -1,9 +1,3 @@
-import { getIcon } from "@/lib/icon-registry"
-
-const ExternalLink = getIcon("actions", "openExternal")
-const KeyRound = getIcon("entities", "apiKey")
-const Plus = getIcon("actions", "add")
-
 import { useMemo, useState } from "react"
 import { inlineLinkClass } from "@/components/shared/brand/inline-link"
 import { Text, textVariants } from "@/components/shared/brand/typography"
@@ -35,8 +29,13 @@ import { columnPreferenceProps, useDataTable } from "@/hooks/use-data-table"
 import { useSortQueryParam } from "@/hooks/use-sort-query-param"
 import { useTargetConfirmDialog } from "@/hooks/use-target-confirm-dialog"
 import { useTargetDialog } from "@/hooks/use-target-dialog"
+import { getIcon } from "@/lib/icon-registry"
 import { sortRows } from "@/lib/sort-rows"
 import { cn } from "@/lib/utils"
+
+const ExternalLink = getIcon("actions", "openExternal")
+const KeyRound = getIcon("entities", "apiKey")
+const Plus = getIcon("actions", "add")
 
 export function ApiKeysContent() {
   const { data: apiKeys = [], isPending, isError, refetch } = useApiKeysList()

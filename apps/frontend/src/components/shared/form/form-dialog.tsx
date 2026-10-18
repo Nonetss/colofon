@@ -1,7 +1,3 @@
-import { getIcon } from "@/lib/icon-registry"
-
-const Loader2 = getIcon("status", "loading")
-
 import type { ReactNode, SyntheticEvent } from "react"
 import { textVariants } from "@/components/shared/brand/typography"
 import {
@@ -18,7 +14,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import type { UseDialogFormReturn } from "@/hooks/use-dialog-form"
+import { getIcon } from "@/lib/icon-registry"
 import { cn } from "@/lib/utils"
+
+const Loader2 = getIcon("status", "loading")
 
 /**
  * Shared dialog chrome for create/edit forms: title, description, `<form>`

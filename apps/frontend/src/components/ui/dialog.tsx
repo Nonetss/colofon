@@ -1,11 +1,10 @@
-import { getIcon } from "@/lib/icon-registry"
-
-const XIcon = getIcon("controls", "close")
-
 import { Dialog as DialogPrimitive } from "@base-ui/react/dialog"
 import type * as React from "react"
 import { Button } from "@/components/ui/button"
+import { getIcon } from "@/lib/icon-registry"
 import { cn } from "@/lib/utils"
+
+const XIcon = getIcon("controls", "close")
 
 function Dialog({ ...props }: DialogPrimitive.Root.Props) {
   return <DialogPrimitive.Root data-slot="dialog" {...props} />

@@ -1,8 +1,3 @@
-import { getIcon } from "@/lib/icon-registry"
-
-const FolderGit = getIcon("entities", "contentRepository")
-const Plus = getIcon("actions", "add")
-
 import { Text } from "@/components/shared/brand/typography"
 import { HeroCount } from "@/components/shared/layout/page-hero"
 import { ResourceOverview } from "@/components/shared/resource/resource-overview"
@@ -19,6 +14,10 @@ import {
 import type { ContentRepository } from "@/features/admin/content/model/types"
 import { useEditDialog } from "@/hooks/use-edit-dialog"
 import { useTargetConfirmDialog } from "@/hooks/use-target-confirm-dialog"
+import { getIcon } from "@/lib/icon-registry"
+
+const FolderGit = getIcon("entities", "contentRepository")
+const Plus = getIcon("actions", "add")
 
 type SlugMutation = {
   isPending: boolean

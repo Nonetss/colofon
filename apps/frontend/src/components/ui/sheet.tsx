@@ -1,11 +1,9 @@
-import { getIcon } from "@/lib/icon-registry"
-
-const XIcon = getIcon("controls", "close")
-
 import { Dialog as SheetPrimitive } from "@base-ui/react/dialog"
 import type * as React from "react"
-
+import { getIcon } from "@/lib/icon-registry"
 import { cn } from "@/lib/utils"
+
+const XIcon = getIcon("controls", "close")
 
 function Sheet({ ...props }: SheetPrimitive.Root.Props) {
   return <SheetPrimitive.Root data-slot="sheet" {...props} />

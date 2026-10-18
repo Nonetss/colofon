@@ -1,12 +1,11 @@
-import { getIcon } from "@/lib/icon-registry"
-
-const FiltersIcon = getIcon("views", "filters")
-
 import { type ReactNode, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { useScrollDirection } from "@/hooks/use-scroll-direction"
+import { getIcon } from "@/lib/icon-registry"
 import { cn } from "@/lib/utils"
+
+const FiltersIcon = getIcon("views", "filters")
 
 /** `pt-3` + `h-11` + `pb-3`, matching the bar's box without the safe area. */
 const OFFSET_VISIBLE = "4.25rem"

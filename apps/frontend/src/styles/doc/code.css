@@ -47,7 +47,7 @@
     background-color: var(--color-accent);
   }
 
-  /* The copied state swaps the copy icon for a check (`page-scripts.ts`). */
+  /* The copied state swaps the copy icon for a check (`page-scripts/copy-code.ts`). */
   .typeset.doc :where(.doc-code-copy > .doc-icon:last-child),
   .typeset.doc
     :where(.doc-code-copy[data-copy-state="done"] > .doc-icon:first-child) {

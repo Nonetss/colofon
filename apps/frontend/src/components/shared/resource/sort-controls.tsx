@@ -1,8 +1,3 @@
-import { getIcon } from "@/lib/icon-registry"
-
-const SortAscendingIcon = getIcon("views", "sortAscending")
-const SortDescendingIcon = getIcon("views", "sortDescending")
-
 import { Hint } from "@/components/shared/feedback/hint"
 import { Button } from "@/components/ui/button"
 import {
@@ -13,7 +8,11 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import type { SortOrder } from "@/hooks/use-sort-query-param"
+import { getIcon } from "@/lib/icon-registry"
 import { cn } from "@/lib/utils"
+
+const SortAscendingIcon = getIcon("views", "sortAscending")
+const SortDescendingIcon = getIcon("views", "sortDescending")
 
 export type { SortOrder }
 

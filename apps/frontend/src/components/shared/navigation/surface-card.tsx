@@ -1,13 +1,12 @@
-import { getIcon } from "@/lib/icon-registry"
-
-const ArrowUpRight = getIcon("navigation", "openSection")
-const ChevronRight = getIcon("controls", "next")
-
 import { surfaceVariants } from "@/components/shared/brand/surface"
 import { Text, textVariants } from "@/components/shared/brand/typography"
 import { AppLink } from "@/components/ui/app-link"
+import { getIcon } from "@/lib/icon-registry"
 import type { SiteNavItem, SiteNavSubItem } from "@/lib/site-nav"
 import { cn } from "@/lib/utils"
+
+const ArrowUpRight = getIcon("navigation", "openSection")
+const ChevronRight = getIcon("controls", "next")
 
 /**
  * Registry-driven card data: a top-level `SiteNavItem` (may carry

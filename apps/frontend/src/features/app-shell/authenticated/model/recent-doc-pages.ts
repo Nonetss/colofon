@@ -1,4 +1,4 @@
-import type { DocsNav, DocsNavNode } from "@/features/docs/shared"
+import type { DocsNav, DocsNavNode } from "@/features/docs/shared/public"
 import { appSurfaceList, isSurfacePathActive } from "@/lib/app-surfaces"
 import { pageHrefOf } from "@/lib/site-nav"
 

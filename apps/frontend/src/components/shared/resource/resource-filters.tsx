@@ -1,8 +1,3 @@
-import { getIcon } from "@/lib/icon-registry"
-
-const ExcludeIcon = getIcon("controls", "exclude")
-const ChevronDown = getIcon("controls", "chevronDown")
-
 import type { ReactNode } from "react"
 import { useEffect, useMemo, useState } from "react"
 import { Text } from "@/components/shared/brand/typography"
@@ -44,7 +39,11 @@ import {
 } from "@/components/ui/tooltip"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { formatDate } from "@/lib/format"
+import { getIcon } from "@/lib/icon-registry"
 import { cn } from "@/lib/utils"
+
+const ExcludeIcon = getIcon("controls", "exclude")
+const ChevronDown = getIcon("controls", "chevronDown")
 
 export interface ResourceFilterOption {
   value: string

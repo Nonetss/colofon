@@ -1,9 +1,3 @@
-import { getIcon } from "@/lib/icon-registry"
-
-const ChevronDownIcon = getIcon("controls", "expand")
-const ChevronLeftIcon = getIcon("controls", "previous")
-const ChevronRightIcon = getIcon("controls", "next")
-
 import * as React from "react"
 import {
   type DayButton,
@@ -11,7 +5,12 @@ import {
   getDefaultClassNames,
 } from "react-day-picker"
 import { Button, buttonVariants } from "@/components/ui/button"
+import { getIcon } from "@/lib/icon-registry"
 import { cn } from "@/lib/utils"
+
+const ChevronDownIcon = getIcon("controls", "expand")
+const ChevronLeftIcon = getIcon("controls", "previous")
+const ChevronRightIcon = getIcon("controls", "next")
 
 function Calendar({
   className,

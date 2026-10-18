@@ -1,7 +1,3 @@
-import { getIcon } from "@/lib/icon-registry"
-
-const ShieldAlert = getIcon("security", "warning")
-
 import { createHighlighter } from "@tanstack/highlight/core"
 import { json } from "@tanstack/highlight/languages/json"
 import { markdown } from "@tanstack/highlight/languages/markdown"
@@ -27,7 +23,10 @@ import {
   type AgentSetup,
   agentSetups,
 } from "@/features/api-keys/manage/model/agent-setups"
+import { getIcon } from "@/lib/icon-registry"
 import { cn } from "@/lib/utils"
+
+const ShieldAlert = getIcon("security", "warning")
 
 export type ApiKeyCreatedDialogProps = {
   open: boolean

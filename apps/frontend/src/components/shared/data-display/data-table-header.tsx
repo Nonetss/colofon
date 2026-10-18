@@ -1,9 +1,3 @@
-import { getIcon } from "@/lib/icon-registry"
-
-const SortableIcon = getIcon("views", "sortable")
-const SortAscendingIcon = getIcon("views", "sortAscending")
-const SortDescendingIcon = getIcon("views", "sortDescending")
-
 import type { Header, RowData } from "@tanstack/react-table"
 import {
   type KeyboardEvent,
@@ -20,7 +14,12 @@ import {
 import { denseTableStickyHead } from "@/components/shared/data-display/dense-table"
 import { TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import type { DataTable, DataTableFeatures } from "@/hooks/use-data-table"
+import { getIcon } from "@/lib/icon-registry"
 import { cn } from "@/lib/utils"
+
+const SortableIcon = getIcon("views", "sortable")
+const SortAscendingIcon = getIcon("views", "sortAscending")
+const SortDescendingIcon = getIcon("views", "sortDescending")
 
 /** Pointer travel before a press on a header becomes a drag. */
 const DRAG_THRESHOLD_PX = 4

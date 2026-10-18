@@ -1,8 +1,7 @@
 import { getIcon } from "@/lib/icon-registry"
+import { cn } from "@/lib/utils"
 
 const Loader2Icon = getIcon("status", "loading")
-
-import { cn } from "@/lib/utils"
 
 function Spinner({ className, ...props }: React.ComponentProps<"svg">) {
   return (

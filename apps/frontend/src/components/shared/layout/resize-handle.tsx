@@ -1,13 +1,12 @@
-import { getIcon } from "@/lib/icon-registry"
-
-const GripVertical = getIcon("controls", "grip")
-
 import { useEffect, useRef, useState } from "react"
 import type {
   ResizeHandleEventProps,
   WidthBounds,
 } from "@/hooks/use-resizable-width"
+import { getIcon } from "@/lib/icon-registry"
 import { cn } from "@/lib/utils"
+
+const GripVertical = getIcon("controls", "grip")
 
 interface ResizeHandleProps extends ResizeHandleEventProps {
   isResizing: boolean

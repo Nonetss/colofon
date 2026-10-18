@@ -1,7 +1,3 @@
-import { getIcon } from "@/lib/icon-registry"
-
-const ReorderIcon = getIcon("actions", "reorder")
-
 import {
   type ComponentProps,
   type CSSProperties,
@@ -15,7 +11,10 @@ import {
 } from "react"
 import { Hint } from "@/components/shared/feedback/hint"
 import { buttonVariants } from "@/components/ui/button"
+import { getIcon } from "@/lib/icon-registry"
 import { cn } from "@/lib/utils"
+
+const ReorderIcon = getIcon("actions", "reorder")
 
 const ACTIVATE_PX = 4
 const SHIFT_MS = 180

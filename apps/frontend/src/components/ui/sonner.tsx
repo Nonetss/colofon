@@ -1,3 +1,5 @@
+import { useSyncExternalStore } from "react"
+import { Toaster as Sonner, type ToasterProps } from "sonner"
 import { getIcon } from "@/lib/icon-registry"
 
 const CircleCheckIcon = getIcon("status", "success")
@@ -5,9 +7,6 @@ const InfoIcon = getIcon("status", "info")
 const Loader2Icon = getIcon("status", "loading")
 const OctagonXIcon = getIcon("status", "error")
 const TriangleAlertIcon = getIcon("security", "warning")
-
-import { useSyncExternalStore } from "react"
-import { Toaster as Sonner, type ToasterProps } from "sonner"
 
 // The theme system is manual (theme-toggle flips the `dark` class on <html>),
 // so the toaster tracks that class instead of a theme provider.

@@ -1,10 +1,3 @@
-import { getIcon } from "@/lib/icon-registry"
-
-const FirstIcon = getIcon("controls", "first")
-const LastIcon = getIcon("controls", "last")
-const NextIcon = getIcon("controls", "next")
-const PreviousIcon = getIcon("controls", "previous")
-
 import type { ComponentType } from "react"
 import { Text } from "@/components/shared/brand/typography"
 import { FilteredEmpty } from "@/components/shared/data-display/filtered-empty"
@@ -18,6 +11,12 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { PAGE_SIZES } from "@/features/docs/tables/model/table-view"
+import { getIcon } from "@/lib/icon-registry"
+
+const FirstIcon = getIcon("controls", "first")
+const LastIcon = getIcon("controls", "last")
+const NextIcon = getIcon("controls", "next")
+const PreviousIcon = getIcon("controls", "previous")
 
 function PageButton({
   label,

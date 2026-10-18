@@ -1,10 +1,3 @@
-import { getIcon } from "@/lib/icon-registry"
-
-const FilterIcon = getIcon("views", "filterByValue")
-const SortAscendingIcon = getIcon("views", "sortAscending")
-const SortDescendingIcon = getIcon("views", "sortDescending")
-const ChevronDown = getIcon("controls", "expand")
-
 import { type ReactNode, useId, useState } from "react"
 import { Text } from "@/components/shared/brand/typography"
 import { Hint } from "@/components/shared/feedback/hint"
@@ -17,7 +10,13 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 import { foldText } from "@/lib/fold-text"
+import { getIcon } from "@/lib/icon-registry"
 import { cn } from "@/lib/utils"
+
+const FilterIcon = getIcon("views", "filterByValue")
+const SortAscendingIcon = getIcon("views", "sortAscending")
+const SortDescendingIcon = getIcon("views", "sortDescending")
+const ChevronDown = getIcon("controls", "expand")
 
 export interface DataTableFilterOption {
   value: string

@@ -1,22 +1,19 @@
 export { default as DocCard } from "@/features/docs/shared/components/doc-card.astro"
 export { loadIcon } from "@/features/docs/shared/model/icon"
-export { isMissing } from "@/features/docs/shared/model/missing"
 export {
+  ALL_SCOPE,
   type CardBlock,
   cardBlocks,
+  DOCS_SCOPE_COOKIE,
   type DocsNav,
   type DocsNavGroup,
   type DocsNavLink,
   type DocsNavNode,
   type DocsRepository,
-  pagesMeta,
-  sectionsAbove,
-} from "@/features/docs/shared/model/nav"
-export {
-  ALL_SCOPE,
-  DOCS_SCOPE_COOKIE,
   type DocsScope,
   inScope,
+  isMissing,
+  pagesMeta,
   readScopeCookie,
   resolveScope,
   SCOPE_COOKIE_MAX_AGE,
@@ -24,4 +21,5 @@ export {
   scopeCookie,
   scopeToStore,
   scopeValue,
-} from "@/features/docs/shared/model/scope"
+  sectionsAbove,
+} from "@/features/docs/shared/public"

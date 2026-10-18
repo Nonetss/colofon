@@ -1,3 +1,17 @@
+import type { ComponentType, KeyboardEvent } from "react"
+import { Text } from "@/components/shared/brand/typography"
+import { Hint } from "@/components/shared/feedback/hint"
+import { CheckboxRow } from "@/components/shared/form/checkbox-row"
+import { SearchInput } from "@/components/shared/form/search-input"
+import { Button } from "@/components/ui/button"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
+import type { TableChip } from "@/features/docs/tables/model/doc-table"
+import type { TableColumn } from "@/features/docs/tables/model/table-view"
+import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard"
 import { getIcon } from "@/lib/icon-registry"
 
 const CheckIcon = getIcon("controls", "check")
@@ -7,22 +21,6 @@ const CopyIcon = getIcon("actions", "copy")
 const DownloadIcon = getIcon("actions", "download")
 const FullscreenIcon = getIcon("views", "fullscreen")
 const LinkIcon = getIcon("actions", "copyLink")
-
-import type { ComponentType, KeyboardEvent } from "react"
-import { Text } from "@/components/shared/brand/typography"
-import { Hint } from "@/components/shared/feedback/hint"
-import { CheckboxRow } from "@/components/shared/form/checkbox-row"
-import { SearchInput } from "@/components/shared/form/search-input"
-import { Button } from "@/components/ui/button"
-
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
-import type { TableChip } from "@/features/docs/tables/model/doc-table"
-import type { TableColumn } from "@/features/docs/tables/model/table-view"
-import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard"
 
 function chipKey(chip: TableChip): string {
   if (chip.kind === "filter") return chip.column

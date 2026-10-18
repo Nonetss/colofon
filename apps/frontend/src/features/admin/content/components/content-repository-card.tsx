@@ -1,8 +1,3 @@
-import { getIcon } from "@/lib/icon-registry"
-
-const FolderGit = getIcon("entities", "contentRepository")
-const Refresh = getIcon("actions", "refresh")
-
 import { surfaceVariants } from "@/components/shared/brand/surface"
 import { Text } from "@/components/shared/brand/typography"
 import { MetadataCell } from "@/components/shared/data-display/metadata-cell"
@@ -19,7 +14,11 @@ import {
   RepositorySyncError,
   RepositorySyncStatus,
 } from "@/features/content-repositories/manage"
+import { getIcon } from "@/lib/icon-registry"
 import { cn } from "@/lib/utils"
+
+const FolderGit = getIcon("entities", "contentRepository")
+const Refresh = getIcon("actions", "refresh")
 
 interface ContentRepositoryCardProps {
   repository: ContentRepository

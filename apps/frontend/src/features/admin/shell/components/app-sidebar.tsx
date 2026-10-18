@@ -1,11 +1,5 @@
-import type { User } from "better-auth"
-import { getIcon } from "@/lib/icon-registry"
-
-const ArrowLeft = getIcon("navigation", "back")
-const ChevronDown = getIcon("controls", "expand")
-const LogOut = getIcon("actions", "logout")
-
 import { Collapsible } from "@base-ui/react/collapsible"
+import type { User } from "better-auth"
 import { AppLogo } from "@/components/shared/brand/app-logo"
 import { Text } from "@/components/shared/brand/typography"
 import { UserAvatar } from "@/components/shared/user/avatar"
@@ -28,9 +22,14 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar"
 import { authClient } from "@/lib/auth-client"
+import { getIcon } from "@/lib/icon-registry"
 import { navigate } from "@/lib/navigate"
 import { adminSidebarLinks, currentNavHref } from "@/lib/site-nav"
 import { userDisplayName } from "@/lib/user-display"
+
+const ArrowLeft = getIcon("navigation", "back")
+const ChevronDown = getIcon("controls", "expand")
+const LogOut = getIcon("actions", "logout")
 
 const adminHrefs = adminSidebarLinks.map((link) => link.href)
 

@@ -1,15 +1,13 @@
+import { Select as SelectPrimitive } from "@base-ui/react/select"
+import type * as React from "react"
+import { Children, isValidElement, type ReactNode } from "react"
+import { useDocumentBody } from "@/hooks/use-document-body"
 import { getIcon } from "@/lib/icon-registry"
+import { cn } from "@/lib/utils"
 
 const CheckIcon = getIcon("controls", "checkIcon")
 const ChevronDownIcon = getIcon("controls", "expand")
 const ChevronUpIcon = getIcon("controls", "collapse")
-
-import { Select as SelectPrimitive } from "@base-ui/react/select"
-import type * as React from "react"
-import { Children, isValidElement, type ReactNode } from "react"
-
-import { useDocumentBody } from "@/hooks/use-document-body"
-import { cn } from "@/lib/utils"
 
 function SelectGroup({ ...props }: SelectPrimitive.Group.Props) {
   return <SelectPrimitive.Group data-slot="select-group" {...props} />

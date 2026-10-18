@@ -1,8 +1,3 @@
-import { getIcon } from "@/lib/icon-registry"
-
-const Loader2 = getIcon("status", "loading")
-const Fingerprint = getIcon("auth", "sso")
-
 import { AppLogo } from "@/components/shared/brand/app-logo"
 import { inlineLinkClass } from "@/components/shared/brand/inline-link"
 import { Text, textVariants } from "@/components/shared/brand/typography"
@@ -21,7 +16,11 @@ import { Input } from "@/components/ui/input"
 import { Marker, MarkerContent } from "@/components/ui/marker"
 import { useAuthConfig } from "@/features/auth/sign-in/hooks/use-auth-config"
 import { useSignIn } from "@/features/auth/sign-in/hooks/use-sign-in"
+import { getIcon } from "@/lib/icon-registry"
 import { cn } from "@/lib/utils"
+
+const Loader2 = getIcon("status", "loading")
+const Fingerprint = getIcon("auth", "sso")
 
 const ERROR_ID = "sign-in-error"
 

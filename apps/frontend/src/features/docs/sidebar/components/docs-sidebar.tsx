@@ -18,14 +18,12 @@ import {
   currentHref,
   type DocsNav,
   type DocsRepository,
-  sectionsAbove,
-} from "@/features/docs/shared/model/nav"
-import {
   type DocsScope,
   inScope,
   resolveScope,
   scopeCookie,
-} from "@/features/docs/shared/model/scope"
+  sectionsAbove,
+} from "@/features/docs/shared/public"
 import { DocsNavTree } from "@/features/docs/sidebar/components/docs-nav-tree"
 import { RepositorySelect } from "@/features/docs/sidebar/components/repository-select"
 import {

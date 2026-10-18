@@ -1,12 +1,11 @@
-import { getIcon } from "@/lib/icon-registry"
-
-const XIcon = getIcon("controls", "x")
-const ClearFiltersIcon = getIcon("views", "clearFilters")
-
 import { textVariants } from "@/components/shared/brand/typography"
 import type { ResourceFilterChip } from "@/components/shared/resource/resource-filters"
 import { Button } from "@/components/ui/button"
+import { getIcon } from "@/lib/icon-registry"
 import { cn } from "@/lib/utils"
+
+const XIcon = getIcon("controls", "x")
+const ClearFiltersIcon = getIcon("views", "clearFilters")
 
 /**
  * Removable chips for every active filter value, above the list at every

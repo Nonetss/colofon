@@ -48,7 +48,7 @@ import {
   scopeSwitchRepository,
   searchRepositoryOf,
 } from "@/features/app-shell/authenticated/model/search-scope"
-import { readScopeCookie } from "@/features/docs/shared"
+import { readScopeCookie } from "@/features/docs/shared/public"
 import { useDebouncedValue } from "@/hooks/use-debounced-value"
 import { foldText } from "@/lib/fold-text"
 import { getIcon } from "@/lib/icon-registry"

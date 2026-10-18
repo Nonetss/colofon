@@ -1,7 +1,3 @@
-import { getIcon } from "@/lib/icon-registry"
-
-const CalendarIcon = getIcon("scheduling", "calendar")
-
 import type { VariantProps } from "class-variance-authority"
 import { lazy, Suspense, useState } from "react"
 import { Button, type buttonVariants } from "@/components/ui/button"
@@ -11,7 +7,10 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 import { formatDate } from "@/lib/format"
+import { getIcon } from "@/lib/icon-registry"
 import { cn } from "@/lib/utils"
+
+const CalendarIcon = getIcon("scheduling", "calendar")
 
 const importCalendarPanel = () => import("@/components/ui/calendar-panel")
 

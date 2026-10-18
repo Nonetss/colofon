@@ -1,4 +1,8 @@
-import { ALL_SCOPE, type DocsNav, resolveScope } from "@/features/docs/shared"
+import {
+  ALL_SCOPE,
+  type DocsNav,
+  resolveScope,
+} from "@/features/docs/shared/public"
 
 /** The repository the dialog can narrow its search to. */
 export interface ScopeRepository {

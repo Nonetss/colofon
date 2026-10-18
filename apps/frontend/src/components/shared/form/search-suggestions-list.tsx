@@ -1,10 +1,9 @@
-import { getIcon } from "@/lib/icon-registry"
-
-const Loader2 = getIcon("status", "loading")
-
 import type { ReactNode } from "react"
 import { Text } from "@/components/shared/brand/typography"
+import { getIcon } from "@/lib/icon-registry"
 import { cn } from "@/lib/utils"
+
+const Loader2 = getIcon("status", "loading")
 
 interface SearchSuggestionsListProps<T> {
   results: T[]

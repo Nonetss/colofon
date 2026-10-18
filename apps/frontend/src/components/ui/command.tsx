@@ -1,8 +1,4 @@
 import { Command as CommandPrimitive } from "cmdk"
-import { getIcon } from "@/lib/icon-registry"
-
-const SearchIcon = getIcon("views", "search")
-
 import type * as React from "react"
 import {
   Dialog,
@@ -11,7 +7,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { getIcon } from "@/lib/icon-registry"
 import { cn } from "@/lib/utils"
+
+const SearchIcon = getIcon("views", "search")
 
 function Command({
   className,

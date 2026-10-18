@@ -1,9 +1,8 @@
+import { type KeyboardEvent, useState } from "react"
 import { getIcon } from "@/lib/icon-registry"
 
 const ChevronLeft = getIcon("controls", "chevronLeft")
 const ChevronRight = getIcon("controls", "chevronRight")
-
-import { type KeyboardEvent, useState } from "react"
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value))

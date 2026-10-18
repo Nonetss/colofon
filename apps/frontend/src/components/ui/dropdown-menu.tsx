@@ -1,13 +1,11 @@
+import { Menu as DropdownMenuPrimitive } from "@base-ui/react/menu"
+import type * as React from "react"
 import { getIcon } from "@/lib/icon-registry"
+import { cn } from "@/lib/utils"
 
 const CheckIcon = getIcon("controls", "checkIcon")
 const ChevronRightIcon = getIcon("controls", "next")
 const CircleIcon = getIcon("controls", "circle")
-
-import { Menu as DropdownMenuPrimitive } from "@base-ui/react/menu"
-import type * as React from "react"
-
-import { cn } from "@/lib/utils"
 
 function DropdownMenu({ ...props }: DropdownMenuPrimitive.Root.Props) {
   return <DropdownMenuPrimitive.Root data-slot="dropdown-menu" {...props} />

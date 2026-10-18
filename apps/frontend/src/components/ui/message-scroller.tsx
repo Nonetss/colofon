@@ -4,13 +4,12 @@ import {
   useMessageScrollerScrollable,
   useMessageScrollerVisibility,
 } from "@shadcn/react/message-scroller"
-import { getIcon } from "@/lib/icon-registry"
-
-const ArrowDownIcon = getIcon("views", "scrollDown")
-
 import type * as React from "react"
 import { Button } from "@/components/ui/button"
+import { getIcon } from "@/lib/icon-registry"
 import { cn } from "@/lib/utils"
+
+const ArrowDownIcon = getIcon("views", "scrollDown")
 
 function MessageScrollerProvider(
   props: React.ComponentProps<typeof MessageScrollerPrimitive.Provider>

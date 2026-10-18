@@ -1,11 +1,10 @@
-import { getIcon } from "@/lib/icon-registry"
-
-const X = getIcon("controls", "x")
-
 import type { ReactNode } from "react"
 import { SearchInput } from "@/components/shared/form/search-input"
 import { SearchSuggestionsList } from "@/components/shared/form/search-suggestions-list"
 import { Button } from "@/components/ui/button"
+import { getIcon } from "@/lib/icon-registry"
+
+const X = getIcon("controls", "x")
 
 export interface EntityPickerProps<TItem> {
   id?: string

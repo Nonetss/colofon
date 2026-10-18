@@ -1,10 +1,10 @@
 import { SearchableCombobox } from "@/components/ui/searchable-combobox"
-import type { DocsRepository } from "@/features/docs/shared/model/nav"
+import type { DocsRepository } from "@/features/docs/shared/public"
 import {
   ALL_SCOPE,
   type DocsScope,
   scopeValue,
-} from "@/features/docs/shared/model/scope"
+} from "@/features/docs/shared/public"
 
 export interface RepositorySelectProps {
   repositories: readonly DocsRepository[]

@@ -1,8 +1,4 @@
 import type { Session, User } from "better-auth"
-import { getIcon } from "@/lib/icon-registry"
-
-const Pencil = getIcon("actions", "edit")
-
 import { useState } from "react"
 import { Text } from "@/components/shared/brand/typography"
 import { MetadataDefinitionList } from "@/components/shared/data-display/metadata-cell"
@@ -14,7 +10,10 @@ import { ChangePasswordDialog } from "@/features/profile/account/components/chan
 import { EditNameDialog } from "@/features/profile/account/components/edit-name-dialog"
 import { authClient } from "@/lib/auth-client"
 import { formatDate } from "@/lib/format"
+import { getIcon } from "@/lib/icon-registry"
 import { userDisplayName } from "@/lib/user-display"
+
+const Pencil = getIcon("actions", "edit")
 
 export type ProfileAccountPageProps = {
   user: User

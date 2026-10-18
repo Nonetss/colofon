@@ -1,13 +1,12 @@
-import { getIcon } from "@/lib/icon-registry"
-
-const Check = getIcon("controls", "check")
-const Copy = getIcon("actions", "copy")
-
 import { Hint } from "@/components/shared/feedback/hint"
 import { Button } from "@/components/ui/button"
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard"
+import { getIcon } from "@/lib/icon-registry"
 import { notifySuccess } from "@/lib/toast"
 import { cn } from "@/lib/utils"
+
+const Check = getIcon("controls", "check")
+const Copy = getIcon("actions", "copy")
 
 export type CopyButtonSize = "icon-xs" | "icon" | "icon-sm"
 

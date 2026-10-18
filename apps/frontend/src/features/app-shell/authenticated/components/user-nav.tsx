@@ -1,13 +1,4 @@
 import type { User } from "better-auth"
-import { getIcon } from "@/lib/icon-registry"
-
-const LogIn = getIcon("auth", "loginAction")
-const LogOut = getIcon("actions", "logout")
-const OpenExternal = getIcon("actions", "openExternal")
-const UserCircle2 = getIcon("identity", "userCircle")
-const UserIcon = getIcon("identity", "userIcon")
-const AdminIcon = getIcon("navigation", "admin")
-
 import { Text } from "@/components/shared/brand/typography"
 import { Hint } from "@/components/shared/feedback/hint"
 import {
@@ -27,8 +18,16 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { useReleaseStatus } from "@/features/app-shell/authenticated/hooks/use-release-status"
 import { authClient } from "@/lib/auth-client"
+import { getIcon } from "@/lib/icon-registry"
 import { navigate } from "@/lib/navigate"
 import { userDisplayName } from "@/lib/user-display"
+
+const LogIn = getIcon("auth", "loginAction")
+const LogOut = getIcon("actions", "logout")
+const OpenExternal = getIcon("actions", "openExternal")
+const UserCircle2 = getIcon("identity", "userCircle")
+const UserIcon = getIcon("identity", "userIcon")
+const AdminIcon = getIcon("navigation", "admin")
 
 export interface UserNavProps {
   user: User | null
