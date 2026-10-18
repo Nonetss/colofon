@@ -2,9 +2,9 @@ import { readFile as readBytes, realpath, stat } from "node:fs/promises"
 import path from "node:path"
 import {
   type Breadcrumb,
-  compareHits,
-  createSiteSearch,
+  createDocsSearch,
   DOCS_DIR,
+  type EntityHit,
   entityPath,
   type FieldDefinition,
   fieldLabel,
@@ -16,8 +16,6 @@ import {
   type Site,
   type SitePage,
   type SiteRoutes,
-  type SiteSearch,
-  searchSite,
 } from "@nonete/content"
 import type { Element, ElementContent, Root } from "hast"
 import type { z } from "zod"
@@ -56,6 +54,9 @@ const CONTENT_TYPES: Record<string, string> = {
 // external loads, and a sandbox in case a browser ignores the rest.
 const SVG_POLICY = "default-src 'none'; style-src 'unsafe-inline'; sandbox"
 
+/** Catalog entities a search returns, whatever its limit. */
+const SEARCH_ENTITY_LIMIT = 5
+
 const PAGE_NOT_FOUND = "Ficha no encontrada"
 const FILE_NOT_FOUND = "Fichero no encontrado"
 
@@ -63,7 +64,8 @@ type NavOutput = z.infer<typeof docsOutput.nav>
 type PageOutput = z.infer<typeof docsOutput.page>
 type SearchOutput = z.infer<typeof docsOutput.search>
 
-type RepositoryHit = { repository: StoredRepository; hit: SearchHit }
+type SearchResult = SearchOutput["results"][number]
+type SearchEntity = SearchOutput["entities"][number]
 
 export type DocsHandlerOptions = {
   reader: ContentReader
@@ -74,17 +76,10 @@ export function createDocsHandler({
   reader,
   repositories,
 }: DocsHandlerOptions) {
-  // One index per read of a repository's pages: a sync replaces the `Site`,
-  // so its index is built again on the next search and the old one is freed.
-  const searches = new WeakMap<Site, SiteSearch>()
-
-  function searchOf(site: Site): SiteSearch {
-    const cached = searches.get(site)
-    if (cached !== undefined) return cached
-    const built = createSiteSearch(site)
-    searches.set(site, built)
-    return built
-  }
+  // One index for every repository, so pages of several rank on the same
+  // terms. A sync replaces a repository's `Site`, and the next search
+  // re-indexes that repository alone.
+  const docsSearch = createDocsSearch()
 
   async function readableSites(audience: RepositoryAudience) {
     const readable: { repository: StoredRepository; site: Site }[] = []
@@ -167,15 +162,33 @@ export function createDocsHandler({
         ({ repository }) => repository.slug === input.repository
       )
       const searched = scoped.length > 0 ? scoped : readable
-      const hits: RepositoryHit[] = []
+      const bySlug = new Map<string, StoredRepository>()
       for (const { repository, site } of searched) {
-        for (const hit of searchSite(searchOf(site), input.query, input.limit))
-          hits.push({ repository, hit })
+        docsSearch.update(repository.slug, site)
+        bySlug.set(repository.slug, repository)
       }
-      hits.sort((a, b) => compareHits(a.hit, b.hit))
+      const answer = docsSearch.search(input.query, {
+        repositories: new Set(bySlug.keys()),
+        limit: input.limit,
+        entityLimit: SEARCH_ENTITY_LIMIT,
+      })
+      const results: SearchResult[] = []
+      for (const hit of answer.hits) {
+        const repository = bySlug.get(hit.repository)
+        if (repository !== undefined)
+          results.push(searchResultOf(repository, hit))
+      }
+      const entities: SearchEntity[] = []
+      for (const hit of answer.entities) {
+        const repository = bySlug.get(hit.repository)
+        if (repository !== undefined)
+          entities.push(searchEntityOf(repository, hit))
+      }
       return {
         allRepositories: searched.length > 1,
-        results: hits.slice(0, input.limit).map(searchResultOf),
+        partial: answer.partial,
+        results,
+        entities,
       }
     },
 
@@ -241,10 +254,10 @@ async function navOf(
   }
 }
 
-function searchResultOf({
-  repository,
-  hit,
-}: RepositoryHit): SearchOutput["results"][number] {
+function searchResultOf(
+  repository: StoredRepository,
+  hit: SearchHit
+): SearchResult {
   const route = readerRoutesOf(repository.slug).routeOf(hit.path)
   return {
     repository: { slug: repository.slug, name: repository.name },
@@ -254,7 +267,27 @@ function searchResultOf({
     description: hit.description,
     trail: hit.trail,
     excerpt: hit.excerpt,
+    sections: hit.sections.map((section) => ({
+      heading: section.heading,
+      href: withAnchor(route, section.anchor),
+      excerpt: section.excerpt,
+    })),
     terms: hit.terms,
+    missing: hit.missing,
+  }
+}
+
+function searchEntityOf(
+  repository: StoredRepository,
+  hit: EntityHit
+): SearchEntity {
+  return {
+    repository: { slug: repository.slug, name: repository.name },
+    type: hit.type,
+    id: hit.id,
+    label: hit.label,
+    href: readerRoutesOf(repository.slug).routeOf(hit.path),
+    exact: hit.exact,
   }
 }
 

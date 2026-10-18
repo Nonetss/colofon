@@ -210,7 +210,7 @@ export function createDocsMcpServer(scope: McpScope): McpServer {
     {
       title: "Search",
       description:
-        "Search the documentation pages by their words, ranked by relevance (title, headings, description, body). Every word must match; prefixes and one-letter typos in long words also match. Each result has the route to pass to read and, for a match in the body, an excerpt. Pass repository to search only one; an unknown one is an error.",
+        "Search the documentation pages and catalog entities by their words, ranked by relevance (title, headings, description, body). Every word must match; prefixes and one-letter typos in long words also match. When no page holds every word, the pages holding some are returned, marked partial, with the words each lacks. Each result has the route to pass to read and, for a match in the body, an excerpt plus other matching sections. Matching entities come after the pages, with the repository, type and id to pass to entity. Pass repository to search only one; an unknown one is an error.",
       inputSchema: docsInput.search,
       outputSchema: searchOutput,
       annotations,

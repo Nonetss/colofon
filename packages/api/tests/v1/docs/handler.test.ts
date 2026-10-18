@@ -560,8 +560,104 @@ describe("docs.search", () => {
         text: "La consulta inversa da el nombre de una IP.",
         highlights: [{ start: 3, end: 11 }],
       },
+      sections: [],
       terms: ["consulta"],
+      missing: [],
     })
+  })
+
+  test("extra sections route to their headings", async () => {
+    const { handler } = await setup(
+      [casa],
+      inClone(casa, {
+        ...CASA,
+        "docs/red/dns.mdx": [
+          "---",
+          "titulo: DNS",
+          "descripcion: Nombres",
+          "---",
+          "",
+          "## Zonas",
+          "",
+          "La caché de zonas guarda cada ttl.",
+          "",
+          "## Rendimiento",
+          "",
+          "Una caché caliente.",
+        ].join("\n"),
+      })
+    )
+    const [result] = (
+      await handler.search({
+        context: userContext(),
+        input: search("caché ttl"),
+      })
+    ).results
+    expect(result?.href).toBe("/casa/red/dns#zonas")
+    expect(result?.sections.map((section) => section.href)).toEqual([
+      "/casa/red/dns#rendimiento",
+    ])
+  })
+
+  test("a partial answer names the words each page lacks", async () => {
+    const { handler } = await setup([casa], inClone(casa, CASA))
+    const answer = await handler.search({
+      context: userContext(),
+      input: search("consulta zigbee"),
+    })
+    expect(answer.partial).toBe(true)
+    expect(
+      answer.results.map((result) => [result.title, result.missing])
+    ).toEqual([["DNS", ["zigbee"]]])
+  })
+
+  test("matching entities come apart, with their catalog route", async () => {
+    const { handler } = await setup([casa], inClone(casa, CASA))
+    const answer = await handler.search({
+      context: userContext(),
+      input: search("nas"),
+    })
+    expect(answer.entities).toEqual([
+      {
+        repository: { slug: "casa", name: "Casa" },
+        type: { id: "maquinas", plural: "Máquinas" },
+        id: "nas",
+        label: "nas",
+        href: "/casa/catalog/maquinas/nas",
+        exact: true,
+      },
+    ])
+  })
+
+  test("at most five entities, whatever the page limit", async () => {
+    const machines = Object.fromEntries(
+      Array.from({ length: 8 }, (_, i) => [
+        `catalog/maquinas/equipo${i}.yaml`,
+        `ip: 10.0.0.${i}\nubicacion: casa\n`,
+      ])
+    )
+    const pages = Object.fromEntries(
+      Array.from({ length: 3 }, (_, i) => [
+        `docs/equipo${i}.mdx`,
+        `---\ntitulo: Equipo ${i}\ndescripcion: Uno\n---\n`,
+      ])
+    )
+    const { handler } = await setup(
+      [casa],
+      inClone(casa, { ...CASA, ...machines, ...pages })
+    )
+    const answer = await handler.search({
+      context: userContext(),
+      input: search("equipo", undefined, 10),
+    })
+    // The three pages and the type page, whose table lists the machines.
+    expect(answer.results.map((result) => result.title).sort()).toEqual([
+      "Equipo 0",
+      "Equipo 1",
+      "Equipo 2",
+      "Máquinas",
+    ])
+    expect(answer.entities).toHaveLength(5)
   })
 
   test("a title match routes to the page with no excerpt", async () => {
@@ -707,6 +803,17 @@ describe("docs of a user's repository", () => {
     const stranger = await handler.search({ context: strangerContext, input })
     const slugs = (answer: typeof owner) =>
       answer.results.map((result) => result.repository.slug)
+    expect(slugs(owner)).toContain("apuntes")
+    expect(slugs(stranger)).not.toContain("apuntes")
+  })
+
+  test("search finds its entities for the owner only, once it is indexed", async () => {
+    const { handler } = await withPrivateRepository()
+    const input = docsInput.search.parse({ query: "nas" })
+    const owner = await handler.search({ context: userContext(), input })
+    const stranger = await handler.search({ context: strangerContext, input })
+    const slugs = (answer: typeof owner) =>
+      answer.entities.map((entity) => entity.repository.slug)
     expect(slugs(owner)).toContain("apuntes")
     expect(slugs(stranger)).not.toContain("apuntes")
   })

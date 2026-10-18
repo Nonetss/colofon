@@ -43,9 +43,9 @@ export const docsRouter = {
   search: protectedProcedure
     .meta(
       openapi({
-        summary: "Search the documentation pages",
+        summary: "Search the documentation pages and catalog entities",
         description:
-          "Full-text search over the pages the navigation lists (home, pages, sections and catalog type pages; not entity pages) of one repository, or of every readable repository when `repository` is missing or names none. A page matches when it holds every word of the query, by prefix or, for words of five letters or more, with one typo. Results are ranked by where the words appear (title, then headings, then description, header fields and trail, then body); a match in a heading or the body comes with an excerpt and a route to its section.",
+          "Full-text search over the pages the navigation lists (home, pages, sections and catalog type pages; not entity pages) and the catalog entities of one repository, or of every readable repository when `repository` is missing or names none, ranked together. A page matches when it holds every word of the query, by prefix or, for words of five letters or more, with one typo; when no page holds every word of a query of several words, the pages holding some of them are returned as a partial answer, each with the words it lacks. Results are ranked by where the words appear (title, then headings, then description, header fields and trail, then body); a match in a heading or the body comes with an excerpt, a route to its section and up to two more matching sections. Up to five entities holding every word are returned apart, an exact match on the id or label first.",
         tags,
         method: "GET",
       })

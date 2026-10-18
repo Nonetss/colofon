@@ -76,6 +76,11 @@ export type RepositorySummary = z.infer<
 
 /** What `search` returns as structured content. */
 export const searchOutput = z.object({
+  partial: z
+    .boolean()
+    .describe(
+      "Whether no page holds every word, so the results hold only some of them"
+    ),
   results: z.array(
     z.object({
       repository: z.object({ slug: z.string(), name: z.string() }),
@@ -91,11 +96,36 @@ export const searchOutput = z.object({
         .string()
         .nullable()
         .describe("The text around the match, when it is in the body"),
+      missing: z
+        .array(z.string())
+        .describe("The query's words the page lacks, in a partial answer"),
+      sections: z
+        .array(
+          z.object({
+            heading: z.string(),
+            route: z.string().describe("Reader route of the section"),
+            excerpt: z.string(),
+          })
+        )
+        .describe("Other sections of the page that match"),
+    })
+  ),
+  entities: z.array(
+    z.object({
+      repository: z.object({ slug: z.string(), name: z.string() }),
+      type: z.object({ id: z.string(), plural: z.string() }),
+      id: z.string(),
+      label: z.string(),
+      route: z
+        .string()
+        .describe("Reader route of the entity's generated catalog page"),
     })
   ),
 })
 
 export type SearchHit = z.infer<typeof searchOutput>["results"][number]
+
+type SearchEntityHit = z.infer<typeof searchOutput>["entities"][number]
 
 function textResult(text: string): CallToolResult {
   return { content: [{ type: "text", text }] }
@@ -255,6 +285,24 @@ function searchHit(result: SearchOutput["results"][number]): SearchHit {
     description: result.description,
     trail: result.trail,
     excerpt: excerptText(result.excerpt),
+    missing: result.missing,
+    sections: result.sections.map((section) => ({
+      heading: section.heading,
+      route: section.href,
+      excerpt: section.excerpt.text,
+    })),
+  }
+}
+
+function searchEntityHit(
+  entity: SearchOutput["entities"][number]
+): SearchEntityHit {
+  return {
+    repository: entity.repository,
+    type: entity.type,
+    id: entity.id,
+    label: entity.label,
+    route: entity.href,
   }
 }
 
@@ -271,7 +319,36 @@ function hitLines(hit: SearchHit, withRepository: boolean): string[] {
   if (withRepository) lines.push(`  Repository: ${hit.repository.name}`)
   if (hit.description !== "") lines.push(`  ${hit.description}`)
   if (hit.excerpt !== null) lines.push(`  > ${hit.excerpt}`)
+  if (hit.missing.length > 0)
+    lines.push(`  Missing words: ${hit.missing.join(", ")}`)
+  for (const section of hit.sections) {
+    lines.push(`  Also in **${section.heading}**: \`${section.route}\``)
+    lines.push(`    > ${section.excerpt}`)
+  }
   return lines
+}
+
+function entityLines(entities: readonly SearchEntityHit[]): string[] {
+  if (entities.length === 0) return []
+  return [
+    "Catalog entities (pass repository, type and id to entity):",
+    ...entities.map(
+      (entity) =>
+        `- **${entity.label}** (${entity.type.plural}, ${entity.repository.name}): repository \`${entity.repository.slug}\`, type \`${entity.type.id}\`, id \`${entity.id}\``
+    ),
+  ]
+}
+
+/** The first lines of the answer: how many pages matched, and how well. */
+function pagesHeader(
+  query: string,
+  results: readonly SearchHit[],
+  partial: boolean
+): string[] {
+  if (results.length === 0) return [`No page matches "${query}".`]
+  const count = `${results.length} results for "${query}". Pass a route to read for the whole page.`
+  if (!partial) return [count]
+  return [count, "No page holds every word; these hold some of them."]
 }
 
 /** `search`: the reader's search, ranked, each result with its route. */
@@ -287,21 +364,21 @@ export async function searchTool({
   }
   const found = await docs.search(input)
   const results = found.results.map(searchHit)
-  if (results.length === 0)
+  const entities = found.entities.map(searchEntityHit)
+  const structuredContent = { partial: found.partial, results, entities }
+  if (results.length === 0 && entities.length === 0)
     return {
-      ...textResult(`No page matches "${input.query}".`),
-      structuredContent: { results },
+      ...textResult(`No page or catalog entity matches "${input.query}".`),
+      structuredContent,
     }
-  const lines = results.flatMap((hit) => hitLines(hit, found.allRepositories))
+  const blocks = [
+    pagesHeader(input.query, results, found.partial),
+    results.flatMap((hit) => hitLines(hit, found.allRepositories)),
+    entityLines(entities),
+  ].filter((lines) => lines.length > 0)
   return {
-    ...textResult(
-      [
-        `${results.length} results for "${input.query}". Pass a route to read for the whole page.`,
-        "",
-        ...lines,
-      ].join("\n")
-    ),
-    structuredContent: { results },
+    ...textResult(blocks.map((lines) => lines.join("\n")).join("\n\n")),
+    structuredContent,
   }
 }
 

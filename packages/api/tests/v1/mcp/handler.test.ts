@@ -28,7 +28,7 @@ const docs: DocsClient = {
   },
   search: async (input) => {
     searched.push(input)
-    return { allRepositories: false, results: [] }
+    return { allRepositories: false, partial: false, results: [], entities: [] }
   },
 }
 
@@ -345,7 +345,7 @@ describe("serveMcp", () => {
       arguments: { query: "dns" },
     })
     expect(result.isError).toBeFalsy()
-    expect(text(result)).toBe('No page matches "dns".')
+    expect(text(result)).toBe('No page or catalog entity matches "dns".')
     expect(searched).toEqual([{ query: "dns", limit: 10 }])
   })
 

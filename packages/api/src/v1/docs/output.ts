@@ -134,6 +134,15 @@ const headerValue = z.object({
     .describe("Reader route for a `ficha` value, or an entity's catalog page"),
 })
 
+const searchRepository = z.object({ slug: z.string(), name: z.string() })
+
+const searchExcerpt = z.object({
+  text: z.string(),
+  highlights: z
+    .array(z.object({ start: z.number(), end: z.number() }))
+    .describe("Matched words, as offsets into `text`"),
+})
+
 export const docsOutput = {
   nav: z.object({
     repositories: z.array(
@@ -222,9 +231,14 @@ export const docsOutput = {
       .describe(
         "Whether more than one repository was searched, so results come from several"
       ),
+    partial: z
+      .boolean()
+      .describe(
+        "Whether no page holds every word of the query, so the results hold only some of them"
+      ),
     results: z.array(
       z.object({
-        repository: z.object({ slug: z.string(), name: z.string() }),
+        repository: searchRepository,
         path: z
           .string()
           .describe("Page path under docs/ without .mdx; empty for the home"),
@@ -238,23 +252,53 @@ export const docsOutput = {
         trail: z
           .array(z.string())
           .describe("Groups and sections above the page, outermost first"),
-        excerpt: z
-          .object({
-            text: z.string(),
-            highlights: z
-              .array(z.object({ start: z.number(), end: z.number() }))
-              .describe("Matched words, as offsets into `text`"),
-          })
+        excerpt: searchExcerpt
           .nullable()
           .describe(
             "The text around the match; null when every word is in the title, description, header fields or trail"
           ),
+        sections: z
+          .array(
+            z.object({
+              heading: z.string(),
+              href: z
+                .string()
+                .describe("Reader route of the page at this section's heading"),
+              excerpt: searchExcerpt,
+            })
+          )
+          .describe(
+            "Up to two more sections of the page that hold some of the query's words; empty when the result has no excerpt"
+          ),
         terms: z
           .array(z.string())
+          .describe("The query's words as typed, folded"),
+        missing: z
+          .array(z.string())
           .describe(
-            "The query's words as typed, folded; the page holds every one"
+            "The query's words the page lacks; empty unless the answer is partial"
           ),
       })
     ),
+    entities: z
+      .array(
+        z.object({
+          repository: searchRepository,
+          type: z.object({ id: z.string(), plural: z.string() }),
+          id: z.string(),
+          label: z.string(),
+          href: z
+            .string()
+            .describe("Reader route of the entity's generated catalog page"),
+          exact: z
+            .boolean()
+            .describe(
+              "Whether the entity's id or label is the query, case, accents and separators aside"
+            ),
+        })
+      )
+      .describe(
+        "Catalog entities holding every word of the query, exact matches first; at most five"
+      ),
   }),
 }

@@ -204,7 +204,12 @@ const casaPages = new Map<string, Page>([
   ["catalog/servidor/nas", nas],
 ])
 
-const noResults: SearchOutput = { allRepositories: false, results: [] }
+const noResults: SearchOutput = {
+  allRepositories: false,
+  partial: false,
+  results: [],
+  entities: [],
+}
 
 type Calls = { page: unknown[]; search: unknown[] }
 
@@ -394,6 +399,8 @@ describe("indexTool", () => {
 describe("searchTool", () => {
   const found: SearchOutput = {
     allRepositories: true,
+    partial: false,
+    entities: [],
     results: [
       {
         repository: { slug: "casa", name: "Casa" },
@@ -406,7 +413,9 @@ describe("searchTool", () => {
           text: "…la resolución inversa…",
           highlights: [{ start: 15, end: 22 }],
         },
+        sections: [],
         terms: ["inversa"],
+        missing: [],
       },
       {
         repository: { slug: "trabajo", name: "Trabajo" },
@@ -416,7 +425,9 @@ describe("searchTool", () => {
         description: "",
         trail: [],
         excerpt: null,
+        sections: [],
         terms: ["inversa"],
+        missing: [],
       },
     ],
   }
@@ -439,6 +450,7 @@ describe("searchTool", () => {
       ].join("\n")
     )
     expect(result.structuredContent).toEqual({
+      partial: false,
       results: [
         {
           repository: { slug: "casa", name: "Casa" },
@@ -447,6 +459,8 @@ describe("searchTool", () => {
           description: "Resolución de nombres",
           trail: ["Red"],
           excerpt: "…la resolución inversa…",
+          missing: [],
+          sections: [],
         },
         {
           repository: { slug: "trabajo", name: "Trabajo" },
@@ -455,8 +469,11 @@ describe("searchTool", () => {
           description: "",
           trail: [],
           excerpt: null,
+          missing: [],
+          sections: [],
         },
       ],
+      entities: [],
     })
   })
 
@@ -497,8 +514,124 @@ describe("searchTool", () => {
       input: { query: "zzz", repository: undefined, limit: 10 },
     })
     expect(result.isError).toBeUndefined()
-    expect(text(result)).toBe('No page matches "zzz".')
-    expect(result.structuredContent).toEqual({ results: [] })
+    expect(text(result)).toBe('No page or catalog entity matches "zzz".')
+    expect(result.structuredContent).toEqual({
+      partial: false,
+      results: [],
+      entities: [],
+    })
+  })
+
+  const dnsWithSections: SearchOutput["results"][number] = {
+    repository: { slug: "casa", name: "Casa" },
+    path: "red/dns",
+    href: "/casa/red/dns#caches",
+    title: "DNS",
+    description: "",
+    trail: ["Red"],
+    excerpt: { text: "La caché guarda cada ttl.", highlights: [] },
+    sections: [
+      {
+        heading: "Rendimiento",
+        href: "/casa/red/dns#rendimiento",
+        excerpt: { text: "Una caché caliente.", highlights: [] },
+      },
+    ],
+    terms: ["cache", "ttl"],
+    missing: [],
+  }
+
+  async function searchFor(query: string, search: SearchOutput) {
+    const { docs, skills } = fakeDocs({ search })
+    return searchTool({
+      docs,
+      skills,
+      origin,
+      input: { query, repository: undefined, limit: 10 },
+    })
+  }
+
+  test("lists the extra sections under their page", async () => {
+    const result = await searchFor("caché ttl", {
+      ...noResults,
+      results: [dnsWithSections],
+    })
+    expect(text(result)).toBe(
+      [
+        '1 results for "caché ttl". Pass a route to read for the whole page.',
+        "",
+        "- **Red / DNS**: `/casa/red/dns#caches`",
+        "  > La caché guarda cada ttl.",
+        "  Also in **Rendimiento**: `/casa/red/dns#rendimiento`",
+        "    > Una caché caliente.",
+      ].join("\n")
+    )
+  })
+
+  test("says when the answer is partial and what each page lacks", async () => {
+    const result = await searchFor("router zigbee", {
+      ...noResults,
+      partial: true,
+      results: [
+        {
+          ...dnsWithSections,
+          excerpt: null,
+          sections: [],
+          href: "/casa/red/dns",
+          missing: ["zigbee"],
+        },
+      ],
+    })
+    expect(text(result)).toBe(
+      [
+        '1 results for "router zigbee". Pass a route to read for the whole page.',
+        "No page holds every word; these hold some of them.",
+        "",
+        "- **Red / DNS**: `/casa/red/dns`",
+        "  Missing words: zigbee",
+      ].join("\n")
+    )
+    expect(result.structuredContent).toMatchObject({
+      partial: true,
+      results: [{ missing: ["zigbee"] }],
+    })
+  })
+
+  test("lists the matching entities with the arguments for entity", async () => {
+    const result = await searchFor("DATABASE_URL", {
+      ...noResults,
+      entities: [
+        {
+          repository: { slug: "colofon", name: "Colofon" },
+          type: { id: "env-vars", plural: "Variables de entorno" },
+          id: "database-url",
+          label: "DATABASE_URL",
+          href: "/colofon/catalog/env-vars/database-url",
+          exact: true,
+        },
+      ],
+    })
+    expect(text(result)).toBe(
+      [
+        'No page matches "DATABASE_URL".',
+        "",
+        "Catalog entities (pass repository, type and id to entity):",
+        "- **DATABASE_URL** (Variables de entorno, Colofon): repository `colofon`, type `env-vars`, id `database-url`",
+      ].join("\n")
+    )
+    expect(result.structuredContent).toEqual({
+      partial: false,
+      results: [],
+      entities: [
+        {
+          repository: { slug: "colofon", name: "Colofon" },
+          type: { id: "env-vars", plural: "Variables de entorno" },
+          id: "database-url",
+          label: "DATABASE_URL",
+          route: "/colofon/catalog/env-vars/database-url",
+        },
+      ],
+    })
   })
 })
 
