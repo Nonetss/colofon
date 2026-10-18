@@ -7,7 +7,7 @@
     { "name": "Ronda de preguntas", "date": "2026-09-08", "info": "Con /colofon-questions se apunta lo que aún no se sabe en open_questions" },
     { "name": "Revisión", "date": "2026-09-22" },
     { "name": "Publicada", "date": "2026-10-01", "focal": true },
-    { "name": "Revisada", "sub": "contra la plataforma", "date": "2026-10-16", "entity": "header-fields/actualizado" }
+    { "name": "Revisada", "sub": "contra la plataforma", "date": "2026-10-16", "entity": "header-fields/updated" }
   ],
   "spans": [
     { "name": "Preguntas abiertas", "start": "2026-09-08", "end": "2026-09-30", "hue": "violet" }

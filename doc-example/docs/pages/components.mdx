@@ -1,10 +1,10 @@
 ---
-titulo: Componentes
-descripcion: Los tres componentes que puede usar una página, Callout, Entities y Diagram, y cómo escribirlos
+title: Componentes
+description: Los tres componentes que puede usar una página, Callout, Entities y Diagram, y cómo escribirlos
 files: [page]
 components: [callout, entities, diagram]
-orden: 3
-actualizado: 2026-10-15
+order: 3
+updated: 2026-10-18
 ---
 
 ## Los componentes
@@ -40,8 +40,8 @@ La tabla de un tipo del catálogo, construida a partir de sus entidades cuando s
 <Entities type="field-kinds" group="family" columns="id,value,takes" />
 
 - `type` es el nombre de la carpeta del tipo en `catalog/`.
-- `columns` elige los campos, `id` incluido. Sin él, se usa el `vista.columnas` del tipo; sin eso, su etiqueta y todos sus campos.
-- `group` divide la tabla en un bloque por valor, en el orden de `valores` para un `enum`, con las entidades que no lo tienen al final.
+- `columns` elige los campos, `id` incluido. Sin él, se usa el `view.columns` del tipo; sin eso, su etiqueta y todos sus campos.
+- `group` divide la tabla en un bloque por valor, en el orden de `values` para un `enum`, con las entidades que no lo tienen al final.
 - Las filas se ordenan por etiqueta, y cada etiqueta enlaza a la página de la entidad o a su página de catálogo. Las referencias muestran la etiqueta de aquello a lo que apuntan, con enlace.
 - Un tipo, columna o atributo desconocido, y cada entidad que no cumple su tipo, se reportan en la página; el resto de la tabla se renderiza igualmente.
 

@@ -1,5 +1,5 @@
 family: scalar
 value: "Una dirección completa; se muestra como un enlace"
-example: "web: { tipo: url } → web: https://komodo.example"
-fuente: manual
-actualizado: 2026-10-15
+example: "web: { type: url } → web: https://komodo.example"
+source: manual
+updated: 2026-10-15

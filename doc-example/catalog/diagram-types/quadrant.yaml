@@ -4,5 +4,5 @@ purpose: Repartir elementos en un marco de dos por dos según dos criterios, com
 keys: x, y, quadrants, items
 budget: 12 elementos
 page: diagrams/concepts
-fuente: manual
-actualizado: 2026-10-16
+source: manual
+updated: 2026-10-16

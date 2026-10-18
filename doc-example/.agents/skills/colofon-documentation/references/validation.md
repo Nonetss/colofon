@@ -18,10 +18,10 @@ under (`/admin/content` shows the address). What the editor knows:
 
 | File | Completion and checks |
 | --- | --- |
-| `doc.config.yaml` | Every key and the field kinds of `cabecera` |
+| `doc.config.yaml` | Every key and the field kinds of `header` |
 | `menu.yaml` | Every key, the paths an entry can name, icon names |
 | `_type.yaml` | Every key, the field kinds, the types a `ref` can point at, icon names |
-| An entity | Its type's fields with descriptions, each `enum`'s values, the ids each `ref` accepts, the pages a `ficha` can name |
+| An entity | Its type's fields with descriptions, each `enum`'s values, the ids each `ref` accepts, the pages a `page` can name |
 | `diagrams/*.json` | Every key, the entities and pages a piece can link, types, shapes and colours |
 
 - Nothing is generated or committed: a new type, entity or page shows in the
@@ -64,7 +64,7 @@ Messages are Spanish and quoted in the folder skills' references (`colofon-docs`
 
 | The report is on… | Look first at |
 | --- | --- |
-| Every page at once | `doc.config.yaml` (`cabecera`) or a `_type.yaml` that broke |
+| Every page at once | `doc.config.yaml` (`header`) or a `_type.yaml` that broke |
 | Every entity of a type | Its `_type.yaml` (a new required field, a renamed one) |
 | A table missing rows | The entities that fail their type |
 | A page's header field | `doc.config.yaml` declares it? the cited id exists? |
@@ -74,7 +74,7 @@ Messages are Spanish and quoted in the folder skills' references (`colofon-docs`
 
 - Every YAML you touched validates in the editor (modulo ids that only exist
   after the sync).
-- Every link, `ficha` field, `ref`, menu entry and diagram `entity` or `page`
+- Every link, `page` field, `ref`, menu entry and diagram `entity` or `page`
   points at something that exists.
 - No page lands in "Otros".
 - No MDX outside backticks reads as code (`colofon-docs` skill, `references/mdx.md`).

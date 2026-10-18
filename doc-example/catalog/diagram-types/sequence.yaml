@@ -4,5 +4,5 @@ purpose: Mensajes entre actores a lo largo del tiempo, de arriba abajo, con sus 
 keys: actors, messages, fragments
 budget: 6 actores, 14 mensajes, 3 fragmentos; los fragmentos se anidan un nivel
 page: diagrams/time
-fuente: manual
-actualizado: 2026-10-16
+source: manual
+updated: 2026-10-16

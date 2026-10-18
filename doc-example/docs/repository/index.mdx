@@ -1,8 +1,8 @@
 ---
-titulo: El repositorio
-descripcion: Cada fichero y carpeta que puede contener un repositorio de contenido, y qué nombres pertenecen a la plataforma
+title: El repositorio
+description: Cada fichero y carpeta que puede contener un repositorio de contenido, y qué nombres pertenecen a la plataforma
 files: [doc-config, menu, page, type-declaration, entity, diagram-file, diagram-illustration, served-skill]
-actualizado: 2026-10-17
+updated: 2026-10-18
 ---
 
 ## Los ficheros
@@ -22,7 +22,7 @@ docs/
     ├── index.mdx        # su página de entrada
     └── dns.mdx          # una de sus páginas
 catalog/
-└── machines/            # un tipo: el nombre de la carpeta es su id
+└── machines/            # un type: el nombre de la carpeta es su id
     ├── _type.yaml       # su declaración
     └── nas.yaml         # una entidad: el nombre del fichero es su id
 diagrams/
@@ -43,17 +43,17 @@ La carpeta es una ruta relativa (`docs`, `sitio/docs`), sin `..`, sin `/` inicia
 
 ## Nombres del contrato y nombres tuyos
 
-La plataforma lee un conjunto fijo de nombres: los ficheros y carpetas, en inglés; las claves de los YAML, en español, salvo las de los diagramas, que son las de los esquemas de la documentación anterior. Deben escribirse exactamente así, o el contenido deja de validar:
+La plataforma lee un conjunto fijo de nombres, todos en inglés: los ficheros y carpetas, las claves y los valores fijos de los YAML y las claves de los diagramas. Deben escribirse exactamente así, o el contenido deja de validar. Es el contrato 2 (`contract: "2"` en `doc.config.yaml`); un repositorio que aún siga el contrato 1 escribe las mismas claves en español, y [Pasar del contrato 1 al 2](contract-1.mdx) las traduce una a una:
 
 | Dónde | Nombres del contrato |
 | --- | --- |
 | Ficheros y carpetas | `doc.config.yaml`, `menu.yaml`, `docs/`, `index.mdx`, `catalog/`, `_type.yaml`, `diagrams/`, `styles/` y sus módulos (`theme.css`, `page.css`, `controls.css`, `code.css`, `tables.css`, `diagrams.css`, `images.css`, `callouts.css`, `sections.css`), `skills/` |
-| `doc.config.yaml` | `nombre`, `descripcion`, `plataforma`, `cabecera` |
-| `menu.yaml` | `secciones`, `titulo`, `icono`, `descripcion`, `paginas`, `ruta` |
-| `_type.yaml` | `nombre`, `plural`, `icono`, `descripcion`, `etiqueta`, `campos`, `vista`, `columnas` |
-| Un campo | `tipo`, `opcional`, `descripcion`, `valores`, `a`, `de`, `campos` |
-| Cada cabecera de página | `titulo`, `descripcion`, `icono`, `orden`, `actualizado` |
-| Cada entidad | `fuente`, `actualizado` |
+| `doc.config.yaml` | `name`, `description`, `contract`, `header` |
+| `menu.yaml` | `sections`, `title`, `icon`, `description`, `pages`, `path` |
+| `_type.yaml` | `name`, `plural`, `icon`, `description`, `title_field`, `fields`, `view`, `columns` |
+| Un campo | `type`, `optional`, `description`, `label`, `values`, `to`, `of`, `fields` |
+| Cada cabecera de página | `title`, `description`, `icon`, `order`, `updated` |
+| Cada entidad | `source`, `updated` |
 | Un diagrama (JSON) | `type`, `variant`, `title`, `desc` y las de su forma: `width`, `height`, `nodes`, `edges`, `zones`, `notes` si se dibuja a mano, `items` y `links` en una cadena, las de su tipo si lleva `type` (ver [Diagramas](../diagrams/index.mdx)) |
 | Enlaces | `catalog:` seguido de un tipo, o de un tipo y un id |
 

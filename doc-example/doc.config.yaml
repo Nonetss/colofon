@@ -1,35 +1,36 @@
 # Configuración del sitio. El menú está en menu.yaml, las páginas en docs/,
 # los datos estructurados en catalog/ y los diagramas en diagrams/.
 #
-# Las claves de este fichero y de cada _type.yaml (nombre, cabecera, campos,
-# tipo: texto...) son el contrato de la plataforma y se leen tal cual. Los
-# valores, los ids de tipo y los nombres de campo son propios de este sitio.
+# Las claves de este fichero y de cada _type.yaml (name, header, fields,
+# type: text...) son el contrato de la plataforma, en inglés, y se leen tal
+# cual. Los valores, los ids de tipo y los nombres de campo son propios de
+# este sitio.
 
-nombre: Escribir documentación
-descripcion: Cómo escribir un repositorio de contenido que publique la plataforma doc, desde la primera página hasta el menú, el catálogo y los diagramas
-plataforma: "1" # versión mayor del contrato de la plataforma a la que apunta este sitio
+name: Escribir documentación
+description: Cómo escribir un repositorio de contenido que publique la plataforma doc, desde la primera página hasta el menú, el catálogo y los diagramas
+contract: "2" # versión mayor del contrato de la plataforma a la que apunta este sitio
 
 # Campos extra de cabecera para las páginas. La plataforma ya da a cada página
-# titulo, descripcion, icono, orden y actualizado. Estos usan los mismos tipos
+# title, description, icon, order y updated. Estos usan los mismos tipos
 # de campo que el catálogo (ver catalog/*/_type.yaml).
-cabecera:
+header:
   files:
-    tipo: lista
-    de: { tipo: ref, a: files }
-    opcional: true
-    descripcion: Ficheros de un repositorio de contenido que explica la página
+    type: list
+    of: { type: ref, to: files }
+    optional: true
+    description: Ficheros de un repositorio de contenido que explica la página
   components:
-    tipo: lista
-    de: { tipo: ref, a: components }
-    opcional: true
-    descripcion: Componentes de página que explica la página
+    type: list
+    of: { type: ref, to: components }
+    optional: true
+    description: Componentes de página que explica la página
   diagram_types:
-    tipo: lista
-    de: { tipo: ref, a: diagram-types }
-    opcional: true
-    descripcion: Tipos de diagrama que explica la página
+    type: list
+    of: { type: ref, to: diagram-types }
+    optional: true
+    description: Tipos de diagrama que explica la página
   open_questions:
-    tipo: lista
-    de: { tipo: texto }
-    opcional: true
-    descripcion: Preguntas aún abiertas; una ronda de preguntas las responde (colofon-questions)
+    type: list
+    of: { type: text }
+    optional: true
+    description: Preguntas aún abiertas; una ronda de preguntas las responde (colofon-questions)

@@ -1,10 +1,10 @@
 ---
-titulo: Tiempo y procesos
-descripcion: Siete tipos de diagrama para lo que pasa en orden, de los mensajes de una secuencia a las etapas de una experiencia, escritos como datos que la plataforma coloca sola
+title: Tiempo y procesos
+description: Siete tipos de diagrama para lo que pasa en orden, de los mensajes de una secuencia a las etapas de una experiencia, escritos como datos que la plataforma coloca sola
 files: [diagram-file]
 diagram_types: [sequence, timeline, gantt, swimlane, kanban, story-map, journey]
-orden: 3
-actualizado: 2026-10-16
+order: 3
+updated: 2026-10-18
 ---
 
 Estos tipos cuentan algo que ocurre en orden: mensajes que van y vuelven, fechas en un calendario, pasos repartidos entre personas o trabajo que avanza de una columna a otra. El fichero da los datos, con `"type"` y las claves de su tipo, y la plataforma calcula cada posición, comprueba el límite de complejidad del tipo y lo dibuja con el mismo aspecto, la misma leyenda y la misma versión en texto que un diagrama dibujado a mano. Como en cualquier diagrama, `title` y `desc` son obligatorias, y una parte puede llevar `entity` o `page` para enlazar a su ficha o a una página, `info` para la tarjeta, `hue` para su color y `focal: true` para ir en el color de acento, dos elementos como mucho.
@@ -63,7 +63,7 @@ Para historiales de versiones, hitos de un proyecto o la cronología de un incid
     { "name": "Ronda de preguntas", "date": "2026-09-08" },
     { "name": "Revisión", "date": "2026-09-22" },
     { "name": "Publicada", "date": "2026-10-01", "focal": true },
-    { "name": "Revisada", "date": "2026-10-16", "entity": "header-fields/actualizado" }
+    { "name": "Revisada", "date": "2026-10-16", "entity": "header-fields/updated" }
   ],
   "spans": [
     { "name": "Preguntas abiertas", "start": "2026-09-08", "end": "2026-09-30", "hue": "violet" }

@@ -1,9 +1,9 @@
 ---
-titulo: Entidades
-descripcion: Un fichero YAML por entidad, con solo los campos que declara su tipo, y de dónde proceden sus datos
+title: Entidades
+description: Un fichero YAML por entidad, con solo los campos que declara su tipo, y de dónde proceden sus datos
 files: [entity]
-orden: 2
-actualizado: 2026-10-15
+order: 2
+updated: 2026-10-18
 ---
 
 ## Un fichero
@@ -14,13 +14,13 @@ ip: 192.168.1.20
 location: home
 kind: vm
 host: pve-01
-fuente: komodo
-actualizado: 2026-10-15
+source: komodo
+updated: 2026-10-15
 ```
 
 - **El id es el nombre del fichero:** minúsculas, dígitos y guiones. La extensión es `.yaml`, nunca `.yml`. Un fichero que empieza por `_` no es una entidad.
-- **Solo los campos que declara su tipo,** incluidos todos los obligatorios. Un `ref` debe nombrar una entidad que exista, y una `ficha` una página que exista.
-- **Procedencia:** `fuente` indica de dónde proceden los datos (`manual`, o el panel del que se leyeron) y `actualizado` su fecha. Cuando el panel y el catálogo discrepan, gana el panel: corrige la entidad.
+- **Solo los campos que declara su tipo,** incluidos todos los obligatorios. Un `ref` debe nombrar una entidad que exista, y un campo `page`, una página que exista.
+- **Procedencia:** `source` indica de dónde proceden los datos (`manual`, o el panel del que se leyeron) y `updated` su fecha. Cuando el panel y el catálogo discrepan, gana el panel: corrige la entidad.
 - **Una entidad por fichero,** siempre, incluso en listas largas.
 - **Ningún secreto,** ni siquiera de forma provisional.
 
@@ -28,7 +28,7 @@ Una entidad que no cumple su tipo se queda fuera de todas las tablas y se report
 
 ## Citarla desde una página
 
-- **En la cabecera,** mediante un campo `ref` declarado bajo `cabecera`: `machines: [docker-01]`.
+- **En la cabecera,** mediante un campo `ref` declarado bajo `header`: `machines: [docker-01]`.
 - **En el texto,** con un enlace: `[docker-01](catalog:machines/docker-01)`.
 
 De cualquiera de las dos formas, la [página de catálogo](reader.mdx) de la entidad lista la página en "Páginas que la citan".

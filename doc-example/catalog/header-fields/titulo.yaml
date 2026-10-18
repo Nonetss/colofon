@@ -1,6 +1,0 @@
-required: true
-kind: texto
-meaning: El título de la página, en la barra lateral, la cabecera de la página, las tarjetas y la búsqueda
-rule: menu.yaml puede dar otro título a la página, y entonces prevalece ese
-fuente: manual
-actualizado: 2026-10-15

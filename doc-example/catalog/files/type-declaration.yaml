@@ -3,5 +3,5 @@ kind: declaration
 required: false
 purpose: La declaración de un tipo del catálogo, sus campos y su tabla
 page: data/types
-fuente: manual
-actualizado: 2026-10-15
+source: manual
+updated: 2026-10-15

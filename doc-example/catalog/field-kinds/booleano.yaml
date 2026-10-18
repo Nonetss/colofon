@@ -1,5 +1,0 @@
-family: scalar
-value: "true o false; se muestra como Sí o No"
-example: "public: { tipo: booleano } → public: true"
-fuente: manual
-actualizado: 2026-10-15

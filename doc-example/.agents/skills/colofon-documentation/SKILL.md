@@ -39,7 +39,7 @@ platform's repository; they change only there.
   guide's page for it; these skills cite pages by route ("the guide's
   `repository/menu` page") and hold how to write well with the contract.
 - **The site is read from its own files.** Which header fields exist
-  (`doc.config.yaml`, `cabecera`), the sidebar's groups (`menu.yaml`), the
+  (`doc.config.yaml`, `header`), the sidebar's groups (`menu.yaml`), the
   catalog types and their fields (`catalog/*/_type.yaml`), its sections
   (`docs/`) and its diagrams (`diagrams/`). Never assume one site's types,
   groups or fields in another.
@@ -111,7 +111,7 @@ loads several. Repeated tasks have their own skill too, invoked by name
 | What the site documents, its own conventions and procedures | `AGENTS.md`, «Este sitio» |
 | Where a file goes, the repository tree, naming | [layout.md](references/layout.md) |
 | `menu.yaml`: its keys, adding an entry, "Otros" | [menu.md](references/menu.md) |
-| `doc.config.yaml`: its keys, `cabecera` fields and their kinds, `plataforma` | [doc-config.md](references/doc-config.md) |
+| `doc.config.yaml`: its keys, `header` fields and their kinds, `contract` | [doc-config.md](references/doc-config.md) |
 | Which names are the contract's and which are the site's | [contract-names.md](references/contract-names.md) |
 | The editor's schemas, the platform's sync, where problems show, final checks | [validation.md](references/validation.md) |
 | Running a question round (`colofon-questions`) | [question-rounds.md](references/question-rounds.md) |
@@ -133,14 +133,14 @@ loads several. Repeated tasks have their own skill too, invoked by name
 - **Don't rename the contract.** Its names are fixed; translating one breaks
   validation.
 - **Declare before use.** An entity field must be declared in its
-  `_type.yaml`; a header field under `cabecera` in `doc.config.yaml`.
+  `_type.yaml`; a header field under `header` in `doc.config.yaml`.
 - **MDX has no code**, and nothing in the prose starts JSX or an expression:
   write component names, `<placeholders>` and braces inside backticks or code
   blocks, never bare in a sentence.
 - **YAML wins over MDX.** Every page is shown by `menu.yaml`, none in
   "Otros"; icons of the pages the menu shows go in `menu.yaml`; a title set in
-  the menu must match the page's `titulo`.
-- **Every `icono` is a Lucide icon name** the platform knows.
+  the menu must match the page's `title`.
+- **Every `icon` is a Lucide icon name** the platform knows.
 - **One entity per file, one diagram per file.** Structured data goes to the
   catalog; explanations to a page.
 - **Ids are lowercase**: digits and hyphens for files and folders; lowercase
@@ -156,8 +156,8 @@ loads several. Repeated tasks have their own skill too, invoked by name
 | Copying the writing skills into a site's repository, or editing them to fit it | The next install overwrites the installed copy, and the copy in the repository drifts from the platform's; the site's convention goes in `AGENTS.md` «Este sitio» |
 | Writing a rule of the contract into `AGENTS.md` or a page instead of reading the guide | Two sources; the copy goes stale first |
 | Assuming the types, header fields or menu groups of another site | Each site declares its own: read its `doc.config.yaml`, `menu.yaml` and `_type.yaml` |
-| Translating `titulo`, `catalog/`, `_type.yaml`, or a diagram's `nodes` | The platform no longer reads it; the file fails validation |
-| Renaming an existing id, field or folder | Breaks every link, `ref`, `ficha`, menu entry and header citing it |
+| Translating `title`, `catalog/`, `_type.yaml`, or a diagram's `nodes` | The platform no longer reads it; the file fails validation |
+| Renaming an existing id, field or folder | Breaks every link, `ref`, `page`, menu entry and header citing it |
 | A new folder under `docs/` without a menu entry | Its pages land in "Otros" and are reported |
 | Fixing only the file the platform reported | The cause is often a declaration (`_type.yaml`, `doc.config.yaml`, `menu.yaml`) |
 | A credential pasted "just for the example" | Content is cloned to servers and read by agents |
@@ -165,7 +165,7 @@ loads several. Repeated tasks have their own skill too, invoked by name
 ## 7. Before finishing
 
 - Every YAML and JSON you touched validates in the editor.
-- Every link, `ref`, `ficha`, menu entry and diagram `entity` or `page`
+- Every link, `ref`, `page`, menu entry and diagram `entity` or `page`
   points at something that exists, and no page lands in "Otros".
 - A convention of the site you added or changed is written in `AGENTS.md`,
   «Este sitio», in the same change; no writing skill was copied or edited.

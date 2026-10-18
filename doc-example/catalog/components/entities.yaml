@@ -6,10 +6,10 @@ attributes:
     meaning: El tipo, como el nombre de su carpeta en catalog/
   - name: columns
     required: false
-    meaning: Los campos que se muestran, separados por comas (también id); sin él, la vista.columnas del tipo
+    meaning: Los campos que se muestran, separados por comas (también id); sin él, las view.columns del tipo
   - name: group
     required: false
     meaning: Un campo que divide la tabla en un bloque por valor
 page: pages/components
-fuente: manual
-actualizado: 2026-10-15
+source: manual
+updated: 2026-10-15

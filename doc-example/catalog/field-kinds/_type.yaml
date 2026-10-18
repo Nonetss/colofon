@@ -1,23 +1,23 @@
-nombre: Tipo de campo
+name: Tipo de campo
 plural: Tipos de campo
-icono: shapes
-descripcion: Los tipos que puede tener un campo de catálogo o un campo de la cabecera de una página. El id es el tipo tal como se escribe en `tipo`
+icon: shapes
+description: Los tipos que puede tener un campo de catálogo o un campo de la cabecera de una página. El id es el tipo tal como se escribe en `type`
 
-campos:
+fields:
   family:
-    tipo: enum
-    valores: [scalar, choice, reference, composite]
-    descripcion: "scalar: un único valor; choice: uno de una lista; reference: apunta a otra cosa; composite: contiene otros campos"
+    type: enum
+    values: [scalar, choice, reference, composite]
+    description: "scalar: un único valor; choice: uno de una lista; reference: apunta a otra cosa; composite: contiene otros campos"
   value:
-    tipo: texto
-    descripcion: Qué aspecto tiene un valor de este tipo
+    type: text
+    description: Qué aspecto tiene un valor de este tipo
   takes:
-    tipo: texto
-    opcional: true
-    descripcion: La clave adicional que necesita la declaración (valores, a, de, campos)
+    type: text
+    optional: true
+    description: La clave adicional que necesita la declaración (values, to, of, fields)
   example:
-    tipo: texto
-    descripcion: Una declaración y un valor, tal como se escriben
+    type: text
+    description: Una declaración y un valor, tal como se escriben
 
-vista:
-  columnas: [id, value, takes, example]
+view:
+  columns: [id, value, takes, example]

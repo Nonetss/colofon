@@ -1,8 +1,8 @@
 ---
-titulo: Primeros pasos
-descripcion: Crea un repositorio de contenido, regístralo en la plataforma y publica tu primera página
+title: Primeros pasos
+description: Crea un repositorio de contenido, regístralo en la plataforma y publica tu primera página
 files: [doc-config, page]
-actualizado: 2026-10-17
+updated: 2026-10-18
 ---
 
 ## 1. Crea el repositorio
@@ -11,21 +11,21 @@ Un repositorio de contenido necesita dos cosas: `doc.config.yaml` y una carpeta 
 
 ```yaml
 # doc.config.yaml
-nombre: Homelab
-descripcion: Los servidores de casa y cómo se mantienen
-plataforma: "1"
+name: Homelab
+description: Los servidores de casa y cómo se mantienen
+contract: "2"
 ```
 
 ```mdx
 ---
-titulo: Homelab
-descripcion: Los servidores de casa y cómo se mantienen
+title: Homelab
+description: Los servidores de casa y cómo se mantienen
 ---
 
 Todo lo que funciona en casa, y dónde encontrarlo.
 ```
 
-`plataforma` va entre comillas: es la versión del contrato que sigue el repositorio, no un número. El resto de `doc.config.yaml` está en [Configuración del sitio](repository/config.mdx).
+`contract` va entre comillas: es la versión del contrato que sigue el repositorio, no un número. El resto de `doc.config.yaml` está en [Configuración del sitio](repository/config.mdx).
 
 La forma más rápida de empezar es copiar este repositorio y reemplazar sus páginas y su catálogo por los tuyos.
 

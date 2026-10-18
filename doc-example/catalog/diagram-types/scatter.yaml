@@ -5,5 +5,5 @@ keys: x, y, points, unit, decimals
 variants: bubble, beeswarm
 budget: 60 puntos, 6 etiquetas, 5 grupos
 page: diagrams/charts
-fuente: manual
-actualizado: 2026-10-16
+source: manual
+updated: 2026-10-16

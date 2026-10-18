@@ -10,7 +10,7 @@ particular to this site (a shape its pages share, words it uses) are in the
 
 | Part | What it holds |
 | --- | --- |
-| Header | `titulo`, a `descripcion` that says what the reader learns or can do, the entities the page is about (`header.md`) |
+| Header | `title`, a `description` that says what the reader learns or can do, the entities the page is about (`header.md`) |
 | The answer | What the reader came for, first: the fact, the example to copy, the table, or the steps |
 | The details | Why it is so, the options, the rules a table can't hold |
 | Shown, not described | The `<Entities>` table, the `<Diagram>`, the screenshot, right where the text needs it |
@@ -80,7 +80,7 @@ One row per question a reader brings, phrased as they would ("Quiero…" or
   "Páginas que la citan", "Sincronizar", "Revisar", "Ampliar",
   "Copiar en Markdown". The same for the UI words of the systems a page
   documents: as their screens show them.
-- Contract names (`titulo`, `catalog:`, `_type.yaml`), ids, paths, commands
+- Contract names (`title`, `catalog:`, `_type.yaml`), ids, paths, commands
   and values are code: in backticks.
 - Repeated facts with the same shape go to the catalog; the page cites them.
 - **Never a secret**, not even in an example: say where it lives and which

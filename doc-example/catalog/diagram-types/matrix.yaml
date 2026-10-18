@@ -4,5 +4,5 @@ purpose: Filas por columnas con un nivel ordenado en cada celda, como quién pue
 keys: rows, columns, levels, cells
 budget: 10 filas, 8 columnas
 page: diagrams/concepts
-fuente: manual
-actualizado: 2026-10-16
+source: manual
+updated: 2026-10-16

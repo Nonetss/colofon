@@ -1,34 +1,34 @@
-nombre: Tipo de diagrama
+name: Tipo de diagrama
 plural: Tipos de diagrama
-icono: chart-pie
-descripcion: Las formas de diagrama que la plataforma coloca sola a partir de los datos. El id es el valor de `type` en el fichero del diagrama
-etiqueta: name
+icon: chart-pie
+description: Las formas de diagrama que la plataforma coloca sola a partir de los datos. El id es el valor de `type` en el fichero del diagrama
+title_field: name
 
-campos:
+fields:
   name:
-    tipo: texto
-    descripcion: Su nombre en la guía
+    type: text
+    description: Su nombre en la guía
   family:
-    tipo: enum
-    valores: [graph, time, concept, chart, comparison]
-    descripcion: "graph: cajas unidas por flechas; time: pasos en el tiempo o por carriles; concept: ideas en un espacio; chart: valores; comparison: un antes y un después"
+    type: enum
+    values: [graph, time, concept, chart, comparison]
+    description: "graph: cajas unidas por flechas; time: pasos en el tiempo o por carriles; concept: ideas en un espacio; chart: valores; comparison: un antes y un después"
   purpose:
-    tipo: texto
-    descripcion: Para qué sirve, en una línea
+    type: text
+    description: Para qué sirve, en una línea
   keys:
-    tipo: texto
-    descripcion: Sus claves propias, además de type, title y desc
+    type: text
+    description: Sus claves propias, además de type, title y desc
   variants:
-    tipo: texto
-    opcional: true
-    descripcion: Los valores de variant que admite
+    type: text
+    optional: true
+    description: Los valores de variant que admite
   budget:
-    tipo: texto
-    descripcion: Su límite de complejidad; pasarlo se avisa y el diagrama se dibuja igual
+    type: text
+    description: Su límite de complejidad; pasarlo se avisa y el diagrama se dibuja igual
   page:
-    tipo: ficha
-    opcional: true
-    descripcion: La página que lo explica
+    type: page
+    optional: true
+    description: La página que lo explica
 
-vista:
-  columnas: [id, purpose, variants, budget]
+view:
+  columns: [id, purpose, variants, budget]

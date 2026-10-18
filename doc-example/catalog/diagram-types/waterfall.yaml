@@ -4,5 +4,5 @@ purpose: Cómo un total de partida llega a otro por cambios que suman y restan
 keys: start, steps, end, unit, decimals
 budget: 10 pasos
 page: diagrams/charts
-fuente: manual
-actualizado: 2026-10-16
+source: manual
+updated: 2026-10-16

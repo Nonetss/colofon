@@ -5,5 +5,5 @@ keys: lanes, steps, links
 variants: process
 budget: 5 carriles, 12 pasos, 16 enlaces
 page: diagrams/time
-fuente: manual
-actualizado: 2026-10-16
+source: manual
+updated: 2026-10-16

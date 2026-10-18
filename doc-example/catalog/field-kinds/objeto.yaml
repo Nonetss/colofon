@@ -1,6 +1,0 @@
-family: composite
-value: "Un grupo de campos con nombre declarados en campos; se muestra como pares nombre: valor"
-takes: "campos: { … }"
-example: "port: { tipo: objeto, campos: { number: { tipo: entero } } } → port: { number: 53 }"
-fuente: manual
-actualizado: 2026-10-15

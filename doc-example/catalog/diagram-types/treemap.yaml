@@ -5,5 +5,5 @@ keys: items, columns, unit, decimals
 variants: marimekko
 budget: 16 partes; un marimekko, 6 columnas y 5 partes por columna
 page: diagrams/proportions
-fuente: manual
-actualizado: 2026-10-16
+source: manual
+updated: 2026-10-16

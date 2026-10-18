@@ -1,37 +1,37 @@
 ---
-titulo: Configuración del sitio
-descripcion: doc.config.yaml da al sitio su nombre, la versión del contrato que sigue y los campos extra de las cabeceras de sus páginas
+title: Configuración del sitio
+description: doc.config.yaml da al sitio su nombre, la versión del contrato que sigue y los campos extra de las cabeceras de sus páginas
 files: [doc-config]
-orden: 1
-actualizado: 2026-10-15
+order: 1
+updated: 2026-10-18
 ---
 
 ## Las claves
 
 | Clave | Qué es |
 | --- | --- |
-| `nombre` | Obligatoria. El nombre del sitio, tal como lo muestra el lector. |
-| `descripcion` | Opcional. Una frase sobre de qué trata la documentación. |
-| `plataforma` | Obligatoria. La versión mayor del contrato, entre comillas: `"1"`. |
-| `cabecera` | Opcional. Los campos extra que aceptan las cabeceras de página de este sitio. |
+| `name` | Obligatoria. El nombre del sitio, tal como lo muestra el lector. |
+| `description` | Opcional. Una frase sobre de qué trata la documentación. |
+| `contract` | Obligatoria. La versión mayor del contrato, entre comillas: `"2"`. Un repositorio que aún diga `plataforma: "1"` sigue el contrato 1: consulta [Pasar del contrato 1 al 2](contract-1.mdx). |
+| `header` | Opcional. Los campos extra que aceptan las cabeceras de página de este sitio. |
 
 Cualquier otra clave se reporta. `doc.config.yaml` es una declaración: mientras está rota, la plataforma mantiene la última versión válida.
 
 ## Campos extra de la cabecera
 
-Toda cabecera de página ya tiene `titulo`, `descripcion`, `icono`, `orden` y `actualizado` (consulta [La cabecera](../pages/header.mdx)). `cabecera` añade los propios del sitio, cada uno declarado con un [tipo de campo](catalog:field-kinds), igual que un campo del catálogo:
+Toda cabecera de página ya tiene `title`, `description`, `icon`, `order` y `updated` (consulta [La cabecera](../pages/header.mdx)). `header` añade los propios del sitio, cada uno declarado con un [tipo de campo](catalog:field-kinds), igual que un campo del catálogo:
 
 ```yaml
-cabecera:
+header:
   machines:
-    tipo: lista
-    de: { tipo: ref, a: machines }
-    opcional: true
-    descripcion: Máquinas de las que trata la página
+    type: list
+    of: { type: ref, to: machines }
+    optional: true
+    description: Máquinas de las que trata la página
 ```
 
 Una página puede entonces decir `machines: [nas, pve-01]`. Cada id se comprueba contra el catálogo, la cabecera de la página los muestra como enlaces a sus entidades, y la página de cada entidad lista la página en "Páginas que la citan".
 
-- `cabecera` no puede redeclarar los campos comunes.
+- `header` no puede redeclarar los campos comunes.
 - Una página que use un campo no declarado aquí se reporta: decláralo primero.
 - Este sitio declara `files`, `components`, `diagram_types` y `open_questions`; consulta su `doc.config.yaml`.

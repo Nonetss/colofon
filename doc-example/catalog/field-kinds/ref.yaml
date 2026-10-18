@@ -1,6 +1,6 @@
 family: reference
-value: "El id de una entidad existente del tipo indicado en a; se muestra como su etiqueta, con enlace"
-takes: "a: <type>"
-example: "host: { tipo: ref, a: machines } → host: pve-01"
-fuente: manual
-actualizado: 2026-10-15
+value: "El id de una entidad existente del tipo indicado en to; se muestra como el valor de su title_field, con enlace"
+takes: "to: <type>"
+example: "host: { type: ref, to: machines } → host: pve-01"
+source: manual
+updated: 2026-10-15

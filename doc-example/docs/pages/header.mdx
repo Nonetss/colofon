@@ -1,20 +1,20 @@
 ---
-titulo: La cabecera
-descripcion: El bloque YAML con el que empieza toda página, los campos que tiene cualquier página y los que añade un sitio
+title: La cabecera
+description: El bloque YAML con el que empieza toda página, los campos que tiene cualquier página y los que añade un sitio
 files: [page, doc-config]
-orden: 1
-actualizado: 2026-10-15
+order: 1
+updated: 2026-10-18
 ---
 
 ## El bloque
 
 ```mdx
 ---
-titulo: DNS
-descripcion: Cómo se resuelven los nombres de casa
-icono: globe
-orden: 2
-actualizado: 2026-10-15
+title: DNS
+description: Cómo se resuelven los nombres de casa
+icon: globe
+order: 2
+updated: 2026-10-15
 machines: [docker-01]
 ---
 ```
@@ -24,13 +24,13 @@ machines: [docker-01]
 <Entities type="header-fields" columns="id,required,kind,meaning,rule" />
 
 - Una página sin una cabecera válida se publica igualmente, titulada con el nombre de su fichero, y sus problemas se reportan.
-- Todo `icono` de la plataforma es un nombre de icono de Lucide; uno que Lucide no tenga se reporta y no se dibuja.
-- `actualizado` es la fecha de los datos: pasados seis meses, la cabecera de la página lo marca como "Revisar".
+- Todo `icon` de la plataforma es un nombre de icono de Lucide; uno que Lucide no tenga se reporta y no se dibuja.
+- `updated` es la fecha de los datos: pasados seis meses, la cabecera de la página lo marca como "Revisar".
 
 ## Los campos propios del sitio
 
-Cualquier otro campo debe declararse bajo `cabecera` en [`doc.config.yaml`](../repository/config.mdx), con su tipo. Un campo `ref` (`machines: [docker-01]`) muestra sus entidades como enlaces, y cada entidad lista la página como una que la cita. Un campo sin declarar se reporta.
+Cualquier otro campo debe declararse bajo `header` en [`doc.config.yaml`](../repository/config.mdx), con su tipo. Un campo `ref` (`machines: [docker-01]`) muestra sus entidades como enlaces, y cada entidad lista la página como una que la cita. Un campo sin declarar se reporta.
 
 ## El menú manda
 
-Cuando [`menu.yaml`](../repository/menu.mdx) da a una página un título o un icono, ese es el que se muestra en todas partes, y una cabecera que discrepe se reporta. Pon en el menú los iconos de las páginas que el menú muestra y deja `icono` fuera de sus cabeceras. `titulo` se queda en cada cabecera, ya que es obligatorio: define un título en el menú solo cuando la barra lateral necesite uno distinto, y la página mostrará entonces el del menú.
+Cuando [`menu.yaml`](../repository/menu.mdx) da a una página un título o un icono, ese es el que se muestra en todas partes, y una cabecera que discrepe se reporta. Pon en el menú los iconos de las páginas que el menú muestra y deja `icon` fuera de sus cabeceras. `title` se queda en cada cabecera, ya que es obligatorio: define un título en el menú solo cuando la barra lateral necesite uno distinto, y la página mostrará entonces el del menú.

@@ -4,5 +4,5 @@ purpose: Apilar capas en las que cada una usa la de debajo, con las piezas de ca
 keys: layers
 budget: 7 capas, 6 piezas por capa
 page: diagrams/concepts
-fuente: manual
-actualizado: 2026-10-16
+source: manual
+updated: 2026-10-16

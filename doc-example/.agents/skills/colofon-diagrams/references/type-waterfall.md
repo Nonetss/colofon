@@ -21,7 +21,7 @@ stages of one funnel (use `pyramid` with `funnel`).
   "unit": "problemas",
   "start": { "name": "Primera sincronización", "value": 24 },
   "steps": [
-    { "name": "Cabeceras", "delta": -9, "focal": true, "info": "Faltaban descripcion y titulo en nueve páginas" },
+    { "name": "Cabeceras", "delta": -9, "focal": true, "info": "Faltaban description y title en nueve páginas" },
     { "name": "Enlaces rotos", "delta": -6 },
     { "name": "Diagramas nuevos", "delta": 3 },
     { "name": "Menú", "delta": -4 }

@@ -28,11 +28,10 @@ no se compila ni se ejecuta nada.
 ## Nombres del contrato frente a los tuyos
 
 La plataforma lee un conjunto fijo de nombres que deben quedarse exactamente
-como están: los ficheros y carpetas, en inglés (`doc.config.yaml`,
+como están, todos en inglés: los ficheros y carpetas (`doc.config.yaml`,
 `menu.yaml`, `docs/`, `catalog/`, `_type.yaml`, `diagrams/`, `styles/`), las
-claves de cada fichero YAML, en español (las de los diagramas, que son JSON,
-van en inglés), los tipos de campo (`texto`, `ref`, `lista`…), la cabecera que
-tiene toda página (`titulo`, `descripcion`, `icono`, `orden`, `actualizado`) y
+claves de cada fichero YAML y de los diagramas JSON, los tipos de campo (`text`, `ref`, `list`…), la cabecera que
+tiene toda página (`title`, `description`, `icon`, `order`, `updated`) y
 los enlaces `catalog:`. Todo lo demás es
 tuyo, en el idioma en que escribas. La tabla completa está en
 `docs/repository/index.mdx`.

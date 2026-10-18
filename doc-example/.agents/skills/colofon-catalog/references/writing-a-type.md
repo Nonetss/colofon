@@ -9,7 +9,7 @@ it changes.
 ## Before adding one
 
 - Look for an existing type that fits (`ls catalog/` and each
-  `_type.yaml`'s `descripcion`); create one only when none does. A missing
+  `_type.yaml`'s `description`); create one only when none does. A missing
   field is a new field, not a new type.
 - A new type is a new kind of thing the site lists as a table. Ask the user
   before adding one when the request did not name it.
@@ -18,48 +18,48 @@ it changes.
 
 ```yaml
 # catalog/components/_type.yaml (from the guide)
-nombre: Componente
+name: Componente
 plural: Componentes
-icono: component
-descripcion: Los componentes que una página puede usar, el único JSX que lee la plataforma. Cada uno va en un bloque propio
-etiqueta: tag
+icon: component
+description: Los componentes que una página puede usar, el único JSX que lee la plataforma. Cada uno va en un bloque propio
+title_field: tag
 
-campos:
+fields:
   tag:
-    tipo: texto
-    descripcion: Cómo se escribe en una página
+    type: text
+    description: Cómo se escribe en una página
   purpose:
-    tipo: texto
-    descripcion: Qué muestra
+    type: text
+    description: Qué muestra
   attributes:
-    tipo: lista
-    descripcion: Los atributos que acepta, siempre como cadenas literales
-    de:
-      tipo: objeto
-      campos:
-        name: { tipo: texto }
-        required: { tipo: booleano }
-        meaning: { tipo: texto }
+    type: list
+    description: Los atributos que acepta, siempre como cadenas literales
+    of:
+      type: object
+      fields:
+        name: { type: text }
+        required: { type: boolean }
+        meaning: { type: text }
   page:
-    tipo: ficha
-    opcional: true
-    descripcion: La página que lo explica
+    type: page
+    optional: true
+    description: La página que lo explica
 
-vista:
-  columnas: [tag, purpose]
+view:
+  columns: [tag, purpose]
 ```
 
 ## Type keys
 
 | Key | What it is |
 | --- | --- |
-| `nombre` | Required. Singular name, Spanish ("Componente"). |
+| `name` | Required. Singular name, Spanish ("Componente"). |
 | `plural` | Required. Plural name ("Componentes"); the catalog page's title and the empty-table text. |
-| `icono` | Optional. A Lucide icon name. |
-| `descripcion` | Optional, always written here. What goes in the type and **what its id is** ("El id es el tipo tal como se escribe en `tipo`"). |
-| `etiqueta` | Optional. The declared field shown as each entity's name, sorted and linked in tables; without it, the id. Use it when the id is not what a reader recognises (`path`, `tag`, `name`). |
-| `campos` | Required. The fields, at least one, each with its `tipo`. |
-| `vista.columnas` | Optional. The type's table columns, in order: declared fields plus `id`, `fuente`, `actualizado`. Also the default of every `<Entities>` without `columns`. |
+| `icon` | Optional. A Lucide icon name. |
+| `description` | Optional, always written here. What goes in the type and **what its id is** ("El id es el tipo tal como se escribe en `type`"). |
+| `title_field` | Optional. The declared field shown as each entity's name, sorted and linked in tables; without it, the id. Use it when the id is not what a reader recognises (`path`, `tag`, `name`). |
+| `fields` | Required. The fields, at least one, each with its `type`. |
+| `view.columns` | Optional. The type's table columns, in order: declared fields plus `id`, `source`, `updated`. Also the default of every `<Entities>` without `columns`. |
 
 Anything else is rejected. The type id is the folder name: lowercase, digits
 and hyphens ("El nombre de un tipo va en minúsculas, sin acentos y con
@@ -69,52 +69,50 @@ guiones").
 
 | Key | What it is |
 | --- | --- |
-| `tipo` | Required. The field kind (below). |
-| `opcional` | Optional. `true` if it may be missing; every field is required otherwise. |
-| `descripcion` | Optional, but on every field that is not obvious: the editor shows it as help and agents read it. Put the enum's meaning here (`"declaration: …; content: …"`). |
-| `valores` | Required for `enum`: the values, at least one. |
-| `a` | Required for `ref`: the target type's folder name. |
-| `de` | Required for `lista`: the field that repeats (a whole field declaration). |
-| `campos` | Required for `objeto`: its named fields. |
+| `type` | Required. The field kind (below). |
+| `optional` | Optional. `true` if it may be missing; every field is required otherwise. |
+| `description` | Optional, but on every field that is not obvious: the editor shows it as help and agents read it. Put the enum's meaning here (`"declaration: …; content: …"`). |
+| `values` | Required for `enum`: the values, at least one. |
+| `label` | Optional. How the reader names the field (column headers, the entity page, the page header); without it, its name. Not to be confused with the type's `title_field`. |
+| `to` | Required for `ref`: the target type's folder name. |
+| `of` | Required for `list`: the field that repeats (a whole field declaration). |
+| `fields` | Required for `object`: its named fields. |
 
 Field names: lowercase, digits and underscores, starting with a letter
-(`public_ip`). `fuente` and `actualizado` can't be declared: "`fuente` no se
+(`public_ip`). `source` and `updated` can't be declared: "`source` no se
 puede declarar: toda entidad lo admite sin declararlo".
-
-The platform's schema also accepts an `etiqueta` on a field (its display
-name). Use it only once the guide documents it.
 
 ## Field kinds
 
 | Family | Kinds | Extra key |
 | --- | --- | --- |
-| scalar | `texto` (one non-empty line), `numero`, `entero`, `booleano` (shown "Sí"/"No"), `fecha` (`YYYY-MM-DD`), `url`, `email`, `ip` (v4 or v6) | — |
-| choice | `enum` | `valores` |
-| reference | `ref` (an entity id of type `a`, shown as its label, linked), `ficha` (a page path under `docs/` without `.mdx`, shown as a link with its title) | `a` for `ref` |
-| composite | `lista` (shown joined by commas), `objeto` (shown as `name: value` pairs) | `de`, `campos` |
+| scalar | `text` (one non-empty line), `number`, `integer`, `boolean` (shown "Sí"/"No"), `date` (`YYYY-MM-DD`), `url`, `email`, `ip` (v4 or v6) | — |
+| choice | `enum` | `values` |
+| reference | `ref` (an entity id of type `to`, shown as its `title_field`, linked), `page` (a page path under `docs/` without `.mdx`, shown as a link with its title) | `to` for `ref` |
+| composite | `list` (shown joined by commas), `object` (shown as `name: value` pairs) | `of`, `fields` |
 
-Kinds nest: a `lista` of `objeto`, each with another `lista`, is valid. The
-same kinds declare `doc.config.yaml`'s `cabecera` fields.
+Kinds nest: a `list` of `object`, each with another `list`, is valid. The
+same kinds declare `doc.config.yaml`'s `header` fields.
 
 ## Choosing a kind
 
 | The value is… | Kind |
 | --- | --- |
 | One of a fixed set you will group or filter by | `enum`, values short ids (`declaration`, `physical`) |
-| Another entity | `ref`, never its name as `texto` |
-| The page that explains this entity | `ficha` (often named `page`) |
-| Several of the same | `lista` with `de` |
-| A small record (an attribute with name, required, meaning) | `objeto`, usually in a `lista` |
-| A date the data was true | `fecha` |
+| Another entity | `ref`, never its name as `text` |
+| The page that explains this entity | `page` (often named `page`) |
+| Several of the same | `list` with `of` |
+| A small record (an attribute with name, required, meaning) | `object`, usually in a `list` |
+| A date the data was true | `date` |
 
 ## Changing a type
 
 - After changing a `_type.yaml`, the existing entities must still validate: a
   new required field is filled in every one of them in the same change (or
-  added `opcional: true`).
-- Renaming or removing a field: update every entity, the `etiqueta`, the
-  `vista.columnas` and every `<Entities columns=… group=…>` on the pages
+  added `optional: true`).
+- Renaming or removing a field: update every entity, the `title_field`, the
+  `view.columns` and every `<Entities columns=… group=…>` on the pages
   (`grep -rn 'type="<type>"' docs`).
-- A bad `a:` is reported on the declaration: "…: `a: x` no es ningún tipo de
-  catalog/ (hay: …)". An `etiqueta` or column that is no field: "`x` no es
+- A bad `to:` is reported on the declaration: "…: `to: x` no es ningún tipo de
+  catalog/ (hay: …)". A `title_field` or column that is no field: "`x` no es
   ninguno de los campos".

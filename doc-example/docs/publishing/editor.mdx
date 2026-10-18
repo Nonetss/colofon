@@ -1,9 +1,9 @@
 ---
-titulo: El editor
-descripcion: Dos ajustes del editor dan a los ficheros YAML y a los diagramas del repositorio autocompletado y validación desde la plataforma
+title: El editor
+description: Dos ajustes del editor dan a los ficheros YAML y a los diagramas del repositorio autocompletado y validación desde la plataforma
 files: [doc-config, menu, type-declaration, entity, diagram-file]
-orden: 1
-actualizado: 2026-10-17
+order: 1
+updated: 2026-10-18
 ---
 
 ## El ajuste
@@ -38,11 +38,11 @@ Los diagramas son JSON, que la extensión YAML no lee. El editor de JSON de VS C
 
 | Fichero | Qué sabe el editor |
 | --- | --- |
-| `doc.config.yaml` | Cada clave y los tipos de campo de `cabecera` |
+| `doc.config.yaml` | Cada clave y los tipos de campo de `header` |
 | `menu.yaml` | Cada clave, las rutas que puede nombrar una entrada (páginas, carpetas, `catalog` y cada tipo) y los nombres de icono |
 | `diagrams/*.json` | Cada clave, las entidades y páginas a las que puede enlazar una caja, y los tipos, formas y colores |
 | `_type.yaml` | Cada clave, los tipos de campo, los tipos a los que puede apuntar un `ref` y los nombres de icono |
-| Una entidad | Los campos de su tipo con sus descripciones, los valores de cada `enum`, los ids que acepta cada `ref` y las páginas que puede nombrar una `ficha` |
+| Una entidad | Los campos de su tipo con sus descripciones, los valores de cada `enum`, los ids que acepta cada `ref` y las páginas que puede nombrar un campo `page` |
 
 No se genera ni se hace commit de nada: un tipo, una entidad o una página nuevos aparecen en las sugerencias tras la sincronización que los trae. Si no aparecen, vuelve a abrir el fichero o recarga la ventana.
 

@@ -4,30 +4,30 @@
 # grupo "Otros". Los títulos e iconos escritos aquí mandan sobre los de las
 # cabeceras de las páginas.
 
-secciones:
-  - titulo: Inicio
-    icono: rocket
-    descripcion: Qué es un repositorio de contenido y cómo publicar uno
-    paginas:
-      - { ruta: getting-started, icono: compass }
-      - { ruta: repository, icono: folder-tree }
+sections:
+  - title: Inicio
+    icon: rocket
+    description: Qué es un repositorio de contenido y cómo publicar uno
+    pages:
+      - { path: getting-started, icon: compass }
+      - { path: repository, icon: folder-tree }
 
-  - titulo: Escritura
-    icono: pen-line
-    descripcion: Las páginas, su cabecera, el Markdown y los componentes
-    paginas:
-      - { ruta: pages, icono: file-text }
-      - { ruta: diagrams, icono: workflow }
+  - title: Escritura
+    icon: pen-line
+    description: Las páginas, su cabecera, el Markdown y los componentes
+    pages:
+      - { path: pages, icon: file-text }
+      - { path: diagrams, icon: workflow }
 
-  - titulo: Datos
-    icono: database
-    descripcion: El catálogo, desde declarar un tipo hasta explorarlo en el lector
-    paginas:
-      - { ruta: data, icono: table }
-      - { ruta: catalog, titulo: Referencia }
+  - title: Datos
+    icon: database
+    description: El catálogo, desde declarar un tipo hasta explorarlo en el lector
+    pages:
+      - { path: data, icon: table }
+      - { path: catalog, title: Referencia }
 
-  - titulo: Publicación
-    icono: send
-    descripcion: Cómo un push se convierte en el sitio publicado y cómo trabajan con él los agentes
-    paginas:
-      - { ruta: publishing, icono: git-branch }
+  - title: Publicación
+    icon: send
+    description: Cómo un push se convierte en el sitio publicado y cómo trabajan con él los agentes
+    pages:
+      - { path: publishing, icon: git-branch }

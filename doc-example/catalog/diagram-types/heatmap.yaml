@@ -4,5 +4,5 @@ purpose: Una tabla de filas por columnas con cada celda sombreada por su valor, 
 keys: rows, columns, values, focal, unit, decimals
 budget: 12 filas, 12 columnas
 page: diagrams/proportions
-fuente: manual
-actualizado: 2026-10-16
+source: manual
+updated: 2026-10-16

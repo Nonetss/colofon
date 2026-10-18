@@ -4,5 +4,5 @@ purpose: Lo que hace una persona, de izquierda a derecha, y qué historias salen
 keys: activities, releases, stories, cut
 budget: 5 actividades, 3 entregas, 12 historias, 4 por actividad y entrega
 page: diagrams/time
-fuente: manual
-actualizado: 2026-10-16
+source: manual
+updated: 2026-10-16

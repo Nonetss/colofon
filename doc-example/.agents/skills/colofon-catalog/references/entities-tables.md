@@ -10,7 +10,7 @@ are explained in the guide's `data/reader` page.
 | --- | --- | --- |
 | A table of a type | `<Entities type="machines" group="kind" columns="id,role,ip" />` | Rebuilt from the valid entities on every read |
 | Cite in the header | `machines: [pve-01]`, a header field of `ref`s the site declares in `doc.config.yaml` | Header links; the entity's page lists the page under "Páginas que la citan" |
-| Link in the text | `[pve-01](catalog:machines/pve-01)`, `[Máquinas](catalog:machines)` | The entity's page (its `ficha`) or its catalog page; also cites it |
+| Link in the text | `[pve-01](catalog:machines/pve-01)`, `[Máquinas](catalog:machines)` | The entity's page (its `page`) or its catalog page; also cites it |
 
 ## Finding the tables
 
@@ -20,13 +20,13 @@ in the same change.
 
 ## Choosing columns and groups
 
-- **`columns` only when the page needs something else than `vista.columnas`**
+- **`columns` only when the page needs something else than `view.columns`**
   (one more field the page is about). Without it the table follows the
   type, which is what you want on most pages.
 - **Include `id` when the id is what the reader types** (a hostname, a value
-  written in a file). Skip it when the label (`etiqueta`) already says it.
+  written in a file). Skip it when the label (the `title_field`) already says it.
 - **`group` on an `enum`** to split long tables by meaning (machines by
-  `kind`). Blocks follow `valores` order; the group field is not repeated as
+  `kind`). Blocks follow `values` order; the group field is not repeated as
   a column.
 - **Long text columns** (lists, objects, examples) only where the page is
   about them.

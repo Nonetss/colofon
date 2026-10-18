@@ -1,29 +1,29 @@
-nombre: Componente
+name: Componente
 plural: Componentes
-icono: component
-descripcion: Los componentes que una página puede usar, el único JSX que lee la plataforma. Cada uno va en un bloque propio
-etiqueta: tag
+icon: component
+description: Los componentes que una página puede usar, el único JSX que lee la plataforma. Cada uno va en un bloque propio
+title_field: tag
 
-campos:
+fields:
   tag:
-    tipo: texto
-    descripcion: Cómo se escribe en una página
+    type: text
+    description: Cómo se escribe en una página
   purpose:
-    tipo: texto
-    descripcion: Qué muestra
+    type: text
+    description: Qué muestra
   attributes:
-    tipo: lista
-    descripcion: Los atributos que acepta, siempre como cadenas literales
-    de:
-      tipo: objeto
-      campos:
-        name: { tipo: texto }
-        required: { tipo: booleano }
-        meaning: { tipo: texto }
+    type: list
+    description: Los atributos que acepta, siempre como cadenas literales
+    of:
+      type: object
+      fields:
+        name: { type: text }
+        required: { type: boolean }
+        meaning: { type: text }
   page:
-    tipo: ficha
-    opcional: true
-    descripcion: La página que lo explica
+    type: page
+    optional: true
+    description: La página que lo explica
 
-vista:
-  columnas: [tag, purpose]
+view:
+  columns: [tag, purpose]

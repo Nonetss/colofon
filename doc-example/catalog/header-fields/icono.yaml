@@ -1,6 +1,0 @@
-required: false
-kind: texto
-meaning: El icono de la página, en la barra lateral, la cabecera de la página y su tarjeta
-rule: Un nombre de icono de Lucide (server, map-pin); menu.yaml puede dar otro, y entonces prevalece ese
-fuente: manual
-actualizado: 2026-10-15

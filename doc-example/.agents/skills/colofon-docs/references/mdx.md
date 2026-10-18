@@ -22,14 +22,14 @@ reported with their line. The contract is the guide's `pages/markdown` page
 MDX treats `<` followed by a letter as the start of JSX, and `{` as the start
 of an expression, **anywhere in prose**, including inside a table cell or a
 list item. Pages that mention components, paths with placeholders, YAML
-or shell snippets (`<Diagram>`, `catalog/<type>`, `{ ruta: … }`,
+or shell snippets (`<Diagram>`, `catalog/<type>`, `{ path: … }`,
 `docker compose -f <file>`) hit it constantly, so:
 
 | Written in prose | What happens | Write instead |
 | --- | --- | --- |
 | `Usa <Diagram> para…` (bare) | Read as a component inside a paragraph: reported, or the parse fails | `` Usa `<Diagram>` para… `` |
 | `catalog/<type>/` (bare) | `<type>` read as an unknown component | `` `catalog/<type>/` `` |
-| `{ ruta: catalog }` (bare) | Read as an expression: reported and dropped | `` `{ ruta: catalog }` `` |
+| `{ path: catalog }` (bare) | Read as an expression: reported and dropped | `` `{ path: catalog }` `` |
 | `a < b` | Usually fine (space after `<`), but don't rely on it | `` `a < b` `` or "menor que" |
 
 **Rule:** anything with `<` or `{` goes inside backticks or a code block,
@@ -48,8 +48,8 @@ always. Inside backticks and fences MDX reads nothing.
 
 ## Headings
 
-- **No `#` in the body:** the title is `titulo`. Reported: "Un título de nivel
-  1 (#) no va en el cuerpo: el título de la ficha es su `titulo`".
+- **No `#` in the body:** the title is `title`. Reported: "Un título de nivel
+  1 (#) no va en el cuerpo: el título de la ficha va en su cabecera".
 - **No emoji in `##` headings:** the anchor is built from the text by GitHub's
   slug rules, which drop the emoji and leave a stray hyphen, so links to it
   break.

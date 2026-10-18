@@ -19,7 +19,7 @@ of guessing. A section that does not exist yet means a new folder, its
 ## 1. Say the plan first
 
 Before writing, tell me in a short message: the path and file name, the
-`titulo` and `descripcion`, its `orden`, the entities its header will cite,
+`title` and `description`, its `order`, the entities its header will cite,
 the parts of the page shape it will have, any diagram or `<Entities>` it will
 show, and the menu entry. Wait for my OK unless the request already pins all
 of it.
@@ -30,7 +30,7 @@ of it.
    reads like them.
 2. Write the page in the shape of `writing-a-page.md` and of its
    neighbours: the answer first, then the details and what goes wrong.
-   `actualizado` is today.
+   `updated` is today.
 3. Facts come from a source: what I tell you, the existing pages and
    catalog, or the system the page documents. Anything you cannot settle is
    an open question (`references/header.md`), never invented.

@@ -3,5 +3,5 @@ kind: content
 required: false
 purpose: Una entidad de un tipo; el nombre del fichero es su id
 page: data/entities
-fuente: manual
-actualizado: 2026-10-15
+source: manual
+updated: 2026-10-15

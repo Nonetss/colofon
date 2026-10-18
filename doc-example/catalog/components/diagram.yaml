@@ -5,5 +5,5 @@ attributes:
     required: true
     meaning: El diagrama, como el nombre de su fichero en diagrams/ sin .json ni .svg
 page: diagrams
-fuente: manual
-actualizado: 2026-10-16
+source: manual
+updated: 2026-10-16

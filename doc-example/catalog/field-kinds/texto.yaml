@@ -1,5 +1,0 @@
-family: scalar
-value: "Una línea de texto, no vacía"
-example: "os: { tipo: texto } → os: Debian 13"
-fuente: manual
-actualizado: 2026-10-15

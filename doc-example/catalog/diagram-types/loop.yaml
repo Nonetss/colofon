@@ -4,5 +4,5 @@ purpose: Un ciclo de pasos que vuelve al primero, con un centro que acumula lo q
 keys: steps, hub, writes
 budget: 8 pasos
 page: diagrams/concepts
-fuente: manual
-actualizado: 2026-10-16
+source: manual
+updated: 2026-10-16

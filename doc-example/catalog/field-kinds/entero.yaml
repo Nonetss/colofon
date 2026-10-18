@@ -1,5 +1,0 @@
-family: scalar
-value: "Un número entero"
-example: "cores: { tipo: entero } → cores: 8"
-fuente: manual
-actualizado: 2026-10-15

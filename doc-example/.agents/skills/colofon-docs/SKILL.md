@@ -36,12 +36,12 @@ the `colofon-documentation` skill.
 | Task | Read |
 | --- | --- |
 | Where a page goes, its file name, sections, moving or renaming one | [sections-and-naming.md](references/sections-and-naming.md) |
-| The front matter: the common fields and the ones the site declares under `cabecera` | [header.md](references/header.md) |
+| The front matter: the common fields and the ones the site declares under `header` | [header.md](references/header.md) |
 | How a page is built: the answer first, procedures, reference tables, what fails, "¿Dónde encuentro…?", UI words | [writing-a-page.md](references/writing-a-page.md) |
 | What MDX reads as code, backticks, fences, headings, what the platform reports | [mdx.md](references/mdx.md) |
 | `<Callout>`, `<Entities>` and `<Diagram>`, with their attributes | [components.md](references/components.md) |
 | Links to pages, entities, catalog tables, images and other files | [links.md](references/links.md) |
-| This site's sections, header fields and page conventions | `doc.config.yaml` (`cabecera`), `menu.yaml` and `AGENTS.md` «Este sitio» |
+| This site's sections, header fields and page conventions | `doc.config.yaml` (`header`), `menu.yaml` and `AGENTS.md` «Este sitio» |
 
 A diagram itself is written in `diagrams/` (`colofon-diagrams` skill); a type or an
 entity in `catalog/` (`colofon-catalog` skill).
@@ -53,11 +53,11 @@ entity in `catalog/` (`colofon-catalog` skill).
 - **`docs/catalog/` is reserved** by the platform: never create it.
 - **Every page is shown by `menu.yaml`**, never in "Otros"
   (`colofon-documentation` skill, `references/menu.md`).
-- **`titulo` and `descripcion` on every page**, `orden` on every page that is
-  not a section's `index.mdx`, `actualizado` the date it was last checked
-  against what it describes, and **no `icono`**: icons go in `menu.yaml`.
+- **`title` and `description` on every page**, `order` on every page that is
+  not a section's `index.mdx`, `updated` the date it was last checked
+  against what it describes, and **no `icon`**: icons go in `menu.yaml`.
 - **Declare before use:** a header field exists only if `doc.config.yaml`
-  declares it under `cabecera`.
+  declares it under `header`.
 - **No code:** no `import`, `export` or `{…}` expressions, and nothing bare in
   prose that MDX could read as JSX or an expression: `<…>` and `{…}` go inside
   backticks or code blocks.
@@ -75,26 +75,26 @@ entity in `catalog/` (`colofon-catalog` skill).
 
 | Anti-pattern | Why it fails |
 | --- | --- |
-| A page that opens with "Esta página explica…" | The `descripcion` and the title already say it; lead with the answer |
+| A page that opens with "Esta página explica…" | The `description` and the title already say it; lead with the answer |
 | A hand-typed table of what the catalog holds | It goes stale; `<Entities>` is rebuilt from the data on every read |
 | `<Diagram>` or `catalog/<type>` bare in a sentence | MDX reads `<` and `{` as code: the page is reported or loses text |
-| `# Título` in the body | The title is `titulo`; a level-1 heading is reported |
+| `# Título` in the body | The title is `title`; a level-1 heading is reported |
 | An emoji in a `##` heading | The anchor no longer matches the heading text |
-| `icono` in the header of a page the menu shows | The menu wins; a different value is reported and never shown |
+| `icon` in the header of a page the menu shows | The menu wins; a different value is reported and never shown |
 | A ```` ```diagram ```` fence | Reported; diagrams are files in `diagrams/` |
 | A new folder without a menu entry | Its pages land in "Otros" and are reported |
-| Renaming a page without updating links, `ficha` fields and the menu | Broken links show as plain text and are reported |
+| Renaming a page without updating links, `page` fields and the menu | Broken links show as plain text and are reported |
 | Copying a procedure instead of linking its page | Two copies, one of them wrong after the next change |
 | A guess written as fact | The next reader trusts it; mark it as an open question instead |
 
 ## 5. Before finishing
 
-- Every page has `titulo` and `descripcion`, and its folder has an
+- Every page has `title` and `description`, and its folder has an
   `index.mdx`.
 - Every header field is declared in `doc.config.yaml`, and every id it cites
   exists in `catalog/`.
 - Every link, image and `<Diagram id>` points at something that exists.
 - The page is shown by `menu.yaml` (not in "Otros"), and a title set in the
-  menu equals its `titulo`.
+  menu equals its `title`.
 - No `<`, `{`, `import` or `export` outside backticks and code blocks.
 - No secret anywhere in the page, not even in an example.

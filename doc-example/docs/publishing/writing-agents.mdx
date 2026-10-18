@@ -1,8 +1,8 @@
 ---
-titulo: Agentes que escriben
-descripcion: Cómo prepara un agente de IA su trabajo en un repositorio de contenido, con las skills de escritura que sirve la plataforma y un AGENTS.md con lo propio de tu sitio
-orden: 3
-actualizado: 2026-10-17
+title: Agentes que escriben
+description: Cómo prepara un agente de IA su trabajo en un repositorio de contenido, con las skills de escritura que sirve la plataforma y un AGENTS.md con lo propio de tu sitio
+order: 3
+updated: 2026-10-18
 ---
 
 ## Los ficheros
@@ -53,14 +53,14 @@ que vas a tocar (`colofon-docs`, `colofon-catalog`…).
 
 ## Reglas estrictas
 
-- Las skills de escritura son de la plataforma: nunca las copies aquí.
+- Las skills de escritura son de la contract: nunca las copies aquí.
 - Nunca escribas un secreto.
 - No renombres el contrato.
 - Toda página la muestra `menu.yaml`.
 
 ## Este sitio
 
-- La plataforma: https://doc.example.org (repositorio `homelab`).
+- La contract: https://doc.example.org (repositorio `homelab`).
 - El id de una máquina es su hostname.
 - Cada diagrama de red empieza por `network-`.
 ```
@@ -98,7 +98,7 @@ Las que escriben algo (`colofon-new-page`, `colofon-new-diagram`) proponen antes
 
 ## Una ronda de preguntas
 
-Cuando una página no puede afirmar algo, el agente lo deja en `open_questions`, un campo de cabecera que el sitio declara en `doc.config.yaml` (una `lista` de `texto`), en lugar de inventarlo. La ronda lo cierra:
+Cuando una página no puede afirmar algo, el agente lo deja en `open_questions`, un campo de cabecera que el sitio declara en `doc.config.yaml` (una `list` de `text`), en lugar de inventarlo. La ronda lo cierra:
 
 1. `colofon-pending` muestra qué secciones tienen más preguntas abiertas.
 2. `colofon-questions` con una sección escribe `questions.md` en la raíz del repositorio, con las preguntas agrupadas por tema y una línea `>` vacía bajo cada una.

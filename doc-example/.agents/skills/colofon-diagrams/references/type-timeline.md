@@ -21,7 +21,7 @@ between them (use `state`), or how something changes before and after (use
     { "name": "Ronda de preguntas", "date": "2026-09-08" },
     { "name": "Revisión", "date": "2026-09-22" },
     { "name": "Publicada", "date": "2026-10-01", "focal": true },
-    { "name": "Revisada", "date": "2026-10-16", "entity": "header-fields/actualizado" }
+    { "name": "Revisada", "date": "2026-10-16", "entity": "header-fields/updated" }
   ],
   "spans": [
     { "name": "Preguntas abiertas", "start": "2026-09-08", "end": "2026-09-30", "hue": "violet" }

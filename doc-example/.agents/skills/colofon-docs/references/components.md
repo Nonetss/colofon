@@ -47,11 +47,11 @@ read, so it never goes stale.
 | Attribute | What it is |
 | --- | --- |
 | `type` | Required. The type, as its folder name in `catalog/` (`machines` for `catalog/machines/`). |
-| `columns` | Optional. The fields shown, comma-separated, `id` included. Without it, the type's `vista.columnas`; without that, its label and every field. |
-| `group` | Optional. A field that splits the table into one block per value, in `valores` order for an `enum`, entities without it last. The group field is not repeated as a column. |
+| `columns` | Optional. The fields shown, comma-separated, `id` included. Without it, the type's `view.columns`; without that, its label and every field. |
+| `group` | Optional. A field that splits the table into one block per value, in `values` order for an `enum`, entities without it last. The group field is not repeated as a column. |
 
 - Rows are sorted by label; each label links to the entity's page (its
-  `ficha`) or its generated catalog page. `ref` cells show the target's label,
+  `page`) or its generated catalog page. `ref` cells show the target's label,
   linked.
 - Only valid entities appear. An unknown type, column or group field, and
   every entity that fails its type, is reported on the page; the rest of the

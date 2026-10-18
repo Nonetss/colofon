@@ -1,6 +1,0 @@
-family: composite
-value: "Varios valores del campo declarado en de; se muestran unidos por comas"
-takes: "de: { tipo: … }"
-example: "tags: { tipo: lista, de: { tipo: texto } } → tags: [docker, apps]"
-fuente: manual
-actualizado: 2026-10-15

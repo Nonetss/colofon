@@ -5,5 +5,5 @@ keys: x, series, unit, decimals
 variants: slope, ridgeline, stream, bump
 budget: 24 puntos por serie, 4 series (8 con ridgeline y bump)
 page: diagrams/charts
-fuente: manual
-actualizado: 2026-10-16
+source: manual
+updated: 2026-10-16

@@ -1,5 +1,5 @@
 family: scalar
 value: "Una dirección IPv4 o IPv6"
-example: "ip: { tipo: ip } → ip: 192.168.1.20"
-fuente: manual
-actualizado: 2026-10-15
+example: "ip: { type: ip } → ip: 192.168.1.20"
+source: manual
+updated: 2026-10-15

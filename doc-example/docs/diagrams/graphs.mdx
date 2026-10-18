@@ -1,10 +1,10 @@
 ---
-titulo: Grafos
-descripcion: Cómo escribir diagramas de flujo, máquinas de estados, árboles, organigramas y grafos de dependencias dando solo las piezas y sus flechas, y qué avisa la plataforma de cada uno
+title: Grafos
+description: Cómo escribir diagramas de flujo, máquinas de estados, árboles, organigramas y grafos de dependencias dando solo las piezas y sus flechas, y qué avisa la plataforma de cada uno
 files: [diagram-file]
 diagram_types: [flowchart, state, tree, org-chart, dependency]
-orden: 2
-actualizado: 2026-10-16
+order: 2
+updated: 2026-10-16
 ---
 
 Un grafo son cajas unidas por flechas, como un diagrama dibujado, pero sin coordenadas: el fichero da las piezas y quién va con quién, y la plataforma las coloca en filas y columnas y lleva cada flecha en ángulo recto por los huecos entre ellas, sin cruzar ninguna caja. Como en cualquier diagrama, `type` elige la forma, `title` y `desc` son obligatorios, y se muestra con `<Diagram id="…" />` en un bloque propio. Al pasar el ratón por una caja se iluminan sus flechas y una tarjeta lista sus conexiones; la versión en texto que leen los lectores de pantalla y los agentes en `llm.txt` lista cada flecha.

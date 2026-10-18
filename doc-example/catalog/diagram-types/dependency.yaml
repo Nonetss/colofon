@@ -4,5 +4,5 @@ purpose: "Qué depende de qué, con las dependencias compartidas y el ciclo que 
 keys: nodes, deps
 budget: 9 nodos, 14 dependencias, 4 rangos, 1 ciclo
 page: diagrams/graphs
-fuente: manual
-actualizado: 2026-10-16
+source: manual
+updated: 2026-10-16

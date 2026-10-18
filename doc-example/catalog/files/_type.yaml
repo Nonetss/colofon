@@ -1,27 +1,27 @@
-nombre: Fichero
+name: Fichero
 plural: Ficheros
-icono: file-code
-descripcion: Los ficheros y carpetas que puede contener un repositorio de contenido. El id es un nombre corto para cada uno
-etiqueta: path
+icon: file-code
+description: Los ficheros y carpetas que puede contener un repositorio de contenido. El id es un nombre corto para cada uno
+title_field: path
 
-campos:
+fields:
   path:
-    tipo: texto
-    descripcion: Dónde va, desde la raíz del repositorio (menu.yaml, docs/**/*.mdx)
+    type: text
+    description: Dónde va, desde la raíz del repositorio (menu.yaml, docs/**/*.mdx)
   kind:
-    tipo: enum
-    valores: [declaration, content, agents]
-    descripcion: "declaration: se lee primero, y si está rota se conserva la última versión válida; content: se lee junto con las páginas; agents: para agentes de IA"
+    type: enum
+    values: [declaration, content, agents]
+    description: "declaration: se lee primero, y si está rota se conserva la última versión válida; content: se lee junto con las páginas; agents: para agentes de IA"
   required:
-    tipo: booleano
-    descripcion: Si todo repositorio lo necesita
+    type: boolean
+    description: Si todo repositorio lo necesita
   purpose:
-    tipo: texto
-    descripcion: Una línea sobre lo que contiene
+    type: text
+    description: Una línea sobre lo que contiene
   page:
-    tipo: ficha
-    opcional: true
-    descripcion: La página que lo explica
+    type: page
+    optional: true
+    description: La página que lo explica
 
-vista:
-  columnas: [path, kind, required, purpose]
+view:
+  columns: [path, kind, required, purpose]

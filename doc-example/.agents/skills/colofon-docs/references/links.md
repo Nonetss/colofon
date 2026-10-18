@@ -10,7 +10,7 @@ read. The contract is the guide's `pages/markdown` page ("Enlaces",
 | --- | --- | --- |
 | Another page | Its **relative path with `.mdx`**: `[El DNS](../network/dns.mdx)`, `[Restaurar](restore.mdx#desde-el-pbs)` | That page, keeping the anchor |
 | A section's entry page | Its `index.mdx`: `[La red](../network/index.mdx)` | The section page |
-| An entity | `catalog:<type>/<id>`: `[docker-01](catalog:machines/docker-01)` | The entity's page (its `ficha`), or its generated catalog page when it has none |
+| An entity | `catalog:<type>/<id>`: `[docker-01](catalog:machines/docker-01)` | The entity's page (its `page`), or its generated catalog page when it has none |
 | A type's table | `catalog:<type>`: `[Máquinas](catalog:machines)` | The type's generated catalog page |
 | An external site | The full `https://` URL | That site, in a new tab |
 | An image | A path relative to the page, under `docs/`: `![El panel](img/panel.png)` | The image, zoomable |

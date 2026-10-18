@@ -1,6 +1,6 @@
 family: choice
-value: "Uno de los valores listados en valores"
-takes: "valores: [a, b]"
-example: "kind: { tipo: enum, valores: [physical, vm] } → kind: vm"
-fuente: manual
-actualizado: 2026-10-15
+value: "Uno de los valores listados en values"
+takes: "values: [a, b]"
+example: "kind: { type: enum, values: [physical, vm] } → kind: vm"
+source: manual
+updated: 2026-10-15

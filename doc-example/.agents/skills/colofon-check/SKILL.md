@@ -16,9 +16,9 @@ repository even when the scope is one file.
 ## What to check
 
 1. **Pages** (`docs/**/*.mdx`): the header as the `colofon-docs` skill's
-   `references/header.md` asks (`titulo` and `descripcion` present, no
-   `icono` where `menu.yaml` gives one), every header field declared under
-   `cabecera` in `doc.config.yaml`, every id it cites present in
+   `references/header.md` asks (`title` and `description` present, no
+   `icon` where `menu.yaml` gives one), every header field declared under
+   `header` in `doc.config.yaml`, every id it cites present in
    `catalog/<type>/`, every folder with its `index.mdx`, nothing outside
    backticks or code blocks that MDX reads as code (`colofon-docs` skill,
    `references/mdx.md`).
@@ -27,9 +27,9 @@ repository even when the scope is one file.
    `references/links.md`).
 3. **Menu**: every page is shown by `menu.yaml` (none lands in "Otros"),
    every entry names a page or folder that exists, and a title set in the menu
-   equals the page's `titulo` (`colofon-documentation` skill, `references/menu.md`).
+   equals the page's `title` (`colofon-documentation` skill, `references/menu.md`).
 4. **Catalog**: every entity declares only fields its `_type.yaml` declares,
-   every `ref` and `ficha` (`page:`) points at something that exists, one
+   every `ref` and `page` (`page:`) points at something that exists, one
    entity per file (`colofon-catalog` skill, `references/writing-an-entity.md`).
 5. **Diagrams** (`diagrams/*.json`): valid JSON, a known `type` or none,
    every `entity` and `page` exists, ids unique and every link names one of

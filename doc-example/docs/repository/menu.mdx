@@ -1,40 +1,40 @@
 ---
-titulo: El menú
-descripcion: menu.yaml decide qué muestra la barra lateral, agrupado y ordenado, estén donde estén guardadas las páginas
+title: El menú
+description: menu.yaml decide qué muestra la barra lateral, agrupado y ordenado, estén donde estén guardadas las páginas
 files: [menu]
-orden: 2
-actualizado: 2026-10-15
+order: 2
+updated: 2026-10-18
 ---
 
 ## Sin menú
 
-Sin `menu.yaml`, la barra lateral son las carpetas de `docs/`: cada carpeta es una sección, ordenada por el `orden` de su `index.mdx` y luego por título, y el catálogo va al final. Funciona, pero agrupar las páginas de otra manera obliga a mover ficheros, y mover un fichero cambia su URL.
+Sin `menu.yaml`, la barra lateral son las carpetas de `docs/`: cada carpeta es una sección, ordenada por el `order` de su `index.mdx` y luego por título, y el catálogo va al final. Funciona, pero agrupar las páginas de otra manera obliga a mover ficheros, y mover un fichero cambia su URL.
 
 ## Con menú
 
 `menu.yaml` lista los grupos de la barra lateral, en orden. Cada grupo tiene un título, un icono, una descripción y sus entradas:
 
 ```yaml
-secciones:
-  - titulo: Infraestructura
-    icono: server
-    descripcion: Las máquinas y la red
-    paginas:
+sections:
+  - title: Infraestructura
+    icon: server
+    description: Las máquinas y la red
+    pages:
       - network                                   # una carpeta, con todas sus páginas
-      - { ruta: containers/komodo, icono: layers } # con su propio título o icono
+      - { path: containers/komodo, icon: layers } # con su propio título o icono
       - backups/duplicati/create-backup             # una sola página
-  - titulo: Datos
-    icono: database
-    paginas: [catalog]                           # el catálogo; o catalog/machines
+  - title: Datos
+    icon: database
+    pages: [catalog]                           # el catálogo; o catalog/machines
 ```
 
 | Clave | Qué es |
 | --- | --- |
-| `secciones` | Los grupos, al menos uno. |
-| `titulo` | Obligatoria. El título del grupo en la barra lateral. |
-| `icono` | Opcional. El nombre de un icono de Lucide. |
-| `descripcion` | Opcional. Una frase sobre qué contiene el grupo. |
-| `paginas` | Obligatoria. Sus entradas: una ruta, o `ruta` con un `titulo` e `icono` opcionales. |
+| `sections` | Los grupos, al menos uno. |
+| `title` | Obligatoria. El título del grupo en la barra lateral. |
+| `icon` | Opcional. El nombre de un icono de Lucide. |
+| `description` | Opcional. Una frase sobre qué contiene el grupo. |
+| `pages` | Obligatoria. Sus entradas: una ruta, o `path` con un `title` e `icon` opcionales. |
 
 Una entrada nombra una página (`network/dns`), una carpeta de `docs/` (`network`, que trae todas sus páginas en su orden habitual), el catálogo (`catalog`) o un tipo del catálogo (`catalog/machines`). **Las carpetas guardan las páginas; el menú decide dónde se muestran.** Un grupo puede reunir carpetas de cualquier sitio, y cada página conserva su URL.
 
@@ -44,7 +44,7 @@ El menú de este propio sitio es un buen ejemplo: consulta su `menu.yaml`.
 
 Lo que el menú dice de una entrada es lo que muestra cada vista: la barra lateral, la cabecera de la página, las migas de pan, las tarjetas, la búsqueda y `llms.txt`. La cabecera de una página solo cuenta para lo que el menú deja sin decir.
 
-- `{ ruta: network, icono: network }` da a la sección su icono; el `icono` de `docs/network/index.mdx` se ignora entonces.
+- `{ path: network, icon: network }` da a la sección su icono; el `icon` de `docs/network/index.mdx` se ignora entonces.
 - Cuando la cabecera dice otra cosa, la página se reporta ("la cabecera dice…, pero manda menu.yaml"), para que nadie edite un valor que nunca se muestra.
 - Las migas de pan empiezan por el grupo, como texto plano: un grupo es un encabezado, no una página.
 

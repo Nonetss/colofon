@@ -3,5 +3,5 @@ kind: content
 required: true
 purpose: Las páginas, en MDX sin código; docs/index.mdx es la página de inicio y cada carpeta es una sección
 page: pages
-fuente: manual
-actualizado: 2026-10-15
+source: manual
+updated: 2026-10-15

@@ -4,5 +4,5 @@ purpose: "Una jerarquía desde una raíz: cada nodo bajo su padre"
 keys: nodes, direction
 budget: 4 niveles, 16 nodos, 6 hijos por nodo
 page: diagrams/graphs
-fuente: manual
-actualizado: 2026-10-16
+source: manual
+updated: 2026-10-16

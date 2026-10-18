@@ -66,7 +66,7 @@ With `"variant": "process"`, a step also lists its chips:
   later one moves right).
 - Links run at right angles, crossing bands at the handoffs.
 - With `process`, each step gets chips under it, «ENTRA la cabecera», «SALE
-  titulo, descripcion», «CON Markdown», one per list it has; every lane leaves
+  title, description», «CON Markdown», one per list it has; every lane leaves
   room for the most chips any step has, so boxes stay aligned.
 - The legend shows «Paso», and «Decisión», «Camino principal», «Opcional /
   vuelta», «Entra / sale / con qué» when used.

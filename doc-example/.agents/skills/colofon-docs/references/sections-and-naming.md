@@ -16,7 +16,7 @@ pages ("Nombres y rutas").
 - Every folder is a **section**, titled by its `index.mdx` (or by the folder
   name when it has none). The section's page lists its pages and subsections
   as cards after its body.
-- The page path is what links, `ficha` fields (`page: network/dns`) and menu
+- The page path is what links, `page` fields (`page: network/dns`) and menu
   entries name.
 
 ## The site's sections
@@ -35,8 +35,8 @@ thing is explained in one place and linked from the rest.
 - **Every folder has its `index.mdx`**, the section's entry page: what the
   topic is, and a "¿Dónde encuentro…?" table to its pages
   (`writing-a-page.md`).
-- **Order within a section comes from each page's `orden`**; pages without it
-  go last, then by title. `index.mdx` has no `orden`. The order of the groups
+- **Order within a section comes from each page's `order`**; pages without it
+  go last, then by title. `index.mdx` has no `order`. The order of the groups
   and of the top level is `menu.yaml`'s.
 - **Files and folders: lowercase, digits and hyphens**
   (`getting-started.mdx`). No accents, no spaces, no underscores. They are
@@ -55,14 +55,14 @@ thing is explained in one place and linked from the rest.
 
 1. Pick the section whose topic it is. A topic with no section is a new
    folder with its `index.mdx`.
-2. Give it a header (`header.md`), with the next free `orden` of the section.
+2. Give it a header (`header.md`), with the next free `order` of the section.
 3. **Menu:** a page inside a folder the menu lists needs nothing (the folder's
-   entry brings it, ordered by `orden`). A new folder or loose page needs an
+   entry brings it, ordered by `order`). A new folder or loose page needs an
    entry in its group (`colofon-documentation` skill, `references/menu.md`).
 4. Link it from the section's "¿Dónde encuentro…?" table, and from the home's
    when it answers a first-time question.
 5. If it is about catalog entities, cite them in the header field the site
-   declares for them, and point each entity's `ficha` field at the page when
+   declares for them, and point each entity's `page` field at the page when
    this is the page that explains it.
 
 ## Moving or renaming a page
@@ -72,10 +72,10 @@ Renaming changes the URL. In the same change, update:
 | What names it | Where |
 | --- | --- |
 | Relative links `[…](….mdx)` | Every page under `docs/` (`grep -rn "dns.mdx" docs`) |
-| `ficha` fields (`page:`) | Entities under `catalog/` |
+| `page` fields (`page:`) | Entities under `catalog/` |
 | Menu entries | `menu.yaml`, when it names the page or its folder |
 | Diagram pieces with `"page"` | `diagrams/*.json` |
 | Served skills and the agent's map | `skills/` and `AGENTS.md`, when they cite the path |
 
 Every one left behind is reported: a broken link shows as plain text, a
-`ficha` to no page fails its entity, a menu entry to nothing is dropped.
+`page` to no page fails its entity, a menu entry to nothing is dropped.

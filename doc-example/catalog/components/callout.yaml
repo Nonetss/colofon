@@ -8,5 +8,5 @@ attributes:
     required: false
     meaning: Su título; sin él, el título de su tipo
 page: pages/components
-fuente: manual
-actualizado: 2026-10-15
+source: manual
+updated: 2026-10-15

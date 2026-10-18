@@ -11,3 +11,4 @@ This guide documents the content contract and uses every feature it explains, so
 - The "Datos / Referencia" pages are the contract's tables (field kinds, header fields, components, diagram types, files). Use them for exact names; they are generated from the guide's catalog and are always current.
 - When the guide and a repository you are working on disagree, the guide wins: it follows the platform's current contract.
 - Each page shows the files it documents (its `files` header), so you can open the real example next to the explanation.
+- A repository whose `doc.config.yaml` says `plataforma: "1"` is on contract 1, with the same keys in Spanish: the guide's `repository/contract-1` page maps each one to its contract 2 name.

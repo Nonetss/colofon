@@ -1,0 +1,47 @@
+---
+title: Pasar del contrato 1 al 2
+description: El contrato 1 escribía en español las mismas claves que el 2 escribe en inglés; la plataforma aún lo lee, y esta tabla traduce un repositorio clave a clave
+files: [doc-config, menu, type-declaration, entity, page]
+order: 4
+updated: 2026-10-18
+---
+
+## Qué cambia
+
+El contrato 2 nombra en inglés todas las claves y los valores fijos de los YAML. El contrato 1 decía lo mismo con nombres en español. Un repositorio dice cuál sigue en `doc.config.yaml`: `contract: "2"`, o `plataforma: "1"` en uno antiguo.
+
+La plataforma sigue leyendo el contrato 1 y publica igual que antes, pero avisa en la portada del repositorio de que su contrato está superado. Nada más cambia: las carpetas, los ficheros, los diagramas, los componentes, los ids, los nombres de campo y las páginas se quedan como están.
+
+<Callout type="warning">
+Un repositorio sigue un solo contrato: el de `doc.config.yaml` decide cómo se leen todos sus ficheros. Una clave del contrato 2 en un repositorio del contrato 1 se reporta como clave del contrato 2, y al revés, una clave en español es una clave desconocida.
+</Callout>
+
+## Las claves, una a una
+
+| Dónde | Contrato 2 | Contrato 1 |
+| --- | --- | --- |
+| `doc.config.yaml` | `name`, `description`, `contract: "2"`, `header` | `nombre`, `descripcion`, `plataforma: "1"`, `cabecera` |
+| `menu.yaml` | `sections`, `title`, `icon`, `description`, `pages`, `path` | `secciones`, `titulo`, `icono`, `descripcion`, `paginas`, `ruta` |
+| `_type.yaml` | `name`, `plural`, `icon`, `description`, `title_field`, `fields`, `view.columns` | `nombre`, `plural`, `icono`, `descripcion`, `etiqueta`, `campos`, `vista.columnas` |
+| Un campo | `type`, `optional`, `description`, `label`, `values`, `to`, `of`, `fields` | `tipo`, `opcional`, `descripcion`, `etiqueta`, `valores`, `a`, `de`, `campos` |
+| Tipos de campo | `text`, `number`, `integer`, `boolean`, `date`, `page`, `list`, `object` | `texto`, `numero`, `entero`, `booleano`, `fecha`, `ficha`, `lista`, `objeto` |
+| Cada cabecera de página | `title`, `description`, `icon`, `order`, `updated` | `titulo`, `descripcion`, `icono`, `orden`, `actualizado` |
+| Cada entidad | `source`, `updated` | `fuente`, `actualizado` |
+
+`url`, `email`, `ip`, `enum` y `ref` se llaman igual en los dos. `etiqueta` eran dos cosas: en un tipo, el campo que da nombre a cada entidad, que ahora es `title_field`; en un campo, cómo lo llama el lector, que ahora es `label`. Las columnas `fuente` y `actualizado` de `vista.columnas` pasan a ser `source` y `updated`.
+
+## Cómo pasar un repositorio
+
+1. Cambia `plataforma: "1"` por `contract: "2"` en `doc.config.yaml`, y traduce el resto de sus claves.
+2. Traduce `menu.yaml`, cada `_type.yaml`, las claves `fuente` y `actualizado` de cada entidad y la cabecera de cada página, con la tabla de arriba.
+3. Deja como están los valores, los ids y los nombres de campo: un campo propio llamado `nombre` sigue llamándose `nombre`.
+4. Haz push. Si se te escapó una clave, la plataforma la reporta en el fichero, con su ruta, y el aviso de la portada desaparece cuando todo valida.
+
+Un agente puede hacerlo entero: dale esta página y pídele que traduzca el repositorio.
+
+## Qué se reporta
+
+- En un repositorio del contrato 1, en la portada: «Este repositorio sigue el contrato 1, con las claves en español», mientras no pase al 2.
+- Una clave del contrato 2 en un fichero del contrato 1, en ese fichero: «`title` es una clave del contrato 2, y este repositorio sigue el contrato 1».
+- En el contrato 1, los problemas nombran las claves en español (`campos.ip.tipo`, `secciones.0.icono`), tal como las escribe el fichero.
+- Un campo propio llamado como un campo reservado del contrato 2 (`source`, `updated`, o `title` y los demás de la cabecera) se reporta como reservado: renómbralo.

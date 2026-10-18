@@ -4,5 +4,5 @@ purpose: Cómo una cantidad se reparte y se junta de una columna a la siguiente,
 keys: columns, flows, unit, decimals
 budget: 3 columnas, 8 nodos, 12 flujos
 page: diagrams/proportions
-fuente: manual
-actualizado: 2026-10-16
+source: manual
+updated: 2026-10-16

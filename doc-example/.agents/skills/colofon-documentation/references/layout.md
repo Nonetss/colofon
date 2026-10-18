@@ -80,7 +80,7 @@ docs/                            # ← the content folder: type `docs`
 | Facts that repeat with the same shape (machines, services, files…) | An entity in `catalog/<type>/` | `colofon-catalog` |
 | How things connect, a flow, values to compare | A file in `diagrams/` shown with `<Diagram>` | `colofon-diagrams` |
 | A new page or folder the sidebar must show | An entry in `menu.yaml` | `references/menu.md` |
-| A new field every page header may carry | `cabecera` in `doc.config.yaml` | `references/doc-config.md` |
+| A new field every page header may carry | `header` in `doc.config.yaml` | `references/doc-config.md` |
 | Another colour, font or look for a piece of the site's pages | A theme variable or a module in `styles/` | `colofon-styles` |
 | What agents that read the site should know about the documented project | A served skill in `skills/<name>/` | `colofon-skills` |
 | A convention of this site for **you**, the agent writing here | `AGENTS.md`, «Este sitio» | — |

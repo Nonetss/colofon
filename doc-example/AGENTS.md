@@ -33,7 +33,7 @@ al final, en [«Este sitio»](#este-sitio).
 
 | Ruta | Qué contiene |
 | --- | --- |
-| `doc.config.yaml` | El sitio: nombre, versión del contrato de la plataforma, campos extra de cabecera de las páginas (`cabecera`) |
+| `doc.config.yaml` | El sitio: nombre, versión del contrato de la plataforma, campos extra de cabecera de las páginas (`header`) |
 | `menu.yaml` | Los grupos de la barra lateral; lo que dice sobre una entrada prevalece sobre las cabeceras de las páginas |
 | `docs/` | Las páginas (`.mdx`). Cada carpeta es una sección con su `index.mdx` |
 | `catalog/<type>/_type.yaml` | La declaración de un tipo de datos y sus campos |
@@ -96,12 +96,12 @@ agentes; lo que entra aquí deja de ser secreto.
 
 ### No renombres el contrato
 
-La plataforma lee un conjunto fijo de nombres. En inglés: los ficheros y
-carpetas (`catalog/`, `_type.yaml`, `menu.yaml`, `diagrams/`, `styles/` y sus
-módulos), los enlaces `catalog:` y las claves de los diagramas JSON. En
-español: las claves de todo fichero YAML, los tipos de campo, la cabecera
-común de página (`titulo`, `descripcion`, `icono`, `orden`, `actualizado`) y
-`fuente`. Cambiarlos rompe la validación. Todo lo demás (ids de tipo, nombres
+La plataforma lee un conjunto fijo de nombres, todos en inglés (el contrato
+2, `contract: "2"`): los ficheros y carpetas (`catalog/`, `_type.yaml`,
+`menu.yaml`, `diagrams/`, `styles/` y sus módulos), los enlaces `catalog:`,
+las claves de todo fichero YAML y de los diagramas JSON, los tipos de campo,
+la cabecera común de página (`title`, `description`, `icon`, `order`,
+`updated`) y `source`. Cambiarlos rompe la validación. Todo lo demás (ids de tipo, nombres
 de campo, valores, carpetas, prosa) es propio del sitio, y lo que ya existe no
 se renombra. La tabla completa está en la skill `colofon-documentation`,
 `references/contract-names.md`.
@@ -111,7 +111,7 @@ se renombra. La tabla completa está en la skill `colofon-documentation`,
 La plataforma no sabe nada del dominio: los tipos y sus campos se declaran
 aquí. Nunca añadas a una entidad un campo que su `_type.yaml` no declare, ni a
 una página un campo de cabecera que `doc.config.yaml` no declare bajo
-`cabecera`.
+`header`.
 
 ### Las páginas no llevan código
 
@@ -124,8 +124,8 @@ rechaza. En la prosa, escribe entre comillas invertidas todo lo que lleve `<` o
 
 Toda página debe mostrarla `menu.yaml`; ninguna puede acabar en «Otros». Los
 iconos de las páginas que muestra el menú se indican allí, no en sus cabeceras,
-y un título fijado en el menú debe coincidir con el `titulo` de la página. Todo
-`icono` es un nombre de icono de Lucide.
+y un título fijado en el menú debe coincidir con el `title` de la página. Todo
+`icon` es un nombre de icono de Lucide.
 
 ### Una entidad por fichero
 
@@ -147,7 +147,7 @@ a una página.
   ven cada problema en su página (los de `menu.yaml`, los diagramas y
   `styles/`, en la portada), y el log los recoge todos.
 - Antes de dar algo por terminado: todo YAML que hayas tocado valida, y todo
-  enlace, campo `ficha`, referencia, entrada de menú y `entity` o `page` de
+  enlace, campo `page`, referencia, entrada de menú y `entity` o `page` de
   diagrama apunta a algo que existe.
 
 ## Commits
@@ -178,7 +178,7 @@ Los ids de tipo, los nombres de campo, los valores de enum, las carpetas, los
 ficheros y los ids de entidad y de diagrama están en inglés; la prosa, los
 títulos, los grupos del menú y los valores pensados para leerse, en español.
 El id de una entidad es el valor del contrato cuando lo hay
-(`field-kinds/ref`, `header-fields/titulo`, `diagram-types/org-chart`); si
+(`field-kinds/ref`, `header-fields/title`, `diagram-types/org-chart`); si
 no, un nombre corto (`files/doc-config`).
 
 ### Secciones
@@ -190,7 +190,7 @@ está reservado), `diagrams` (una página por familia de tipos, más `drawn` e
 `illustrations`) y `publishing` (el editor, los agentes que leen y los que
 escriben). En la raíz, la portada y `getting-started.mdx`. Cada grupo de
 `menu.yaml` muestra carpetas enteras, cada una con su icono; el catálogo sale
-como `{ ruta: catalog, titulo: Referencia }` en «Datos».
+como `{ path: catalog, title: Referencia }` en «Datos».
 
 ### Cómo se lee una página de la guía
 
@@ -216,7 +216,7 @@ páginas modelo son `docs/repository/menu.mdx` y `docs/pages/components.mdx`.
 - Las tablas de referencia (ficheros, tipos de campo, campos de cabecera,
   componentes, tipos de diagrama) son siempre `<Entities>` de su catálogo,
   nunca tablas escritas a mano.
-- `actualizado` es la fecha en que la página se revisó contra la plataforma.
+- `updated` es la fecha en que la página se revisó contra la plataforma.
 
 ### Cabecera
 
@@ -227,15 +227,15 @@ páginas modelo son `docs/repository/menu.mdx` y `docs/pages/components.mdx`.
 
 | Tipo | Una entidad por… | Muestra funcionando |
 | --- | --- | --- |
-| `files` | Fichero o carpeta que puede tener un repositorio | un `enum` (`kind`) y una `ficha` (`page`) |
+| `files` | Fichero o carpeta que puede tener un repositorio | un `enum` (`kind`) y un campo de tipo `page` (`page`) |
 | `field-kinds` | Tipo de campo; el id es el tipo | un `enum` para agrupar (`family`) |
 | `header-fields` | Campo común de cabecera; el id es el campo | un `ref` (`kind` → `field-kinds`) |
-| `components` | Componente de página | una `lista` de `objeto` (`attributes`) |
+| `components` | Componente de página | una `list` de `object` (`attributes`) |
 | `diagram-types` | Tipo de diagrama; el id es su valor de `type` | un `enum` para agrupar (`family`, que decide su página de `docs/diagrams/`) |
 
-- Los campos y su significado están en cada `_type.yaml`. La `ficha` de la
-  página que explica una entidad se llama siempre `page`.
-- Toda entidad lleva `fuente: manual` y como `actualizado` la fecha en que se
+- Los campos y su significado están en cada `_type.yaml`. El campo de tipo
+  `page` que apunta a la página que explica una entidad se llama siempre `page`.
+- Toda entidad lleva `source: manual` y como `updated` la fecha en que se
   comprobó contra el código de la plataforma.
 - `components.attributes` es la fuente de los atributos que lista la skill
   `colofon-docs` (`references/components.md`).
@@ -291,17 +291,17 @@ Léelo para comprobar hechos; nunca lo edites desde aquí.
 | Tipo | Dónde está la verdad (`packages/content/src/`) |
 | --- | --- |
 | `files` | `load.ts`, `source.ts` y la spec OpenSpec `content-contract` |
-| `field-kinds` | `meta-schema.ts` (`SCALAR_FIELD_KINDS` y las formas `enum`, `ref`, `lista`, `objeto`), `entity-schema.ts` |
+| `field-kinds` | `meta-schema.ts` (`SCALAR_FIELD_KINDS` y las formas `enum`, `ref`, `list`, `object`), `entity-schema.ts` |
 | `header-fields` | `meta-schema.ts` (`PAGE_HEADER_FIELDS`), `pages/header.ts` |
 | `components` | `pages/transform.ts` (`Callout`, `Diagram`), `pages/entities.ts` (`Entities`) |
 | `diagram-types` | `pages/diagram-types/<type>.ts` (claves, variantes, presupuesto), `pages/diagrams.ts` |
 
 | La plataforma… | En `catalog/` | En `docs/` y lo demás |
 | --- | --- | --- |
-| Añade un fichero, tipo de campo, campo de cabecera, componente o tipo de diagrama | Una entidad nueva, `fuente: manual`, `actualizado` de hoy, `page` a su página | La página lo explica y cita la entidad en su cabecera. Un tipo de diagrama recibe además su sección en la página de su familia, su ejemplo `<type>-<topic>` y, en `.agents/skills/colofon-diagrams/`, su referencia `type-<type>.md` con su fila en la tabla de formas |
-| Cambia uno (un atributo, un valor de enum, un presupuesto) | Actualiza los campos y `actualizado` | Actualiza el ejemplo, la tabla de claves y «Qué se reporta» de la página, y la skill común que lo cuente |
+| Añade un fichero, tipo de campo, campo de cabecera, componente o tipo de diagrama | Una entidad nueva, `source: manual`, `updated` de hoy, `page` a su página | La página lo explica y cita la entidad en su cabecera. Un tipo de diagrama recibe además su sección en la página de su familia, su ejemplo `<type>-<topic>` y, en `.agents/skills/colofon-diagrams/`, su referencia `type-<type>.md` con su fila en la tabla de formas |
+| Cambia uno (un atributo, un valor de enum, un presupuesto) | Actualiza los campos y `updated` | Actualiza el ejemplo, la tabla de claves y «Qué se reporta» de la página, y la skill común que lo cuente |
 | Quita uno | Borra la entidad | Quítalo de la página, de toda cabecera que lo cite y de las skills comunes |
-| Añade una propiedad que toda entidad de un tipo debe mostrar | Un campo nuevo en `_type.yaml` (`opcional: true` hasta rellenarlo), y luego todas las entidades | La columna en los `<Entities>` que la necesiten |
+| Añade una propiedad que toda entidad de un tipo debe mostrar | Un campo nuevo en `_type.yaml` (`optional: true` hasta rellenarlo), y luego todas las entidades | La columna en los `<Entities>` que la necesiten |
 | Cambia una regla que enuncia una skill servida | — | `skills/guide/SKILL.md` en el mismo cambio |
 
 Cuando el usuario pida sincronizar la guía con la plataforma (un tipo o
@@ -316,11 +316,11 @@ todos):
    los ficheros que tocaría cada cosa (páginas, cabeceras, ejemplos,
    referencias de `diagrams`, `skills/guide`).
 2. **Aplicar, solo cuando el usuario lo diga.** Aplica lo aprobado siguiendo
-   la tabla anterior. Sube `actualizado` en toda entidad y página que hayas
+   la tabla anterior. Sube `updated` en toda entidad y página que hayas
    comprobado, haya cambiado o no. Comprueba lo tocado como hace
    `colofon-check`. Lo que no puedas resolver con el código queda como
    `open_questions` en su página, no como una suposición.
 
 Cuando una página se mueve o se renombra, actualiza cada `page:` que la
-nombre (`grep -rn "^page: <ruta/vieja>$" catalog`): una `ficha` a una página
+nombre (`grep -rn "^page: <ruta/vieja>$" catalog`): un campo `page` que apunta a una página
 que no existe hace fallar a su entidad, que desaparece de todas las tablas.
