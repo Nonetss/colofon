@@ -25,7 +25,8 @@ structure and **without the AI ever seeing a secret**.
 - **Platform and content live in separate repositories.** The logic is updated
   without touching the documentation and vice versa, and whoever writes works
   in a repository with no code. Between them there is a versioned contract
-  (`plataforma: "1"` in `doc.config.yaml`).
+  (`contract: "2"` in `doc.config.yaml`; repositories still on contract 1,
+  `plataforma: "1"` with the same keys in Spanish, are still read).
 - **Content is text in git.** MDX pages, YAML data and JSON diagrams; git is
   the source of truth, with its history, diffs and review.
 - **The backend reads the content live.** Changing the documentation doesn't
@@ -167,7 +168,7 @@ the page header fields and the field types:
 
 ```txt
 documentacion/
-├── doc.config.yaml        # name, platform version (plataforma: "1"), extra header fields
+├── doc.config.yaml        # name, contract version (contract: "2"), extra header fields
 ├── menu.yaml              # optional: the sidebar's groups, which win over page headers
 ├── docs/                  # MDX pages; each folder is a section with its index.mdx
 ├── catalog/

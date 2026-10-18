@@ -28,11 +28,11 @@ La plataforma solo impone esta forma, los campos de cabecera de las páginas y l
 
 ## `doc.config.yaml`
 
-El nombre del sitio, su descripción y la versión mayor del contrato a la que apunta, `plataforma: "1"`. En `cabecera` puede declarar campos de cabecera extra para las páginas, con los mismos tipos que el catálogo.
+El nombre del sitio, su descripción y la versión mayor del contrato a la que apunta, `contract: "2"`. En `header` puede declarar campos de cabecera extra para las páginas, con los mismos tipos que el catálogo.
 
 ## Páginas
 
-`docs/**/*.mdx`, cada una con su cabecera (`titulo` y `descripcion` obligatorios; `icono`, `orden` y `actualizado` opcionales) y un cuerpo en Markdown de GitHub. **El MDX no ejecuta nada**: `import`, `export` y las expresiones `{…}` se rechazan, y los únicos componentes son los tres de la plataforma:
+`docs/**/*.mdx`, cada una con su cabecera (`title` y `description` obligatorios; `icon`, `order` y `updated` opcionales) y un cuerpo en Markdown de GitHub. **El MDX no ejecuta nada**: `import`, `export` y las expresiones `{…}` se rechazan, y los únicos componentes son los tres de la plataforma:
 
 - `<Callout type="warning">`: una nota destacada alrededor de Markdown.
 - `<Entities type="maquinas" columns="…" />`: una tabla de un tipo del catálogo.
@@ -42,7 +42,7 @@ Sin `menu.yaml`, la barra lateral sigue las carpetas. Con él, sus grupos listan
 
 ## El catálogo
 
-Los datos estructurados viven en `catalog/<tipo>/`: un `_type.yaml` que declara el tipo (nombre, plural, icono, campos y las columnas de su tabla) y un YAML por entidad. Entre los tipos de campo están `texto`, `numero`, `entero`, `booleano`, `fecha`, `url`, `email`, `ip`, `enum`, `ref` (otra entidad), `ficha` (una página), `lista` y `objeto`. La plataforma genera las páginas del catálogo en `/<slug>/catalog`: una tabla por tipo y una página por entidad, con las páginas que la citan y las entidades que apuntan a ella.
+Los datos estructurados viven en `catalog/<tipo>/`: un `_type.yaml` que declara el tipo (nombre, plural, icono, campos y las columnas de su tabla) y un YAML por entidad. Entre los tipos de campo están `text`, `number`, `integer`, `boolean`, `date`, `url`, `email`, `ip`, `enum`, `ref` (otra entidad), `page` (una página), `list` y `object`. La plataforma genera las páginas del catálogo en `/<slug>/catalog`: una tabla por tipo y una página por entidad, con las páginas que la citan y las entidades que apuntan a ella.
 
 ## Diagramas, estilos y skills
 

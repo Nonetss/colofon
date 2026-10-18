@@ -30,7 +30,7 @@ curl -fsSL https://raw.githubusercontent.com/Nonetss/colofon/main/compose.prod.y
 La plataforma y los repositorios de contenido se versionan por separado. Cada repositorio dice para qué versión del contrato está escrito en su `doc.config.yaml`:
 
 ```yaml
-plataforma: "1"
+contract: "2"
 ```
 
-Hoy `"1"` es la única versión, así que actualizar la plataforma no obliga a tocar el contenido. Un repositorio que declara una versión que la plataforma no conoce se marca como inválido al sincronizar, y la plataforma sigue sirviendo su última versión válida.
+La versión 2 nombra todas las claves en inglés. Un repositorio escrito aún para la versión 1 (`plataforma: "1"`, las mismas claves en español) se sigue leyendo y publicando, con un aviso en su portada de que su contrato está superado; la página «Pasar del contrato 1 al 2» de [doc-example](https://github.com/Nonetss/doc-example) traduce cada clave. Actualizar la plataforma no obliga a tocar el contenido. Un repositorio que declara una versión que la plataforma no conoce se marca como inválido al sincronizar, y la plataforma sigue sirviendo su última versión válida.

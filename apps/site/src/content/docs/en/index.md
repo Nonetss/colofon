@@ -11,7 +11,7 @@ It ships as three Docker images (gateway, frontend and backend) plus PostgreSQL.
 ## Principles
 
 - **The platform knows nothing about the domain.** The data types (machines, services, suppliers…) and their fields are declared by the content, not by the code.
-- **Platform and content live in separate repositories.** Between them there is a versioned contract, `plataforma: "1"` in each repository's `doc.config.yaml`.
+- **Platform and content live in separate repositories.** Between them there is a versioned contract, `contract: "2"` in each repository's `doc.config.yaml`.
 - **Content is text in git.** Git is the source of truth, with its history, diffs and review.
 - **The backend reads the content live.** Changing the documentation does not rebuild anything: the backend syncs the repository and serves it.
 - **MDX executes no code.** Only Markdown and the platform's components, with no `import`, `export` or expressions.

@@ -11,7 +11,7 @@ Se distribuye como tres imágenes Docker (gateway, frontend y backend) más Post
 ## Principios
 
 - **La plataforma no sabe nada del dominio.** Los tipos de datos (máquinas, servicios, proveedores…) y sus campos los declara el contenido, no el código.
-- **Plataforma y contenido viven en repositorios separados.** Entre ambos hay un contrato versionado: `plataforma: "1"` en el `doc.config.yaml` de cada repositorio.
+- **Plataforma y contenido viven en repositorios separados.** Entre ambos hay un contrato versionado: `contract: "2"` en el `doc.config.yaml` de cada repositorio.
 - **El contenido es texto en git.** Git es la fuente de verdad, con su historial, sus diffs y su revisión.
 - **El backend lee el contenido en vivo.** Cambiar la documentación no reconstruye nada: el backend sincroniza el repositorio y lo sirve.
 - **El MDX no ejecuta código.** Solo Markdown y los componentes de la plataforma, sin `import`, `export` ni expresiones.

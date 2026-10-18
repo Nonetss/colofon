@@ -28,11 +28,11 @@ The platform imposes only this shape, the page header fields and the field kinds
 
 ## `doc.config.yaml`
 
-The site's name, description and the major version of the contract it targets, `plataforma: "1"`. Under `cabecera` it can declare extra page header fields, typed like catalog fields.
+The site's name, description and the major version of the contract it targets, `contract: "2"`. Under `header` it can declare extra page header fields, typed like catalog fields.
 
 ## Pages
 
-`docs/**/*.mdx`, each with a header (`titulo` and `descripcion` required; `icono`, `orden` and `actualizado` optional) and a body in GitHub-flavoured Markdown. **MDX executes nothing**: `import`, `export` and `{…}` expressions are refused, and the only components are the platform's three:
+`docs/**/*.mdx`, each with a header (`title` and `description` required; `icon`, `order` and `updated` optional) and a body in GitHub-flavoured Markdown. **MDX executes nothing**: `import`, `export` and `{…}` expressions are refused, and the only components are the platform's three:
 
 - `<Callout type="warning">`: a highlighted note around Markdown.
 - `<Entities type="maquinas" columns="…" />`: a table of a catalog type.
@@ -42,7 +42,7 @@ Without `menu.yaml`, the sidebar follows the folders. With it, its groups list t
 
 ## The catalog
 
-Structured data lives in `catalog/<type>/`: a `_type.yaml` declaring the type (name, plural, icon, fields and the columns of its table) and one YAML file per entity. Field kinds include `texto`, `numero`, `entero`, `booleano`, `fecha`, `url`, `email`, `ip`, `enum`, `ref` (another entity), `ficha` (a page), `lista` and `objeto`. The platform generates the catalog pages at `/<slug>/catalog`: one table per type and one page per entity, with the pages that cite it and the entities that point at it.
+Structured data lives in `catalog/<type>/`: a `_type.yaml` declaring the type (name, plural, icon, fields and the columns of its table) and one YAML file per entity. Field kinds include `text`, `number`, `integer`, `boolean`, `date`, `url`, `email`, `ip`, `enum`, `ref` (another entity), `page` (a page), `list` and `object`. The platform generates the catalog pages at `/<slug>/catalog`: one table per type and one page per entity, with the pages that cite it and the entities that point at it.
 
 ## Diagrams, styles and skills
 

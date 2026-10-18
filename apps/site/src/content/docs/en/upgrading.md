@@ -30,7 +30,7 @@ curl -fsSL https://raw.githubusercontent.com/Nonetss/colofon/main/compose.prod.y
 The platform and the content repositories are versioned apart. Each repository says which version of the contract it is written for in its `doc.config.yaml`:
 
 ```yaml
-plataforma: "1"
+contract: "2"
 ```
 
-`"1"` is the only version today, so upgrading the platform does not require touching the content. A repository that declares a version the platform does not know is reported as invalid on sync, and the platform keeps serving its last valid version.
+Version 2 names every key in English. A repository still written for version 1 (`plataforma: "1"`, the same keys in Spanish) is still read and published, with a notice on its home saying its contract is superseded; the «Pasar del contrato 1 al 2» page of [doc-example](https://github.com/Nonetss/doc-example) maps each key. Upgrading the platform does not require touching the content. A repository that declares a version the platform does not know is reported as invalid on sync, and the platform keeps serving its last valid version.
