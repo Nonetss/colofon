@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Sets APP_VERSION in packages/api/src/shared/releases.ts to a release's
+# Sets APP_VERSION in packages/api/src/v1/release/feed.ts to a release's
 # version, so the running app names the GitHub release it was built from.
 # The /tag command runs it before tagging.
 #
@@ -14,7 +14,7 @@ if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
   exit 1
 fi
 
-constant=packages/api/src/shared/releases.ts
+constant=packages/api/src/v1/release/feed.ts
 sed -i "s/^export const APP_VERSION = \"[^\"]*\"$/export const APP_VERSION = \"$version\"/" "$constant"
 grep -q "^export const APP_VERSION = \"$version\"$" "$constant" || { echo "Could not set $constant" >&2; exit 1; }
 echo "Version set to $version"
