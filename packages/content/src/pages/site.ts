@@ -84,6 +84,8 @@ export type Site = {
   styles: string
   /** The valid skills of `skills/`, by name; empty without. */
   skills: ContentSkill[]
+  /** The valid catalog entities by type, as the catalog pages show them. */
+  catalog: Catalog
 }
 
 export type SiteRoutes = {
@@ -203,6 +205,7 @@ export async function readSite(
   return arrange(home, nav, read, siteProblems, {
     styles: styles.css,
     skills: skills.skills,
+    catalog,
   })
 }
 
@@ -515,7 +518,7 @@ function arrange(
   nav: NavNode[],
   read: ReadonlyMap<string, Page>,
   siteProblems: readonly PageProblem[],
-  { styles, skills }: Pick<Site, "styles" | "skills">
+  { styles, skills, catalog }: Pick<Site, "styles" | "skills" | "catalog">
 ): Site {
   const visits: Visit[] = [{ entry: home, breadcrumbs: [], children: nav }]
   const walk = (nodes: NavNode[], breadcrumbs: Breadcrumb[]) => {
@@ -576,7 +579,7 @@ function arrange(
       children: [],
     })
   }
-  return { home, nav, pages, problems, styles, skills }
+  return { home, nav, pages, problems, styles, skills, catalog }
 }
 
 /** The site's own problems (menu.yaml, reserved files, styles) go on the home. */

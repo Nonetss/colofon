@@ -116,13 +116,15 @@ export {
 export { fieldLabel } from "#pages/entities"
 export { type HeaderSchema, headerSchema, readHeader } from "#pages/header"
 export {
-  compareHits,
-  createSiteSearch,
+  createDocsSearch,
+  type DocsSearch,
+  type EntityHit,
+  type SearchAnswer,
   type SearchExcerpt,
   type SearchHighlight,
   type SearchHit,
-  type SiteSearch,
-  searchSite,
+  type SearchOptions,
+  type SearchSectionHit,
 } from "#pages/search"
 export {
   type Breadcrumb,

@@ -1,9 +1,9 @@
 import { describe, expect, test } from "bun:test"
 import {
-  createSiteSearch,
+  createDocsSearch,
+  type DocsSearch,
+  type SearchAnswer,
   type SearchHit,
-  type SiteSearch,
-  searchSite,
 } from "#pages/search"
 import { page, siteOf } from "#tests/fixtures/site"
 
@@ -41,16 +41,44 @@ const SITE = {
   "docs/modo.mdx": page("Modos", "El modo de arranque."),
 }
 
+/** A catalog type with a label field and three entities. */
+const SERVICES = {
+  "catalog/servicios/_type.yaml": [
+    "nombre: Servicio",
+    "plural: Servicios",
+    "etiqueta: name",
+    "campos:",
+    "  name: { tipo: texto }",
+    "  nota: { tipo: texto, opcional: true }",
+  ].join("\n"),
+  "catalog/servicios/database-url.yaml": "name: DATABASE_URL\n",
+  "catalog/servicios/proxy.yaml": "name: Proxy\n",
+  "catalog/servicios/web.yaml": "name: Web\nnota: Va detrás del proxy\n",
+}
+
+const CASA = new Set(["casa"])
+
 async function searchOf(files: Record<string, string> = SITE) {
-  return createSiteSearch(await siteOf(files))
+  const search = createDocsSearch()
+  search.update("casa", await siteOf(files))
+  return search
 }
 
-function titlesFor(search: SiteSearch, query: string): string[] {
-  return searchSite(search, query, 20).map((hit) => hit.title)
+function answerFor(
+  search: DocsSearch,
+  query: string,
+  limit = 20,
+  repositories: ReadonlySet<string> = CASA
+): SearchAnswer {
+  return search.search(query, { repositories, limit, entityLimit: 5 })
 }
 
-function hitFor(search: SiteSearch, query: string, title: string): SearchHit {
-  const found = searchSite(search, query, 20).find((hit) => hit.title === title)
+function titlesFor(search: DocsSearch, query: string): string[] {
+  return answerFor(search, query).hits.map((hit) => hit.title)
+}
+
+function hitFor(search: DocsSearch, query: string, title: string): SearchHit {
+  const found = answerFor(search, query).hits.find((hit) => hit.title === title)
   if (found === undefined) throw new Error(`No hit "${title}" for "${query}"`)
   return found
 }
@@ -64,20 +92,49 @@ function highlighted(hit: SearchHit): string[] {
   )
 }
 
-describe("searchSite: what is indexed", () => {
+describe("docsSearch: what is indexed", () => {
   test("a word only in the body finds the page", async () => {
     const search = await searchOf()
     expect(titlesFor(search, "inversa")).toEqual(["DNS"])
   })
 
-  test("a new index over a changed site finds the new words", async () => {
-    const before = await searchOf()
-    expect(titlesFor(before, "pihole")).toEqual([])
-    const after = await searchOf({
-      ...SITE,
-      "docs/red/dns.mdx": page("DNS", "Ahora con pihole."),
-    })
-    expect(titlesFor(after, "pihole")).toEqual(["DNS"])
+  test("updating a repository with a new site replaces its pages", async () => {
+    const search = await searchOf()
+    expect(titlesFor(search, "pihole")).toEqual([])
+    search.update(
+      "casa",
+      await siteOf({
+        ...SITE,
+        "docs/red/dns.mdx": page("DNS", "Ahora con pihole."),
+      })
+    )
+    expect(titlesFor(search, "pihole")).toEqual(["DNS"])
+    expect(titlesFor(search, "inversa")).toEqual([])
+    expect(titlesFor(search, "vlan")).toEqual(["VLAN", "Router"])
+  })
+
+  test("updating a repository with the same site indexes nothing twice", async () => {
+    const site = await siteOf(SITE)
+    const search = createDocsSearch()
+    search.update("casa", site)
+    search.update("casa", site)
+    expect(titlesFor(search, "vlan")).toEqual(["VLAN", "Router"])
+  })
+
+  test("only the asked repositories are searched", async () => {
+    const search = await searchOf()
+    search.update(
+      "otra",
+      await siteOf({ "docs/index.mdx": page("Otra"), ...SERVICES })
+    )
+    search.update(
+      "propia",
+      await siteOf({ "docs/pihole.mdx": page("Pihole", "Mi pihole.") })
+    )
+    expect(titlesFor(search, "pihole")).toEqual([])
+    const both = answerFor(search, "pihole", 20, new Set(["casa", "propia"]))
+    expect(both.hits.map((hit) => hit.repository)).toEqual(["propia"])
+    expect(answerFor(search, "proxy").entities).toEqual([])
   })
 
   test("header fields are searched", async () => {
@@ -98,7 +155,7 @@ describe("searchSite: what is indexed", () => {
   })
 })
 
-describe("searchSite: matching", () => {
+describe("docsSearch: matching", () => {
   test("accents and case are ignored", async () => {
     const search = await searchOf()
     expect(titlesFor(search, "RESOLUCION")).toEqual(["DNS"])
@@ -106,8 +163,10 @@ describe("searchSite: matching", () => {
 
   test("every word must be found", async () => {
     const search = await searchOf()
-    expect(titlesFor(search, "router vlan")).toEqual(["Router"])
-    expect(titlesFor(search, "router noche")).toEqual([])
+    const answer = answerFor(search, "router vlan")
+    expect(answer.hits.map((hit) => hit.title)).toEqual(["Router"])
+    expect(answer.partial).toBe(false)
+    expect(answer.hits[0]?.missing).toEqual([])
   })
 
   test("words are found across fields, the trail included", async () => {
@@ -133,16 +192,23 @@ describe("searchSite: matching", () => {
 
   test("an empty query finds nothing", async () => {
     const search = await searchOf()
-    expect(searchSite(search, "  ¿? ", 10)).toEqual([])
+    expect(answerFor(search, "  ¿? ", 10)).toEqual({
+      partial: false,
+      hits: [],
+      entities: [],
+    })
   })
 
   test("the typed words are returned folded, as split at spaces", async () => {
     const search = await searchOf()
-    expect(searchSite(search, "Red  DNS", 10)[0]?.terms).toEqual(["red", "dns"])
+    expect(answerFor(search, "Red  DNS", 10).hits[0]?.terms).toEqual([
+      "red",
+      "dns",
+    ])
   })
 })
 
-describe("searchSite: ranking", () => {
+describe("docsSearch: ranking", () => {
   test("title beats body", async () => {
     const search = await searchOf()
     expect(titlesFor(search, "vlan")).toEqual(["VLAN", "Router"])
@@ -164,13 +230,42 @@ describe("searchSite: ranking", () => {
 
   test("at most the limit, the most relevant ones", async () => {
     const search = await searchOf()
-    expect(searchSite(search, "vlan", 1).map((hit) => hit.title)).toEqual([
+    expect(answerFor(search, "vlan", 1).hits.map((hit) => hit.title)).toEqual([
       "VLAN",
     ])
   })
+
+  test("repository size does not bias the ranking", async () => {
+    const notes = page("Notas", "Aquí va el proxy de la casa.")
+    const many = Object.fromEntries(
+      Array.from({ length: 50 }, (_, i) => [
+        `docs/tema${i}.mdx`,
+        page(`Tema ${i}`, `Texto del tema ${i}.`),
+      ])
+    )
+    const search = createDocsSearch()
+    search.update("mini", await siteOf({ "docs/notas.mdx": notes }))
+    search.update("grande", await siteOf({ ...many, "docs/notas.mdx": notes }))
+    const { hits } = answerFor(search, "proxy", 20, new Set(["mini", "grande"]))
+    expect(hits.map((hit) => hit.repository)).toEqual(["grande", "mini"])
+    expect(hits[0]?.score).toBe(hits[1]?.score ?? 0)
+  })
+
+  test("the scope does not change the order of a repository's pages", async () => {
+    const search = await searchOf()
+    search.update(
+      "otra",
+      await siteOf({ "docs/vlan.mdx": page("VLAN", "Otra vlan.") })
+    )
+    const alone = titlesFor(search, "vlan")
+    const together = answerFor(search, "vlan", 20, new Set(["casa", "otra"]))
+      .hits.filter((hit) => hit.repository === "casa")
+      .map((hit) => hit.title)
+    expect(together).toEqual(alone)
+  })
 })
 
-describe("searchSite: excerpt and section", () => {
+describe("docsSearch: excerpt and section", () => {
   test("a body match points at its section, with the word highlighted", async () => {
     const search = await searchOf()
     const hit = hitFor(search, "consulta", "DNS")
@@ -220,5 +315,133 @@ describe("searchSite: excerpt and section", () => {
     expect(highlighted(hitFor(search, "confguracion", "Ajustes"))).toEqual([
       "configuración",
     ])
+  })
+})
+
+describe("docsSearch: partial answers", () => {
+  const files = {
+    "docs/uno.mdx": page("Uno", "El router lleva la vlan."),
+    "docs/dos.mdx": page("Dos", "Solo el router."),
+  }
+
+  test("pages holding some words come back, those lacking fewer first", async () => {
+    const search = await searchOf(files)
+    const answer = answerFor(search, "router vlan zigbee")
+    expect(answer.partial).toBe(true)
+    expect(answer.hits.map((hit) => [hit.title, hit.missing])).toEqual([
+      ["Uno", ["zigbee"]],
+      ["Dos", ["vlan", "zigbee"]],
+    ])
+  })
+
+  test("one unknown word finds nothing and is not partial", async () => {
+    const search = await searchOf(files)
+    expect(answerFor(search, "zigbee")).toEqual({
+      partial: false,
+      hits: [],
+      entities: [],
+    })
+  })
+
+  test("a title match in a partial answer needs no excerpt", async () => {
+    const search = await searchOf(files)
+    const hit = hitFor(search, "uno zigbee", "Uno")
+    expect(hit.excerpt).toBeNull()
+    expect(hit.missing).toEqual(["zigbee"])
+  })
+})
+
+describe("docsSearch: extra sections", () => {
+  const files = {
+    "docs/dns.mdx": page(
+      "DNS",
+      [
+        "## Resolución inversa",
+        "",
+        "Usa la caché del servidor.",
+        "",
+        "## Cachés",
+        "",
+        "La caché guarda cada ttl.",
+        "",
+        "## Rendimiento",
+        "",
+        "Una caché caliente responde antes.",
+      ].join("\n")
+    ),
+  }
+
+  test("the best section gives the excerpt and the next ones follow", async () => {
+    const search = await searchOf(files)
+    const hit = hitFor(search, "caché ttl", "DNS")
+    expect(hit.anchor).toBe("cachés")
+    expect(highlighted(hit)).toEqual(["caché", "ttl"])
+    expect(hit.sections.map((section) => section.anchor)).toEqual([
+      "resolución-inversa",
+      "rendimiento",
+    ])
+    expect(hit.sections[1]?.heading).toBe("Rendimiento")
+    expect(hit.sections[1]?.excerpt.text).toBe(
+      "Una caché caliente responde antes."
+    )
+  })
+
+  test("one matching section brings no extra sections", async () => {
+    const search = await searchOf(files)
+    expect(hitFor(search, "ttl", "DNS").sections).toEqual([])
+  })
+
+  test("a title match brings no extra sections", async () => {
+    const search = await searchOf(files)
+    expect(hitFor(search, "dns", "DNS").sections).toEqual([])
+  })
+})
+
+describe("docsSearch: entities", () => {
+  test("an identifier finds its entity first, as exact", async () => {
+    const search = await searchOf({ ...SITE, ...SERVICES })
+    const [first] = answerFor(search, "DATABASE_URL").entities
+    expect(first).toEqual({
+      repository: "casa",
+      type: { id: "servicios", plural: "Servicios" },
+      id: "database-url",
+      label: "DATABASE_URL",
+      path: "catalog/servicios/database-url",
+      exact: true,
+      score: first?.score ?? 0,
+    })
+  })
+
+  test("a field value finds an entity", async () => {
+    const search = await searchOf()
+    const entities = answerFor(search, "192.168.1.30").entities
+    expect(entities.map((entity) => entity.id)).toEqual(["nas"])
+    expect(entities[0]?.exact).toBe(false)
+  })
+
+  test("an exact label beats a mention in a field", async () => {
+    const search = await searchOf({ ...SITE, ...SERVICES })
+    const entities = answerFor(search, "proxy").entities
+    expect(entities.map((entity) => [entity.label, entity.exact])).toEqual([
+      ["Proxy", true],
+      ["Web", false],
+    ])
+  })
+
+  test("entities need every word, even when pages are partial", async () => {
+    const search = await searchOf({ ...SITE, ...SERVICES })
+    const answer = answerFor(search, "proxy router")
+    expect(answer.partial).toBe(true)
+    expect(answer.entities).toEqual([])
+  })
+
+  test("at most the entity limit", async () => {
+    const search = await searchOf({ ...SITE, ...SERVICES })
+    const answer = search.search("servicios", {
+      repositories: CASA,
+      limit: 10,
+      entityLimit: 2,
+    })
+    expect(answer.entities).toHaveLength(2)
   })
 })
