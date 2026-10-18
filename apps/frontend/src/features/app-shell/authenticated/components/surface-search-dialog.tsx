@@ -28,10 +28,10 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty"
 import { Kbd } from "@/components/ui/kbd"
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { SurfaceSearchExcerpt } from "@/features/app-shell/authenticated/components/surface-search-excerpt"
 import { SurfaceSearchFooter } from "@/features/app-shell/authenticated/components/surface-search-footer"
 import { SurfaceSearchLabel } from "@/features/app-shell/authenticated/components/surface-search-label"
+import { SurfaceSearchScope } from "@/features/app-shell/authenticated/components/surface-search-scope"
 import { useDocsSearchMeta } from "@/features/app-shell/authenticated/hooks/use-docs-search-meta"
 import { useSurfaceSearchRecords } from "@/features/app-shell/authenticated/hooks/use-surface-search-records"
 import type { DocsSearchMeta } from "@/features/app-shell/authenticated/model/doc-search-entries"
@@ -78,9 +78,6 @@ const EntityIcon = getIcon("docSections", "data")
 /** Pause after the last keystroke before the server is asked: short, since
  *  the palette is typed in short bursts and waits on it. */
 const SEARCH_DEBOUNCE_MS = 150
-
-/** Value of the scope switch that searches every repository. */
-const EVERYWHERE = "todos"
 
 /** Group headings stay pinned while their group scrolls under them. */
 const GROUP_CLASS =
@@ -395,6 +392,13 @@ export function SurfaceSearchDialog({
         onValueChange={setSearch}
         onKeyDown={handleInputKeyDown}
       >
+        {switchRepository === null ? null : (
+          <SurfaceSearchScope
+            repository={switchRepository.name}
+            everywhere={everywhere}
+            onChange={setEverywhere}
+          />
+        )}
         <DialogClose
           aria-label="Cerrar búsqueda"
           className="shrink-0 rounded outline-none focus-visible:ring-2 focus-visible:ring-ring/50 hover:[&>kbd]:text-foreground"
@@ -402,27 +406,6 @@ export function SurfaceSearchDialog({
           <Kbd>esc</Kbd>
         </DialogClose>
       </CommandInput>
-      {switchRepository === null ? null : (
-        <div className="flex items-center justify-between gap-3 border-b px-3 py-2">
-          <Tabs
-            value={everywhere ? EVERYWHERE : switchRepository.slug}
-            onValueChange={(value) => setEverywhere(value === EVERYWHERE)}
-          >
-            <TabsList aria-label="Dónde buscar (Tab para cambiar)">
-              <TabsTrigger value={switchRepository.slug}>
-                {switchRepository.name}
-              </TabsTrigger>
-              <TabsTrigger value={EVERYWHERE}>Todos</TabsTrigger>
-            </TabsList>
-          </Tabs>
-          <span aria-hidden className="hidden items-center gap-1.5 sm:flex">
-            <Kbd>tab</Kbd>
-            <Text variant="compact" tone="muted">
-              cambiar
-            </Text>
-          </span>
-        </div>
-      )}
       <CommandList className="max-h-[min(60vh,440px)] scroll-pt-9 p-1">
         {hasQuery ? (
           <CommandEmpty className="py-10">
@@ -464,7 +447,7 @@ export function SurfaceSearchDialog({
         ) : null}
         {hasQuery ? renderResults() : null}
       </CommandList>
-      <SurfaceSearchFooter />
+      <SurfaceSearchFooter scopeHint={switchRepository !== null} />
     </CommandDialog>
   )
 }

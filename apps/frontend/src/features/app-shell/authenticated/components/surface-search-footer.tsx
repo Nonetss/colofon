@@ -8,14 +8,29 @@ const KEY_HINTS = [
   { keys: ["esc"], label: "cerrar" },
 ]
 
+const SCOPE_HINT = { keys: ["tab"], label: "dónde buscar" }
+
+export interface SurfaceSearchFooterProps {
+  /** Whether Tab switches where the search looks, so it gets a hint too. */
+  scopeHint?: boolean
+}
+
+/** The legend's keys: Tab's only when the dialog offers the scope switch. */
+function keyHints(scopeHint: boolean) {
+  if (!scopeHint) return KEY_HINTS
+  return [...KEY_HINTS.slice(0, 2), SCOPE_HINT, ...KEY_HINTS.slice(2)]
+}
+
 /**
  * Keyboard legend under the surface search results. Hidden on small
  * screens, where the palette is driven by touch.
  */
-export function SurfaceSearchFooter() {
+export function SurfaceSearchFooter({
+  scopeHint = false,
+}: SurfaceSearchFooterProps) {
   return (
     <CommandFooter aria-hidden className="hidden sm:flex">
-      {KEY_HINTS.map((hint) => (
+      {keyHints(scopeHint).map((hint) => (
         <span key={hint.label} className="inline-flex items-center gap-1.5">
           <KbdGroup>
             {hint.keys.map((key) => (
