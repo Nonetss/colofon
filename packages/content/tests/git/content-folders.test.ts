@@ -20,7 +20,7 @@ async function remote(): Promise<GitRemote> {
   return created
 }
 
-const CONFIG = 'nombre: Sitio\nplataforma: "1"\n'
+const CONFIG = 'name: Sitio\ncontract: "2"\n'
 
 describe("foldersHoldingConfig", () => {
   test("keeps the folder of each config, the root first and the rest in order", () => {

@@ -120,7 +120,7 @@ describe("content.schemaCatalog", () => {
     await root.write(
       inClone(repository.id, {
         "catalog/proveedores/_type.yaml":
-          "nombre: Proveedor\nplural: Proveedores\ncampos:\n  nombre: { tipo: texto }\n",
+          "name: Proveedor\nplural: Proveedores\nfields:\n  name: { type: text }\n",
       })
     )
     const catalog = await handler.schemaCatalog({ input })
@@ -158,7 +158,7 @@ describe("content.entitySchema", () => {
     const { handler } = await setup([repository, homelab], {
       ...inClone(repository.id, CONTENT_SITE),
       ...inClone(homelab.id, {
-        "doc.config.yaml": 'nombre: Homelab\nplataforma: "1"\n',
+        "doc.config.yaml": 'name: Homelab\ncontract: "2"\n',
       }),
     })
     await expectErrorCode(
@@ -214,7 +214,7 @@ describe("last valid content", () => {
 
     await root.write(
       inClone(repository.id, {
-        "catalog/maquinas/_type.yaml": "nombre: Máquina\n",
+        "catalog/maquinas/_type.yaml": "name: Máquina\n",
       })
     )
     const schema = await handler.entitySchema({
@@ -230,7 +230,7 @@ describe("last valid content", () => {
   test("content that was never valid behaves as no content", async () => {
     const { handler } = await setup(
       [repository],
-      inClone(repository.id, { "doc.config.yaml": "nombre: X\n" })
+      inClone(repository.id, { "doc.config.yaml": "name: X\n" })
     )
     expect(await handler.schemaCatalog({ input })).toEqual({
       version: 1,
@@ -289,8 +289,8 @@ describe("content.sync", () => {
 
   test("removes the clones of repositories that no longer exist, and a clone left at the root", async () => {
     const { handler, root } = await setup([], {
-      ...inClone("deleted-repo", { "doc.config.yaml": "nombre: X\n" }),
-      "doc.config.yaml": "nombre: Antiguo\n",
+      ...inClone("deleted-repo", { "doc.config.yaml": "name: X\n" }),
+      "doc.config.yaml": "name: Antiguo\n",
     })
     await mkdir(path.join(root.root, ".git"))
 

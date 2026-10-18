@@ -3,18 +3,18 @@ import type { PageProblem } from "#contract/problems"
 
 /** What every page's header gives, after validation. */
 export type PageHeader = {
-  titulo: string
-  descripcion: string
-  icono: string | null
-  orden: number | null
-  actualizado: string | null
+  title: string
+  description: string
+  icon: string | null
+  order: number | null
+  updated: string | null
   /**
    * The date of the last commit that touched the page's file, from git;
    * never written in the file. `null` for pages that come from no file.
    */
   editado: string | null
-  /** The site's own header fields (`cabecera`), the valid ones only. */
-  campos: Record<string, unknown>
+  /** The site's own header fields (`header`), the valid ones only. */
+  fields: Record<string, unknown>
 }
 
 /** A level 2 or 3 heading of a page, for its table of contents. */

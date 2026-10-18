@@ -9,58 +9,58 @@ import { iconName } from "#contract/icon-name"
 // shown to whoever writes the content, in the editor and in the errors.
 
 /** Major versions of the content contract this platform reads. */
-export const CONTRACT_VERSIONS = ["1"] as const
+export const CONTRACT_VERSIONS = ["2"] as const
 
 /** Field kinds that take no parameters. */
 export const SCALAR_FIELD_KINDS = [
-  "texto",
-  "numero",
-  "entero",
-  "booleano",
-  "fecha",
+  "text",
+  "number",
+  "integer",
+  "boolean",
+  "date",
   "url",
   "email",
   "ip",
-  "ficha",
+  "page",
 ] as const
 
 /** Header fields every page has; a site cannot redeclare them. */
 export const PAGE_HEADER_FIELDS = [
-  "titulo",
-  "descripcion",
-  "icono",
-  "orden",
-  "actualizado",
+  "title",
+  "description",
+  "icon",
+  "order",
+  "updated",
 ] as const
 
 /** Fields every entity accepts without declaring them. */
-export const ENTITY_RESERVED_FIELDS = ["fuente", "actualizado"] as const
+export const ENTITY_RESERVED_FIELDS = ["source", "updated"] as const
 
-/** Column that shows an entity's id, available in every type's `vista`. */
+/** Column that shows an entity's id, available in every type's `view`. */
 export const ID_COLUMN = "id"
 
 export type ScalarFieldKind = (typeof SCALAR_FIELD_KINDS)[number]
 
 type FieldModifiers = {
-  opcional?: boolean | undefined
-  descripcion?: string | undefined
+  optional?: boolean | undefined
+  description?: string | undefined
   /** How the reader names the field; its name when unset. */
-  etiqueta?: string | undefined
+  label?: string | undefined
 }
 
 /** One field of a catalog type, of an object field or of the page header. */
 export type FieldDefinition = FieldModifiers &
   (
-    | { tipo: ScalarFieldKind }
-    | { tipo: "enum"; valores: string[] }
-    | { tipo: "ref"; a: string }
-    | { tipo: "lista"; de: FieldDefinition }
-    | { tipo: "objeto"; campos: Record<string, FieldDefinition> }
+    | { type: ScalarFieldKind }
+    | { type: "enum"; values: string[] }
+    | { type: "ref"; to: string }
+    | { type: "list"; of: FieldDefinition }
+    | { type: "object"; fields: Record<string, FieldDefinition> }
   )
 
 export type MetaSchemaOptions = {
   /**
-   * The catalog types that exist. When given, `ref`'s `a` must be one of
+   * The catalog types that exist. When given, `ref`'s `to` must be one of
    * them, which is what lets the editor suggest them; without it any name
    * passes and the loader checks the references afterwards.
    */
@@ -114,64 +114,64 @@ function requireSomeField(
 /** The meta-schema, with `ref` targets checked against `typeIds` if given. */
 export function createMetaSchemas(options: MetaSchemaOptions = {}) {
   const modifiers = {
-    opcional: z.boolean().optional().meta({
+    optional: z.boolean().optional().meta({
       description: "true si el campo puede faltar. Por defecto es obligatorio",
     }),
-    descripcion: z.string().min(1).optional().meta({
+    description: z.string().min(1).optional().meta({
       description:
         "Para qué sirve el campo. Sale como ayuda en el editor y la lee la IA",
     }),
-    etiqueta: z.string().min(1).optional().meta({
+    label: z.string().min(1).optional().meta({
       description:
         "Cómo se llama el campo en el lector (fichas, tablas y cabecera). Sin ella se muestra su nombre",
     }),
   }
 
-  // Recursive through getters, so `lista` and `objeto` reuse these same
+  // Recursive through getters, so `list` and `object` reuse these same
   // instances and the JSON Schema conversion sees the cycle.
   const fieldDefinition: z.ZodType<FieldDefinition> = z.discriminatedUnion(
-    "tipo",
+    "type",
     [
       z.strictObject({
-        tipo: z.enum(SCALAR_FIELD_KINDS).meta({
+        type: z.enum(SCALAR_FIELD_KINDS).meta({
           description:
-            "Tipo del campo. `ficha` es la ruta de una página de docs/ (contenedores/komodo)",
+            "Tipo del campo. `page` es la ruta de una página de docs/ (contenedores/komodo)",
         }),
         ...modifiers,
       }),
       z.strictObject({
-        tipo: z.literal("enum").meta({
-          description: "Uno de los valores de `valores`",
+        type: z.literal("enum").meta({
+          description: "Uno de los valores de `values`",
         }),
-        valores: z
+        values: z
           .array(z.string().min(1))
           .min(1)
           .meta({ description: "Los valores que admite el campo" }),
         ...modifiers,
       }),
       z.strictObject({
-        tipo: z.literal("ref").meta({
+        type: z.literal("ref").meta({
           description: "El id de una entidad de otro tipo del catálogo",
         }),
-        a: typeIdSchema(options.typeIds).meta({
+        to: typeIdSchema(options.typeIds).meta({
           description: "El tipo al que apunta: el nombre de su carpeta",
         }),
         ...modifiers,
       }),
       z.strictObject({
-        tipo: z.literal("lista").meta({
-          description: "Varios valores; `de` es el campo que se repite",
+        type: z.literal("list").meta({
+          description: "Varios valores; `of` es el campo que se repite",
         }),
-        get de(): z.ZodType<FieldDefinition> {
+        get of(): z.ZodType<FieldDefinition> {
           return fieldDefinition
         },
         ...modifiers,
       }),
       z.strictObject({
-        tipo: z.literal("objeto").meta({
+        type: z.literal("object").meta({
           description: "Un grupo de campos con nombre",
         }),
-        get campos(): z.ZodType<Record<string, FieldDefinition>> {
+        get fields(): z.ZodType<Record<string, FieldDefinition>> {
           return fieldMap
         },
         ...modifiers,
@@ -182,33 +182,33 @@ export function createMetaSchemas(options: MetaSchemaOptions = {}) {
   const fieldMap = z
     .record(fieldName, fieldDefinition)
     .superRefine(requireSomeField)
-    .meta({ description: "Los campos, cada uno con su `tipo`" })
+    .meta({ description: "Los campos, cada uno con su `type`" })
 
   const typeDefinition = z
     .strictObject({
-      nombre: z.string().min(1).meta({
+      name: z.string().min(1).meta({
         description: "Nombre del tipo en singular (Máquina)",
       }),
       plural: z.string().min(1).meta({
         description: "Nombre del tipo en plural (Máquinas)",
       }),
-      icono: iconName.optional(),
-      descripcion: z.string().min(1).optional().meta({
+      icon: iconName.optional(),
+      description: z.string().min(1).optional().meta({
         description: "Qué entra en este tipo y qué no",
       }),
-      etiqueta: fieldName.optional().meta({
+      title_field: fieldName.optional().meta({
         description:
           "El campo que se muestra como nombre de cada entidad. Si falta, su id",
       }),
-      campos: fieldMap.superRefine(
+      fields: fieldMap.superRefine(
         rejectNames(
           ENTITY_RESERVED_FIELDS,
           "toda entidad lo admite sin declararlo"
         )
       ),
-      vista: z
+      view: z
         .strictObject({
-          columnas: z
+          columns: z
             .array(fieldName)
             .min(1)
             .meta({ description: "Columnas de la tabla del tipo, en orden" }),
@@ -217,48 +217,51 @@ export function createMetaSchemas(options: MetaSchemaOptions = {}) {
         .meta({ description: "Cómo se muestra la lista del tipo" }),
     })
     .superRefine((type, ctx) => {
-      const declared = Object.keys(type.campos)
+      const declared = Object.keys(type.fields)
       const reserved: readonly string[] = ENTITY_RESERVED_FIELDS
-      if (type.etiqueta !== undefined && !declared.includes(type.etiqueta)) {
+      if (
+        type.title_field !== undefined &&
+        !declared.includes(type.title_field)
+      ) {
         ctx.addIssue({
           code: "custom",
-          path: ["etiqueta"],
-          message: `\`${type.etiqueta}\` no es ninguno de los campos`,
+          path: ["title_field"],
+          message: `\`${type.title_field}\` no es ninguno de los campos`,
         })
       }
-      const columns = type.vista?.columnas ?? []
+      const columns = type.view?.columns ?? []
       columns.forEach((column, position) => {
         if (column === ID_COLUMN) return
         if (declared.includes(column)) return
         if (reserved.includes(column)) return
         ctx.addIssue({
           code: "custom",
-          path: ["vista", "columnas", position],
+          path: ["view", "columns", position],
           message: `\`${column}\` no es ninguno de los campos`,
         })
       })
     })
 
   const siteConfig = z.strictObject({
-    nombre: z.string().min(1).meta({ description: "Nombre del sitio" }),
-    descripcion: z.string().min(1).optional().meta({
+    name: z.string().min(1).meta({ description: "Nombre del sitio" }),
+    description: z.string().min(1).optional().meta({
       description: "Una frase con de qué va la documentación",
     }),
-    plataforma: z
+    contract: z
       .enum(CONTRACT_VERSIONS, {
-        error: `\`plataforma\` es la versión del contrato, entre comillas: ${CONTRACT_VERSIONS.map((v) => `"${v}"`).join(", ")}`,
+        error: `\`contract\` es la versión del contrato, entre comillas: ${CONTRACT_VERSIONS.map((v) => `"${v}"`).join(", ")}`,
       })
       .meta({
-        description: "Versión mayor de la plataforma con la que es compatible",
+        description: "Versión mayor del contrato de la plataforma que sigue",
       }),
-    cabecera: fieldMap
+    header: fieldMap
       .superRefine(
         rejectNames(PAGE_HEADER_FIELDS, "toda ficha lo tiene sin declararlo")
       )
       .optional()
       .meta({
         description:
-          "Campos extra de la cabecera de las fichas, además de titulo, descripcion, icono, orden y actualizado",
+          "Campos extra de la cabecera de las fichas, además de title, description, icon, order y updated",
       }),
   })
 
@@ -270,27 +273,27 @@ export function createMetaSchemas(options: MetaSchemaOptions = {}) {
   const menuEntry = z.union([
     menuPath,
     z.strictObject({
-      ruta: menuPath,
-      titulo: z.string().min(1).optional().meta({
+      path: menuPath,
+      title: z.string().min(1).optional().meta({
         description:
           "El título en el menú y en la página. Manda sobre el de su cabecera",
       }),
-      icono: iconName.optional().meta({
-        description: "Icono de Lucide. Manda sobre el `icono` de su cabecera",
+      icon: iconName.optional().meta({
+        description: "Icono de Lucide. Manda sobre el `icon` de su cabecera",
       }),
     }),
   ])
 
   const menu = z.strictObject({
-    secciones: z
+    sections: z
       .array(
         z.strictObject({
-          titulo: z.string().min(1).meta({ description: "Título del grupo" }),
-          icono: iconName.optional(),
-          descripcion: z.string().min(1).optional().meta({
+          title: z.string().min(1).meta({ description: "Título del grupo" }),
+          icon: iconName.optional(),
+          description: z.string().min(1).optional().meta({
             description: "Una frase con lo que hay en el grupo",
           }),
-          paginas: z.array(menuEntry).min(1).meta({
+          pages: z.array(menuEntry).min(1).meta({
             description:
               "Lo que muestra el grupo, en orden: páginas, carpetas (con todas sus páginas), catalog o catalog/<tipo>",
           }),
@@ -315,4 +318,4 @@ export type SiteConfig = z.output<MetaSchemas["siteConfig"]>
 export type Menu = z.output<MetaSchemas["menu"]>
 
 /** One entry of a `menu.yaml` group, written as a path or as an object. */
-export type MenuEntry = Menu["secciones"][number]["paginas"][number]
+export type MenuEntry = Menu["sections"][number]["pages"][number]

@@ -4,12 +4,12 @@ import { messagesOf, page, pageAt, siteOf } from "#tests/fixtures/site"
 describe("page header", () => {
   test("a valid header gives the title, description and order, with no problem", async () => {
     const site = await siteOf({
-      "docs/red/dns.mdx": page("DNS", "", "orden: 2\n"),
+      "docs/red/dns.mdx": page("DNS", "", "order: 2\n"),
     })
     const dns = pageAt(site, "red/dns")
-    expect(dns.header.titulo).toBe("DNS")
-    expect(dns.header.descripcion).toBe("Sobre DNS")
-    expect(dns.header.orden).toBe(2)
+    expect(dns.header.title).toBe("DNS")
+    expect(dns.header.description).toBe("Sobre DNS")
+    expect(dns.header.order).toBe(2)
     expect(dns.problems).toEqual([])
   })
 
@@ -24,34 +24,34 @@ describe("page header", () => {
     expect(dns.tree).not.toBeNull()
   })
 
-  test("icono is a Lucide icon name: an unknown one is reported and dropped", async () => {
+  test("icon is a Lucide icon name: an unknown one is reported and dropped", async () => {
     const site = await siteOf({
-      "docs/red/index.mdx": page("Red", "", "icono: netwrok\n"),
-      "docs/red/dns.mdx": page("DNS", "", "icono: network\n"),
+      "docs/red/index.mdx": page("Red", "", "icon: netwrok\n"),
+      "docs/red/dns.mdx": page("DNS", "", "icon: network\n"),
     })
     const red = pageAt(site, "red")
-    expect(red.header.icono).toBeNull()
+    expect(red.header.icon).toBeNull()
     expect(messagesOf(red)).toEqual([
-      "icono: `netwrok` no es un nombre de icono de Lucide (server, map-pin, network…)",
+      "icon: `netwrok` no es un nombre de icono de Lucide (server, map-pin, network…)",
     ])
-    expect(pageAt(site, "red/dns").header.icono).toBe("network")
+    expect(pageAt(site, "red/dns").header.icon).toBe("network")
   })
 
-  test("a valid site field is kept in campos", async () => {
+  test("a valid site field is kept in fields", async () => {
     const site = await siteOf({
       "docs/red/dns.mdx": page("DNS", "", "maquinas: [nas]\n"),
     })
-    expect(pageAt(site, "red/dns").header.campos).toEqual({ maquinas: ["nas"] })
+    expect(pageAt(site, "red/dns").header.fields).toEqual({ maquinas: ["nas"] })
   })
 
   test("a page without front matter takes its file name and reports both required fields", async () => {
     const site = await siteOf({ "docs/notas.mdx": "Solo texto\n" })
     const notas = pageAt(site, "notas")
-    expect(notas.header.titulo).toBe("notas")
-    expect(notas.header.descripcion).toBe("")
+    expect(notas.header.title).toBe("notas")
+    expect(notas.header.description).toBe("")
     const messages = messagesOf(notas)
-    expect(messages.some((m) => m.startsWith("titulo:"))).toBe(true)
-    expect(messages.some((m) => m.startsWith("descripcion:"))).toBe(true)
+    expect(messages.some((m) => m.startsWith("title:"))).toBe(true)
+    expect(messages.some((m) => m.startsWith("description:"))).toBe(true)
     expect(notas.tree).not.toBeNull()
   })
 
@@ -75,19 +75,19 @@ describe("page header", () => {
 
   test("a bad date is reported and the rest of the header is kept", async () => {
     const site = await siteOf({
-      "docs/notas.mdx": page("Notas", "", "actualizado: 15/10/2026\n"),
+      "docs/notas.mdx": page("Notas", "", "updated: 15/10/2026\n"),
     })
     const notas = pageAt(site, "notas")
     expect(messagesOf(notas)).toEqual([
-      "actualizado: Una fecha AAAA-MM-DD (2026-10-15)",
+      "updated: Una fecha AAAA-MM-DD (2026-10-15)",
     ])
-    expect(notas.header.actualizado).toBeNull()
-    expect(notas.header.titulo).toBe("Notas")
+    expect(notas.header.updated).toBeNull()
+    expect(notas.header.title).toBe("Notas")
   })
 
   test("broken YAML is reported with its line", async () => {
     const site = await siteOf({
-      "docs/notas.mdx": "---\ntitulo: Notas: rotas\n---\n",
+      "docs/notas.mdx": "---\ntitle: Notas: rotas\n---\n",
     })
     const [problem] = pageAt(site, "notas").problems
     expect(problem?.message).toStartWith("La cabecera no es YAML válido")

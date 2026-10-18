@@ -104,18 +104,18 @@ function generated(pagePath: string, header: PageHeader): Page {
 }
 
 function header(
-  titulo: string,
-  descripcion: string,
-  icono: string | null
+  title: string,
+  description: string,
+  icon: string | null
 ): PageHeader {
   return {
-    titulo,
-    descripcion,
-    icono,
-    orden: null,
-    actualizado: null,
+    title,
+    description,
+    icon,
+    order: null,
+    updated: null,
     editado: null,
-    campos: {},
+    fields: {},
   }
 }
 
@@ -131,13 +131,13 @@ function typeHeader(type: CatalogType): PageHeader {
   return header(
     type.definition.plural,
     typeDescription(type),
-    type.definition.icono ?? null
+    type.definition.icon ?? null
   )
 }
 
 function typeDescription(type: CatalogType): string {
-  if (type.definition.descripcion !== undefined)
-    return type.definition.descripcion
+  if (type.definition.description !== undefined)
+    return type.definition.description
   return `Datos de ${type.definition.plural}`
 }
 
@@ -147,12 +147,8 @@ function entityHeader(
   editado: string | null
 ): PageHeader {
   return {
-    ...header(
-      entity.label,
-      type.definition.nombre,
-      type.definition.icono ?? null
-    ),
-    actualizado: dateOf(entity.values.actualizado),
+    ...header(entity.label, type.definition.name, type.definition.icon ?? null),
+    updated: dateOf(entity.values.updated),
     editado,
   }
 }
@@ -213,7 +209,7 @@ function catalogBody(context: CatalogBodyContext): ElementContent[] {
     const withPage = entities.filter((entity) => entity.page !== null)
     return [
       [link(context.routeOf(catalogTypePath(type.id)), type.definition.plural)],
-      [text(type.definition.descripcion ?? "")],
+      [text(type.definition.description ?? "")],
       [text(String(entities.length))],
       [text(String(withPage.length))],
     ]
@@ -253,7 +249,7 @@ function entityBody(
 ): ElementContent[] {
   const pagePath = entityPath(type.id, entity.id)
   const body: ElementContent[] = [fieldsTable(type, entity, context)]
-  const source = entity.values.fuente
+  const source = entity.values.source
   if (typeof source === "string")
     body.push(
       element("p", { className: ["doc-entity-source"] }, [
@@ -305,7 +301,7 @@ function entityBody(
 
 /**
  * One row per declared field the entity sets, in declaration order, named by
- * its label. `fuente` goes in a note under it and `actualizado` in the header.
+ * its label. `source` goes in a note under it and `updated` in the header.
  */
 function fieldsTable(
   type: CatalogType,
@@ -313,7 +309,7 @@ function fieldsTable(
   context: CatalogBodyContext
 ): Element {
   const rows: ElementContent[][][] = []
-  for (const [name, field] of Object.entries(type.definition.campos)) {
+  for (const [name, field] of Object.entries(type.definition.fields)) {
     const shown = shownValue(entity.values[name], field, context)
     if (shown.length > 0) rows.push([[text(fieldLabel(name, field))], shown])
   }

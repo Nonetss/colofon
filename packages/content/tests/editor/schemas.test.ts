@@ -10,6 +10,7 @@ import {
   createContentDir,
   VALID_SITE,
 } from "#tests/fixtures/content-dir"
+import { CONTRACT_1_SITE } from "#tests/fixtures/contract-1"
 
 let dir: ContentDir | undefined
 
@@ -24,8 +25,10 @@ function schemaNamed(schemas: EditorSchema[], name: string) {
   return found
 }
 
-async function loadSite(): Promise<ContentDeclarations> {
-  dir = await createContentDir(VALID_SITE)
+async function loadSite(
+  files: Record<string, string> = VALID_SITE
+): Promise<ContentDeclarations> {
+  dir = await createContentDir(files)
   const result = await loadContent(dir.root)
   if (!result.ok) throw new Error(JSON.stringify(result.problems))
   return result.content
@@ -67,14 +70,14 @@ describe("editorSchemas", () => {
     })
   })
 
-  test("a field with etiqueta is titled with it, and the meta-schema accepts it", async () => {
+  test("a field with a label is titled with it, and the meta-schema accepts it", async () => {
     const schemas = editorSchemas(await loadSite())
     const machines = schemaNamed(schemas, "entities/maquinas")
     expect(machines.schema).toMatchObject({
       properties: { ip: { title: "Dirección IP" } },
     })
     expect(JSON.stringify(schemaNamed(schemas, "type").schema)).toContain(
-      '"etiqueta":{'
+      '"label":{'
     )
   })
 
@@ -145,7 +148,7 @@ describe("editorSchemas", () => {
     )
   })
 
-  test("every icono lists the Lucide names, so a wrong one is marked", async () => {
+  test("every icon lists the Lucide names, so a wrong one is marked", async () => {
     const schemas = editorSchemas(await loadSite())
     for (const name of ["type", "menu"]) {
       const text = JSON.stringify(schemaNamed(schemas, name).schema)
@@ -188,5 +191,57 @@ describe("schemaCatalog", () => {
       version: 1,
       schemas: [],
     })
+  })
+})
+
+describe("editorSchemas of a contract 1 repository", () => {
+  test("the declarations' schemas take the Spanish names, kinds and version", async () => {
+    const schemas = editorSchemas(await loadSite(CONTRACT_1_SITE))
+    const type = JSON.stringify(schemaNamed(schemas, "type").schema)
+    for (const key of ['"campos":', '"etiqueta":', '"vista":', '"columnas":'])
+      expect(type).toContain(key)
+    for (const key of ['"fields":', '"title_field":', '"view":', '"label":'])
+      expect(type).not.toContain(key)
+    for (const kind of [
+      "texto",
+      "numero",
+      "entero",
+      "booleano",
+      "fecha",
+      "ficha",
+    ])
+      expect(type).toContain(`"${kind}"`)
+    expect(type).toContain('"lista"')
+    expect(type).toContain('"objeto"')
+    expect(type).not.toContain('"integer"')
+
+    const config = schemaNamed(schemas, "config").schema
+    expect(config).toMatchObject({
+      properties: { nombre: {}, plataforma: { enum: ["1"] }, cabecera: {} },
+      required: ["nombre", "plataforma"],
+    })
+    const menu = JSON.stringify(schemaNamed(schemas, "menu").schema)
+    expect(menu).toContain('"secciones":')
+    expect(menu).toContain('"ruta":')
+  })
+
+  test("an entity's schema renames only fuente and actualizado", async () => {
+    const schemas = editorSchemas(await loadSite(CONTRACT_1_SITE))
+    const machines = schemaNamed(schemas, "entities/maquinas").schema
+    expect(machines).toMatchObject({
+      properties: {
+        hostname: { title: "Nombre" },
+        fuente: {},
+        actualizado: {},
+      },
+    })
+    expect(JSON.stringify(machines)).not.toContain('"source":')
+  })
+
+  test("a contract 2 repository keeps the English names", async () => {
+    const schemas = editorSchemas(await loadSite())
+    const type = JSON.stringify(schemaNamed(schemas, "type").schema)
+    expect(type).toContain('"fields":')
+    expect(type).not.toContain('"campos":')
   })
 })

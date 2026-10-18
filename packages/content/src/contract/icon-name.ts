@@ -1,7 +1,7 @@
 import { z } from "zod"
 import { LUCIDE_ICON_NAMES } from "#contract/lucide-icons.generated"
 
-// Every `icono` of a content repository (page headers, `_type.yaml`,
+// Every `icon` of a content repository (page headers, `_type.yaml`,
 // `menu.yaml`, diagram nodes) names a Lucide icon the reader can draw. The
 // list is generated from the web's lucide-react (`bun run icons:catalog`).
 

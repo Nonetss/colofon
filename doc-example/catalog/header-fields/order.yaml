@@ -1,0 +1,6 @@
+required: false
+kind: number
+meaning: El lugar de la página en su carpeta; las páginas sin él van al final, y luego por título
+rule: Solo ordena las páginas de una carpeta; el nivel superior del menú lo ordena menu.yaml
+source: manual
+updated: 2026-10-15

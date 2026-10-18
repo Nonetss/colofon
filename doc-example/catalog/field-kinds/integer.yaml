@@ -1,0 +1,5 @@
+family: scalar
+value: "Un número entero"
+example: "cores: { type: integer } → cores: 8"
+source: manual
+updated: 2026-10-15

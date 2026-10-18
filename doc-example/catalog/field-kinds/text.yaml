@@ -1,0 +1,5 @@
+family: scalar
+value: "Una línea de texto, no vacía"
+example: "os: { type: text } → os: Debian 13"
+source: manual
+updated: 2026-10-15

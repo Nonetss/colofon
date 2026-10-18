@@ -26,16 +26,16 @@ function collectRefs(
   refs: EntityRef[]
 ): void {
   if (value === undefined || value === null) return
-  if (field.tipo === "ref" && typeof value === "string") {
-    refs.push({ type: field.a, id: value })
+  if (field.type === "ref" && typeof value === "string") {
+    refs.push({ type: field.to, id: value })
     return
   }
-  if (field.tipo === "lista" && Array.isArray(value)) {
-    for (const item of value) collectRefs(item, field.de, refs)
+  if (field.type === "list" && Array.isArray(value)) {
+    for (const item of value) collectRefs(item, field.of, refs)
     return
   }
-  if (field.tipo === "objeto" && typeof value === "object") {
-    for (const [name, inner] of Object.entries(field.campos))
+  if (field.type === "object" && typeof value === "object") {
+    for (const [name, inner] of Object.entries(field.fields))
       collectRefs(Reflect.get(value, name), inner, refs)
   }
 }
@@ -51,7 +51,7 @@ export function reverseRefs(catalog: Catalog): ReverseRefs {
   for (const type of catalog.values()) {
     for (const entity of type.entities.values()) {
       const named = new Set(
-        refsIn(entity.values, type.definition.campos).map((ref) =>
+        refsIn(entity.values, type.definition.fields).map((ref) =>
           entityPath(ref.type, ref.id)
         )
       )

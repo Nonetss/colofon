@@ -22,7 +22,7 @@ afterEach(async () => {
   for (const cleanup of cleanups.splice(0)) await cleanup()
 })
 
-const SITE = { "docs/doc.config.yaml": 'nombre: Sitio\nplataforma: "1"\n' }
+const SITE = { "docs/doc.config.yaml": 'name: Sitio\ncontract: "2"\n' }
 
 async function remote(files: Record<string, string> = SITE) {
   const created = await createContentRemote(files)

@@ -44,12 +44,12 @@ const SITE = {
 /** A catalog type with a label field and three entities. */
 const SERVICES = {
   "catalog/servicios/_type.yaml": [
-    "nombre: Servicio",
+    "name: Servicio",
     "plural: Servicios",
-    "etiqueta: name",
-    "campos:",
-    "  name: { tipo: texto }",
-    "  nota: { tipo: texto, opcional: true }",
+    "title_field: name",
+    "fields:",
+    "  name: { type: text }",
+    "  nota: { type: text, optional: true }",
   ].join("\n"),
   "catalog/servicios/database-url.yaml": "name: DATABASE_URL\n",
   "catalog/servicios/proxy.yaml": "name: Proxy\n",

@@ -1,0 +1,5 @@
+family: scalar
+value: "Cualquier número, incluidos los decimales"
+example: "disk_tb: { type: number } → disk_tb: 1.5"
+source: manual
+updated: 2026-10-15

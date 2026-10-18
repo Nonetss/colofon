@@ -31,26 +31,26 @@ const trabajo = storedRepository({
 const SITE: Record<string, string> = {
   ...CONTENT_SITE,
   "doc.config.yaml": [
-    "nombre: Homelab",
-    "descripcion: La red de casa",
-    'plataforma: "1"',
-    "cabecera:",
+    "name: Homelab",
+    "description: La red de casa",
+    'contract: "2"',
+    "header:",
     "  ver:",
-    "    tipo: lista",
-    "    opcional: true",
-    "    etiqueta: Ver también",
-    "    de: { tipo: ficha }",
+    "    type: list",
+    "    optional: true",
+    "    label: Ver también",
+    "    of: { type: page }",
     "  maquinas:",
-    "    tipo: lista",
-    "    opcional: true",
-    "    de: { tipo: ref, a: maquinas }",
+    "    type: list",
+    "    optional: true",
+    "    of: { type: ref, to: maquinas }",
   ].join("\n"),
-  "docs/index.mdx": "---\ntitulo: Inicio\ndescripcion: Portada\n---\n",
-  "docs/red/index.mdx": "---\ntitulo: Red\ndescripcion: La red\n---\n",
+  "docs/index.mdx": "---\ntitle: Inicio\ndescription: Portada\n---\n",
+  "docs/red/index.mdx": "---\ntitle: Red\ndescription: La red\n---\n",
   "docs/red/dns.mdx": [
     "---",
-    "titulo: DNS",
-    "descripcion: Nombres",
+    "title: DNS",
+    "description: Nombres",
     "ver: [red/vpn]",
     "maquinas: [nas]",
     "---",
@@ -59,7 +59,7 @@ const SITE: Record<string, string> = {
     "",
     "[roto](falta.mdx)",
   ].join("\n"),
-  "docs/red/vpn.mdx": "---\ntitulo: VPN\ndescripcion: Túnel\norden: 1\n---\n",
+  "docs/red/vpn.mdx": "---\ntitle: VPN\ndescription: Túnel\norder: 1\n---\n",
   "docs/red/img/zonas.svg": "<svg xmlns='http://www.w3.org/2000/svg'/>",
   "docs/red/notas.txt": "texto",
 }
@@ -150,12 +150,12 @@ describe("docs.nav", () => {
 })
 
 describe("docs.page", () => {
-  test("the header carries actualizado as updated and the file's last commit as edited, independently", async () => {
+  test("the header carries updated and the file's last commit as edited, independently", async () => {
     const remote = await createContentRemote(
       {
         ...SITE,
         "docs/red/vpn.mdx":
-          "---\ntitulo: VPN\ndescripcion: Túnel\nactualizado: 2026-01-10\n---\n",
+          "---\ntitle: VPN\ndescription: Túnel\nupdated: 2026-01-10\n---\n",
       },
       "2026-10-14T09:00:00+02:00"
     )
@@ -221,6 +221,65 @@ describe("docs.page", () => {
       properties: { id: "zonas" },
       children: [{ type: "text", value: "Zonas" }],
     })
+  })
+
+  test("a contract 1 repository gives the same header, its keys read in Spanish", async () => {
+    const spanish = {
+      ...SITE,
+      "doc.config.yaml": [
+        "nombre: Homelab",
+        "descripcion: La red de casa",
+        'plataforma: "1"',
+        "cabecera:",
+        "  ver:",
+        "    tipo: lista",
+        "    opcional: true",
+        "    etiqueta: Ver también",
+        "    de: { tipo: ficha }",
+      ].join("\n"),
+      "catalog/ubicaciones/_type.yaml":
+        "nombre: Ubicación\nplural: Ubicaciones\ncampos:\n  name: { tipo: texto }\n",
+      "catalog/maquinas/_type.yaml": [
+        "nombre: Máquina",
+        "plural: Máquinas",
+        "campos:",
+        "  ip: { tipo: ip }",
+        "  ubicacion: { tipo: ref, a: ubicaciones }",
+        "  ficha: { tipo: ficha, opcional: true }",
+      ].join("\n"),
+      "docs/index.mdx": "---\ntitulo: Inicio\ndescripcion: Portada\n---\n",
+      "docs/red/index.mdx": "---\ntitulo: Red\ndescripcion: La red\n---\n",
+      "docs/red/dns.mdx": [
+        "---",
+        "titulo: DNS",
+        "descripcion: Nombres",
+        "actualizado: 2026-01-10",
+        "ver: [red/vpn]",
+        "---",
+      ].join("\n"),
+      "docs/red/vpn.mdx":
+        "---\ntitulo: VPN\ndescripcion: Túnel\norden: 1\n---\n",
+    }
+    const { handler } = await setup([casa], inClone(casa, spanish))
+    const page = await handler.page({
+      context: adminContext(),
+      input: { repository: "casa", path: "red/dns" },
+    })
+    expect(page.header).toEqual({
+      title: "DNS",
+      description: "Nombres",
+      icon: null,
+      updated: "2026-01-10",
+      edited: null,
+      fields: [
+        {
+          name: "ver",
+          label: "Ver también",
+          values: [{ text: "VPN", href: "/casa/red/vpn" }],
+        },
+      ],
+    })
+    expect(page.previous?.title).toBe("VPN")
   })
 
   test("admins get the page's problems", async () => {
@@ -321,7 +380,7 @@ describe("docs.page styles", () => {
 
 describe("docs with menu.yaml and the catalog", () => {
   const MENU =
-    "secciones:\n  - titulo: Infra\n    icono: network\n    paginas: [red, catalog]\n"
+    "sections:\n  - title: Infra\n    icon: network\n    pages: [red, catalog]\n"
 
   test("the navigation is the menu's groups and breadcrumbs carry the group without a link", async () => {
     const { handler } = await setup(
@@ -472,11 +531,11 @@ describe("docs.file with a content folder", () => {
 describe("docs.search", () => {
   const CASA: Record<string, string> = {
     ...CONTENT_SITE,
-    "docs/red/index.mdx": "---\ntitulo: Red\ndescripcion: La red\n---\n",
+    "docs/red/index.mdx": "---\ntitle: Red\ndescription: La red\n---\n",
     "docs/red/dns.mdx": [
       "---",
-      "titulo: DNS",
-      "descripcion: Nombres",
+      "title: DNS",
+      "description: Nombres",
       "---",
       "",
       "Servidor de la casa.",
@@ -488,7 +547,7 @@ describe("docs.search", () => {
   }
   const TRABAJO: Record<string, string> = {
     ...CONTENT_SITE,
-    "docs/dns.mdx": "---\ntitulo: DNS de la oficina\ndescripcion: Zonas\n---\n",
+    "docs/dns.mdx": "---\ntitle: DNS de la oficina\ndescription: Zonas\n---\n",
   }
 
   function search(query: string, repository?: string, limit = 10) {
@@ -573,8 +632,8 @@ describe("docs.search", () => {
         ...CASA,
         "docs/red/dns.mdx": [
           "---",
-          "titulo: DNS",
-          "descripcion: Nombres",
+          "title: DNS",
+          "description: Nombres",
           "---",
           "",
           "## Zonas",
@@ -639,7 +698,7 @@ describe("docs.search", () => {
     const pages = Object.fromEntries(
       Array.from({ length: 3 }, (_, i) => [
         `docs/equipo${i}.mdx`,
-        `---\ntitulo: Equipo ${i}\ndescripcion: Uno\n---\n`,
+        `---\ntitle: Equipo ${i}\ndescription: Uno\n---\n`,
       ])
     )
     const { handler } = await setup(
@@ -692,7 +751,7 @@ describe("docs.search", () => {
     const after = await createContentRemote({
       ...CASA,
       "docs/red/dns.mdx":
-        "---\ntitulo: DNS\ndescripcion: Nombres\n---\n\nAhora con pihole.\n",
+        "---\ntitle: DNS\ndescription: Nombres\n---\n\nAhora con pihole.\n",
     })
     cleanups.push(before.remove, after.remove)
     const first = { ...casa, url: before.url }

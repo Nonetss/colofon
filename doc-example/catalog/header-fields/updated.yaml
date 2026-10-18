@@ -1,0 +1,5 @@
+required: false
+kind: date
+meaning: La fecha de los datos de la página, no de su última edición; pasados seis meses la página se marca para revisión
+source: manual
+updated: 2026-10-15

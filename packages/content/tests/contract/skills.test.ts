@@ -54,7 +54,7 @@ describe("readSkills", () => {
   })
 
   test("a repository without skills/ has none and no problem", async () => {
-    expect(await skillsOf({ "doc.config.yaml": "nombre: X\n" })).toEqual({
+    expect(await skillsOf({ "doc.config.yaml": "name: X\n" })).toEqual({
       skills: [],
       problems: [],
     })

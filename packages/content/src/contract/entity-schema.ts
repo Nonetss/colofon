@@ -6,7 +6,7 @@ import type { FieldDefinition, TypeDefinition } from "#contract/meta-schema"
 export type CatalogIndex = {
   /** The entity ids of each catalog type, by type id. */
   entityIds: ReadonlyMap<string, readonly string[]>
-  /** The pages of docs/ a `ficha` field can name (`contenedores/komodo`). */
+  /** The pages of docs/ a `page` field can name (`contenedores/komodo`). */
   pagePaths: readonly string[]
   /** Every folder of docs/ that holds a page (`contenedores`, `contenedores/komodo`). */
   folderPaths: readonly string[]
@@ -18,22 +18,22 @@ export function fieldSchema(
   index: CatalogIndex
 ): z.ZodType {
   const schema = valueSchema(field, index)
-  if (field.descripcion === undefined && field.etiqueta === undefined)
+  if (field.description === undefined && field.label === undefined)
     return schema
-  return schema.meta({ title: field.etiqueta, description: field.descripcion })
+  return schema.meta({ title: field.label, description: field.description })
 }
 
 function valueSchema(field: FieldDefinition, index: CatalogIndex): z.ZodType {
-  switch (field.tipo) {
-    case "texto":
+  switch (field.type) {
+    case "text":
       return z.string().min(1)
-    case "numero":
+    case "number":
       return z.number()
-    case "entero":
+    case "integer":
       return z.int()
-    case "booleano":
+    case "boolean":
       return z.boolean()
-    case "fecha":
+    case "date":
       return z.iso.date({ error: "Una fecha AAAA-MM-DD (2026-10-15)" })
     case "url":
       return z.url()
@@ -43,19 +43,19 @@ function valueSchema(field: FieldDefinition, index: CatalogIndex): z.ZodType {
       return z.union([z.ipv4(), z.ipv6()], {
         error: "Una IP (192.168.1.10)",
       })
-    case "ficha":
+    case "page":
       return enumOf(index.pagePaths, "No hay ninguna ficha en docs/")
     case "enum":
-      return enumOf(field.valores, "El campo no tiene `valores`")
+      return enumOf(field.values, "El campo no tiene valores")
     case "ref":
       return enumOf(
-        index.entityIds.get(field.a) ?? [],
-        `No hay ninguna entidad en catalog/${field.a}/`
+        index.entityIds.get(field.to) ?? [],
+        `No hay ninguna entidad en catalog/${field.to}/`
       )
-    case "lista":
-      return z.array(fieldSchema(field.de, index))
-    case "objeto":
-      return z.strictObject(objectShape(field.campos, index))
+    case "list":
+      return z.array(fieldSchema(field.of, index))
+    case "object":
+      return z.strictObject(objectShape(field.fields, index))
   }
 }
 
@@ -71,7 +71,7 @@ export function objectShape(
 }
 
 function withPresence(field: FieldDefinition, schema: z.ZodType): z.ZodType {
-  if (field.opcional === true) return schema.optional()
+  if (field.optional === true) return schema.optional()
   return schema
 }
 
@@ -79,15 +79,15 @@ function withPresence(field: FieldDefinition, schema: z.ZodType): z.ZodType {
 export function entitySchema(type: TypeDefinition, index: CatalogIndex) {
   return z
     .strictObject({
-      ...objectShape(type.campos, index),
-      fuente: z.string().min(1).optional().meta({
+      ...objectShape(type.fields, index),
+      source: z.string().min(1).optional().meta({
         description:
           "De dónde sale el dato: manual, o la conexión de la que se importó (komodo)",
       }),
-      actualizado: z.iso
+      updated: z.iso
         .date({ error: "Una fecha AAAA-MM-DD (2026-10-15)" })
         .optional()
         .meta({ description: "Fecha del dato, AAAA-MM-DD" }),
     })
-    .meta({ title: type.nombre, description: type.descripcion })
+    .meta({ title: type.name, description: type.description })
 }

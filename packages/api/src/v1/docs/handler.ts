@@ -119,7 +119,7 @@ export function createDocsHandler({
       if (found === undefined)
         throw errors.NOT_FOUND({ message: PAGE_NOT_FOUND })
       const routes = readerRoutesOf(read.repository.slug)
-      const cabecera = read.declarations?.config.cabecera ?? {}
+      const header = read.declarations?.config.header ?? {}
       return {
         repository: {
           slug: read.repository.slug,
@@ -129,12 +129,12 @@ export function createDocsHandler({
         href: routes.routeOf(found.path),
         source: found.source,
         header: {
-          title: found.header.titulo,
-          description: found.header.descripcion,
-          icon: found.header.icono,
-          updated: found.header.actualizado,
+          title: found.header.title,
+          description: found.header.description,
+          icon: found.header.icon,
+          updated: found.header.updated,
           edited: found.header.editado,
-          fields: headerFields(found, cabecera, read.site, routes),
+          fields: headerFields(found, header, read.site, routes),
         },
         tree: toWire(found.tree),
         headings: found.headings,
@@ -246,8 +246,8 @@ async function navOf(
   const routes = readerRoutesOf(repository.slug)
   return {
     ...base,
-    title: read.declarations.config.nombre,
-    description: descriptionOf(read.declarations.config.descripcion),
+    title: read.declarations.config.name,
+    description: descriptionOf(read.declarations.config.description),
     available: true,
     home: entryOf(read.site.home, routes),
     nodes: read.site.nav.map((node) => navNodeOf(node, routes)),
@@ -356,14 +356,14 @@ function problemsFor(context: Context, found: SitePage) {
 /** The site's header fields that the page sets, as text and links. */
 function headerFields(
   found: SitePage,
-  cabecera: Record<string, FieldDefinition>,
+  header: Record<string, FieldDefinition>,
   site: Site,
   routes: SiteRoutes
 ) {
   const fields: PageOutput["header"]["fields"] = []
-  for (const [name, field] of Object.entries(cabecera)) {
-    if (!(name in found.header.campos)) continue
-    const values = valuesOf(found.header.campos[name], field, site, routes)
+  for (const [name, field] of Object.entries(header)) {
+    if (!(name in found.header.fields)) continue
+    const values = valuesOf(found.header.fields[name], field, site, routes)
     if (values.length > 0)
       fields.push({ name, label: fieldLabel(name, field), values })
   }
@@ -378,14 +378,14 @@ function valuesOf(
   site: Site,
   routes: SiteRoutes
 ): HeaderValue[] {
-  if (field.tipo === "lista" && Array.isArray(value)) {
-    return value.flatMap((item) => valuesOf(item, field.de, site, routes))
+  if (field.type === "list" && Array.isArray(value)) {
+    return value.flatMap((item) => valuesOf(item, field.of, site, routes))
   }
-  if (field.tipo === "ficha" && typeof value === "string") {
+  if (field.type === "page" && typeof value === "string") {
     return [{ text: pageTitle(site, value), href: routes.routeOf(value) }]
   }
-  if (field.tipo === "ref" && typeof value === "string") {
-    const entityPage = entityPath(field.a, value)
+  if (field.type === "ref" && typeof value === "string") {
+    const entityPage = entityPath(field.to, value)
     if (!site.pages.has(entityPage)) return [{ text: value, href: null }]
     return [
       { text: pageTitle(site, entityPage), href: routes.routeOf(entityPage) },
@@ -400,7 +400,7 @@ function valuesOf(
 function pageTitle(site: Site, pagePath: string): string {
   const found = site.pages.get(pagePath)
   if (found === undefined) return pagePath
-  return found.header.titulo
+  return found.header.title
 }
 
 /** The page tree as the output schema carries it: elements and text only. */

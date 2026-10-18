@@ -79,7 +79,7 @@ describe("contentReader.site", () => {
     const before = await remote(CONTENT_SITE)
     const after = await remote({
       ...CONTENT_SITE,
-      "docs/red/vpn.mdx": "---\ntitulo: VPN\ndescripcion: Túnel\n---\n",
+      "docs/red/vpn.mdx": "---\ntitle: VPN\ndescription: Túnel\n---\n",
     })
     const repository = storedRepository({ url: before })
     const { reader } = await readerWith([repository])
@@ -182,14 +182,14 @@ describe("contentReader with a content folder", () => {
     const { reader } = await readerWith(
       [repository],
       inClone(repository.id, {
-        "doc.config.yaml": 'nombre: Raíz\nplataforma: "1"\n',
+        "doc.config.yaml": 'name: Raíz\ncontract: "2"\n',
         "catalog/raiz/_type.yaml":
-          "nombre: Raíz\nplural: Raíces\ncampos:\n  x: { tipo: texto }\n",
+          "name: Raíz\nplural: Raíces\nfields:\n  x: { type: text }\n",
         ...under("docs", CONTENT_SITE),
       })
     )
     const read = await reader.site("documentacion", "all")
-    expect(read?.declarations?.config.nombre).toBe("Homelab")
+    expect(read?.declarations?.config.name).toBe("Homelab")
     expect([...(read?.declarations?.types.keys() ?? [])].toSorted()).toEqual([
       "maquinas",
       "ubicaciones",
@@ -229,17 +229,17 @@ describe("contentReader with a content folder", () => {
   test("changing the content folder serves the other folder of the same clone", async () => {
     const stored = storedRepository({ contentPath: "uno" })
     const files = inClone(stored.id, {
-      "uno/doc.config.yaml": 'nombre: Uno\nplataforma: "1"\n',
-      "dos/doc.config.yaml": 'nombre: Dos\nplataforma: "1"\n',
+      "uno/doc.config.yaml": 'name: Uno\ncontract: "2"\n',
+      "dos/doc.config.yaml": 'name: Dos\ncontract: "2"\n',
     })
     const { reader, store } = await readerWith([stored], files)
     expect(
-      (await reader.site("documentacion", "all"))?.declarations?.config.nombre
+      (await reader.site("documentacion", "all"))?.declarations?.config.name
     ).toBe("Uno")
 
     store.rows[0] = { ...stored, contentPath: "dos" }
     expect(
-      (await reader.site("documentacion", "all"))?.declarations?.config.nombre
+      (await reader.site("documentacion", "all"))?.declarations?.config.name
     ).toBe("Dos")
   })
 

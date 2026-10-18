@@ -40,26 +40,26 @@ describe("readCatalog", () => {
     expect(maquinas.problems).toEqual([])
   })
 
-  test("the label is the etiqueta value, or the id when it is left out", async () => {
+  test("the label is the title_field value, or the id when it is left out", async () => {
     const catalog = await catalogOf({
       "catalog/maquinas/_type.yaml": [
-        "nombre: Máquina",
+        "name: Máquina",
         "plural: Máquinas",
-        "etiqueta: nombre",
-        "campos:",
-        "  nombre: { tipo: texto, opcional: true }",
-        "  ip: { tipo: ip }",
-        "  ubicacion: { tipo: ref, a: ubicaciones }",
+        "title_field: name",
+        "fields:",
+        "  name: { type: text, optional: true }",
+        "  ip: { type: ip }",
+        "  ubicacion: { type: ref, to: ubicaciones }",
       ].join("\n"),
       "catalog/maquinas/pve-01.yaml":
-        "nombre: PVE-01\nip: 192.168.1.10\nubicacion: casa\n",
+        "name: PVE-01\nip: 192.168.1.10\nubicacion: casa\n",
     })
     const entities = typeOf(catalog, "maquinas").entities
     expect(entities.get("pve-01")?.label).toBe("PVE-01")
     expect(entities.get("nas")?.label).toBe("nas")
   })
 
-  test("without etiqueta the label is the id", async () => {
+  test("without title_field the label is the id", async () => {
     const catalog = await catalogOf({})
     expect(typeOf(catalog, "ubicaciones").entities.get("casa")?.label).toBe(
       "casa"

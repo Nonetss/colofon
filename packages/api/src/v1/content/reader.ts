@@ -289,11 +289,9 @@ export function createContentReader(
     }
     const built = await readSite(
       folder,
-      declarations.config,
-      declarations.index,
+      declarations,
       catalog,
       readerRoutesOf(repository.slug),
-      declarations.menu,
       editDates
     )
     if (built.problems.length > 0) {

@@ -1,9 +1,11 @@
 import path from "node:path"
 import { entitySchema } from "#contract/entity-schema"
 import {
+  asContract2,
   CATALOG_DIR,
   type ContentDeclarations,
   type ContentProblem,
+  type ContractReading,
   describeIssue,
   parseYaml,
   readText,
@@ -21,9 +23,9 @@ export type Entity = {
   id: string
   /** The id of its catalog type. */
   type: string
-  /** Its `etiqueta` value, or its id when the type has none or it is left out. */
+  /** Its `title_field` value, or its id when the type has none or it is left out. */
   label: string
-  /** The value of the first `ficha` field its type declares, if any. */
+  /** The value of the first `page` field its type declares, if any. */
   page: string | null
   values: Readonly<Record<string, unknown>>
 }
@@ -55,16 +57,21 @@ export async function readCatalog(
     const schema = entitySchema(definition, declarations.index)
     const entities = new Map<string, Entity>()
     const problems: ContentProblem[] = []
+    const reading: ContractReading = {
+      contract: declarations.contract,
+      file: "entity",
+    }
     for (const id of declarations.index.entityIds.get(typeId) ?? []) {
       const file = entityFile(typeId, id)
       const text = await readText(path.join(root, file))
       if (text === undefined) continue
       const data = parseYaml(text, file, problems)
       if (data === undefined) continue
-      const result = schema.safeParse(data, { error: spanishErrors })
+      const values = asContract2(data, file, reading, problems)
+      const result = schema.safeParse(values, { error: spanishErrors })
       if (!result.success) {
         for (const issue of result.error.issues)
-          problems.push({ file, message: describeIssue(issue) })
+          problems.push({ file, message: describeIssue(issue, reading) })
         continue
       }
       entities.set(id, {
@@ -80,10 +87,10 @@ export async function readCatalog(
   return catalog
 }
 
-/** The field shown as an entity's name: `etiqueta`, or the id column. */
+/** The field shown as an entity's name: `title_field`, or the id column. */
 export function labelField(definition: TypeDefinition): string {
-  if (definition.etiqueta === undefined) return ID_COLUMN
-  return definition.etiqueta
+  if (definition.title_field === undefined) return ID_COLUMN
+  return definition.title_field
 }
 
 function labelOf(
@@ -101,8 +108,8 @@ function pageOf(
   definition: TypeDefinition,
   values: Record<string, unknown>
 ): string | null {
-  for (const [name, field] of Object.entries(definition.campos)) {
-    if (field.tipo !== "ficha") continue
+  for (const [name, field] of Object.entries(definition.fields)) {
+    if (field.type !== "page") continue
     const value = values[name]
     if (typeof value === "string") return value
     return null

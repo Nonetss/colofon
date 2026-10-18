@@ -11,15 +11,15 @@ function messages(result: { error?: { issues: { message: string }[] } }) {
 describe("fieldDefinition", () => {
   test("accepts every kind, nested lists and objects included", () => {
     const fields = [
-      { tipo: "texto", opcional: true, descripcion: "Una línea" },
-      { tipo: "enum", valores: ["vm", "fisica"] },
-      { tipo: "ref", a: "maquinas" },
-      { tipo: "lista", de: { tipo: "lista", de: { tipo: "fecha" } } },
+      { type: "text", optional: true, description: "Una línea" },
+      { type: "enum", values: ["vm", "fisica"] },
+      { type: "ref", to: "maquinas" },
+      { type: "list", of: { type: "list", of: { type: "date" } } },
       {
-        tipo: "objeto",
-        campos: {
-          puertos: { tipo: "lista", de: { tipo: "texto" } },
-          host: { tipo: "ref", a: "centros" },
+        type: "object",
+        fields: {
+          puertos: { type: "list", of: { type: "text" } },
+          host: { type: "ref", to: "centros" },
         },
       },
     ]
@@ -29,59 +29,59 @@ describe("fieldDefinition", () => {
   })
 
   test("an unknown kind or an unknown key is refused", () => {
-    expect(meta.fieldDefinition.safeParse({ tipo: "cadena" }).success).toBe(
+    expect(meta.fieldDefinition.safeParse({ type: "cadena" }).success).toBe(
       false
     )
     expect(
-      meta.fieldDefinition.safeParse({ tipo: "texto", obligatorio: true })
+      meta.fieldDefinition.safeParse({ type: "text", obligatorio: true })
         .success
     ).toBe(false)
   })
 
-  test("any field, nested ones included, may name itself with etiqueta", () => {
+  test("any field, nested ones included, may name itself with label", () => {
     const field = {
-      tipo: "objeto",
-      etiqueta: "Red",
-      campos: { ip: { tipo: "ip", etiqueta: "Dirección IP" } },
+      type: "object",
+      label: "Red",
+      fields: { ip: { type: "ip", label: "Dirección IP" } },
     }
     expect(meta.fieldDefinition.safeParse(field).success).toBe(true)
   })
 
-  test("an empty etiqueta is refused with its path", () => {
+  test("an empty label is refused with its path", () => {
     const result = meta.siteConfig.safeParse({
-      nombre: "Homelab",
-      plataforma: "1",
-      cabecera: { files: { tipo: "texto", etiqueta: "" } },
+      name: "Homelab",
+      contract: "2",
+      header: { files: { type: "text", label: "" } },
     })
     expect(result.success).toBe(false)
     expect(result.error?.issues.map((issue) => issue.path.join("."))).toEqual([
-      "cabecera.files.etiqueta",
+      "header.files.label",
     ])
   })
 
   test("an enum needs at least one value", () => {
     expect(
-      meta.fieldDefinition.safeParse({ tipo: "enum", valores: [] }).success
+      meta.fieldDefinition.safeParse({ type: "enum", values: [] }).success
     ).toBe(false)
   })
 
   test("with typeIds, a ref must name one of them, also inside a list", () => {
     expect(
-      metaWithTypes.fieldDefinition.safeParse({ tipo: "ref", a: "centros" })
+      metaWithTypes.fieldDefinition.safeParse({ type: "ref", to: "centros" })
         .success
     ).toBe(true)
     expect(
       metaWithTypes.fieldDefinition.safeParse({
-        tipo: "lista",
-        de: { tipo: "ref", a: "personas" },
+        type: "list",
+        of: { type: "ref", to: "personas" },
       }).success
     ).toBe(false)
   })
 
   test("an object needs at least one field", () => {
     const result = meta.fieldDefinition.safeParse({
-      tipo: "objeto",
-      campos: {},
+      type: "object",
+      fields: {},
     })
     expect(messages(result)).toContain("Declara al menos un campo")
   })
@@ -89,11 +89,11 @@ describe("fieldDefinition", () => {
 
 describe("typeDefinition", () => {
   const type = {
-    nombre: "Máquina",
+    name: "Máquina",
     plural: "Máquinas",
-    etiqueta: "nombre",
-    campos: { nombre: { tipo: "texto" }, ip: { tipo: "ip" } },
-    vista: { columnas: ["id", "nombre", "ip", "actualizado"] },
+    title_field: "name",
+    fields: { name: { type: "text" }, ip: { type: "ip" } },
+    view: { columns: ["id", "name", "ip", "updated"] },
   }
 
   test("accepts a type whose label and columns are its fields, id or reserved fields", () => {
@@ -103,39 +103,39 @@ describe("typeDefinition", () => {
   test("a label or a column that is not a field is refused with its path", () => {
     const result = meta.typeDefinition.safeParse({
       ...type,
-      etiqueta: "hostname",
-      vista: { columnas: ["ip", "uso"] },
+      title_field: "hostname",
+      view: { columns: ["ip", "uso"] },
     })
     expect(result.error?.issues.map((issue) => issue.path)).toEqual([
-      ["etiqueta"],
-      ["vista", "columnas", 1],
+      ["title_field"],
+      ["view", "columns", 1],
     ])
   })
 
   test("the reserved entity fields cannot be declared", () => {
     const result = meta.typeDefinition.safeParse({
       ...type,
-      campos: { ...type.campos, fuente: { tipo: "texto" } },
+      fields: { ...type.fields, source: { type: "text" } },
     })
     expect(messages(result)).toEqual([
-      "`fuente` no se puede declarar: toda entidad lo admite sin declararlo",
+      "`source` no se puede declarar: toda entidad lo admite sin declararlo",
     ])
   })
 
   test("a field name with capitals or accents is refused", () => {
     const result = meta.typeDefinition.safeParse({
       ...type,
-      campos: { Ubicación: { tipo: "texto" } },
+      fields: { Ubicación: { type: "text" } },
     })
     expect(result.success).toBe(false)
   })
 
-  test("icono is a Lucide icon name", () => {
+  test("icon is a Lucide icon name", () => {
     expect(
-      meta.typeDefinition.safeParse({ ...type, icono: "map-pin" }).success
+      meta.typeDefinition.safeParse({ ...type, icon: "map-pin" }).success
     ).toBe(true)
-    const result = meta.typeDefinition.safeParse({ ...type, icono: "cohete" })
-    expect(result.error?.issues.map((issue) => issue.path)).toEqual([["icono"]])
+    const result = meta.typeDefinition.safeParse({ ...type, icon: "cohete" })
+    expect(result.error?.issues.map((issue) => issue.path)).toEqual([["icon"]])
     expect(messages(result)[0]).toStartWith(
       "`cohete` no es un nombre de icono de Lucide"
     )
@@ -145,31 +145,31 @@ describe("typeDefinition", () => {
 describe("siteConfig", () => {
   test("accepts a site with extra header fields", () => {
     const result = meta.siteConfig.safeParse({
-      nombre: "Homelab",
-      plataforma: "1",
-      cabecera: { pendientes: { tipo: "lista", de: { tipo: "texto" } } },
+      name: "Homelab",
+      contract: "2",
+      header: { pendientes: { type: "list", of: { type: "text" } } },
     })
     expect(result.success).toBe(true)
   })
 
   test("the platform version is a quoted known major", () => {
     const result = meta.siteConfig.safeParse({
-      nombre: "Homelab",
-      plataforma: 1,
+      name: "Homelab",
+      contract: 2,
     })
     expect(messages(result)).toEqual([
-      '`plataforma` es la versión del contrato, entre comillas: "1"',
+      '`contract` es la versión del contrato, entre comillas: "2"',
     ])
   })
 
   test("the common page header fields cannot be redeclared", () => {
     const result = meta.siteConfig.safeParse({
-      nombre: "Homelab",
-      plataforma: "1",
-      cabecera: { titulo: { tipo: "texto" } },
+      name: "Homelab",
+      contract: "2",
+      header: { title: { type: "text" } },
     })
     expect(messages(result)).toEqual([
-      "`titulo` no se puede declarar: toda ficha lo tiene sin declararlo",
+      "`title` no se puede declarar: toda ficha lo tiene sin declararlo",
     ])
   })
 })

@@ -15,7 +15,7 @@ export function entityPath(typeId: string, id: string): string {
 }
 
 /**
- * Where an entity links: its page (the first `ficha` field set) or, when it
+ * Where an entity links: its page (the first `page` field set) or, when it
  * has none, its generated catalog page.
  */
 export function entityPagePath(entity: Entity): string {

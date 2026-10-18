@@ -1,0 +1,6 @@
+family: composite
+value: "Un grupo de campos con nombre declarados en fields; se muestra como pares nombre: valor"
+takes: "fields: { … }"
+example: "port: { type: object, fields: { number: { type: integer } } } → port: { number: 53 }"
+source: manual
+updated: 2026-10-15

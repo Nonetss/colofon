@@ -4,11 +4,16 @@ import path from "node:path"
 import type { Element } from "hast"
 import type { Catalog } from "#contract/catalog"
 import { entityPath, isCatalogPath } from "#contract/catalog-paths"
-import type { CatalogIndex } from "#contract/entity-schema"
-import { DOCS_DIR, isReservedDocsPath } from "#contract/load"
-import type { Menu, SiteConfig } from "#contract/meta-schema"
+import { contractKey } from "#contract/contract-1"
+import {
+  type ContentDeclarations,
+  DOCS_DIR,
+  isReservedDocsPath,
+} from "#contract/load"
+import type { Menu } from "#contract/meta-schema"
 import type { PageProblem } from "#contract/problems"
 import { type ContentSkill, readSkills } from "#contract/skills"
+import type { ContractVersion } from "#contract/versions"
 import { diagramFigure } from "#diagrams/figure"
 import type { DiagramFile } from "#diagrams/model"
 import { diagramsByEntity, readDiagrams } from "#diagrams/read"
@@ -17,7 +22,7 @@ import {
   catalogPages,
   withCatalogBody,
 } from "#pages/catalog-pages"
-import { formerNameProblems } from "#pages/former-names"
+import { contract1Problems, formerNameProblems } from "#pages/former-names"
 import { type HeaderSchema, headerSchema, readHeader } from "#pages/header"
 import {
   folderNav,
@@ -101,13 +106,12 @@ export type SiteRoutes = {
  */
 export async function readSite(
   root: string,
-  config: SiteConfig,
-  index: CatalogIndex,
+  declarations: ContentDeclarations,
   catalog: Catalog,
   routes: SiteRoutes,
-  menu: Menu | null,
   editDates: ReadonlyMap<string, string>
 ): Promise<Site> {
+  const { config, index, menu, contract } = declarations
   const docsRoot = path.join(root, DOCS_DIR)
   const files = await listFiles(docsRoot)
   const fileSet = new Set(files)
@@ -122,17 +126,18 @@ export async function readSite(
     mdxFiles.push(file)
   }
   siteProblems.push(...(await formerNameProblems(root)))
+  siteProblems.push(...contract1Problems(contract))
   const pagePaths = new Set(mdxFiles.map(pagePathOf))
   const folders = foldersWithPages(mdxFiles)
   for (const folder of folders) pagePaths.add(folder)
   pagePaths.add("")
 
   const typeIds = [...catalog.keys()]
-  const resolved = resolveMenuOf(menu, {
-    pages: pagePaths,
-    folders,
-    types: typeIds,
-  })
+  const resolved = resolveMenuOf(
+    menu,
+    { pages: pagePaths, folders, types: typeIds },
+    contract
+  )
   siteProblems.push(...resolved.problems)
 
   const diagramRead = await readDiagrams(root, {
@@ -147,19 +152,23 @@ export async function readSite(
   siteProblems.push(...skills.problems)
   const { diagrams } = diagramRead
 
-  const schema = headerSchema(config, index)
+  const schema = headerSchema(config, index, contract)
   const headed: HeadedPage[] = []
   for (const file of mdxFiles) {
     const source = await readFile(path.join(docsRoot, file), "utf8")
     headed.push(
-      withOverride(headPage(source, file, schema, editDates), resolved)
+      withOverride(
+        headPage(source, file, schema, editDates),
+        resolved,
+        contract
+      )
     )
   }
   const generated = catalogPages(catalog, editDates)
   for (const [pagePath, page] of generated)
     generated.set(pagePath, overridden(page, resolved.overrides))
 
-  const titles = new Map(headed.map((page) => [page.path, page.header.titulo]))
+  const titles = new Map(headed.map((page) => [page.path, page.header.title]))
   const context: BuildContext = {
     pages: pagePaths,
     files: fileSet,
@@ -173,7 +182,7 @@ export async function readSite(
   for (const page of headed) {
     const built = buildPage(page, context)
     read.set(page.path, built.page)
-    const headerRefs = refsIn(page.header.campos, config.cabecera ?? {}).map(
+    const headerRefs = refsIn(page.header.fields, config.header ?? {}).map(
       (ref) => entityPath(ref.type, ref.id)
     )
     cited.set(page.path, [...new Set([...headerRefs, ...built.cited])])
@@ -186,7 +195,7 @@ export async function readSite(
     typeIds,
     overrides: resolved.overrides,
   }
-  const home = homeEntry(read, config.nombre)
+  const home = homeEntry(read, config.name)
   const nav = navOf(menu, resolved, source)
 
   const bodyContext: CatalogBodyContext = {
@@ -279,11 +288,15 @@ function citationsByEntity(
   return citations
 }
 
-function resolveMenuOf(menu: Menu | null, targets: MenuTargets): ResolvedMenu {
+function resolveMenuOf(
+  menu: Menu | null,
+  targets: MenuTargets,
+  contract: ContractVersion
+): ResolvedMenu {
   if (menu === null) return { groups: [], overrides: new Map(), problems: [] }
   const pages = new Set(targets.pages)
   pages.delete("")
-  return resolveMenu(menu, { ...targets, pages })
+  return resolveMenu(menu, { ...targets, pages }, contract)
 }
 
 function reservedProblem(file: string): PageProblem {
@@ -349,7 +362,11 @@ function headPage(
  * A page with the title and icon its menu entry gives (the YAML wins), and a
  * problem for each header value the menu overrides with another one.
  */
-function withOverride(page: HeadedPage, menu: ResolvedMenu): HeadedPage {
+function withOverride(
+  page: HeadedPage,
+  menu: ResolvedMenu,
+  contract: ContractVersion
+): HeadedPage {
   const override = menu.overrides.get(page.path)
   if (override === undefined) return page
   const problems = [...page.problems]
@@ -358,19 +375,19 @@ function withOverride(page: HeadedPage, menu: ResolvedMenu): HeadedPage {
   const { header } = page
   if (
     override.title !== null &&
-    header.titulo !== override.title &&
-    header.titulo !== fallbackTitleOf(page.path)
+    header.title !== override.title &&
+    header.title !== fallbackTitleOf(page.path)
   )
     report(
-      `titulo: la cabecera dice «${header.titulo}», pero manda menu.yaml («${override.title}»)`
+      `${contractKey(contract, "title")}: la cabecera dice «${header.title}», pero manda menu.yaml («${override.title}»)`
     )
   if (
     override.icon !== null &&
-    header.icono !== null &&
-    header.icono !== override.icon
+    header.icon !== null &&
+    header.icon !== override.icon
   )
     report(
-      `icono: la cabecera dice \`${header.icono}\`, pero manda menu.yaml (\`${override.icon}\`)`
+      `${contractKey(contract, "icon")}: la cabecera dice \`${header.icon}\`, pero manda menu.yaml (\`${override.icon}\`)`
     )
   return { ...page, header: applyOverride(header, override), problems }
 }
@@ -387,13 +404,13 @@ function overridden(
 function applyOverride(header: PageHeader, override: MenuOverride): PageHeader {
   return {
     ...header,
-    titulo: overriddenTitle(header, override),
-    icono: overriddenIcon(header, override),
+    title: overriddenTitle(header, override),
+    icon: overriddenIcon(header, override),
   }
 }
 
 function overriddenTitle(header: PageHeader, override: MenuOverride): string {
-  if (override.title === null) return header.titulo
+  if (override.title === null) return header.title
   return override.title
 }
 
@@ -401,7 +418,7 @@ function overriddenIcon(
   header: PageHeader,
   override: MenuOverride
 ): string | null {
-  if (override.icon === null) return header.icono
+  if (override.icon === null) return header.icon
   return override.icon
 }
 
@@ -505,9 +522,9 @@ function homeEntry(
     return { path: "", title: siteName, description: "", icon: null }
   return {
     path: "",
-    title: page.header.titulo,
-    description: page.header.descripcion,
-    icon: page.header.icono,
+    title: page.header.title,
+    description: page.header.description,
+    icon: page.header.icon,
   }
 }
 
@@ -599,10 +616,7 @@ function breadcrumbsAbove(
   while (parent !== ".") {
     const above = pages.get(parent)
     if (above !== undefined)
-      return [
-        ...above.breadcrumbs,
-        { path: parent, title: above.header.titulo },
-      ]
+      return [...above.breadcrumbs, { path: parent, title: above.header.title }]
     parent = path.posix.dirname(parent)
   }
   return []
@@ -630,13 +644,13 @@ function pageOrFolder(page: Page | undefined, entry: NavEntry): Page {
 
 function folderHeader(entry: NavEntry): PageHeader {
   return {
-    titulo: entry.title,
-    descripcion: "",
-    icono: entry.icon,
-    orden: null,
-    actualizado: null,
+    title: entry.title,
+    description: "",
+    icon: entry.icon,
+    order: null,
+    updated: null,
     editado: null,
-    campos: {},
+    fields: {},
   }
 }
 

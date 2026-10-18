@@ -1,16 +1,20 @@
 import { isNode, parseDocument } from "yaml"
 import { type ZodType, z } from "zod"
+import { contractKey, pathFor, translateContract1 } from "#contract/contract-1"
 import { type CatalogIndex, objectShape } from "#contract/entity-schema"
 import { iconName } from "#contract/icon-name"
-import { yamlErrorReason } from "#contract/load"
-import type { SiteConfig } from "#contract/meta-schema"
+import { foreignKeyMessage, yamlErrorReason } from "#contract/load"
+import { PAGE_HEADER_FIELDS, type SiteConfig } from "#contract/meta-schema"
 import type { PageProblem } from "#contract/problems"
+import type { ContractVersion } from "#contract/versions"
 import type { PageHeader } from "#pages/types"
 
 // The header of a page: its YAML front matter, checked against the fields
-// every page has plus the site's own `cabecera`. A broken header never hides
-// the page: every field that is valid on its own is kept, and the title falls
-// back to the file name.
+// every page has plus the site's own `header` fields. A broken header never
+// hides the page: every field that is valid on its own is kept, and the title
+// falls back to the file name. A version 1 repository's headers are
+// translated to the version 2 names first, and their problems name the keys
+// the page holds.
 
 const spanishErrors = z.locales.es().localeError
 
@@ -20,27 +24,30 @@ const DATE_ERROR = "Una fecha AAAA-MM-DD (2026-10-15)"
 export type HeaderSchema = {
   whole: ZodType
   fields: ReadonlyMap<string, ZodType>
-  /** Names of the site's own fields, kept apart in `campos`. */
+  /** Names of the site's own fields, kept apart in `fields`. */
   extra: ReadonlySet<string>
+  contract: ContractVersion
 }
 
 export function headerSchema(
   config: SiteConfig,
-  index: CatalogIndex
+  index: CatalogIndex,
+  contract: ContractVersion
 ): HeaderSchema {
-  const extraShape = objectShape(config.cabecera ?? {}, index)
+  const extraShape = objectShape(config.header ?? {}, index)
   const shape: Record<string, ZodType> = {
-    titulo: z.string().min(1),
-    descripcion: z.string().min(1),
-    icono: iconName.optional(),
-    orden: z.number().optional(),
-    actualizado: z.iso.date({ error: DATE_ERROR }).optional(),
+    title: z.string().min(1),
+    description: z.string().min(1),
+    icon: iconName.optional(),
+    order: z.number().optional(),
+    updated: z.iso.date({ error: DATE_ERROR }).optional(),
     ...extraShape,
   }
   return {
     whole: z.strictObject(shape),
     fields: new Map(Object.entries(shape)),
     extra: new Set(Object.keys(extraShape)),
+    contract,
   }
 }
 
@@ -49,7 +56,7 @@ export type HeaderSource = { text: string; startLine: number } | undefined
 
 /**
  * Reads a page header. `fallbackTitle` (the file name) is used when
- * `titulo` is missing or invalid. Problem lines count from the file's start.
+ * `title` is missing or invalid. Problem lines count from the file's start.
  */
 export function readHeader(
   source: HeaderSource,
@@ -63,17 +70,41 @@ export function readHeader(
   if (problems.length > 0)
     return { header: salvage({}, schema, fallbackTitle), problems }
   const lineOf = lineFinder(source)
-  const result = schema.whole.safeParse(data.value, { error: spanishErrors })
+  const value = asContract2Header(data.value, schema.contract, (at) =>
+    problems.push({
+      file,
+      line: lineOf(data.document, at),
+      message: foreignKeyMessage(at),
+    })
+  )
+  const result = schema.whole.safeParse(value, { error: spanishErrors })
   if (!result.success) {
     for (const issue of result.error.issues) {
+      const at = pathFor(schema.contract, "pageHeader", issuePath(issue))
       problems.push({
         file,
-        line: lineOf(data.document, issuePath(issue)),
-        message: describeIssue(issue),
+        line: lineOf(data.document, at),
+        message: describeIssue(issue, schema.contract),
       })
     }
   }
-  return { header: salvage(data.value, schema, fallbackTitle), problems }
+  return { header: salvage(value, schema, fallbackTitle), problems }
+}
+
+/**
+ * A header under the version 2 names; for a version 1 repository, each
+ * version 2 key it holds goes to `foreign` and is left out.
+ */
+function asContract2Header(
+  value: Record<string, unknown>,
+  contract: ContractVersion,
+  foreign: (at: PropertyKey[]) => void
+): Record<string, unknown> {
+  if (contract === "2") return value
+  const translated = translateContract1("pageHeader", value)
+  for (const at of translated.foreign) foreign(at)
+  if (!isRecord(translated.data)) return {}
+  return translated.data
 }
 
 type ParsedHeader = {
@@ -133,13 +164,18 @@ function issuePath(issue: z.core.$ZodIssue): PropertyKey[] {
   return [...issue.path, first]
 }
 
-function describeIssue(issue: z.core.$ZodIssue): string {
+function describeIssue(
+  issue: z.core.$ZodIssue,
+  contract: ContractVersion
+): string {
   if (issue.code === "unrecognized_keys") {
     const keys = issue.keys.map((key) => `\`${key}\``).join(", ")
-    return `La cabecera no admite ${keys}: solo titulo, descripcion, icono, orden, actualizado y los campos de cabecera de doc.config.yaml`
+    const fixed = PAGE_HEADER_FIELDS.map((key) => contractKey(contract, key))
+    return `La cabecera no admite ${keys}: solo ${fixed.join(", ")} y los campos de cabecera de doc.config.yaml`
   }
   if (issue.path.length === 0) return issue.message
-  return `${issue.path.join(".")}: ${issue.message}`
+  const at = pathFor(contract, "pageHeader", issue.path)
+  return `${at.join(".")}: ${issue.message}`
 }
 
 function salvage(
@@ -154,18 +190,18 @@ function salvage(
     if (parsed.success && parsed.data !== undefined)
       valid.set(name, parsed.data)
   }
-  const campos: Record<string, unknown> = {}
+  const fields: Record<string, unknown> = {}
   for (const name of schema.extra) {
-    if (valid.has(name)) campos[name] = valid.get(name)
+    if (valid.has(name)) fields[name] = valid.get(name)
   }
   return {
-    titulo: textOr(valid.get("titulo"), fallbackTitle),
-    descripcion: textOr(valid.get("descripcion"), ""),
-    icono: textOrNull(valid.get("icono")),
-    orden: numberOrNull(valid.get("orden")),
-    actualizado: textOrNull(valid.get("actualizado")),
+    title: textOr(valid.get("title"), fallbackTitle),
+    description: textOr(valid.get("description"), ""),
+    icon: textOrNull(valid.get("icon")),
+    order: numberOrNull(valid.get("order")),
+    updated: textOrNull(valid.get("updated")),
     editado: null,
-    campos,
+    fields,
   }
 }
 

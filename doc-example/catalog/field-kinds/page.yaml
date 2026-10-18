@@ -1,0 +1,5 @@
+family: reference
+value: "La ruta de una página bajo docs/, sin .mdx; se muestra como un enlace con el título de la página"
+example: "page: { type: page } → page: containers/komodo"
+source: manual
+updated: 2026-10-15

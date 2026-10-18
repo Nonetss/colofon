@@ -60,10 +60,10 @@ async function repo(): Promise<Repo> {
 }
 
 const SITE = {
-  "doc.config.yaml": "nombre: Manual\n",
-  "docs/index.mdx": "---\ntitulo: Inicio\n---\n",
+  "doc.config.yaml": "name: Manual\n",
+  "docs/index.mdx": "---\ntitle: Inicio\n---\n",
   "docs/red/dns.mdx": "# DNS\n",
-  "catalog/maquinas/_type.yaml": "nombre: Máquina\n",
+  "catalog/maquinas/_type.yaml": "name: Máquina\n",
 }
 
 describe("readFolder", () => {
@@ -81,7 +81,7 @@ describe("readFolder", () => {
           name: "doc.config.yaml",
           path: "doc.config.yaml",
           kind: "file",
-          size: 15,
+          size: 13,
         },
       ],
     })
@@ -162,8 +162,8 @@ describe("readFile", () => {
     expect(await readFile(manual.bare, "main", "docs/index.mdx")).toEqual({
       ok: true,
       kind: "text",
-      size: 23,
-      content: "---\ntitulo: Inicio\n---\n",
+      size: 22,
+      content: "---\ntitle: Inicio\n---\n",
     })
   })
 

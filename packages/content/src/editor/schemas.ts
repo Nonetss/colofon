@@ -1,5 +1,6 @@
 import { z } from "zod"
 import { catalogTypePath } from "#contract/catalog-paths"
+import { contract1JsonSchema } from "#contract/contract-1"
 import { entitySchema } from "#contract/entity-schema"
 import {
   CATALOG_DIR,
@@ -22,7 +23,8 @@ import { DIAGRAM_TYPES } from "#diagrams/types/index"
 // its `type`), with the entities and pages a box or item can link to; each
 // catalog type gets its own
 // schema, generated from its _type.yaml, with the ids its `ref` fields can
-// take. Every `icono` lists the Lucide names. The editor finds them
+// take. Every `icon` lists the Lucide names. A version 1 repository gets the
+// same schemas under its Spanish names (the diagram's has none to rename). The editor finds them
 // through a catalog in SchemaStore's format (`schemaCatalog`), set once as
 // its `yaml.schemaStore.url`.
 
@@ -56,6 +58,8 @@ export function editorSchemas(
     typeIds,
     menuPaths: menuPathsOf(declarations),
   })
+  const declaration = (schema: z.ZodType, title: string) =>
+    forContract(declarations, toJsonSchema(schema, title), "declaration")
   const diagram = diagramFileSchema({
     entityKeys: entityKeysOf(declarations),
     pagePaths: pagePathsOf(declarations),
@@ -66,14 +70,14 @@ export function editorSchemas(
       title: "Configuración del sitio",
       description: `El ${CONFIG_FILE} del repositorio de contenido`,
       patterns: [CONFIG_FILE],
-      schema: toJsonSchema(meta.siteConfig, "Configuración del sitio"),
+      schema: declaration(meta.siteConfig, "Configuración del sitio"),
     },
     {
       name: MENU_SCHEMA,
       title: "Menú",
       description: `El ${MENU_FILE}: los grupos de la barra lateral`,
       patterns: [MENU_FILE],
-      schema: toJsonSchema(meta.menu, "Menú"),
+      schema: declaration(meta.menu, "Menú"),
     },
     {
       name: DIAGRAM_SCHEMA,
@@ -87,7 +91,7 @@ export function editorSchemas(
       title: "Tipo del catálogo",
       description: `El ${TYPE_FILE} de cada tipo de ${CATALOG_DIR}/`,
       patterns: [`${CATALOG_DIR}/*/${TYPE_FILE}`],
-      schema: toJsonSchema(meta.typeDefinition, "Tipo del catálogo"),
+      schema: declaration(meta.typeDefinition, "Tipo del catálogo"),
     },
   ]
   for (const [typeId, type] of declarations.types) {
@@ -99,7 +103,11 @@ export function editorSchemas(
         `${CATALOG_DIR}/${typeId}/*.yaml`,
         `!${CATALOG_DIR}/${typeId}/_*.yaml`,
       ],
-      schema: toJsonSchema(entitySchema(type, declarations.index), type.nombre),
+      schema: forContract(
+        declarations,
+        toJsonSchema(entitySchema(type, declarations.index), type.name),
+        "entity"
+      ),
     })
   }
   return schemas
@@ -138,6 +146,16 @@ function entityKeysOf(declarations: ContentDeclarations): string[] {
   for (const [typeId, ids] of declarations.index.entityIds)
     for (const id of ids) keys.push(`${typeId}/${id}`)
   return keys.sort()
+}
+
+/** `schema` under the names of the repository's contract version. */
+function forContract(
+  declarations: ContentDeclarations,
+  schema: Record<string, unknown>,
+  file: "declaration" | "entity"
+): Record<string, unknown> {
+  if (declarations.contract === "2") return schema
+  return contract1JsonSchema(schema, file)
 }
 
 function toJsonSchema(

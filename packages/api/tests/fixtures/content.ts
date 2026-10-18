@@ -10,21 +10,21 @@ import {
 
 /** A small valid content repository: two types, one pointing at the other. */
 export const CONTENT_SITE: Record<string, string> = {
-  "doc.config.yaml": 'nombre: Homelab\nplataforma: "1"\n',
+  "doc.config.yaml": 'name: Homelab\ncontract: "2"\n',
   "catalog/ubicaciones/_type.yaml":
-    "nombre: Ubicación\nplural: Ubicaciones\ncampos:\n  nombre: { tipo: texto }\n",
-  "catalog/ubicaciones/casa.yaml": "nombre: Casa\n",
+    "name: Ubicación\nplural: Ubicaciones\nfields:\n  name: { type: text }\n",
+  "catalog/ubicaciones/casa.yaml": "name: Casa\n",
   "catalog/maquinas/_type.yaml": [
-    "nombre: Máquina",
+    "name: Máquina",
     "plural: Máquinas",
-    "campos:",
-    "  ip: { tipo: ip }",
-    "  ubicacion: { tipo: ref, a: ubicaciones }",
-    "  ficha: { tipo: ficha, opcional: true }",
+    "fields:",
+    "  ip: { type: ip }",
+    "  ubicacion: { type: ref, to: ubicaciones }",
+    "  ficha: { type: page, optional: true }",
   ].join("\n"),
   "catalog/maquinas/nas.yaml": "ip: 192.168.1.30\nubicacion: casa\n",
-  "docs/index.mdx": "---\ntitulo: Inicio\n---\n",
-  "docs/red/dns.mdx": "---\ntitulo: DNS\n---\n",
+  "docs/index.mdx": "---\ntitle: Inicio\n---\n",
+  "docs/red/dns.mdx": "---\ntitle: DNS\n---\n",
 }
 
 /** A content folder in a temp directory; `write` changes files in place. */

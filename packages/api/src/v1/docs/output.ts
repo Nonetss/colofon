@@ -8,7 +8,7 @@ const navEntry = {
   href: z.string().describe("Reader route of the page"),
   title: z.string(),
   description: z.string(),
-  icon: z.string().nullable().describe("Lucide icon name from `icono`"),
+  icon: z.string().nullable().describe("Lucide icon name from `icon`"),
 }
 
 type NavEntry = {
@@ -131,7 +131,7 @@ const headerValue = z.object({
   href: z
     .string()
     .nullable()
-    .describe("Reader route for a `ficha` value, or an entity's catalog page"),
+    .describe("Reader route for a `page` value, or an entity's catalog page"),
 })
 
 const searchRepository = z.object({ slug: z.string(), name: z.string() })
@@ -152,11 +152,11 @@ export const docsOutput = {
         title: z
           .string()
           .nullable()
-          .describe("`nombre` of doc.config.yaml; null without content"),
+          .describe("`name` of doc.config.yaml; null without content"),
         description: z
           .string()
           .nullable()
-          .describe("`descripcion` of doc.config.yaml"),
+          .describe("`description` of doc.config.yaml"),
         available: z
           .boolean()
           .describe("Whether the repository has readable content"),
@@ -178,7 +178,7 @@ export const docsOutput = {
       title: z.string(),
       description: z.string(),
       icon: z.string().nullable(),
-      updated: z.string().nullable().describe("`actualizado`, YYYY-MM-DD"),
+      updated: z.string().nullable().describe("`updated`, YYYY-MM-DD"),
       edited: z
         .string()
         .nullable()
@@ -191,11 +191,11 @@ export const docsOutput = {
             name: z.string(),
             label: z
               .string()
-              .describe("The field's `etiqueta`, or its name without one"),
+              .describe("The field's `label`, or its name without one"),
             values: z.array(headerValue),
           })
         )
-        .describe("The site's own header fields (`cabecera`) that are set"),
+        .describe("The site's own header fields (`header`) that are set"),
     }),
     tree: hastRoot
       .nullable()

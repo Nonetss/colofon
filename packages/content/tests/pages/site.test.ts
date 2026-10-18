@@ -15,18 +15,18 @@ function section(nodes: NavNode[], title: string) {
 
 const SITE = {
   "docs/index.mdx": page("Casa"),
-  "docs/red/index.mdx": page("Red", "", "orden: 1\n"),
-  "docs/red/dns.mdx": page("DNS", "", "orden: 2\n"),
-  "docs/red/vpn.mdx": page("VPN", "", "orden: 1\n"),
+  "docs/red/index.mdx": page("Red", "", "order: 1\n"),
+  "docs/red/dns.mdx": page("DNS", "", "order: 2\n"),
+  "docs/red/vpn.mdx": page("VPN", "", "order: 1\n"),
   "docs/red/anexo.mdx": page("Anexo"),
   "docs/varios/zeta.mdx": page("Zeta"),
   "docs/varios/alfa.mdx": page("Alfa"),
   "docs/varios/img/foto.png": "png",
-  "docs/suelta.mdx": page("Suelta", "", "orden: 5\n"),
+  "docs/suelta.mdx": page("Suelta", "", "order: 5\n"),
 }
 
 describe("readSite", () => {
-  test("pages are ordered by orden, those without one last, then by title", async () => {
+  test("pages are ordered by order, those without one last, then by title", async () => {
     const site = await siteOf(SITE)
     expect(titles(site.nav)).toEqual(["Red", "Suelta", "varios", "Catálogo"])
     expect(titles(section(site.nav, "Red").children)).toEqual([
@@ -44,7 +44,7 @@ describe("readSite", () => {
     const site = await siteOf(SITE)
     const varios = pageAt(site, "varios")
     expect(varios.source).toBe("folder")
-    expect(varios.header.titulo).toBe("varios")
+    expect(varios.header.title).toBe("varios")
     expect(varios.tree).toBeNull()
     expect(titles(varios.children)).toEqual(["Alfa", "Zeta"])
   })
@@ -52,7 +52,7 @@ describe("readSite", () => {
   test("a folder holding only its index is a page with no children, keeping its order, breadcrumbs and reading order", async () => {
     const site = await siteOf({
       ...SITE,
-      "docs/red/solo/index.mdx": page("Solo", "", "orden: 3\n"),
+      "docs/red/solo/index.mdx": page("Solo", "", "order: 3\n"),
     })
     const solo = section(site.nav, "Red").children.find(
       (node) => node.title === "Solo"
@@ -106,17 +106,17 @@ describe("readSite", () => {
   })
 
   test("the home is docs/index.mdx, or a folder page titled with the site name without it", async () => {
-    expect(pageAt(await siteOf(SITE), "").header.titulo).toBe("Casa")
+    expect(pageAt(await siteOf(SITE), "").header.title).toBe("Casa")
     const withoutHome = await siteOf({ "docs/red/dns.mdx": page("DNS") })
     const home = pageAt(withoutHome, "")
     expect(home.source).toBe("folder")
-    expect(home.header.titulo).toBe("Casa")
+    expect(home.header.title).toBe("Casa")
     expect(titles(home.children)).toEqual(["red", "Catálogo"])
   })
 
   test("problems of one page don't stop the others, and every problem is listed", async () => {
     const site = await siteOf({
-      "docs/mala.mdx": "---\ntitulo: Mala\n---\n\n[x](falta.mdx)\n",
+      "docs/mala.mdx": "---\ntitle: Mala\n---\n\n[x](falta.mdx)\n",
       "docs/buena.mdx": page("Buena", "Texto"),
     })
     expect(pageAt(site, "mala").problems).toHaveLength(2)
@@ -158,7 +158,7 @@ describe("readSite", () => {
       "docs/catalog/index.mdx": page("Mío"),
     })
     expect(pageAt(site, "catalog").source).toBe("generated")
-    expect(pageAt(site, "catalog").header.titulo).toBe("Catálogo")
+    expect(pageAt(site, "catalog").header.title).toBe("Catálogo")
     expect(pageAt(site, "").problems.map((p) => p.file)).toEqual([
       "docs/catalog/index.mdx",
     ])
@@ -167,7 +167,7 @@ describe("readSite", () => {
   test("the former Spanish folders are reported on the home and not read", async () => {
     const site = await siteOf({
       ...SITE,
-      "catalogo/routers/_tipo.yaml": "nombre: Router\nplural: Routers\n",
+      "catalogo/routers/_tipo.yaml": "name: Router\nplural: Routers\n",
       "diagramas/red.json": "{}",
       "estilos/tema.css": ":root { --primary: red }",
       "docs/mapa.mdx": page("Mapa", '<Diagram id="red" />'),
@@ -202,7 +202,7 @@ describe("readSite", () => {
   test("a former _tipo.yaml in a type folder is reported", async () => {
     const site = await siteOf({
       ...SITE,
-      "catalog/maquinas/_tipo.yaml": "nombre: Viejo\nplural: Viejos\n",
+      "catalog/maquinas/_tipo.yaml": "name: Viejo\nplural: Viejos\n",
     })
     expect(pageAt(site, "").problems).toEqual([
       {
@@ -212,15 +212,15 @@ describe("readSite", () => {
           "La declaración de un tipo se llama ahora _type.yaml: _tipo.yaml no se lee hasta que lo renombres",
       },
     ])
-    expect(pageAt(site, "catalog/maquinas").header.titulo).toBe("Máquinas")
+    expect(pageAt(site, "catalog/maquinas").header.title).toBe("Máquinas")
   })
 })
 
-/** A menu.yaml from its groups: `[titulo, extra lines, entries]`. */
+/** A menu.yaml from its groups: `[title, extra lines, entries]`. */
 function menuOf(...groups: [string, string[]][]): string {
-  const lines = ["secciones:"]
-  for (const [titulo, entries] of groups) {
-    lines.push(`  - titulo: ${titulo}`, "    paginas:")
+  const lines = ["sections:"]
+  for (const [title, entries] of groups) {
+    lines.push(`  - title: ${title}`, "    pages:")
     for (const entry of entries) lines.push(`      - ${entry}`)
   }
   return lines.join("\n")
@@ -234,11 +234,11 @@ function group(nodes: NavNode[], title: string) {
 }
 
 describe("readSite edit dates", () => {
-  test("a page is dated with its file's last commit, independent of actualizado", async () => {
+  test("a page is dated with its file's last commit, independent of updated", async () => {
     const site = await siteOf(
       {
         ...SITE,
-        "docs/red/vpn.mdx": page("VPN", "", "actualizado: 2026-01-10\n"),
+        "docs/red/vpn.mdx": page("VPN", "", "updated: 2026-01-10\n"),
       },
       new Map([
         ["docs/red/dns.mdx", "2026-03-02"],
@@ -246,11 +246,11 @@ describe("readSite edit dates", () => {
       ])
     )
     expect(pageAt(site, "red/dns").header).toMatchObject({
-      actualizado: null,
+      updated: null,
       editado: "2026-03-02",
     })
     expect(pageAt(site, "red/vpn").header).toMatchObject({
-      actualizado: "2026-01-10",
+      updated: "2026-01-10",
       editado: "2026-10-14",
     })
   })
@@ -349,19 +349,18 @@ describe("readSite with menu.yaml", () => {
         file: "menu.yaml",
         line: null,
         message:
-          "secciones.0.paginas.1: `red/vpnn` no es ninguna página ni carpeta de docs/, ni catalog, ni un tipo del catálogo",
+          "sections.0.pages.1: `red/vpnn` no es ninguna página ni carpeta de docs/, ni catalog, ni un tipo del catálogo",
       },
       {
         file: "menu.yaml",
         line: null,
         message:
-          "secciones.0.paginas.2: la portada no va en el menú: sale siempre como «Inicio»",
+          "sections.0.pages.2: la portada no va en el menú: sale siempre como «Inicio»",
       },
       {
         file: "menu.yaml",
         line: null,
-        message:
-          "secciones.1.paginas.0: `red/dns` ya sale en el menú con `red`",
+        message: "sections.1.pages.0: `red/dns` ya sale en el menú con `red`",
       },
     ])
   })
@@ -400,21 +399,21 @@ describe("readSite with menu.yaml", () => {
   test("the menu's title and icon win over the header's, which is reported when it differs", async () => {
     const site = await siteOf({
       ...SITE,
-      "docs/red/index.mdx": page("Red", "", "icono: box\n"),
-      "docs/varios/zeta.mdx": page("Zeta", "", "icono: globe\n"),
+      "docs/red/index.mdx": page("Red", "", "icon: box\n"),
+      "docs/varios/zeta.mdx": page("Zeta", "", "icon: globe\n"),
       "menu.yaml": menuOf([
         "Todo",
         [
-          "{ ruta: red, icono: layers, titulo: Redes }",
+          "{ path: red, icon: layers, title: Redes }",
           "varios",
           "suelta",
-          "{ ruta: catalog, titulo: Datos }",
+          "{ path: catalog, title: Datos }",
         ],
       ]),
     })
     const red = pageAt(site, "red")
-    expect(red.header.icono).toBe("layers")
-    expect(red.header.titulo).toBe("Redes")
+    expect(red.header.icon).toBe("layers")
+    expect(red.header.title).toBe("Redes")
     expect(section(group(site.nav, "Todo").children, "Redes").icon).toBe(
       "layers"
     )
@@ -423,12 +422,12 @@ describe("readSite with menu.yaml", () => {
       { path: "red", title: "Redes" },
     ])
     expect(red.problems.map((problem) => problem.message)).toEqual([
-      "titulo: la cabecera dice «Red», pero manda menu.yaml («Redes»)",
-      "icono: la cabecera dice `box`, pero manda menu.yaml (`layers`)",
+      "title: la cabecera dice «Red», pero manda menu.yaml («Redes»)",
+      "icon: la cabecera dice `box`, pero manda menu.yaml (`layers`)",
     ])
-    expect(pageAt(site, "varios/zeta").header.icono).toBe("globe")
+    expect(pageAt(site, "varios/zeta").header.icon).toBe("globe")
     expect(pageAt(site, "varios/zeta").problems).toEqual([])
-    expect(pageAt(site, "catalog").header.titulo).toBe("Datos")
+    expect(pageAt(site, "catalog").header.title).toBe("Datos")
   })
 
   test("a folder entry holding only its index is a page with the menu's title and icon", async () => {
@@ -439,7 +438,7 @@ describe("readSite with menu.yaml", () => {
         "Todo",
         [
           "red",
-          "{ ruta: diagrams, titulo: Dibujos, icono: workflow }",
+          "{ path: diagrams, title: Dibujos, icon: workflow }",
           "varios",
           "suelta",
           "catalog",
@@ -461,7 +460,7 @@ describe("readSite with menu.yaml", () => {
         "Todo",
         [
           "red",
-          "{ ruta: varios, titulo: Varios, icono: box }",
+          "{ path: varios, title: Varios, icon: box }",
           "suelta",
           "catalog",
         ],
@@ -469,7 +468,7 @@ describe("readSite with menu.yaml", () => {
     })
     const varios = section(group(site.nav, "Todo").children, "Varios")
     expect(varios.icon).toBe("box")
-    expect(pageAt(site, "varios").header.titulo).toBe("Varios")
+    expect(pageAt(site, "varios").header.title).toBe("Varios")
   })
 })
 

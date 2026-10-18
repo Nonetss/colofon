@@ -5,44 +5,44 @@ import { htmlOf, page, pageAt, siteOf } from "#tests/fixtures/site"
 // stack on the VM, and pages that cite them in their header or with links.
 const FILES: Record<string, string> = {
   "doc.config.yaml": [
-    "nombre: Casa",
-    'plataforma: "1"',
-    "cabecera:",
+    "name: Casa",
+    'contract: "2"',
+    "header:",
     "  machines:",
-    "    tipo: lista",
-    "    opcional: true",
-    "    de: { tipo: ref, a: machines }",
+    "    type: list",
+    "    optional: true",
+    "    of: { type: ref, to: machines }",
   ].join("\n"),
   "catalog/machines/_type.yaml": [
-    "nombre: Machine",
+    "name: Machine",
     "plural: Machines",
-    "icono: server",
-    "descripcion: Servers and VMs",
-    "etiqueta: name",
-    "campos:",
-    "  name: { tipo: texto, opcional: true }",
-    "  ip: { tipo: ip, etiqueta: Dirección IP }",
-    "  host: { tipo: ref, a: machines, opcional: true }",
-    "  page: { tipo: ficha, opcional: true }",
-    "vista:",
-    "  columnas: [name, ip]",
+    "icon: server",
+    "description: Servers and VMs",
+    "title_field: name",
+    "fields:",
+    "  name: { type: text, optional: true }",
+    "  ip: { type: ip, label: Dirección IP }",
+    "  host: { type: ref, to: machines, optional: true }",
+    "  page: { type: page, optional: true }",
+    "view:",
+    "  columns: [name, ip]",
   ].join("\n"),
   "catalog/machines/pve-01.yaml":
     "name: PVE-01\nip: 192.168.1.10\npage: red/dns\n",
   "catalog/machines/docker-01.yaml":
-    "ip: 192.168.1.20\nhost: pve-01\nfuente: komodo\nactualizado: 2026-10-01\n",
+    "ip: 192.168.1.20\nhost: pve-01\nsource: komodo\nupdated: 2026-10-01\n",
   "catalog/machines/broken.yaml": "name: Broken\n",
   "catalog/stacks/_type.yaml": [
-    "nombre: Stack",
+    "name: Stack",
     "plural: Stacks",
-    "campos:",
+    "fields:",
     "  services:",
-    "    tipo: lista",
-    "    de:",
-    "      tipo: objeto",
-    "      campos:",
-    "        name: { tipo: texto }",
-    "        machine: { tipo: ref, a: machines }",
+    "    type: list",
+    "    of:",
+    "      type: object",
+    "      fields:",
+    "        name: { type: text }",
+    "        machine: { type: ref, to: machines }",
   ].join("\n"),
   "catalog/stacks/docker-01-adguard.yaml":
     "services:\n  - name: adguard\n    machine: docker-01\n",
@@ -54,7 +54,7 @@ describe("generated catalog pages", () => {
   test("the catalog page lists every type with its counts", async () => {
     const site = await siteOf(FILES)
     const catalog = pageAt(site, "catalog")
-    expect(catalog.header.titulo).toBe("Catálogo")
+    expect(catalog.header.title).toBe("Catálogo")
     const html = htmlOf(catalog.tree)
     expect(html).toContain(
       '<tr><td><a href="/casa/catalog/machines">Machines</a></td><td>Servers and VMs</td><td>2</td><td>1</td></tr>'
@@ -68,9 +68,9 @@ describe("generated catalog pages", () => {
     const site = await siteOf(FILES)
     const machines = pageAt(site, "catalog/machines")
     expect(machines.header).toMatchObject({
-      titulo: "Machines",
-      descripcion: "Servers and VMs",
-      icono: "server",
+      title: "Machines",
+      description: "Servers and VMs",
+      icon: "server",
     })
     const html = htmlOf(machines.tree)
     expect(html).toContain("<th>name</th><th>Dirección IP</th>")
@@ -94,7 +94,7 @@ describe("generated catalog pages", () => {
       ])
     )
     expect(pageAt(site, "catalog/machines/docker-01").header).toMatchObject({
-      actualizado: "2026-10-01",
+      updated: "2026-10-01",
       editado: "2026-09-30",
     })
     expect(pageAt(site, "catalog/machines/pve-01").header.editado).toBe(
@@ -106,7 +106,7 @@ describe("generated catalog pages", () => {
 
   test("a type without a description gets one from its plural", async () => {
     const site = await siteOf(FILES)
-    expect(pageAt(site, "catalog/stacks").header.descripcion).toBe(
+    expect(pageAt(site, "catalog/stacks").header.description).toBe(
       "Datos de Stacks"
     )
   })
@@ -115,10 +115,10 @@ describe("generated catalog pages", () => {
     const site = await siteOf(FILES)
     const docker = pageAt(site, "catalog/machines/docker-01")
     expect(docker.header).toMatchObject({
-      titulo: "docker-01",
-      descripcion: "Machine",
-      icono: "server",
-      actualizado: "2026-10-01",
+      title: "docker-01",
+      description: "Machine",
+      icon: "server",
+      updated: "2026-10-01",
     })
     expect(docker.breadcrumbs).toEqual([
       { path: "catalog", title: "Catálogo" },
@@ -131,8 +131,8 @@ describe("generated catalog pages", () => {
     expect(html).toContain(
       "<tr><td>Dirección IP</td><td>192.168.1.20</td></tr>"
     )
-    expect(html).not.toContain("<td>fuente</td>")
-    expect(html).not.toContain("<td>actualizado</td>")
+    expect(html).not.toContain("<td>source</td>")
+    expect(html).not.toContain("<td>updated</td>")
     expect(html).toContain(
       '</table><p class="doc-entity-source">Fuente: komodo</p>'
     )

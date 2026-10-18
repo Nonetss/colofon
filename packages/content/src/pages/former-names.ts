@@ -1,15 +1,27 @@
 import type { Dirent } from "node:fs"
 import { readdir } from "node:fs/promises"
 import path from "node:path"
-import { CATALOG_DIR, DIAGRAMS_DIR, TYPE_FILE } from "#contract/load"
+import {
+  CATALOG_DIR,
+  CONFIG_FILE,
+  DIAGRAMS_DIR,
+  TYPE_FILE,
+} from "#contract/load"
 import type { PageProblem } from "#contract/problems"
+import {
+  CONTRACT_1_KEY,
+  CONTRACT_1_VALUE,
+  CONTRACT_KEY,
+  type ContractVersion,
+} from "#contract/versions"
 import { STYLES_DIR } from "#styles/modules"
 
 // The folders and files the contract named in Spanish before it moved to
 // English (`content-contract`, "Former Spanish names are reported"). They are
 // never read: each one a repository still holds is reported as a site
 // problem naming where it moved, so a repository that lost its catalog,
-// diagrams or styles to the rename sees why on its home.
+// diagrams or styles to the rename sees why on its home. A repository on
+// contract 1, whose keys are still Spanish, is read but reported the same way.
 
 /** The root folders that moved, with the folder each one is now. */
 const FORMER_FOLDERS = [
@@ -48,6 +60,22 @@ export async function formerNameProblems(root: string): Promise<PageProblem[]> {
     })
   }
   return problems
+}
+
+/**
+ * The problem of a repository still on contract 1 (`content-contract`,
+ * "Contract 1 is reported as superseded"): it is read, but the names it
+ * uses are not the current ones.
+ */
+export function contract1Problems(contract: ContractVersion): PageProblem[] {
+  if (contract === "2") return []
+  return [
+    {
+      file: CONFIG_FILE,
+      line: null,
+      message: `Este repositorio sigue el contrato 1, con las claves en español (\`${CONTRACT_1_KEY}: "${CONTRACT_1_VALUE}"\`). Se sigue leyendo, pero el contrato 2 las nombra en inglés (\`${CONTRACT_KEY}: "2"\`): la guía «Escribir documentación» explica el cambio en «Pasar del contrato 1 al 2»`,
+    },
+  ]
 }
 
 async function listDir(dir: string): Promise<Dirent[]> {

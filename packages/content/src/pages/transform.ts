@@ -158,7 +158,7 @@ export function transformPage(
         if (node.depth === 1) {
           report(
             line,
-            "Un título de nivel 1 (#) no va en el cuerpo: el título de la ficha es su `titulo`"
+            "Un título de nivel 1 (#) no va en el cuerpo: el título de la ficha va en su cabecera"
           )
         }
         if (node.depth >= 2 && node.depth <= 4) {

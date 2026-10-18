@@ -12,23 +12,23 @@ const index: CatalogIndex = {
 }
 
 const machine: TypeDefinition = {
-  nombre: "Máquina",
+  name: "Máquina",
   plural: "Máquinas",
-  campos: {
-    ip: { tipo: "ip" },
-    ubicacion: { tipo: "ref", a: "ubicaciones" },
-    clase: { tipo: "enum", valores: ["fisica", "vm"] },
-    ficha: { tipo: "ficha", opcional: true },
-    alta: { tipo: "fecha", opcional: true },
-    discos: { tipo: "entero", opcional: true },
+  fields: {
+    ip: { type: "ip" },
+    ubicacion: { type: "ref", to: "ubicaciones" },
+    clase: { type: "enum", values: ["fisica", "vm"] },
+    ficha: { type: "page", optional: true },
+    alta: { type: "date", optional: true },
+    discos: { type: "integer", optional: true },
     contenedores: {
-      tipo: "lista",
-      opcional: true,
-      de: {
-        tipo: "objeto",
-        campos: {
-          nombre: { tipo: "texto" },
-          puertos: { tipo: "lista", de: { tipo: "texto" }, opcional: true },
+      type: "list",
+      optional: true,
+      of: {
+        type: "object",
+        fields: {
+          name: { type: "text" },
+          puertos: { type: "list", of: { type: "text" }, optional: true },
         },
       },
     },
@@ -49,9 +49,9 @@ describe("entitySchema", () => {
       ficha: "red/dns",
       alta: "2026-10-15",
       discos: 2,
-      contenedores: [{ nombre: "adguard", puertos: ["53:53/udp"] }],
-      fuente: "komodo",
-      actualizado: "2026-10-15",
+      contenedores: [{ name: "adguard", puertos: ["53:53/udp"] }],
+      source: "komodo",
+      updated: "2026-10-15",
     })
     expect(result.success).toBe(true)
   })
@@ -81,14 +81,14 @@ describe("entitySchema", () => {
     expect(
       schema.safeParse({
         ...valid,
-        contenedores: [{ nombre: "x", imagen: "y" }],
+        contenedores: [{ name: "x", imagen: "y" }],
       }).success
     ).toBe(false)
   })
 
   test("a ref to a type with no entities says there are none", () => {
     const empty = entitySchema(
-      { ...machine, campos: { centro: { tipo: "ref", a: "vacio" } } },
+      { ...machine, fields: { centro: { type: "ref", to: "vacio" } } },
       index
     )
     const result = empty.safeParse({ centro: "c11" })

@@ -144,11 +144,11 @@ describe("accepted MDX", () => {
   test("an Entities cell of a ficha field shows the page's title", async () => {
     const site = await siteOf({
       "catalog/maquinas/_type.yaml": [
-        "nombre: Máquina",
+        "name: Máquina",
         "plural: Máquinas",
-        "campos:",
-        "  ip: { tipo: ip }",
-        "  ficha: { tipo: ficha, opcional: true }",
+        "fields:",
+        "  ip: { type: ip }",
+        "  ficha: { type: page, optional: true }",
       ].join("\n"),
       "catalog/maquinas/nas.yaml": "ip: 192.168.1.30\nficha: red/nas\n",
       "docs/red/nas.mdx": page("El NAS de casa"),
@@ -192,7 +192,7 @@ describe("accepted MDX", () => {
     // The unclosed tag on line 8 is noticed at the end of the file.
     expect(found.problems[0]?.line).toBe(9)
     expect(found.problems[0]?.message).toStartWith("La ficha no se puede leer:")
-    expect(found.header.titulo).toBe("Notas")
+    expect(found.header.title).toBe("Notas")
   })
 
   test("GitHub-flavoured Markdown renders tables, task lists and strikethrough", async () => {
@@ -298,11 +298,11 @@ describe("links and images", () => {
   describe("catalog: links", () => {
     const withPages = {
       "catalog/maquinas/_type.yaml": [
-        "nombre: Máquina",
+        "name: Máquina",
         "plural: Máquinas",
-        "campos:",
-        "  ip: { tipo: ip }",
-        "  ficha: { tipo: ficha, opcional: true }",
+        "fields:",
+        "  ip: { type: ip }",
+        "  ficha: { type: page, optional: true }",
       ].join("\n"),
       "catalog/maquinas/nas.yaml": "ip: 192.168.1.30\nficha: red/dns\n",
       "catalog/maquinas/pve-01.yaml": "ip: 192.168.1.10\n",

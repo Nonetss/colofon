@@ -11,6 +11,12 @@ import {
 } from "jsonc-parser/lib/esm/main.js"
 import { parse, YAMLParseError } from "yaml"
 import { type ZodType, z } from "zod"
+import {
+  type Contract1File,
+  contractKey,
+  pathFor,
+  translateContract1,
+} from "#contract/contract-1"
 import type { CatalogIndex } from "#contract/entity-schema"
 import {
   createMetaSchemas,
@@ -19,6 +25,13 @@ import {
   type SiteConfig,
   type TypeDefinition,
 } from "#contract/meta-schema"
+import {
+  CONTRACT_1_KEY,
+  CONTRACT_1_VALUE,
+  type ContractVersion,
+  contractVersionOf,
+  isRecord,
+} from "#contract/versions"
 
 // Reads the declarations of a content repository: doc.config.yaml, the
 // optional menu.yaml, each catalog type and the ids and pages its fields can
@@ -39,6 +52,8 @@ export const CATALOG_PATH = "catalog"
 export type ContentProblem = { file: string; message: string }
 
 export type ContentDeclarations = {
+  /** The contract major version `doc.config.yaml` declares. */
+  contract: ContractVersion
   config: SiteConfig
   /** The parsed `menu.yaml`, `null` when the repository has none. */
   menu: Menu | null
@@ -61,11 +76,15 @@ export async function loadContent(root: string): Promise<LoadResult> {
   const problems: ContentProblem[] = []
   const meta = createMetaSchemas()
 
-  const config = await readDeclaration(
-    root,
+  const configData = await readYaml(root, CONFIG_FILE, problems)
+  const contract = contractVersionOf(configData)
+  if (contract === "1") checkContract1Version(configData, problems)
+  const config = validateDeclaration(
+    configData,
     CONFIG_FILE,
     meta.siteConfig,
-    problems
+    problems,
+    { contract, file: "config" }
   )
 
   // A type exists when its folder does, even if its _type.yaml is broken:
@@ -74,7 +93,8 @@ export async function loadContent(root: string): Promise<LoadResult> {
     root,
     MENU_FILE,
     meta.menu,
-    problems
+    problems,
+    { contract, file: "menu" }
   )
 
   const typeIds = await catalogTypeIds(root, problems)
@@ -82,22 +102,27 @@ export async function loadContent(root: string): Promise<LoadResult> {
   const entityIds = new Map<string, string[]>()
   for (const typeId of typeIds) {
     const file = `${CATALOG_DIR}/${typeId}/${TYPE_FILE}`
-    const type = await readDeclaration(
-      root,
+    const data = await readYaml(root, file, problems)
+    const type = validateDeclaration(
+      data,
       file,
       meta.typeDefinition,
-      problems
+      problems,
+      {
+        contract,
+        file: "type",
+      }
     )
     if (type !== undefined) types.set(typeId, type)
     entityIds.set(typeId, await entityIdsOf(root, typeId, problems))
   }
 
-  if (config?.cabecera !== undefined) {
-    checkRefs(config.cabecera, CONFIG_FILE, typeIds, problems)
+  if (config?.header !== undefined) {
+    checkRefs(config.header, CONFIG_FILE, typeIds, problems, contract)
   }
   for (const [typeId, type] of types) {
     const file = `${CATALOG_DIR}/${typeId}/${TYPE_FILE}`
-    checkRefs(type.campos, file, typeIds, problems)
+    checkRefs(type.fields, file, typeIds, problems, contract)
   }
 
   if (config === undefined || menu === undefined || problems.length > 0)
@@ -106,6 +131,7 @@ export async function loadContent(root: string): Promise<LoadResult> {
   return {
     ok: true,
     content: {
+      contract,
       config,
       menu,
       types,
@@ -118,51 +144,111 @@ export async function loadContent(root: string): Promise<LoadResult> {
   }
 }
 
-/** Like `readDeclaration`, but a missing file is `null`, not a problem. */
+/**
+ * How a file that names contract keys is read: which kind of file it is, and
+ * the repository's contract version, which says whether it is translated
+ * from the version 1 names before it is validated.
+ */
+export type ContractReading = { contract: ContractVersion; file: Contract1File }
+
+/** Like `readYaml` + `validateDeclaration`, but a missing file is `null`. */
 async function readOptionalDeclaration<T>(
   root: string,
   file: string,
   schema: ZodType<T>,
-  problems: ContentProblem[]
+  problems: ContentProblem[],
+  reading: ContractReading
 ): Promise<T | null | undefined> {
   const text = await readText(path.join(root, file))
   if (text === undefined) return null
-  return parseDeclaration(text, file, schema, problems)
+  const data = parseYaml(text, file, problems)
+  return validateDeclaration(data, file, schema, problems, reading)
 }
 
-async function readDeclaration<T>(
+/** The parsed YAML of `file`; a missing or broken file is a problem. */
+async function readYaml(
   root: string,
   file: string,
-  schema: ZodType<T>,
   problems: ContentProblem[]
-): Promise<T | undefined> {
+): Promise<unknown> {
   const text = await readText(path.join(root, file))
   if (text === undefined) {
     problems.push({ file, message: "No existe" })
     return undefined
   }
-  return parseDeclaration(text, file, schema, problems)
+  return parseYaml(text, file, problems)
 }
 
-function parseDeclaration<T>(
-  text: string,
+function validateDeclaration<T>(
+  data: unknown,
   file: string,
   schema: ZodType<T>,
-  problems: ContentProblem[]
+  problems: ContentProblem[],
+  reading: ContractReading
 ): T | undefined {
-  const data = parseYaml(text, file, problems)
   if (data === undefined) return undefined
-  const result = schema.safeParse(data, { error: spanishErrors })
+  const result = schema.safeParse(asContract2(data, file, reading, problems), {
+    error: spanishErrors,
+  })
   if (result.success) return result.data
   for (const issue of result.error.issues) {
-    problems.push({ file, message: describeIssue(issue) })
+    problems.push({ file, message: describeIssue(issue, reading) })
   }
   return undefined
 }
 
-export function describeIssue(issue: z.core.$ZodIssue): string {
+/**
+ * `data` under the version 2 names: as it is for a version 2 repository,
+ * translated for a version 1 one, whose version 2 keys are reported.
+ */
+export function asContract2(
+  data: unknown,
+  file: string,
+  reading: ContractReading,
+  problems: ContentProblem[]
+): unknown {
+  if (reading.contract === "2") return data
+  const translated = translateContract1(reading.file, data)
+  for (const at of translated.foreign) {
+    problems.push({ file, message: foreignKeyMessage(at) })
+  }
+  return translated.data
+}
+
+/** The problem of a version 2 key in a version 1 file. */
+export function foreignKeyMessage(at: readonly PropertyKey[]): string {
+  const key = String(at.at(-1))
+  return `${at.join(".")}: \`${key}\` es una clave del contrato 2, y este repositorio sigue el contrato 1 (\`${CONTRACT_1_KEY}: "${CONTRACT_1_VALUE}"\`)`
+}
+
+/**
+ * An issue as the platform reports it, its path under the names the file
+ * holds when `reading` is given.
+ */
+export function describeIssue(
+  issue: z.core.$ZodIssue,
+  reading?: ContractReading
+): string {
   if (issue.path.length === 0) return issue.message
-  return `${issue.path.join(".")}: ${issue.message}`
+  return `${issuePathOf(issue, reading).join(".")}: ${issue.message}`
+}
+
+function issuePathOf(
+  issue: z.core.$ZodIssue,
+  reading: ContractReading | undefined
+): PropertyKey[] {
+  if (reading === undefined) return issue.path
+  return pathFor(reading.contract, reading.file, issue.path)
+}
+
+/** Version 1 says its version as `plataforma: "1"`, between quotes. */
+function checkContract1Version(config: unknown, problems: ContentProblem[]) {
+  if (!isRecord(config)) return
+  if (config[CONTRACT_1_KEY] === CONTRACT_1_VALUE) return
+  problems.push({
+    file: CONFIG_FILE,
+    message: `${CONTRACT_1_KEY}: \`${CONTRACT_1_KEY}\` es la versión del contrato, entre comillas: "${CONTRACT_1_VALUE}"`,
+  })
 }
 
 export async function readText(file: string): Promise<string | undefined> {
@@ -349,10 +435,11 @@ function checkRefs(
   file: string,
   typeIds: readonly string[],
   problems: ContentProblem[],
+  contract: ContractVersion,
   prefix = ""
 ) {
   for (const [name, field] of Object.entries(fields)) {
-    checkFieldRefs(field, `${prefix}${name}`, file, typeIds, problems)
+    checkFieldRefs(field, `${prefix}${name}`, file, typeIds, problems, contract)
   }
 }
 
@@ -361,20 +448,31 @@ function checkFieldRefs(
   at: string,
   file: string,
   typeIds: readonly string[],
-  problems: ContentProblem[]
+  problems: ContentProblem[],
+  contract: ContractVersion
 ) {
-  if (field.tipo === "ref" && !typeIds.includes(field.a)) {
+  if (field.type === "ref" && !typeIds.includes(field.to)) {
     const known = typeIds.join(", ")
+    const to = contractKey(contract, "to")
     problems.push({
       file,
-      message: `${at}: \`a: ${field.a}\` no es ningún tipo de ${CATALOG_DIR}/ (hay: ${known})`,
+      message: `${at}: \`${to}: ${field.to}\` no es ningún tipo de ${CATALOG_DIR}/ (hay: ${known})`,
     })
   }
-  if (field.tipo === "lista") {
-    checkFieldRefs(field.de, `${at}.de`, file, typeIds, problems)
+  if (field.type === "list") {
+    const of = contractKey(contract, "of")
+    checkFieldRefs(field.of, `${at}.${of}`, file, typeIds, problems, contract)
   }
-  if (field.tipo === "objeto") {
-    checkRefs(field.campos, file, typeIds, problems, `${at}.campos.`)
+  if (field.type === "object") {
+    const fields = contractKey(contract, "fields")
+    checkRefs(
+      field.fields,
+      file,
+      typeIds,
+      problems,
+      contract,
+      `${at}.${fields}.`
+    )
   }
 }
 
@@ -391,7 +489,7 @@ async function docMdxFiles(root: string): Promise<string[]> {
     .filter((file) => file.endsWith(".mdx") && !isReservedDocsPath(file))
 }
 
-/** Pages a `ficha` field can name: paths in docs/ without `.mdx`, a folder's `index.mdx` as the folder. */
+/** Pages a `page` field can name: paths in docs/ without `.mdx`, a folder's `index.mdx` as the folder. */
 function docPagePaths(files: readonly string[]): string[] {
   const paths: string[] = []
   for (const file of files) {

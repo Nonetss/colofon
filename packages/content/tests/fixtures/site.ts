@@ -12,29 +12,29 @@ export const ROUTES = {
 }
 
 const CONFIG = [
-  "nombre: Casa",
-  'plataforma: "1"',
-  "cabecera:",
+  "name: Casa",
+  'contract: "2"',
+  "header:",
   "  maquinas:",
-  "    tipo: lista",
-  "    opcional: true",
-  "    de: { tipo: ref, a: maquinas }",
+  "    type: list",
+  "    optional: true",
+  "    of: { type: ref, to: maquinas }",
 ].join("\n")
 
 const CATALOG: Record<string, string> = {
   "doc.config.yaml": CONFIG,
   "catalog/maquinas/_type.yaml": [
-    "nombre: Máquina",
+    "name: Máquina",
     "plural: Máquinas",
-    "campos:",
-    "  ip: { tipo: ip }",
+    "fields:",
+    "  ip: { type: ip }",
   ].join("\n"),
   "catalog/maquinas/nas.yaml": "ip: 192.168.1.30\n",
 }
 
 /** A page file with a valid header and `body`. */
-export function page(titulo: string, body = "", extra = ""): string {
-  return `---\ntitulo: ${titulo}\ndescripcion: Sobre ${titulo}\n${extra}---\n\n${body}\n`
+export function page(title: string, body = "", extra = ""): string {
+  return `---\ntitle: ${title}\ndescription: Sobre ${title}\n${extra}---\n\n${body}\n`
 }
 
 /**
@@ -45,17 +45,23 @@ export async function siteOf(
   files: Record<string, string>,
   editDates: ReadonlyMap<string, string> = new Map()
 ): Promise<Site> {
-  const dir = await createContentDir({ ...CATALOG, ...files })
+  return readSiteOf({ ...CATALOG, ...files }, editDates)
+}
+
+/** Reads a site made of exactly `files`, without the default catalog. */
+export async function readSiteOf(
+  files: Record<string, string>,
+  editDates: ReadonlyMap<string, string> = new Map()
+): Promise<Site> {
+  const dir = await createContentDir(files)
   try {
     const loaded = await loadContent(dir.root)
     if (!loaded.ok) throw new Error(JSON.stringify(loaded.problems))
     return await readSite(
       dir.root,
-      loaded.content.config,
-      loaded.content.index,
+      loaded.content,
       await readCatalog(dir.root, loaded.content),
       ROUTES,
-      loaded.content.menu,
       editDates
     )
   } finally {

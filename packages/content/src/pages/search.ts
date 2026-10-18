@@ -368,7 +368,7 @@ function documentsOf(
   ) => {
     const page = site.pages.get(entry.path)
     const sections = sectionsOf(page?.tree ?? null)
-    const fields = page?.header.campos ?? {}
+    const fields = page?.header.fields ?? {}
     documents.push({
       id: takeId(),
       repository,

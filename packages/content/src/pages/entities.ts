@@ -72,7 +72,7 @@ export function entitiesTable(
   for (const problem of type.problems)
     problems.push(`${problem.file}: ${problem.message}`)
 
-  const fields = type.definition.campos
+  const fields = type.definition.fields
   const label = labelField(type.definition)
   const isColumn = (name: string) => name === ID_COLUMN || name in fields
   const unknownField = (name: string) =>
@@ -118,7 +118,7 @@ export function entitiesTable(
 
 /**
  * The table of some entities of a type, with the type's default columns
- * (`vista.columnas`, or the label and every field), ordered by label.
+ * (`view.columns`, or the label and every field), ordered by label.
  */
 export function typeTable(
   type: CatalogType,
@@ -127,12 +127,12 @@ export function typeTable(
 ): Element {
   const label = labelField(type.definition)
   const columns = columnsOf(null, type.definition, label).filter(
-    (name) => name === ID_COLUMN || name in type.definition.campos
+    (name) => name === ID_COLUMN || name in type.definition.fields
   )
   const sorted = [...entities].sort((a, b) =>
     collator.compare(a.label, b.label)
   )
-  const shown = { fields: type.definition.campos, label, context }
+  const shown = { fields: type.definition.fields, label, context }
   return element("div", { className: ["doc-entities"] }, [
     table(columns, sorted, shown),
   ])
@@ -170,7 +170,7 @@ function readOptions(
   return options
 }
 
-/** `columns`, else the type's `vista.columnas`, else the label and every field. */
+/** `columns`, else the type's `view.columns`, else the label and every field. */
 function columnsOf(
   written: string | null,
   definition: TypeDefinition,
@@ -181,8 +181,8 @@ function columnsOf(
       .split(",")
       .map((name) => name.trim())
       .filter((name) => name !== "")
-  if (definition.vista !== undefined) return definition.vista.columnas
-  const rest = Object.keys(definition.campos).filter((name) => name !== label)
+  if (definition.view !== undefined) return definition.view.columns
+  const rest = Object.keys(definition.fields).filter((name) => name !== label)
   return [label, ...rest]
 }
 
@@ -236,7 +236,7 @@ function table(
   return element("table", {}, [head, body])
 }
 
-/** A column's header: its field's label, or its name (`id`, `fuente`…). */
+/** A column's header: its field's label, or its name (`id`, `source`…). */
 function columnLabel(
   name: string,
   fields: Readonly<Record<string, FieldDefinition>>
@@ -246,9 +246,9 @@ function columnLabel(
   return fieldLabel(name, field)
 }
 
-/** How the reader names a field: its `etiqueta`, or its name without one. */
+/** How the reader names a field: its `label`, or its name without one. */
 export function fieldLabel(name: string, field: FieldDefinition): string {
-  if (field.etiqueta !== undefined) return field.etiqueta
+  if (field.label !== undefined) return field.label
   return name
 }
 
@@ -279,8 +279,8 @@ export function shownValue(
   context: EntitiesContext
 ): ElementContent[] {
   if (value === undefined || value === null) return []
-  switch (field.tipo) {
-    case "booleano":
+  switch (field.type) {
+    case "boolean":
       return [text(yesNo(value))]
     case "url":
       if (typeof value !== "string") return []
@@ -288,19 +288,19 @@ export function shownValue(
     case "email":
       if (typeof value !== "string") return []
       return [link(`mailto:${value}`, [text(value)])]
-    case "ficha":
+    case "page":
       if (typeof value !== "string") return []
       return [link(context.routeOf(value), [text(context.titleOf(value))])]
     case "ref":
-      return refOf(value, field.a, context)
-    case "lista":
+      return refOf(value, field.to, context)
+    case "list":
       if (!Array.isArray(value)) return []
       return joined(
-        value.map((item) => shownValue(item, field.de, context)),
+        value.map((item) => shownValue(item, field.of, context)),
         ", "
       )
-    case "objeto":
-      return objectOf(value, field.campos, context)
+    case "object":
+      return objectOf(value, field.fields, context)
     default:
       return [text(plain(value))]
   }
@@ -363,7 +363,7 @@ type Group = {
   entities: Entity[]
 }
 
-/** One block per value: `valores` order for an enum, shown order otherwise. */
+/** One block per value: `values` order for an enum, shown order otherwise. */
 function groupsOf(
   entities: readonly Entity[],
   group: GroupField,
@@ -397,11 +397,11 @@ function contentOrMissing(
   return [text(`Sin ${name}`)]
 }
 
-/** Enum values by their place in `valores`; the missing block always last. */
+/** Enum values by their place in `values`; the missing block always last. */
 function rankOf(value: unknown, field: FieldDefinition): number {
   if (value === undefined || value === null) return Number.MAX_SAFE_INTEGER
-  if (field.tipo !== "enum" || typeof value !== "string") return 0
-  return field.valores.indexOf(value)
+  if (field.type !== "enum" || typeof value !== "string") return 0
+  return field.values.indexOf(value)
 }
 
 function byRankThenKey(a: Group, b: Group): number {

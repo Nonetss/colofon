@@ -21,9 +21,9 @@ export function catalogWithNas(): Catalog {
     typeIds: ["maquinas"],
     menuPaths: [],
   }).typeDefinition.parse({
-    nombre: "Máquina",
+    name: "Máquina",
     plural: "Máquinas",
-    campos: { ip: { tipo: "ip" } },
+    fields: { ip: { type: "ip" } },
   })
   const nas = {
     id: "nas",

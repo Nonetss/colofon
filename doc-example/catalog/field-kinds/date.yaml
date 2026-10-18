@@ -1,0 +1,5 @@
+family: scalar
+value: "Una fecha escrita como YYYY-MM-DD"
+example: "bought: { type: date } → bought: 2026-10-15"
+source: manual
+updated: 2026-10-15

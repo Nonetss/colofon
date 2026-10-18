@@ -1,0 +1,6 @@
+family: composite
+value: "Varios valores del campo declarado en of; se muestran unidos por comas"
+takes: "of: { type: … }"
+example: "tags: { type: list, of: { type: text } } → tags: [docker, apps]"
+source: manual
+updated: 2026-10-15

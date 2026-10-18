@@ -1,14 +1,16 @@
 import path from "node:path"
 import { catalogTypePath } from "#contract/catalog-paths"
+import { contractKey } from "#contract/contract-1"
 import { CATALOG_DIR, CATALOG_PATH, DOCS_DIR, MENU_FILE } from "#contract/load"
 import type { Menu, MenuEntry } from "#contract/meta-schema"
 import type { PageProblem } from "#contract/problems"
+import type { ContractVersion } from "#contract/versions"
 import { pagePathOf } from "#pages/transform"
 import type { Page } from "#pages/types"
 
 // The navigation of a repository. Without `menu.yaml` it is the folders of
 // docs/ (each folder a section, or a page when it holds only its index,
-// ordered by `orden` then by title) followed by
+// ordered by `order` then by title) followed by
 // the catalog. With a menu, the top level is its groups, each holding the
 // pages, folders and catalog pages its entries name, in the order written;
 // whatever no entry shows goes to a last "Otros" group. Entries naming
@@ -75,13 +77,13 @@ export const OTHERS_TITLE = "Otros"
 
 function entryPath(entry: MenuEntry): string {
   if (typeof entry === "string") return entry
-  return entry.ruta
+  return entry.path
 }
 
 function entryOverride(entry: MenuEntry): MenuOverride | undefined {
   if (typeof entry === "string") return undefined
-  if (entry.titulo === undefined && entry.icono === undefined) return undefined
-  return { title: entry.titulo ?? null, icon: entry.icono ?? null }
+  if (entry.title === undefined && entry.icon === undefined) return undefined
+  return { title: entry.title ?? null, icon: entry.icon ?? null }
 }
 
 function targetOf(
@@ -102,17 +104,23 @@ function isWithin(inner: string, outer: string): boolean {
 }
 
 /** Checks every entry of `menu` against what the repository holds. */
-export function resolveMenu(menu: Menu, targets: MenuTargets): ResolvedMenu {
+export function resolveMenu(
+  menu: Menu,
+  targets: MenuTargets,
+  contract: ContractVersion
+): ResolvedMenu {
   const problems: PageProblem[] = []
   const overrides = new Map<string, MenuOverride>()
   const accepted: string[] = []
   const report = (at: string, message: string) =>
     problems.push({ file: MENU_FILE, line: null, message: `${at}: ${message}` })
 
-  const groups = menu.secciones.map((group, groupAt) => {
+  const sectionsKey = contractKey(contract, "sections")
+  const pagesKey = contractKey(contract, "pages")
+  const groups = menu.sections.map((group, groupAt) => {
     const entries: ResolvedEntry[] = []
-    group.paginas.forEach((entry, entryAt) => {
-      const at = `secciones.${groupAt}.paginas.${entryAt}`
+    group.pages.forEach((entry, entryAt) => {
+      const at = `${sectionsKey}.${groupAt}.${pagesKey}.${entryAt}`
       const value = entryPath(entry)
       if (value === "" || value === "index") {
         report(at, "la portada no va en el menú: sale siempre como «Inicio»")
@@ -139,9 +147,9 @@ export function resolveMenu(menu: Menu, targets: MenuTargets): ResolvedMenu {
       if (override !== undefined) overrides.set(value, override)
     })
     return {
-      title: group.titulo,
-      description: group.descripcion ?? "",
-      icon: group.icono ?? null,
+      title: group.title,
+      description: group.description ?? "",
+      icon: group.icon ?? null,
       entries,
     }
   })
@@ -271,9 +279,9 @@ function entryOf(
   if (page !== undefined)
     return {
       path: pagePath,
-      title: page.header.titulo,
-      description: page.header.descripcion,
-      icon: page.header.icono,
+      title: page.header.title,
+      description: page.header.description,
+      icon: page.header.icon,
     }
   const override = source.overrides.get(pagePath)
   return {
@@ -365,7 +373,7 @@ export function joinPath(folder: string, name: string): string {
 
 function orderOf(page: Page | undefined): number | null {
   if (page === undefined) return null
-  return page.header.orden
+  return page.header.order
 }
 
 const collator = new Intl.Collator("es", { numeric: true })

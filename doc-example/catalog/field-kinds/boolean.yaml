@@ -1,0 +1,5 @@
+family: scalar
+value: "true o false; se muestra como Sí o No"
+example: "public: { type: boolean } → public: true"
+source: manual
+updated: 2026-10-15

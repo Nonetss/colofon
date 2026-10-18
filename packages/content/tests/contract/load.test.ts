@@ -41,7 +41,7 @@ describe("loadContent", () => {
       "pve-01",
     ])
     expect(result.content.index.pagePaths).toEqual(["red", "red/dns"])
-    expect(result.content.config.nombre).toBe("Homelab")
+    expect(result.content.config.name).toBe("Homelab")
   })
 
   test("a missing doc.config.yaml or _type.yaml is a problem", async () => {
@@ -60,17 +60,17 @@ describe("loadContent", () => {
     const result = await load({
       ...VALID_SITE,
       "catalog/ubicaciones/_type.yaml": [
-        "nombre: Ubicación",
+        "name: Ubicación",
         "plural: Ubicaciones",
-        "campos:",
-        "  centro: { tipo: lista, de: { tipo: ref, a: centros } }",
+        "fields:",
+        "  centro: { type: list, of: { type: ref, to: centros } }",
       ].join("\n"),
     })
     expect(problemsOf(result)).toEqual([
       {
         file: "catalog/ubicaciones/_type.yaml",
         message:
-          "centro.de: `a: centros` no es ningún tipo de catalog/ (hay: maquinas, ubicaciones)",
+          "centro.of: `to: centros` no es ningún tipo de catalog/ (hay: maquinas, ubicaciones)",
       },
     ])
   })
@@ -78,13 +78,13 @@ describe("loadContent", () => {
   test("a YAML syntax error gives the line and, for an unquoted colon, the fix", async () => {
     const result = await load({
       ...VALID_SITE,
-      "doc.config.yaml": 'plataforma: "1"\nnombre: Casa: la red\n',
+      "doc.config.yaml": 'contract: "2"\nname: Casa: la red\n',
     })
     expect(problemsOf(result)).toEqual([
       {
         file: "doc.config.yaml",
         message:
-          'YAML no válido en la línea 2, columna 9: un texto con ": " dentro tiene que ir entre comillas',
+          'YAML no válido en la línea 2, columna 7: un texto con ": " dentro tiene que ir entre comillas',
       },
     ])
   })
@@ -92,10 +92,10 @@ describe("loadContent", () => {
   test("schema problems carry the path of the field, in Spanish", async () => {
     const result = await load({
       ...VALID_SITE,
-      "catalog/ubicaciones/_type.yaml": "nombre: Ubicación\ncampos: {}\n",
+      "catalog/ubicaciones/_type.yaml": "name: Ubicación\nfields: {}\n",
     })
     const messages = problemsOf(result).map((problem) => problem.message)
-    expect(messages).toContain("campos: Declara al menos un campo")
+    expect(messages).toContain("fields: Declara al menos un campo")
     expect(messages.some((message) => message.startsWith("plural: "))).toBe(
       true
     )
@@ -104,7 +104,7 @@ describe("loadContent", () => {
   test("badly named types and entity files are problems; .yml is refused", async () => {
     const result = await load({
       ...VALID_SITE,
-      "catalog/Equipos/_type.yaml": "nombre: Equipo\n",
+      "catalog/Equipos/_type.yaml": "name: Equipo\n",
       "catalog/maquinas/PVE-02.yaml": "ip: 192.168.1.11\n",
       "catalog/maquinas/vps.yml": "ip: 203.0.113.42\n",
     })
@@ -118,8 +118,8 @@ describe("loadContent", () => {
   test("folder paths list every folder holding a page; docs/catalog is left out", async () => {
     const result = await load({
       ...VALID_SITE,
-      "docs/contenedores/komodo/nuevo-stack.mdx": "---\ntitulo: Nuevo\n---\n",
-      "docs/catalog/index.mdx": "---\ntitulo: Mío\n---\n",
+      "docs/contenedores/komodo/nuevo-stack.mdx": "---\ntitle: Nuevo\n---\n",
+      "docs/catalog/index.mdx": "---\ntitle: Mío\n---\n",
     })
     if (!result.ok) throw new Error(JSON.stringify(result.problems))
     expect(result.content.index.folderPaths).toEqual([
@@ -133,28 +133,25 @@ describe("loadContent", () => {
 
 describe("menu.yaml", () => {
   const MENU = [
-    "secciones:",
-    "  - titulo: Red",
-    "    icono: network",
-    "    descripcion: El DNS",
-    "    paginas:",
+    "sections:",
+    "  - title: Red",
+    "    icon: network",
+    "    description: El DNS",
+    "    pages:",
     "      - red",
-    "      - { ruta: red/dns, titulo: Nombres, icono: globe }",
+    "      - { path: red/dns, title: Nombres, icon: globe }",
   ].join("\n")
 
   test("a valid menu is read as written", async () => {
     const result = await load({ ...VALID_SITE, "menu.yaml": MENU })
     if (!result.ok) throw new Error(JSON.stringify(result.problems))
     expect(result.content.menu).toEqual({
-      secciones: [
+      sections: [
         {
-          titulo: "Red",
-          icono: "network",
-          descripcion: "El DNS",
-          paginas: [
-            "red",
-            { ruta: "red/dns", titulo: "Nombres", icono: "globe" },
-          ],
+          title: "Red",
+          icon: "network",
+          description: "El DNS",
+          pages: ["red", { path: "red/dns", title: "Nombres", icon: "globe" }],
         },
       ],
     })
@@ -170,26 +167,26 @@ describe("menu.yaml", () => {
     const result = await load({
       ...VALID_SITE,
       "menu.yaml": [
-        "secciones:",
-        "  - titulo: Red",
-        "    icono: netwrok",
-        "    orden: 2",
-        "    paginas: [red]",
+        "sections:",
+        "  - title: Red",
+        "    icon: netwrok",
+        "    order: 2",
+        "    pages: [red]",
       ].join("\n"),
     })
     expect(result.ok).toBe(false)
     const messages = problemsOf(result).map((problem) => problem.message)
     expect(messages).toContain(
-      "secciones.0.icono: `netwrok` no es un nombre de icono de Lucide (server, map-pin, network…)"
+      "sections.0.icon: `netwrok` no es un nombre de icono de Lucide (server, map-pin, network…)"
     )
-    expect(messages.some((message) => message.includes("orden"))).toBe(true)
+    expect(messages.some((message) => message.includes("order"))).toBe(true)
     expect(problemsOf(result).every((p) => p.file === "menu.yaml")).toBe(true)
   })
 
   test("a path that names no page is not a declaration problem", async () => {
     const result = await load({
       ...VALID_SITE,
-      "menu.yaml": "secciones:\n  - titulo: Red\n    paginas: [red/vpn]\n",
+      "menu.yaml": "sections:\n  - title: Red\n    pages: [red/vpn]\n",
     })
     expect(result.ok).toBe(true)
   })

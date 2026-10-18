@@ -9,43 +9,43 @@ import { type ContentDir, createContentDir } from "#tests/fixtures/content-dir"
 // A catalog shaped like the example homelab: services grouped by an enum,
 // machines labelled by an optional field and pointing at a location.
 const FILES: Record<string, string> = {
-  "doc.config.yaml": 'nombre: Homelab\nplataforma: "1"\n',
+  "doc.config.yaml": 'name: Homelab\ncontract: "2"\n',
   "catalog/locations/_type.yaml": [
-    "nombre: Location",
+    "name: Location",
     "plural: Locations",
-    "etiqueta: name",
-    "campos:",
-    "  name: { tipo: texto }",
+    "title_field: name",
+    "fields:",
+    "  name: { type: text }",
   ].join("\n"),
   "catalog/locations/home.yaml": "name: Home\n",
   "catalog/machines/_type.yaml": [
-    "nombre: Machine",
+    "name: Machine",
     "plural: Machines",
-    "etiqueta: name",
-    "campos:",
-    "  name: { tipo: texto, opcional: true }",
-    "  ip: { tipo: ip, etiqueta: Dirección IP }",
-    "  kind: { tipo: enum, valores: [physical, vm] }",
-    "  location: { tipo: ref, a: locations }",
-    "  virtual: { tipo: booleano, opcional: true }",
-    "  tags: { tipo: lista, opcional: true, de: { tipo: texto } }",
-    "vista:",
-    "  columnas: [name, ip, location]",
+    "title_field: name",
+    "fields:",
+    "  name: { type: text, optional: true }",
+    "  ip: { type: ip, label: Dirección IP }",
+    "  kind: { type: enum, values: [physical, vm] }",
+    "  location: { type: ref, to: locations }",
+    "  virtual: { type: boolean, optional: true }",
+    "  tags: { type: list, optional: true, of: { type: text } }",
+    "view:",
+    "  columns: [name, ip, location]",
   ].join("\n"),
   "catalog/machines/docker-01.yaml":
     "ip: 192.168.1.20\nkind: vm\nlocation: home\nvirtual: true\ntags: [docker, apps]\n",
   "catalog/machines/pve-01.yaml":
     "name: PVE-01\nip: 192.168.1.10\nkind: physical\nlocation: home\n",
   "catalog/services/_type.yaml": [
-    "nombre: Service",
+    "name: Service",
     "plural: Services",
-    "etiqueta: name",
-    "campos:",
-    "  name: { tipo: texto }",
-    "  category: { tipo: enum, valores: [network, containers, backups] }",
-    "  url: { tipo: url, opcional: true }",
-    "  machine: { tipo: ref, a: machines }",
-    "  page: { tipo: ficha, opcional: true }",
+    "title_field: name",
+    "fields:",
+    "  name: { type: text }",
+    "  category: { type: enum, values: [network, containers, backups] }",
+    "  url: { type: url, optional: true }",
+    "  machine: { type: ref, to: machines }",
+    "  page: { type: page, optional: true }",
   ].join("\n"),
   "catalog/services/komodo.yaml":
     "name: Komodo\ncategory: containers\nurl: https://komodo.example\nmachine: docker-01\npage: containers/komodo\n",
@@ -54,19 +54,19 @@ const FILES: Record<string, string> = {
   "catalog/services/duplicati.yaml":
     "name: Duplicati\ncategory: backups\nmachine: docker-01\n",
   "catalog/stacks/_type.yaml": [
-    "nombre: Stack",
+    "name: Stack",
     "plural: Stacks",
-    "campos:",
-    "  machine: { tipo: ref, a: machines }",
+    "fields:",
+    "  machine: { type: ref, to: machines }",
   ].join("\n"),
   "catalog/stacks/apps.yaml": "machine: docker-01\n",
   "catalog/vlans/_type.yaml": [
-    "nombre: VLAN",
+    "name: VLAN",
     "plural: VLANs",
-    "campos:",
-    "  tag: { tipo: entero }",
+    "fields:",
+    "  tag: { type: integer }",
   ].join("\n"),
-  "docs/containers/komodo.mdx": "---\ntitulo: Komodo\n---\n",
+  "docs/containers/komodo.mdx": "---\ntitle: Komodo\n---\n",
 }
 
 let dir: ContentDir
@@ -135,14 +135,14 @@ describe("entitiesTable", () => {
     )
   })
 
-  test("a column is headed by its field's etiqueta, its name without one, and id keeps its name", () => {
+  test("a column is headed by its field's label, its name without one, and id keeps its name", () => {
     const { html } = render({ type: "machines", columns: "id,ip,kind" })
     expect(html).toContain(
       "<tr><th>id</th><th>Dirección IP</th><th>kind</th></tr>"
     )
   })
 
-  test("without etiqueta the label column is the id", () => {
+  test("without title_field the label column is the id", () => {
     const { html } = render({ type: "stacks" })
     expect(html).toContain("<tr><th>id</th><th>machine</th></tr>")
     expect(rowsOf(html)).toEqual([["apps", "docker-01"]])
@@ -155,7 +155,7 @@ describe("entitiesTable", () => {
     )
   })
 
-  test("grouped by an enum, in valores order, without the group column", () => {
+  test("grouped by an enum, in values order, without the group column", () => {
     const { html, problems } = render({
       type: "services",
       group: "category",
