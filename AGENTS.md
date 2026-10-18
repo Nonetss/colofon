@@ -7,7 +7,7 @@ Monorepo `colofon`: Astro + Hono + oRPC + Better Auth + Drizzle/PostgreSQL on Bu
 - Agent instructions are `AGENTS.md` plus the `stack` skill (`.agents/skills/stack/`, see "Project skill"). `CLAUDE.md` just imports this file (`@AGENTS.md`) so every agent reads identical text — never add instruction text to `CLAUDE.md`.
 - This file holds only what applies to **every** task: the base philosophy, the project map, the hard rules and the pointer to `stack`. Convention detail lives in the `stack` skill's references.
 - Any change that alters a convention updates the file that states it (this one or the `stack` reference that owns it) in the same change. Adding, removing or renaming a workspace updates `references/workspaces.md`.
-- Don't update the human documentation in `docs/` (`docs/human/`, `docs/diagrams/`, `docs/img/`) as part of a change, and don't add tasks for it to OpenSpec changes. Touch it only when the user asks for it.
+- Don't update the human documentation in `docs/` (see "Documentation site (`docs/`)") as part of a change, and don't add tasks for it to OpenSpec changes. Touch it only when the user asks for it.
 - New convention detail goes into a reference under `.agents/skills/stack/references/` plus a row in `stack/SKILL.md`'s routing tables, not into a new skill. The skill is symlinked from `.claude/skills/stack`.
 - Don't hand-copy enumerations whose source of truth lives elsewhere (env vars, OpenSpec capabilities). Name the source and state the rule instead.
 - Every cited path must exist, here and in the skill.
@@ -28,6 +28,7 @@ This repo was started from a **template**, so it ships with a lot of features (B
 - `apps/site` — the static project website (Astro, English + Spanish landing and docs), published to GitHub Pages at `nonetss.github.io/colofon` by `.github/workflows/pages.yml`; not part of the running app.
 - `apps/gateway` — Caddy (Docker assets only, not a workspace) and the only place that maps requests to apps: the public HTTP entry point (backend API + frontend on one origin, the only published port).
 - `packages/api` (oRPC contract + handlers), `packages/db` (Drizzle schema, seed, migrations), `packages/auth` (Better Auth), `packages/cron`, `packages/content` (content contract: meta-schema, catalog loader, editor schemas, clones of the content repositories stored in the database, the git server for the ones the platform hosts, and the page parser: MDX to a sanitized HTML tree, the navigation from the folders or `menu.yaml`, the generated catalog pages, the diagrams and the repository's cleaned `styles/` stylesheet, without executing anything), `packages/logger`, `packages/env`, `packages/config`.
+- `docs/` — the human documentation (Spanish), a colofon content repository registered with content folder `docs`; see "Documentation site (`docs/`)".
 - `doc-example/` — a sample content repository (git subtree of its own GitHub repo, not a workspace): the kind of documentation this platform renders. Look at it before changing anything content-facing; how to sync it is in `references/workspaces.md`.
 
 Details and conventions: `stack` skill.
@@ -85,6 +86,17 @@ Before writing a new React/UI component, hook, client-side helper or `packages/a
 - Biome 2.5.15 (root `biome.json`): 2-space indent, double quotes, no semicolons, 80-col, organize imports on, experimental HTML formatting, Tailwind CSS directives. One override: `**/*.svelte|astro|vue` disables `useConst`, `useImportType`, unused-vars/imports.
 - Tailwind classes: `tailwint` (`bun run tailwind:check`).
 - No ESLint, no Prettier, no Husky.
+
+## Documentation site (`docs/`)
+
+`docs/` is a **colofon content repository** (content folder `docs`) documenting this monorepo. Before writing or changing anything under it, load the `colofon-documentation` skill and the one for the folder you touch (`colofon-docs`, `colofon-catalog`, `colofon-diagrams`…). Those writing skills belong to the platform: never copy them into this repo or edit an installed copy. Every path below is relative to `docs/`. This section is the site's «Este sitio».
+
+- **What it documents:** how colofon works inside and how to work with it (architecture, local development, configuration, the content platform, API, auth, crons, frontend, cross-cutting features, deployment, conventions). Prose, titles and menu groups in Spanish; section folders and page files in Spanish (lowercase, hyphens, no accents); catalog type, field, enum and entity ids in English, the same as garabato's documentation so both sites stay comparable.
+- **Sections:** one folder per topic under `docs/`, never deeper than `docs/<section>/<page>.mdx`: `arquitectura`, `desarrollo`, `configuracion`, `contenido`, `backend-api`, `autenticacion`, `crons`, `frontend`, `transversales`, `docker-despliegue`, `convenciones`. Each `menu.yaml` group shows whole folders with their icon; the catalog shows as `{ ruta: catalog, titulo: Catálogo }` in «Referencia». Each section's `index.mdx` ends with a «¿Dónde encuentro…?» table of its pages.
+- **Catalog types:** `workspaces` (id = folder name), `env-vars` (id = variable lowercased with hyphens), `commands` (id = root script with `:` → `-`), `compose-files` (id = short name: `dev`, `local`, `prod`, `gateway`). Their sources: the repo tree and each `package.json`, `.env.example` plus `packages/env/src/*.ts`, the root `package.json` scripts, and the compose files. An entity's `fuente` names that source and `actualizado` is the date it was last checked against it. The `ficha` to the explaining page is always `page`.
+- **Header fields** (`doc.config.yaml`): `workspaces`, `env_vars`, `commands`, `compose_files` (lists of `ref`) and `open_questions`.
+- **Diagrams:** `diagrams/arquitectura.json` (home, `arquitectura`), `api-estructura.json` (`backend-api`), `frontend-estructura.json` and `slices-admin.json` (`frontend`).
+- **Not read by the platform:** `img/` (the SVG diagrams the root `README.md` embeds).
 
 ## OpenSpec workflow
 
