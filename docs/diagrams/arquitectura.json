@@ -4,31 +4,126 @@
   "width": 808,
   "height": 232,
   "zones": [
-    { "id": "client", "x": 16, "y": 16, "w": 176, "h": 200, "label": "CLIENTE" },
-    { "id": "server", "x": 232, "y": 16, "w": 560, "h": 200, "label": "SERVIDOR · COMPOSE" }
+    {
+      "id": "client",
+      "x": 16,
+      "y": 16,
+      "w": 176,
+      "h": 200,
+      "label": "CLIENTE"
+    },
+    {
+      "id": "server",
+      "x": 232,
+      "y": 16,
+      "w": 560,
+      "h": 200,
+      "label": "SERVIDOR · COMPOSE"
+    }
   ],
   "nodes": [
-    { "id": "browser", "name": "Navegador", "sub": "cookie de sesión", "kind": "input", "shape": "pill",
-      "x": 40, "y": 82, "w": 136, "h": 72, "zone": "client", "trace": true },
-    { "id": "gateway", "name": "Gateway", "sub": ["Caddy", "único puerto público"], "tag": "Entrada", "kind": "focal",
-      "x": 256, "y": 40, "w": 144, "h": 156, "zone": "server", "needs": ["frontend", "backend"] },
-    { "id": "frontend", "name": "Frontend", "sub": "Astro SSR · :4321", "tag": "App",
-      "x": 480, "y": 40, "w": 144, "h": 64, "zone": "server" },
-    { "id": "backend", "name": "Backend", "sub": "Hono + oRPC · :3000", "tag": "App",
-      "x": 480, "y": 132, "w": 144, "h": 64, "zone": "server", "needs": ["db"] },
-    { "id": "db", "name": "PostgreSQL", "sub": "Drizzle", "kind": "store", "shape": "cylinder",
-      "x": 676, "y": 124, "w": 100, "h": 80, "zone": "server" }
+    {
+      "id": "browser",
+      "name": "Navegador",
+      "sub": "cookie de sesión",
+      "kind": "input",
+      "shape": "pill",
+      "x": 40,
+      "y": 82,
+      "w": 136,
+      "h": 72,
+      "zone": "client",
+      "trace": true
+    },
+    {
+      "id": "gateway",
+      "name": "Gateway",
+      "sub": ["Caddy", "único puerto público"],
+      "tag": "Entrada",
+      "kind": "focal",
+      "x": 256,
+      "y": 40,
+      "w": 144,
+      "h": 156,
+      "zone": "server",
+      "needs": ["frontend", "backend"]
+    },
+    {
+      "id": "frontend",
+      "name": "Frontend",
+      "sub": "Astro SSR · :4321",
+      "tag": "App",
+      "x": 480,
+      "y": 40,
+      "w": 144,
+      "h": 64,
+      "zone": "server"
+    },
+    {
+      "id": "backend",
+      "name": "Backend",
+      "sub": "Hono + oRPC · :3000",
+      "tag": "App",
+      "x": 480,
+      "y": 132,
+      "w": 144,
+      "h": 64,
+      "zone": "server",
+      "needs": ["db"]
+    },
+    {
+      "id": "db",
+      "name": "PostgreSQL",
+      "sub": "Drizzle",
+      "kind": "store",
+      "shape": "cylinder",
+      "x": 676,
+      "y": 124,
+      "w": 100,
+      "h": 80,
+      "zone": "server"
+    }
   ],
   "edges": [
-    { "from": "browser", "to": "gateway", "kind": "accent",
-      "points": [[176, 118], [256, 118]], "label": "HTTP", "at": [216, 108] },
-    { "from": "gateway", "to": "frontend",
-      "points": [[400, 72], [480, 72]], "label": "PÁGINAS", "at": [440, 62] },
-    { "from": "gateway", "to": "backend", "kind": "accent",
-      "points": [[400, 164], [480, 164]], "label": "/RPC /API", "at": [440, 154] },
-    { "from": "frontend", "to": "backend", "kind": "dash",
-      "points": [[552, 104], [552, 132]], "label": "SESIÓN", "at": [564, 122], "anchor": "start" },
-    { "from": "backend", "to": "db", "kind": "accent",
-      "points": [[624, 164], [676, 164]], "label": "SQL", "at": [650, 154] }
+    {
+      "from": "browser",
+      "to": "gateway",
+      "kind": "accent",
+      "points": [[176, 118], [256, 118]],
+      "label": "HTTP",
+      "at": [216, 108]
+    },
+    {
+      "from": "gateway",
+      "to": "frontend",
+      "points": [[400, 72], [480, 72]],
+      "label": "PÁGINAS",
+      "at": [440, 62]
+    },
+    {
+      "from": "gateway",
+      "to": "backend",
+      "kind": "accent",
+      "points": [[400, 164], [480, 164]],
+      "label": "/RPC /API",
+      "at": [440, 154]
+    },
+    {
+      "from": "frontend",
+      "to": "backend",
+      "kind": "dash",
+      "points": [[552, 104], [552, 132]],
+      "label": "SESIÓN",
+      "at": [564, 122],
+      "anchor": "start"
+    },
+    {
+      "from": "backend",
+      "to": "db",
+      "kind": "accent",
+      "points": [[624, 164], [676, 164]],
+      "label": "SQL",
+      "at": [650, 154]
+    }
   ]
 }

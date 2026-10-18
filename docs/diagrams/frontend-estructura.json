@@ -5,12 +5,48 @@
   "direction": "down",
   "nodes": [
     { "id": "root", "name": "src/", "sub": "apps/frontend", "focal": true },
-    { "id": "pages", "name": "pages/ · layouts/", "sub": "rutas y middleware", "parent": "root" },
-    { "id": "features", "name": "features/", "sub": "interfaz por dominio", "parent": "root", "page": "frontend" },
-    { "id": "components", "name": "components/", "sub": "ui/ y shared/", "parent": "root" },
-    { "id": "ui", "name": "ui/", "sub": "primitivas shadcn", "parent": "components" },
-    { "id": "shared", "name": "shared/", "sub": "patrones de la app", "parent": "components" },
-    { "id": "lib", "name": "hooks/ · lib/", "sub": "y providers/", "parent": "root" },
-    { "id": "styles", "name": "styles/", "sub": "tokens y tema", "parent": "root" }
+    {
+      "id": "pages",
+      "name": "pages/ · layouts/",
+      "sub": "rutas y middleware",
+      "parent": "root"
+    },
+    {
+      "id": "features",
+      "name": "features/",
+      "sub": "interfaz por dominio",
+      "parent": "root",
+      "page": "frontend"
+    },
+    {
+      "id": "components",
+      "name": "components/",
+      "sub": "ui/ y shared/",
+      "parent": "root"
+    },
+    {
+      "id": "ui",
+      "name": "ui/",
+      "sub": "primitivas shadcn",
+      "parent": "components"
+    },
+    {
+      "id": "shared",
+      "name": "shared/",
+      "sub": "patrones de la app",
+      "parent": "components"
+    },
+    {
+      "id": "lib",
+      "name": "hooks/ · lib/",
+      "sub": "y providers/",
+      "parent": "root"
+    },
+    {
+      "id": "styles",
+      "name": "styles/",
+      "sub": "tokens y tema",
+      "parent": "root"
+    }
   ]
 }

@@ -5,13 +5,55 @@
   "direction": "down",
   "nodes": [
     { "id": "root", "name": "src/", "sub": "packages/api", "focal": true },
-    { "id": "base", "name": "Base compartida", "sub": "index · context · errors", "parent": "root" },
-    { "id": "helpers", "name": "shared/ · lib/", "sub": "helpers comunes", "parent": "root" },
-    { "id": "v1", "name": "v1/", "sub": "router.ts monta features", "parent": "root", "page": "backend-api" },
-    { "id": "feature", "name": "<feature>/", "sub": "cron, comment, apiKey…", "parent": "v1" },
-    { "id": "input", "name": "input.ts", "sub": "entrada (zod)", "parent": "feature" },
-    { "id": "output", "name": "output.ts", "sub": "salida (zod)", "parent": "feature" },
-    { "id": "handler", "name": "handler.ts", "sub": "lógica · db · auth", "parent": "feature", "focal": true },
-    { "id": "router", "name": "router.ts", "sub": "solo cableado", "parent": "feature" }
+    {
+      "id": "base",
+      "name": "Base compartida",
+      "sub": "index · context · errors",
+      "parent": "root"
+    },
+    {
+      "id": "helpers",
+      "name": "shared/ · lib/",
+      "sub": "helpers comunes",
+      "parent": "root"
+    },
+    {
+      "id": "v1",
+      "name": "v1/",
+      "sub": "router.ts monta features",
+      "parent": "root",
+      "page": "backend-api"
+    },
+    {
+      "id": "feature",
+      "name": "<feature>/",
+      "sub": "cron, comment, apiKey…",
+      "parent": "v1"
+    },
+    {
+      "id": "input",
+      "name": "input.ts",
+      "sub": "entrada (zod)",
+      "parent": "feature"
+    },
+    {
+      "id": "output",
+      "name": "output.ts",
+      "sub": "salida (zod)",
+      "parent": "feature"
+    },
+    {
+      "id": "handler",
+      "name": "handler.ts",
+      "sub": "lógica · db · auth",
+      "parent": "feature",
+      "focal": true
+    },
+    {
+      "id": "router",
+      "name": "router.ts",
+      "sub": "solo cableado",
+      "parent": "feature"
+    }
   ]
 }
