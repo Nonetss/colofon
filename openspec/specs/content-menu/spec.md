@@ -5,22 +5,22 @@ Lets a content repository declare its sidebar in one YAML file, grouping pages, 
 ## Requirements
 ### Requirement: Menu file
 
-A content repository MAY hold a `menu.yaml` file at its root. It SHALL declare `secciones`, a non-empty list of groups. Each group SHALL declare `titulo` (required text), `icono` (optional, a Lucide icon name), `descripcion` (optional text) and `paginas`, a non-empty list of entries. An entry SHALL be either a path written as text, or an object with `ruta` (the path, required), `titulo` (optional text) and `icono` (optional, a Lucide icon name). A path SHALL name a page, a section folder under `docs/`, the catalog (`catalog`) or a catalog type (`catalog/<type>`). Any other key, a missing required key or an icon that is not a Lucide icon name SHALL make the file invalid, reported per file with the field path.
+A content repository MAY hold a `menu.yaml` file at its root. It SHALL declare `sections`, a non-empty list of groups. Each group SHALL declare `title` (required text), `icon` (optional, a Lucide icon name), `description` (optional text) and `pages`, a non-empty list of entries. An entry SHALL be either a path written as text, or an object with `path` (the path, required), `title` (optional text) and `icon` (optional, a Lucide icon name). A path SHALL name a page, a section folder under `docs/`, the catalog (`catalog`) or a catalog type (`catalog/<type>`). Any other key, a missing required key or an icon that is not a Lucide icon name SHALL make the file invalid, reported per file with the field path.
 
 #### Scenario: A valid menu
 
-- **WHEN** `menu.yaml` holds a group `titulo: Red`, `icono: network` with `paginas: [network, { ruta: containers/komodo, icono: layers }]`, and both paths exist
+- **WHEN** `menu.yaml` holds a group `title: Red`, `icon: network` with `pages: [network, { path: containers/komodo, icon: layers }]`, and both paths exist
 - **THEN** the file SHALL be valid and the group SHALL list the section "network" and then the section "containers/komodo"
 
 #### Scenario: Misspelt icon
 
-- **WHEN** a group says `icono: netwrok`
-- **THEN** `menu.yaml` SHALL be reported on `secciones.0.icono` as not being a Lucide icon name
+- **WHEN** a group says `icon: netwrok`
+- **THEN** `menu.yaml` SHALL be reported on `sections.0.icon` as not being a Lucide icon name
 
 #### Scenario: Unknown key
 
-- **WHEN** a group says `orden: 2`
-- **THEN** `menu.yaml` SHALL be reported naming `orden` as a key it does not accept
+- **WHEN** a group says `order: 2`
+- **THEN** `menu.yaml` SHALL be reported naming `order` as a key it does not accept
 
 ### Requirement: Entries that point at nothing
 
@@ -38,7 +38,7 @@ An entry whose path names no page, section folder, catalog or catalog type, an e
 
 ### Requirement: Navigation from the menu
 
-When the repository has a valid `menu.yaml`, its navigation SHALL be one group per entry of `secciones`, in that order, each titled, described and iconed by the group. A group's children SHALL be its entries in the order written: a page entry SHALL be a page; a section folder entry SHALL be that section with its whole subtree, ordered inside as the folder navigation orders it, except a folder whose only page is its `index.mdx`, which SHALL be a page (`content-pages`, "Navigation tree"); `catalog` SHALL be the catalog section holding one page per catalog type; `catalog/<type>` SHALL be that type's page. Groups SHALL NOT be routes. The reading order (previous and next page) SHALL follow the menu, depth first, and SHALL skip the catalog's pages. A page's breadcrumbs SHALL be its group (as text, without a link) followed by the sections above it inside its entry.
+When the repository has a valid `menu.yaml`, its navigation SHALL be one group per entry of `sections`, in that order, each titled, described and iconed by the group. A group's children SHALL be its entries in the order written: a page entry SHALL be a page; a section folder entry SHALL be that section with its whole subtree, ordered inside as the folder navigation orders it, except a folder whose only page is its `index.mdx`, which SHALL be a page (`content-pages`, "Navigation tree"); `catalog` SHALL be the catalog section holding one page per catalog type; `catalog/<type>` SHALL be that type's page. Groups SHALL NOT be routes. The reading order (previous and next page) SHALL follow the menu, depth first, and SHALL skip the catalog's pages. A page's breadcrumbs SHALL be its group (as text, without a link) followed by the sections above it inside its entry.
 
 #### Scenario: A folder shown in another group
 
@@ -80,15 +80,14 @@ A repository without `menu.yaml` SHALL be navigated from its folders (`content-p
 
 ### Requirement: The menu wins over page headers
 
-What `menu.yaml` says about an entry SHALL be what every view shows for it: an entry's `titulo` and `icono` SHALL be the page's or section's title and icon in the sidebar, the page header, the breadcrumbs, the section listings, the search and the `llms.txt` indexes, whatever its header says. The header's `titulo` and `icono` SHALL only apply where the menu says nothing. When a page's header sets `titulo` or `icono` to a different value than its entry, the page SHALL be reported naming both values and saying that `menu.yaml` wins.
+What `menu.yaml` says about an entry SHALL be what every view shows for it: an entry's `title` and `icon` SHALL be the page's or section's title and icon in the sidebar, the page header, the breadcrumbs, the section listings, the search and the `llms.txt` indexes, whatever its header says. The header's `title` and `icon` SHALL only apply where the menu says nothing. When a page's header sets `title` or `icon` to a different value than its entry, the page SHALL be reported naming both values and saying that `menu.yaml` wins.
 
 #### Scenario: Icon set in both places
 
-- **WHEN** `menu.yaml` lists `{ ruta: containers/komodo, icono: layers }` and `docs/containers/komodo/index.mdx` says `icono: box`
-- **THEN** the sidebar and the page header SHALL show the `layers` icon, and the page SHALL be reported saying its `icono` `box` is overridden by `menu.yaml` (`layers`)
+- **WHEN** `menu.yaml` lists `{ path: containers/komodo, icon: layers }` and `docs/containers/komodo/index.mdx` says `icon: box`
+- **THEN** the sidebar and the page header SHALL show the `layers` icon, and the page SHALL be reported saying its `icon` `box` is overridden by `menu.yaml` (`layers`)
 
 #### Scenario: Only the header says it
 
-- **WHEN** `menu.yaml` lists `network` without `icono` and `docs/network/index.mdx` says `icono: network`
+- **WHEN** `menu.yaml` lists `network` without `icon` and `docs/network/index.mdx` says `icon: network`
 - **THEN** the section SHALL show the `network` icon and no problem SHALL be reported
-

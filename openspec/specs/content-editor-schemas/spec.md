@@ -34,10 +34,10 @@ The backend SHALL serve, without authentication, as JSON Schema draft-07, for th
 - `GET /api/v1/content/schemas/{repository}/config`: the schema of `doc.config.yaml`;
 - `GET /api/v1/content/schemas/{repository}/menu`: the schema of `menu.yaml`, where a path lists the repository's page paths, section folders, `catalog` and `catalog/<type>` for each type;
 - `GET /api/v1/content/schemas/{repository}/diagram`: the schema of a diagram `.json` file (`content-diagrams`) in any of its forms: the drawn diagram and the chain without `type`, and each typed form (`content-diagram-types`) selected by its `type`, with its own keys and its `variant` values, accepting `$schema`, where a box's or typed item's `entity` lists `<type>/<id>` for every entity of the catalog, its `page` lists the repository's page paths, and `type`, `kind`, `shape`, `hue`, an edge's `kind`, `route`, `head` and `anchor`, and every other closed value list their values;
-- `GET /api/v1/content/schemas/{repository}/type`: the schema of a `_type.yaml`, where a reference's `a` lists the catalog types that exist and every field declaration accepts `etiqueta`;
-- `GET /api/v1/content/schemas/{repository}/entities/{type}`: the schema of an entity of `{type}`, titled with the type's `nombre`, where each declared field is titled with its `etiqueta` when it has one and carries its `descripcion`, a `ref` field lists the ids of the referenced type, a `ficha` field lists the page paths, an `enum` field lists its values, the fields without `opcional: true` are required and undeclared fields are refused.
+- `GET /api/v1/content/schemas/{repository}/type`: the schema of a `_type.yaml`, where a reference's `to` lists the catalog types that exist and every field declaration accepts `label`;
+- `GET /api/v1/content/schemas/{repository}/entities/{type}`: the schema of an entity of `{type}`, titled with the type's `name`, where each declared field is titled with its `label` when it has one and carries its `description`, a `ref` field lists the ids of the referenced type, a `page` field lists the page paths, an `enum` field lists its values, the fields without `optional: true` are required and undeclared fields are refused.
 
-Every `icono` in these schemas SHALL list the Lucide icon names the platform accepts. An unknown `{repository}`, an unknown `{type}`, or any schema requested for a repository without valid content SHALL answer `NOT_FOUND`.
+Every `icon` in these schemas SHALL list the Lucide icon names the platform accepts. The schemas of `doc.config.yaml`, `menu.yaml`, `_type.yaml` and the entities SHALL use the names of the repository's contract version (`content-contract` "Contract versions"): the English names for a version 2 repository, and the Spanish names of "Contract 1 names" for a version 1 one. The diagram schema SHALL be the same for both. An unknown `{repository}`, an unknown `{type}`, or any schema requested for a repository without valid content SHALL answer `NOT_FOUND`.
 
 #### Scenario: Reference suggestions
 
@@ -52,12 +52,17 @@ Every `icono` in these schemas SHALL list the Lucide icon names the platform acc
 #### Scenario: Icon suggestions
 
 - **WHEN** the editor requests the type schema of `documentacion`
-- **THEN** `icono` SHALL accept only Lucide icon names, so `server` is accepted and `servr` is marked
+- **THEN** `icon` SHALL accept only Lucide icon names, so `server` is accepted and `servr` is marked
 
 #### Scenario: Labelled field
 
-- **WHEN** the type `field-kinds` declares `family: { tipo: enum, valores: [scalar], etiqueta: Familia }` and the editor requests its entity schema
+- **WHEN** the type `field-kinds` declares `family: { type: enum, values: [scalar], label: Familia }` and the editor requests its entity schema
 - **THEN** the property `family` SHALL be titled "Familia"
+
+#### Scenario: A version 1 repository
+
+- **WHEN** the editor requests the type schema of a repository whose `doc.config.yaml` says `plataforma: "1"`
+- **THEN** the schema SHALL accept `campos`, `etiqueta` and `vista.columnas`, a field's `tipo` SHALL list `texto`, `numero`, `entero`, `booleano`, `fecha`, `url`, `email`, `ip`, `ficha`, `enum`, `ref`, `lista` and `objeto`, and `fields` SHALL be marked as not allowed
 
 #### Scenario: Unknown type
 
@@ -110,4 +115,3 @@ A content repository SHALL need only the editor setting `yaml.schemaStore.url`, 
 
 - **WHEN** a writer clones the content repository stored as `documentacion`, whose editor settings point `yaml.schemaStore.url` at `<public origin>/api/v1/content/schemas/documentacion`, and opens `catalog/maquinas/nas.yaml`
 - **THEN** the editor SHALL suggest the machine's fields and the ids its references accept, without the writer running anything
-
