@@ -1,6 +1,6 @@
 /** The running version: `/tag` sets it to the release's version
  *  (`scripts/set-version.sh`) before tagging, so it names the release. */
-export const APP_VERSION = "0.5.1"
+export const APP_VERSION = "0.5.2"
 
 const LATEST_RELEASE_URL =
   "https://api.github.com/repos/Nonetss/colofon/releases/latest"
