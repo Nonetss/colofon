@@ -8,6 +8,7 @@ import {
 } from "@nonete/db/testing"
 import { call } from "@orpc/server"
 import {
+  adminContext,
   anonymousContext,
   apiKeyContext,
   userContext,
@@ -170,6 +171,19 @@ describe("myOrganization.get", () => {
       ["Yo", "member", true],
     ])
     expect(answer.invitations).toEqual([])
+    expect(answer.canAddMembers).toBe(false)
+  })
+
+  test("a global admin may add users directly", async () => {
+    fakeDb.queue("query.member.findFirst", { ...ownMember, userId: "admin-id" })
+    fakeDb.queue("query.organization.findFirst", detail)
+
+    const answer = await myOrganizationHandler.get({
+      context: adminContext(),
+      input: { id: ORG_ID },
+    })
+
+    expect(answer.canAddMembers).toBe(true)
   })
 
   test("an admin sees the pending invitations only", async () => {

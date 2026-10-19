@@ -1,5 +1,11 @@
-import { skipToken, useQuery } from "@tanstack/react-query"
+import {
+  keepPreviousData,
+  skipToken,
+  useInfiniteQuery,
+  useQuery,
+} from "@tanstack/react-query"
 import type { MyOrganizationInput } from "@/features/profile/organizations/model/types"
+import { useDebouncedValue } from "@/hooks/use-debounced-value"
 import { useOrpcMutation } from "@/hooks/use-orpc-mutation"
 import { orpc } from "@/lib/orpc"
 
@@ -115,3 +121,58 @@ export const useInvitationReject = () =>
     error: "No se pudo rechazar la invitación",
     invalidate,
   })
+
+type AddMemberInput = Parameters<typeof orpc.v1.organization.addMember.call>[0]
+
+/** A global admin adds a user at once, without an invitation. */
+export const useMemberAdd = () =>
+  useOrpcMutation({
+    mutationFn: (input: AddMemberInput) =>
+      orpc.v1.organization.addMember.call(input),
+    success: "Miembro añadido",
+    error: "No se pudo añadir al miembro",
+    invalidate,
+  })
+
+const CANDIDATES_PAGE_SIZE = 25
+const MIN_SEARCH_LENGTH = 2
+
+function candidateSearch(search: string): string | undefined {
+  const trimmed = search.trim()
+  if (trimmed.length < MIN_SEARCH_LENGTH) return undefined
+  return trimmed
+}
+
+/**
+ * The users a global admin can add, by name and paged for infinite scroll;
+ * a search of 2+ characters narrows them by name or email, and the members
+ * in `excludeIds` are left out.
+ */
+export function useMemberCandidates(
+  search: string,
+  excludeIds: readonly string[]
+) {
+  const debouncedSearch = useDebouncedValue(search)
+  const query = useInfiniteQuery({
+    ...orpc.v1.adminUser.list.infiniteOptions({
+      input: (cursor: string | null) => ({
+        search: candidateSearch(debouncedSearch),
+        sort: "name",
+        order: "asc",
+        limit: CANDIDATES_PAGE_SIZE,
+        cursor,
+      }),
+      initialPageParam: null,
+      getNextPageParam: (lastPage) => lastPage.nextCursor,
+    }),
+    placeholderData: keepPreviousData,
+  })
+  const loaded = query.data?.pages.flatMap((page) => page.users) ?? []
+  return {
+    users: loaded.filter((user) => !excludeIds.includes(user.id)),
+    isPending: query.isPending,
+    hasNextPage: query.hasNextPage,
+    isFetchingNextPage: query.isFetchingNextPage,
+    fetchNextPage: query.fetchNextPage,
+  }
+}

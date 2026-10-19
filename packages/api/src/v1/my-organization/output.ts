@@ -50,6 +50,11 @@ export const myOrganizationOutput = {
   list: z.array(summary),
   get: summary.extend({
     members: z.array(memberItem),
+    canAddMembers: z
+      .boolean()
+      .describe(
+        "Whether the caller, as a global admin, may add users directly through organization.addMember"
+      ),
     invitations: z
       .array(invitationItem)
       .describe(

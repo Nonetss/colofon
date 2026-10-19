@@ -90,7 +90,8 @@ The profile section SHALL provide an “Organizaciones” page at `/me/organizat
 - lists the user's organizations with their name, slug, the user's role and member count, and an empty state with a button to create one;
 - creates an organization in a form with its name and a slug suggested from the name;
 - opens an organization to show its members (name, email, role, join date) and, to owners and admins, its pending invitations, with the actions the user's role allows: invite by email with a role, cancel an invitation, change a member's role, remove a member, rename and delete the organization (after a confirmation) and leave it (after a confirmation);
-- hides the actions the user's role doesn't allow.
+- hides the actions the user's role doesn't allow;
+- to a user with the global `admin` role, offers to add an existing user to the organization at once with a role, without an invitation, through the admin procedure of `organization-management`.
 
 All copy SHALL be in Spanish. A request without a session SHALL be redirected to the login.
 
@@ -103,6 +104,16 @@ All copy SHALL be in Spanish. A request without a session SHALL be redirected to
 
 - **WHEN** `luis`, a `member` of `equipo-docs`, opens it
 - **THEN** he SHALL see its members and the action to leave it, and no action to invite, change roles, remove members, rename or delete
+
+#### Scenario: A global admin adds someone directly
+
+- **WHEN** a global admin, a member of `equipo-docs`, opens it, picks the user `luis` and the role `member`
+- **THEN** `luis` SHALL be a member of `equipo-docs` at once, with no invitation, and SHALL read the repositories shared with it
+
+#### Scenario: Not offered to other users
+
+- **WHEN** a user without the global `admin` role, an owner of `equipo-docs`, opens it
+- **THEN** the page SHALL offer to invite by email and SHALL NOT offer to add a user directly
 
 #### Scenario: Accepting from the screen
 

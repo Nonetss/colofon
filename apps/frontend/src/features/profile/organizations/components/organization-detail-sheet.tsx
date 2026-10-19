@@ -14,6 +14,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet"
+import { AddMemberDialog } from "@/features/profile/organizations/components/add-member-dialog"
 import { InviteDialog } from "@/features/profile/organizations/components/invite-dialog"
 import { RoleSelect } from "@/features/profile/organizations/components/role-select"
 import {
@@ -51,9 +52,11 @@ const UserPlus = getIcon("identity", "addUser")
 
 function MembersSection({
   organization,
+  onAdd,
   onRemove,
 }: {
   organization: MyOrganizationDetail
+  onAdd: () => void
   onRemove: (member: OrganizationMember) => void
 }) {
   const updateRole = useMemberRoleUpdate()
@@ -69,7 +72,18 @@ function MembersSection({
 
   return (
     <section className="space-y-3">
-      <SectionHeading title="Miembros" count={organization.members.length} />
+      <SectionHeading
+        title="Miembros"
+        count={organization.members.length}
+        action={
+          organization.canAddMembers && (
+            <Button size="sm" variant="outline" onClick={onAdd}>
+              <UserPlus className="size-4" />
+              Añadir miembro
+            </Button>
+          )
+        }
+      />
       <DataTableView
         table={table}
         label="Miembros"
@@ -192,6 +206,7 @@ export function OrganizationDetailSheet({
   const detail = useMyOrganization(organizationId)
   const removeMember = useMemberRemove()
   const [inviteOpen, setInviteOpen] = useState(false)
+  const [addOpen, setAddOpen] = useState(false)
   const removeDialog = useTargetConfirmDialog<OrganizationMember>({
     title: "Quitar de la organización",
     description: (member) =>
@@ -236,6 +251,7 @@ export function OrganizationDetailSheet({
             <div className="flex flex-col gap-6 px-4 pb-6">
               <MembersSection
                 organization={organization}
+                onAdd={() => setAddOpen(true)}
                 onRemove={removeDialog.open}
               />
               {canManageMembers(organization.role) && (
@@ -250,11 +266,18 @@ export function OrganizationDetailSheet({
       </Sheet>
 
       {organization !== undefined && (
-        <InviteDialog
-          organization={organization}
-          open={inviteOpen}
-          onOpenChange={setInviteOpen}
-        />
+        <>
+          <InviteDialog
+            organization={organization}
+            open={inviteOpen}
+            onOpenChange={setInviteOpen}
+          />
+          <AddMemberDialog
+            organization={organization}
+            open={addOpen}
+            onOpenChange={setAddOpen}
+          />
+        </>
       )}
       <ConfirmDialog {...removeDialog.confirmDialogProps} />
     </>

@@ -238,7 +238,8 @@ export const myOrganizationHandler = {
     context: Context
     input: z.infer<typeof myOrganizationInput.get>
   }): Promise<z.infer<typeof myOrganizationOutput.get>> {
-    const callerId = callerOf(context).id
+    const caller = callerOf(context)
+    const callerId = caller.id
     const own = await membershipOf(input.id, callerId)
     const row = assertFound(
       await db.query.organization.findFirst({
@@ -268,6 +269,8 @@ export const myOrganizationHandler = {
       memberCount: row.members.length,
       createdAt: toIso(row.createdAt),
       members: members.toSorted((a, b) => a.name.localeCompare(b.name, "es")),
+      // Global admins skip invitations: the admin feature adds users at once.
+      canAddMembers: caller.role === "admin",
       invitations,
     }
   },
