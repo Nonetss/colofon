@@ -42,6 +42,7 @@ export const relations = defineRelations(schema, (r) => ({
     teams: r.many.team(),
     invitations: r.many.invitation(),
     roles: r.many.organizationRole(),
+    repositoryShares: r.many.contentRepositoryShare(),
   },
   organizationRole: {
     organization: r.one.organization({
@@ -109,6 +110,24 @@ export const relations = defineRelations(schema, (r) => ({
     job: r.one.cronJob({
       from: r.cronRun.jobId,
       to: r.cronJob.id,
+    }),
+  },
+  contentRepository: {
+    owner: r.one.user({
+      from: r.contentRepository.ownerId,
+      to: r.user.id,
+      optional: true,
+    }),
+    shares: r.many.contentRepositoryShare(),
+  },
+  contentRepositoryShare: {
+    repository: r.one.contentRepository({
+      from: r.contentRepositoryShare.repositoryId,
+      to: r.contentRepository.id,
+    }),
+    organization: r.one.organization({
+      from: r.contentRepositoryShare.organizationId,
+      to: r.organization.id,
     }),
   },
   comments: {

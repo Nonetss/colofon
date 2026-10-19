@@ -4,6 +4,7 @@ import type {
   contentRepository,
   entityIcons,
   gitCredential,
+  invitation,
   member,
   organization,
   secret,
@@ -23,6 +24,7 @@ export type ContentRepositoryRow = typeof contentRepository.$inferSelect
 export type EntityIconRow = typeof entityIcons.$inferSelect
 export type OrganizationRow = typeof organization.$inferSelect
 export type MemberRow = typeof member.$inferSelect
+export type InvitationRow = typeof invitation.$inferSelect
 export type TeamRow = typeof team.$inferSelect
 export type GitCredentialRow = typeof gitCredential.$inferSelect
 export type SecretRow = typeof secret.$inferSelect
@@ -151,6 +153,23 @@ export function memberRow(overrides: Partial<MemberRow> = {}): MemberRow {
     userId: "user-1",
     role: "member",
     createdAt: NOW,
+    ...overrides,
+  }
+}
+
+export function invitationRow(
+  overrides: Partial<InvitationRow> = {}
+): InvitationRow {
+  return {
+    id: "invitation-1",
+    organizationId: "org-1",
+    email: "pablo@example.com",
+    role: "member",
+    teamId: null,
+    status: "pending",
+    expiresAt: new Date("2026-01-03T00:00:00.000Z"),
+    createdAt: NOW,
+    inviterId: "user-1",
     ...overrides,
   }
 }

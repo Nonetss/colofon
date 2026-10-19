@@ -1,12 +1,14 @@
 import {
+  index,
   pgTable,
+  primaryKey,
   text,
   timestamp,
   uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core"
 
-import { user } from "#schema/auth"
+import { organization, user } from "#schema/auth"
 import { gitCredential } from "#schema/git-credential"
 
 /**
@@ -15,8 +17,8 @@ import { gitCredential } from "#schema/git-credential"
  * never changes it after creation. The clone lives in a folder named by the
  * id. The URL may carry credentials (https://user:token@host/...): the
  * application never returns or logs it as stored. A repository with an
- * owner is private to that user; without one it is the platform's, read by
- * every signed-in user.
+ * owner is private to that user and the organizations it is shared with;
+ * without one it is the platform's, read by every signed-in user.
  */
 export const contentRepository = pgTable(
   "content_repository",
@@ -54,3 +56,30 @@ export const contentRepository = pgTable(
 
 export type ContentRepository = typeof contentRepository.$inferSelect
 export type NewContentRepository = typeof contentRepository.$inferInsert
+
+/**
+ * An organization a user's repository is shared with. Its members read the
+ * repository while its owner is a member too; only the owner changes this.
+ */
+export const contentRepositoryShare = pgTable(
+  "content_repository_share",
+  {
+    repositoryId: uuid("repository_id")
+      .notNull()
+      .references(() => contentRepository.id, { onDelete: "cascade" }),
+    organizationId: text("organization_id")
+      .notNull()
+      .references(() => organization.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.repositoryId, table.organizationId] }),
+    index("content_repository_share_organization_id_idx").on(
+      table.organizationId
+    ),
+  ]
+)
+
+export type ContentRepositoryShare = typeof contentRepositoryShare.$inferSelect
+export type NewContentRepositoryShare =
+  typeof contentRepositoryShare.$inferInsert
