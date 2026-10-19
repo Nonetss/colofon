@@ -19,6 +19,7 @@ export type SurfaceId =
   | "profile-api-keys"
   | "profile-secrets"
   | "profile-repositories"
+  | "profile-organizations"
   | "profile-skills"
   | "login"
   | "signup"
@@ -215,8 +216,16 @@ const appSurfaceDefinitions: Partial<Record<SurfaceId, SurfaceDefinition>> = {
         title: "Mi perfil · Repositorios",
         label: "Repositorios",
         description:
-          "Añade tus propios repositorios git de documentación: solo tú los lees.",
+          "Añade tus propios repositorios git de documentación: solo tú y las organizaciones con las que los compartas los leéis.",
         icon: iconRef("entities", "contentRepository"),
+      },
+      "profile-organizations": {
+        path: "/me/organizations",
+        title: "Mi perfil · Organizaciones",
+        label: "Organizaciones",
+        description:
+          "Crea organizaciones e invita a otras personas para compartir con ellas tus repositorios.",
+        icon: iconRef("entities", "organization"),
       },
       "profile-skills": {
         path: "/me/skills",

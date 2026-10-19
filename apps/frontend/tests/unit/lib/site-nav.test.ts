@@ -81,6 +81,7 @@ describe("sectionSidebarLinks", () => {
       "/me/api-keys",
       "/me/secrets",
       "/me/repositories",
+      "/me/organizations",
       "/me/skills",
     ])
   })

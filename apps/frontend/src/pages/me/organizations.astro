@@ -1,0 +1,12 @@
+---
+import { ProfileOrganizationsPage } from "@/features/profile/organizations"
+import WithSidebar from "@/layouts/WithSidebar.astro"
+import { appSurfaces } from "@/lib/app-surfaces"
+---
+
+<WithSidebar
+  title={appSurfaces["profile-organizations"].title}
+  section="profile"
+>
+  <ProfileOrganizationsPage client:only="react" />
+</WithSidebar>
