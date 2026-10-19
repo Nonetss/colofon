@@ -48,6 +48,7 @@ const apuntes: OwnRepositoryOutput = {
   lastSyncError: null,
   createdAt: "2026-10-17T10:00:00.000Z",
   updatedAt: "2026-10-17T10:00:00.000Z",
+  organizations: [],
 }
 
 type SavedCredentials = Awaited<ReturnType<CredentialClient["list"]>>

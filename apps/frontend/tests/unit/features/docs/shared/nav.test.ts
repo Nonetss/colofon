@@ -23,6 +23,7 @@ const casa: DocsRepository = {
   title: "Homelab",
   description: null,
   available: true,
+  sharedBy: null,
   home: { ...entry("", "Inicio"), href: "/casa" },
   nodes: [
     {

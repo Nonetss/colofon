@@ -93,7 +93,7 @@ export function createDocsHandler({
 
   return {
     async nav({ context }: { context: Context }): Promise<NavOutput> {
-      const audience = audienceOfUser(context.user)
+      const audience = await audienceOfUser(context.user, repositories)
       const stored = await repositories.list(audience)
       const answer: NavOutput["repositories"] = []
       for (const repository of stored) {
@@ -111,7 +111,7 @@ export function createDocsHandler({
     }): Promise<PageOutput> {
       const read = await reader.site(
         input.repository,
-        audienceOfUser(context.user)
+        await audienceOfUser(context.user, repositories)
       )
       if (read === undefined || read.site === undefined)
         throw errors.NOT_FOUND({ message: PAGE_NOT_FOUND })
@@ -157,7 +157,9 @@ export function createDocsHandler({
       context: Context
       input: z.infer<typeof docsInput.search>
     }): Promise<SearchOutput> {
-      const readable = await readableSites(audienceOfUser(context.user))
+      const readable = await readableSites(
+        await audienceOfUser(context.user, repositories)
+      )
       const scoped = readable.filter(
         ({ repository }) => repository.slug === input.repository
       )
@@ -201,7 +203,7 @@ export function createDocsHandler({
     }): Promise<File> {
       const repository = await repositories.find(
         input.repository,
-        audienceOfUser(context.user)
+        await audienceOfUser(context.user, repositories)
       )
       if (repository === undefined || !isImageFile(input.path))
         throw errors.NOT_FOUND({ message: FILE_NOT_FOUND })
@@ -228,7 +230,11 @@ async function navOf(
   audience: RepositoryAudience
 ): Promise<NavOutput["repositories"][number]> {
   const read = await reader.site(repository.slug, audience)
-  const base = { slug: repository.slug, name: repository.name }
+  const base = {
+    slug: repository.slug,
+    name: repository.name,
+    sharedBy: sharedByOf(repository, audience),
+  }
   if (
     read === undefined ||
     read.site === undefined ||
@@ -252,6 +258,18 @@ async function navOf(
     home: entryOf(read.site.home, routes),
     nodes: read.site.nav.map((node) => navNodeOf(node, routes)),
   }
+}
+
+/** The organization `repository` reaches `audience` through, if shared. */
+function sharedByOf(
+  repository: StoredRepository,
+  audience: RepositoryAudience
+): string | null {
+  if (audience === "all" || audience === "platform") return null
+  if (repository.ownerId === audience.userId) return null
+  const organization = audience.shared.get(repository.id)
+  if (organization === undefined) return null
+  return organization
 }
 
 function searchResultOf(

@@ -5,6 +5,7 @@ import {
   cronProcedure,
   protectedProcedure,
   publicProcedure,
+  sessionProcedure,
 } from "#index"
 import { contentInput } from "#v1/content/input"
 import { contentOutput } from "#v1/content/output"
@@ -288,6 +289,24 @@ export const contentRouter = {
     .output(contentOutput.deleteMyRepository)
     .handler(({ context, input }) =>
       contentHandler.deleteMyRepository({ context, input })
+    ),
+
+  // Only from a browser session: sharing widens who reads the repository,
+  // which an agent holding an API key must not do on its own.
+  shareMyRepository: sessionProcedure
+    .meta(
+      openapi({
+        summary: "Share one of the caller's repositories with organizations",
+        description:
+          "Replaces the organizations a repository the caller owns is shared with; their members read it while the owner is a member too. Only organizations the caller belongs to; NOT_FOUND for any other organization or repository, with nothing changed. An empty list makes it private again. Only from a browser session.",
+        tags,
+        method: "PUT",
+      })
+    )
+    .input(contentInput.shareMyRepository)
+    .output(contentOutput.shareMyRepository)
+    .handler(({ context, input }) =>
+      contentHandler.shareMyRepository({ context, input })
     ),
 
   listMyBranches: protectedProcedure

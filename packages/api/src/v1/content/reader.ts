@@ -42,29 +42,40 @@ export type StoredRepository = {
 }
 
 /**
- * Whose repositories a read may see: `platform` the ones without an owner,
- * `{ userId }` those and that user's own, `all` every one (syncs, git
- * hosting).
+ * The repositories shared with a user through their organizations, by id,
+ * each with the name of the first of those organizations by name.
  */
-export type RepositoryAudience = "all" | "platform" | { userId: string }
+export type SharedRepositories = ReadonlyMap<string, string>
+
+/** What a signed-in user reads: theirs, the platform's and those shared. */
+export type UserAudience = { userId: string; shared: SharedRepositories }
+
+/**
+ * Whose repositories a read may see: `platform` the ones without an owner,
+ * a `UserAudience` those, that user's own and the ones shared with them,
+ * `all` every one (syncs, git hosting).
+ */
+export type RepositoryAudience = "all" | "platform" | UserAudience
 
 /** What a signed-in user reads; the platform's alone without a session. */
-export function audienceOfUser(
-  user: { id: string } | null
-): RepositoryAudience {
+export async function audienceOfUser(
+  user: { id: string } | null,
+  repositories: Pick<RepositoryStore, "sharedWith">
+): Promise<RepositoryAudience> {
   if (user === null) return "platform"
-  return { userId: user.id }
+  return { userId: user.id, shared: await repositories.sharedWith(user.id) }
 }
 
 /** Whether `repository` is within `audience`. */
 export function isVisibleTo(
-  repository: Pick<StoredRepository, "ownerId">,
+  repository: Pick<StoredRepository, "id" | "ownerId">,
   audience: RepositoryAudience
 ): boolean {
   if (audience === "all") return true
   if (repository.ownerId === null) return true
   if (audience === "platform") return false
-  return repository.ownerId === audience.userId
+  if (repository.ownerId === audience.userId) return true
+  return audience.shared.has(repository.id)
 }
 
 /** Where the reader finds the repositories and records their syncs. */
@@ -74,6 +85,11 @@ export type RepositoryStore = {
     audience: RepositoryAudience
   ) => Promise<StoredRepository | undefined>
   list: (audience: RepositoryAudience) => Promise<StoredRepository[]>
+  /**
+   * The repositories shared with `userId`: through an organization where
+   * both they and the repository's owner are members.
+   */
+  sharedWith: (userId: string) => Promise<SharedRepositories>
   recordSync: (id: string, result: SyncResult) => Promise<void>
 }
 

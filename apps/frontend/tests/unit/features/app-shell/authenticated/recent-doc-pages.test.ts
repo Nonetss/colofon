@@ -20,6 +20,7 @@ const repositories: DocsNav["repositories"] = [
     title: "Casa",
     description: null,
     available: true,
+    sharedBy: null,
     home: entry("/casa", "Inicio"),
     nodes: [
       {

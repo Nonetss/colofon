@@ -32,6 +32,7 @@ const casa: DocsRepository = {
   title: "Homelab",
   description: "Lo que corre en casa",
   available: true,
+  sharedBy: null,
   home: { ...entry("casa", "", "Inicio", "Portada"), href: "/casa" },
   nodes: [
     {
@@ -60,6 +61,7 @@ const trabajo: DocsRepository = {
   title: null,
   description: null,
   available: true,
+  sharedBy: null,
   home: null,
   nodes: [{ kind: "page", ...entry("trabajo", "correo", "Correo") }],
 }
@@ -70,6 +72,7 @@ const nuevo: DocsRepository = {
   title: null,
   description: null,
   available: false,
+  sharedBy: null,
   home: null,
   nodes: [],
 }

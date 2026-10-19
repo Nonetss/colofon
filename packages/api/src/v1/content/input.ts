@@ -259,6 +259,15 @@ export const contentInput = {
       }
     ),
   deleteMyRepository: z.object({ slug: repository }),
+  shareMyRepository: z.object({
+    slug: repository.describe("Slug of one of the caller's repositories"),
+    organizationIds: z
+      .array(z.string().min(1))
+      .max(100)
+      .describe(
+        "Every organization to share it with, replacing the current ones; empty makes it private"
+      ),
+  }),
   deleteRepository: z.object({ slug: repository }),
   syncRepository: z.object({ slug: repository }),
 }

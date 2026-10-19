@@ -17,9 +17,16 @@ import {
   TYPE_SCHEMA,
 } from "@nonete/content"
 import { db } from "@nonete/db"
-import { type ContentRepository, contentRepository } from "@nonete/db/schema"
+import {
+  type ContentRepository,
+  contentRepository,
+  contentRepositoryShare,
+  member,
+  organization,
+} from "@nonete/db/schema"
 import { env } from "@nonete/env/server"
-import { eq } from "drizzle-orm"
+import { and, asc, eq } from "drizzle-orm"
+import { alias } from "drizzle-orm/pg-core"
 import type { z } from "zod"
 import type { Context } from "#context"
 import { errors } from "#errors"
@@ -42,6 +49,7 @@ import {
   audienceOfUser,
   type ContentReader,
   type RepositoryAudience,
+  type SharedRepositories,
 } from "#v1/content/reader"
 import { checkUserRemoteWithTrusted } from "#v1/content/trusted-hosts"
 import {
@@ -103,7 +111,28 @@ function toRepository(row: ContentRepository): ContentRepositoryOutput {
   }
 }
 
-function toOwnRepository(row: ContentRepository): OwnRepositoryOutput {
+type SharedOrganization = OwnRepositoryOutput["organizations"][number]
+
+/** The organizations of `shares`, by name; a dangling one is skipped. */
+function organizationsOf(
+  shares: { organization: SharedOrganization | null }[]
+): SharedOrganization[] {
+  const organizations: SharedOrganization[] = []
+  for (const share of shares) {
+    if (share.organization === null) continue
+    organizations.push({
+      id: share.organization.id,
+      name: share.organization.name,
+      slug: share.organization.slug,
+    })
+  }
+  return organizations.toSorted((a, b) => a.name.localeCompare(b.name, "es"))
+}
+
+function toOwnRepository(
+  row: ContentRepository,
+  organizations: SharedOrganization[]
+): OwnRepositoryOutput {
   return {
     id: row.id,
     slug: row.slug,
@@ -117,6 +146,7 @@ function toOwnRepository(row: ContentRepository): OwnRepositoryOutput {
     lastSyncError: row.lastSyncError,
     createdAt: toIso(row.createdAt),
     updatedAt: toIso(row.updatedAt),
+    organizations,
   }
 }
 
@@ -124,9 +154,73 @@ function toOwnRepository(row: ContentRepository): OwnRepositoryOutput {
 export function audienceFilter(audience: RepositoryAudience) {
   if (audience === "all") return {}
   if (audience === "platform") return { ownerId: { isNull: true as const } }
-  return {
-    OR: [{ ownerId: { isNull: true as const } }, { ownerId: audience.userId }],
+  const shared = [...audience.shared.keys()]
+  if (shared.length === 0) {
+    return {
+      OR: [
+        { ownerId: { isNull: true as const } },
+        { ownerId: audience.userId },
+      ],
+    }
   }
+  return {
+    OR: [
+      { ownerId: { isNull: true as const } },
+      { ownerId: audience.userId },
+      { id: { in: shared } },
+    ],
+  }
+}
+
+const repositoryOwner = alias(member, "repository_owner")
+
+/**
+ * The repositories shared with `userId`: a share names an organization where
+ * both they and the repository's owner are members, so a share outlived by
+ * the owner's membership reads as none. Each keeps the first organization's
+ * name, by name.
+ */
+export async function sharedRepositoriesOf(
+  userId: string
+): Promise<SharedRepositories> {
+  const rows = await db
+    .select({
+      repositoryId: contentRepositoryShare.repositoryId,
+      organizationName: organization.name,
+    })
+    .from(contentRepositoryShare)
+    .innerJoin(
+      member,
+      and(
+        eq(member.organizationId, contentRepositoryShare.organizationId),
+        eq(member.userId, userId)
+      )
+    )
+    .innerJoin(
+      contentRepository,
+      eq(contentRepository.id, contentRepositoryShare.repositoryId)
+    )
+    .innerJoin(
+      repositoryOwner,
+      and(
+        eq(
+          repositoryOwner.organizationId,
+          contentRepositoryShare.organizationId
+        ),
+        eq(repositoryOwner.userId, contentRepository.ownerId)
+      )
+    )
+    .innerJoin(
+      organization,
+      eq(organization.id, contentRepositoryShare.organizationId)
+    )
+    .orderBy(asc(organization.name))
+  const shared = new Map<string, string>()
+  for (const row of rows) {
+    if (!shared.has(row.repositoryId))
+      shared.set(row.repositoryId, row.organizationName)
+  }
+  return shared
 }
 
 export function findRow(slug: string, audience: RepositoryAudience) {
@@ -135,9 +229,29 @@ export function findRow(slug: string, audience: RepositoryAudience) {
   })
 }
 
+/**
+ * The organizations among `ids` that `userId` is a member of, once each, as
+ * shares to list.
+ */
+async function ownersOrganizations(userId: string, ids: string[]) {
+  if (ids.length === 0) return []
+  const memberships = await db.query.member.findMany({
+    where: { userId, organizationId: { in: ids } },
+    with: { organization: true },
+  })
+  const seen = new Set<string>()
+  return memberships.filter((membership) => {
+    if (seen.has(membership.organizationId)) return false
+    seen.add(membership.organizationId)
+    return true
+  })
+}
+
+/** One of `userId`'s repositories, with the organizations it is shared with. */
 function findOwned(slug: string, userId: string) {
   return db.query.contentRepository.findFirst({
     where: { slug, ownerId: userId },
+    with: { shares: { with: { organization: true } } },
   })
 }
 
@@ -629,7 +743,9 @@ export function createContentHandler(
       context: Context
       input: z.infer<typeof contentInput.syncRepository>
     }): Promise<z.infer<typeof contentOutput.syncRepository>> {
-      const audience = audienceOfUser(context.user)
+      const audience = await audienceOfUser(context.user, {
+        sharedWith: sharedRepositoriesOf,
+      })
       const row = assertFound(
         await findRow(input.slug, audience),
         NOT_FOUND_MESSAGE
@@ -648,9 +764,12 @@ export function createContentHandler(
     }): Promise<z.infer<typeof contentOutput.listMyRepositories>> {
       const rows = await db.query.contentRepository.findMany({
         where: { ownerId: requireUserId(context) },
+        with: { shares: { with: { organization: true } } },
         orderBy: { name: "asc" },
       })
-      return rows.map(toOwnRepository)
+      return rows.map((row) =>
+        toOwnRepository(row, organizationsOf(row.shares))
+      )
     },
 
     async createMyRepository({
@@ -686,7 +805,7 @@ export function createContentHandler(
         .returning()
       if (!row) throw conflict
       reader.syncInBackground(row)
-      return toOwnRepository(row)
+      return toOwnRepository(row, [])
     },
 
     async updateMyRepository({
@@ -709,7 +828,9 @@ export function createContentHandler(
         ...(input.ref !== undefined && { ref: input.ref }),
         ...(input.path !== undefined && { contentPath: input.path }),
       }
-      if (Object.keys(patch).length === 0) return toOwnRepository(row)
+      const organizations = organizationsOf(row.shares)
+      if (Object.keys(patch).length === 0)
+        return toOwnRepository(row, organizations)
       const [updated] = await db
         .update(contentRepository)
         .set(patch)
@@ -717,7 +838,38 @@ export function createContentHandler(
         .returning()
       const saved = assertFound(updated, NOT_FOUND_MESSAGE)
       if (changesClone(row, saved)) reader.syncInBackground(saved)
-      return toOwnRepository(saved)
+      return toOwnRepository(saved, organizations)
+    },
+
+    async shareMyRepository({
+      context,
+      input,
+    }: {
+      context: Context
+      input: z.infer<typeof contentInput.shareMyRepository>
+    }): Promise<z.infer<typeof contentOutput.shareMyRepository>> {
+      const ownerId = requireUserId(context)
+      const row = assertFound(
+        await findOwned(input.slug, ownerId),
+        NOT_FOUND_MESSAGE
+      )
+      const wanted = new Set(input.organizationIds)
+      const organizations = await ownersOrganizations(ownerId, [...wanted])
+      if (organizations.length !== wanted.size)
+        throw errors.NOT_FOUND({ message: "Organización no encontrada" })
+      await db.transaction(async (tx) => {
+        await tx
+          .delete(contentRepositoryShare)
+          .where(eq(contentRepositoryShare.repositoryId, row.id))
+        if (wanted.size === 0) return
+        await tx.insert(contentRepositoryShare).values(
+          [...wanted].map((organizationId) => ({
+            repositoryId: row.id,
+            organizationId,
+          }))
+        )
+      })
+      return toOwnRepository(row, organizationsOf(organizations))
     },
 
     async deleteMyRepository({

@@ -5,7 +5,9 @@ import type { SyncResult } from "@nonete/content"
 import {
   isVisibleTo,
   type RepositoryStore,
+  type SharedRepositories,
   type StoredRepository,
+  type UserAudience,
 } from "#v1/content/reader"
 
 /** A small valid content repository: two types, one pointing at the other. */
@@ -61,7 +63,8 @@ export type MemoryRepositoryStore = RepositoryStore & {
 
 /** A repository store over `rows`, kept in memory; `list` keeps their order. */
 export function memoryRepositoryStore(
-  rows: StoredRepository[] = []
+  rows: StoredRepository[] = [],
+  shares: Record<string, SharedRepositories> = {}
 ): MemoryRepositoryStore {
   const recorded: { id: string; result: SyncResult }[] = []
   return {
@@ -70,10 +73,28 @@ export function memoryRepositoryStore(
     find: async (slug, audience) =>
       rows.find((row) => row.slug === slug && isVisibleTo(row, audience)),
     list: async (audience) => rows.filter((row) => isVisibleTo(row, audience)),
+    sharedWith: async (userId) => sharedOf(shares, userId),
     recordSync: async (id, result) => {
       recorded.push({ id, result })
     },
   }
+}
+
+/** A signed-in user's audience, with the repositories shared with them. */
+export function userAudience(
+  userId: string,
+  shared: Record<string, string> = {}
+): UserAudience {
+  return { userId, shared: new Map(Object.entries(shared)) }
+}
+
+function sharedOf(
+  shares: Record<string, SharedRepositories>,
+  userId: string
+): SharedRepositories {
+  const shared = shares[userId]
+  if (shared === undefined) return new Map()
+  return shared
 }
 
 /** A stored repository; its id names its clone folder. */

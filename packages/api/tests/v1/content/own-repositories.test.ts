@@ -1,27 +1,42 @@
 import { beforeEach, describe, expect, mock, test } from "bun:test"
 import type { RemoteCheck } from "@nonete/content"
-import { contentRepositoryRow, stepArgs } from "@nonete/db/testing"
+import {
+  contentRepositoryRow,
+  memberRow,
+  organizationRow,
+  stepArgs,
+} from "@nonete/db/testing"
 import { call } from "@orpc/server"
+import { userAudience } from "#tests/fixtures/content"
 import {
   adminContext,
   anonymousContext,
+  apiKeyContext,
   userContext,
 } from "#tests/fixtures/context"
 import { fakeDb } from "#tests/fixtures/db"
 import { resetEnv, testEnv } from "#tests/fixtures/env"
 import { expectErrorCode } from "#tests/fixtures/errors"
-import { audienceFilter, createContentHandler } from "#v1/content/handler"
+import {
+  audienceFilter,
+  createContentHandler,
+  sharedRepositoriesOf,
+} from "#v1/content/handler"
 import { contentInput } from "#v1/content/input"
 import type { ContentReader, StoredRepository } from "#v1/content/reader"
 import { contentRouter } from "#v1/content/router"
 
 const SECRET_URL = "https://ana:secreto@git.example/ana/apuntes.git"
-const owned = contentRepositoryRow({
-  slug: "apuntes",
-  name: "Apuntes",
-  url: SECRET_URL,
-  ownerId: "user-id",
-})
+// As the owner procedures read it, with the organizations it is shared with.
+const owned = {
+  ...contentRepositoryRow({
+    slug: "apuntes",
+    name: "Apuntes",
+    url: SECRET_URL,
+    ownerId: "user-id",
+  }),
+  shares: [],
+}
 
 function fakeReader() {
   return {
@@ -68,9 +83,44 @@ describe("audienceFilter", () => {
   })
 
   test("a user reads the platform's and their own", () => {
-    expect(audienceFilter({ userId: "ana" })).toEqual({
+    expect(audienceFilter(userAudience("ana"))).toEqual({
       OR: [{ ownerId: { isNull: true } }, { ownerId: "ana" }],
     })
+  })
+
+  test("and the ones shared with them", () => {
+    expect(
+      audienceFilter(userAudience("luis", { "repo-apuntes": "Equipo docs" }))
+    ).toEqual({
+      OR: [
+        { ownerId: { isNull: true } },
+        { ownerId: "luis" },
+        { id: { in: ["repo-apuntes"] } },
+      ],
+    })
+  })
+})
+
+describe("sharedRepositoriesOf", () => {
+  test("keeps each repository once, with the first organization by name", async () => {
+    fakeDb.queue("select", [
+      { repositoryId: "repo-apuntes", organizationName: "Casa" },
+      { repositoryId: "repo-notas", organizationName: "Casa" },
+      { repositoryId: "repo-apuntes", organizationName: "Equipo docs" },
+    ])
+
+    const shared = await sharedRepositoriesOf("luis")
+
+    expect([...shared]).toEqual([
+      ["repo-apuntes", "Casa"],
+      ["repo-notas", "Casa"],
+    ])
+    expect(fakeDb.calls("select")).toHaveLength(1)
+  })
+
+  test("nothing shared is an empty map", async () => {
+    fakeDb.queue("select", [])
+    expect((await sharedRepositoriesOf("luis")).size).toBe(0)
   })
 })
 
@@ -238,7 +288,7 @@ describe("content.updateMyRepository", () => {
     )
     const [find] = fakeDb.calls("query.contentRepository.findFirst")
     if (!find) throw new Error("no query recorded")
-    expect(stepArgs(find, "findFirst")[0]).toEqual({
+    expect(stepArgs(find, "findFirst")[0]).toMatchObject({
       where: { slug: "casa", ownerId: "user-id" },
     })
     expect(fakeDb.calls("update")).toEqual([])
@@ -331,6 +381,7 @@ describe("content.listMyBranches", () => {
 
 describe("syncing a repository", () => {
   test("a user's repository is looked up within the caller's audience", async () => {
+    fakeDb.queue("select", [])
     fakeDb.queue("query.contentRepository.findFirst", undefined)
 
     await expectErrorCode(
@@ -348,6 +399,37 @@ describe("syncing a repository", () => {
         OR: [{ ownerId: { isNull: true } }, { ownerId: "admin-id" }],
       },
     })
+  })
+
+  test("a repository shared with the caller is found and synced", async () => {
+    const shared = contentRepositoryRow({
+      id: "repo-apuntes",
+      slug: "apuntes",
+      ownerId: "ana",
+    })
+    fakeDb.queue("select", [
+      { repositoryId: "repo-apuntes", organizationName: "Equipo docs" },
+    ])
+    fakeDb.queue("query.contentRepository.findFirst", shared, shared)
+
+    await handler.syncRepository({
+      context: userContext(),
+      input: { slug: "apuntes" },
+    })
+
+    const [find] = fakeDb.calls("query.contentRepository.findFirst")
+    if (!find) throw new Error("no query recorded")
+    expect(stepArgs(find, "findFirst")[0]).toEqual({
+      where: {
+        slug: "apuntes",
+        OR: [
+          { ownerId: { isNull: true } },
+          { ownerId: "user-id" },
+          { id: { in: ["repo-apuntes"] } },
+        ],
+      },
+    })
+    expect(reader.sync).toHaveBeenCalledWith(shared)
   })
 })
 
@@ -461,5 +543,123 @@ describe("trusted internal hosts", () => {
         url: "http://git.noneweb.online/nonete/homelab",
       }).success
     ).toBe(false)
+  })
+})
+
+describe("content.shareMyRepository", () => {
+  const equipo = organizationRow({ id: "org-equipo", name: "Equipo docs" })
+  const casa = organizationRow({ id: "org-casa", name: "Casa", slug: "casa" })
+
+  test("only from a browser session", async () => {
+    await expectErrorCode(
+      call(
+        contentRouter.shareMyRepository,
+        { slug: "apuntes", organizationIds: [] },
+        { context: apiKeyContext() }
+      ),
+      "FORBIDDEN"
+    )
+    expect(fakeDb.calls()).toEqual([])
+  })
+
+  test("a repository that is not the caller's is NOT_FOUND and nothing is written", async () => {
+    fakeDb.queue("query.contentRepository.findFirst", undefined)
+
+    await expectErrorCode(
+      handler.shareMyRepository({
+        context: userContext(),
+        input: { slug: "casa", organizationIds: ["org-equipo"] },
+      }),
+      "NOT_FOUND"
+    )
+    expect(fakeDb.calls("transaction")).toEqual([])
+  })
+
+  test("an organization the owner isn't in is NOT_FOUND and the sharing stays", async () => {
+    fakeDb.queue("query.contentRepository.findFirst", owned)
+    fakeDb.queue("query.member.findMany", [
+      { ...memberRow({ organizationId: "org-equipo" }), organization: equipo },
+    ])
+
+    await expectErrorCode(
+      handler.shareMyRepository({
+        context: userContext(),
+        input: { slug: "apuntes", organizationIds: ["org-equipo", "ajena"] },
+      }),
+      "NOT_FOUND"
+    )
+    const [find] = fakeDb.calls("query.member.findMany")
+    if (!find) throw new Error("no query recorded")
+    expect(stepArgs(find, "findMany")[0]).toMatchObject({
+      where: {
+        userId: "user-id",
+        organizationId: { in: ["org-equipo", "ajena"] },
+      },
+    })
+    expect(fakeDb.calls("transaction")).toEqual([])
+    expect(fakeDb.calls("delete")).toEqual([])
+  })
+
+  test("replaces the shares in one transaction and lists them by name", async () => {
+    fakeDb.queue("query.contentRepository.findFirst", owned)
+    fakeDb.queue("query.member.findMany", [
+      { ...memberRow({ organizationId: "org-equipo" }), organization: equipo },
+      { ...memberRow({ organizationId: "org-casa" }), organization: casa },
+    ])
+    fakeDb.queue("delete", undefined)
+    fakeDb.queue("insert", undefined)
+
+    const shared = await handler.shareMyRepository({
+      context: userContext(),
+      input: { slug: "apuntes", organizationIds: ["org-equipo", "org-casa"] },
+    })
+
+    expect(fakeDb.calls().map((each) => each.op)).toEqual([
+      "query.contentRepository.findFirst",
+      "query.member.findMany",
+      "transaction",
+      "delete",
+      "insert",
+    ])
+    const [insert] = fakeDb.calls("insert")
+    if (!insert) throw new Error("no insert recorded")
+    expect(stepArgs(insert, "values")[0]).toEqual([
+      { repositoryId: owned.id, organizationId: "org-equipo" },
+      { repositoryId: owned.id, organizationId: "org-casa" },
+    ])
+    expect(shared.organizations.map((each) => each.name)).toEqual([
+      "Casa",
+      "Equipo docs",
+    ])
+  })
+
+  test("an empty list makes it private again", async () => {
+    fakeDb.queue("query.contentRepository.findFirst", owned)
+    fakeDb.queue("delete", undefined)
+
+    const shared = await handler.shareMyRepository({
+      context: userContext(),
+      input: { slug: "apuntes", organizationIds: [] },
+    })
+
+    expect(fakeDb.calls("query.member.findMany")).toEqual([])
+    expect(fakeDb.calls("delete")).toHaveLength(1)
+    expect(fakeDb.calls("insert")).toEqual([])
+    expect(shared.organizations).toEqual([])
+  })
+
+  test("the caller's repositories carry the organizations they are shared with", async () => {
+    fakeDb.queue("query.contentRepository.findMany", [
+      { ...owned, shares: [{ organization: equipo }, { organization: casa }] },
+    ])
+
+    const [listed] = await handler.listMyRepositories({
+      context: userContext(),
+    })
+
+    expect(listed?.organizations).toEqual([
+      { id: "org-casa", name: "Casa", slug: "casa" },
+      { id: "org-equipo", name: "Equipo docs", slug: "acme" },
+    ])
   })
 })

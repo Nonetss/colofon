@@ -38,12 +38,16 @@ function credential(
   })
 }
 
-const owned = contentRepositoryRow({
-  slug: "apuntes",
-  name: "Apuntes",
-  url: "https://git.example.com/ana/apuntes.git",
-  ownerId: "user-id",
-})
+// As the owner procedures read it, with the organizations it is shared with.
+const owned = {
+  ...contentRepositoryRow({
+    slug: "apuntes",
+    name: "Apuntes",
+    url: "https://git.example.com/ana/apuntes.git",
+    ownerId: "user-id",
+  }),
+  shares: [],
+}
 
 function fakeReader() {
   return {

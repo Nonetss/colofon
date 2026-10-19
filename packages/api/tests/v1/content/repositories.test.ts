@@ -95,6 +95,7 @@ describe("access", () => {
     )
     expect(fakeDb.calls()).toEqual([])
 
+    fakeDb.queue("select", [])
     fakeDb.queue("query.contentRepository.findFirst", undefined)
     await expectErrorCode(
       call(
@@ -504,6 +505,7 @@ describe("content.deleteRepository", () => {
 
 describe("content.syncRepository", () => {
   test("an unknown repository is NOT_FOUND and nothing is synced", async () => {
+    fakeDb.queue("select", [])
     fakeDb.queue("query.contentRepository.findFirst", undefined)
 
     await expectErrorCode(
@@ -518,6 +520,7 @@ describe("content.syncRepository", () => {
 
   test("a failed sync is BAD_GATEWAY with the git error", async () => {
     useReader(fakeReader({ ok: false, error: "fatal: *** rejected" }))
+    fakeDb.queue("select", [])
     fakeDb.queue("query.contentRepository.findFirst", privateRow)
 
     const error = await handler
@@ -537,6 +540,7 @@ describe("content.syncRepository", () => {
   })
 
   test("returns the repository with the outcome the sync stored", async () => {
+    fakeDb.queue("select", [])
     fakeDb.queue("query.contentRepository.findFirst", row)
     fakeDb.queue(
       "query.contentRepository.findFirst",

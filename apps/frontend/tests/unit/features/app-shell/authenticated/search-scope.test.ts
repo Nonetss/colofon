@@ -14,6 +14,7 @@ function repository(slug: string, name: string, available = true): Repository {
     title: name,
     description: null,
     available,
+    sharedBy: null,
     home: null,
     nodes: [],
   }

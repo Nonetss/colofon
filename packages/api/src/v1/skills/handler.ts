@@ -201,7 +201,10 @@ export function createSkillsHandler({
     const names = new Set(own.map((skill) => skill.name))
     return [
       ...own,
-      ...(await contentSkills(names, audienceOfUser(context.user))),
+      ...(await contentSkills(
+        names,
+        await audienceOfUser(context.user, repositories)
+      )),
     ]
   }
 

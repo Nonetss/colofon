@@ -8,6 +8,7 @@ import {
   audienceFilter,
   createContentHandler,
   findRow,
+  sharedRepositoriesOf,
   syncFields,
 } from "#v1/content/handler"
 import { createGitHosting, gitSourceOf } from "#v1/content/hosting"
@@ -30,6 +31,7 @@ const repositoryStore: RepositoryStore = {
       where: audienceFilter(audience),
       orderBy: { name: "asc" },
     }),
+  sharedWith: sharedRepositoriesOf,
   recordSync: async (id, result) => {
     await db
       .update(contentRepository)

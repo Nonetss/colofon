@@ -160,6 +160,12 @@ export const docsOutput = {
         available: z
           .boolean()
           .describe("Whether the repository has readable content"),
+        sharedBy: z
+          .string()
+          .nullable()
+          .describe(
+            "Name of the organization the repository is shared with the caller through; null for the platform's and the caller's own"
+          ),
         home: z.object(navEntry).nullable(),
         nodes: z.array(navNode),
       })

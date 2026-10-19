@@ -5,6 +5,7 @@ import {
   createContentRemote,
   memoryRepositoryStore,
   storedRepository,
+  userAudience,
 } from "#tests/fixtures/content"
 import { gitSourceOf } from "#v1/content/hosting"
 import {
@@ -31,19 +32,33 @@ describe("isVisibleTo", () => {
   test("a platform repository is visible to every audience", () => {
     expect(isVisibleTo(casa, "all")).toBe(true)
     expect(isVisibleTo(casa, "platform")).toBe(true)
-    expect(isVisibleTo(casa, { userId: "luis" })).toBe(true)
+    expect(isVisibleTo(casa, userAudience("luis"))).toBe(true)
   })
 
   test("a user's repository is visible to its owner and to a full read only", () => {
-    expect(isVisibleTo(apuntes, { userId: "ana" })).toBe(true)
+    expect(isVisibleTo(apuntes, userAudience("ana"))).toBe(true)
     expect(isVisibleTo(apuntes, "all")).toBe(true)
-    expect(isVisibleTo(apuntes, { userId: "luis" })).toBe(false)
+    expect(isVisibleTo(apuntes, userAudience("luis"))).toBe(false)
     expect(isVisibleTo(apuntes, "platform")).toBe(false)
   })
 
-  test("a request without a user reads the platform's alone", () => {
-    expect(audienceOfUser(null)).toBe("platform")
-    expect(audienceOfUser({ id: "ana" })).toEqual({ userId: "ana" })
+  test("a repository shared with the reader is visible to them", () => {
+    const shared = userAudience("luis", { "repo-apuntes": "Equipo docs" })
+    expect(isVisibleTo(apuntes, shared)).toBe(true)
+    expect(isVisibleTo(apuntes, userAudience("pablo"))).toBe(false)
+  })
+
+  test("a user's audience carries what is shared with them; without one, the platform's alone", async () => {
+    const store = memoryRepositoryStore([], {
+      ana: new Map([["repo-x", "Casa"]]),
+    })
+    expect(await audienceOfUser(null, store)).toBe("platform")
+    expect(await audienceOfUser({ id: "ana" }, store)).toEqual(
+      userAudience("ana", { "repo-x": "Casa" })
+    )
+    expect(await audienceOfUser({ id: "luis" }, store)).toEqual(
+      userAudience("luis")
+    )
   })
 })
 
@@ -68,9 +83,15 @@ async function readerWith(
 describe("contentReader audiences", () => {
   test("another user's repository is as unknown as a missing one", async () => {
     const { reader } = await readerWith()
-    expect(await reader.site("apuntes", { userId: "luis" })).toBeUndefined()
+    expect(await reader.site("apuntes", userAudience("luis"))).toBeUndefined()
     expect(await reader.content("apuntes", "platform")).toBeUndefined()
-    expect(await reader.site("apuntes", { userId: "ana" })).toBeDefined()
+    expect(await reader.site("apuntes", userAudience("ana"))).toBeDefined()
+  })
+
+  test("a repository shared with the reader is read as by its owner", async () => {
+    const { reader } = await readerWith()
+    const luis = userAudience("luis", { "repo-apuntes": "Equipo docs" })
+    expect(await reader.site("apuntes", luis)).toBeDefined()
   })
 
   test("the periodic sync reaches every repository, whoever owns it", async () => {

@@ -11,7 +11,11 @@ import {
 import { adminContext, userContext } from "#tests/fixtures/context"
 import { expectErrorCode } from "#tests/fixtures/errors"
 import { gitSourceOf } from "#v1/content/hosting"
-import { createContentReader, type StoredRepository } from "#v1/content/reader"
+import {
+  createContentReader,
+  type SharedRepositories,
+  type StoredRepository,
+} from "#v1/content/reader"
 import { createDocsHandler } from "#v1/docs/handler"
 import { docsInput } from "#v1/docs/input"
 
@@ -76,11 +80,12 @@ function inClone(repository: StoredRepository, files: Record<string, string>) {
 /** A docs handler over clones of `repositories`, holding `files`. */
 async function setup(
   repositories: StoredRepository[],
-  files: Record<string, string>
+  files: Record<string, string>,
+  shares: Record<string, SharedRepositories> = {}
 ) {
   const root = await createContentFolder(files)
   cleanups.push(root.remove)
-  const store = memoryRepositoryStore(repositories)
+  const store = memoryRepositoryStore(repositories, shares)
   const reader = createContentReader({
     cloneRoot: root.root,
     repositories: store,
@@ -143,6 +148,7 @@ describe("docs.nav", () => {
       title: null,
       description: null,
       available: false,
+      sharedBy: null,
       home: null,
       nodes: [],
     })
@@ -875,5 +881,47 @@ describe("docs of a user's repository", () => {
       answer.entities.map((entity) => entity.repository.slug)
     expect(slugs(owner)).toContain("apuntes")
     expect(slugs(stranger)).not.toContain("apuntes")
+  })
+})
+
+describe("docs of a repository shared through an organization", () => {
+  const apuntes = storedRepository({
+    id: "repo-apuntes",
+    slug: "apuntes",
+    name: "Apuntes",
+    ownerId: "ana",
+  })
+
+  async function withSharedRepository() {
+    return setup(
+      [casa, apuntes],
+      { ...inClone(casa, SITE), ...inClone(apuntes, SITE) },
+      { "user-id": new Map([["repo-apuntes", "Equipo docs"]]) }
+    )
+  }
+
+  test("a member's navigation lists it with the organization it comes from", async () => {
+    const { handler } = await withSharedRepository()
+    const { repositories } = await handler.nav({ context: userContext() })
+    const sharedBy = Object.fromEntries(
+      repositories.map((repository) => [repository.slug, repository.sharedBy])
+    )
+    expect(sharedBy).toEqual({ apuntes: "Equipo docs", casa: null })
+  })
+
+  test("a member reads its pages, and someone outside gets NOT_FOUND", async () => {
+    const { handler } = await withSharedRepository()
+    const page = await handler.page({
+      context: userContext(),
+      input: { repository: "apuntes", path: "red/dns" },
+    })
+    expect(page.repository.slug).toBe("apuntes")
+    await expectErrorCode(
+      handler.page({
+        context: adminContext(),
+        input: { repository: "apuntes", path: "red/dns" },
+      }),
+      "NOT_FOUND"
+    )
   })
 })
