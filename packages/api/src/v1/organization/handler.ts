@@ -15,10 +15,9 @@ import type { Context } from "#context"
 import { errors } from "#errors"
 import { toIso } from "#shared/dates"
 import { assertFound } from "#shared/not-found"
+import { INVITATION_TTL_MS } from "#shared/organization"
 import { likePattern } from "#shared/search"
 import type { organizationInput } from "#v1/organization/input"
-
-const INVITATION_TTL_MS = 1000 * 60 * 60 * 24 * 7
 
 async function assertAssignableRole(organizationId: string, role: string) {
   if (role in roles) return

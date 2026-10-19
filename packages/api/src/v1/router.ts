@@ -9,6 +9,7 @@ import { docsRouter } from "#v1/docs/router"
 import { entityIconRouter } from "#v1/entity-icon/router"
 import { gitCredentialRouter } from "#v1/git-credential/router"
 import { healthRouter } from "#v1/health/router"
+import { myOrganizationRouter } from "#v1/my-organization/router"
 import { organizationRouter } from "#v1/organization/router"
 import { pluginsRouter } from "#v1/plugins/router"
 import { privateRouter } from "#v1/private/router"
@@ -26,6 +27,7 @@ export const appRouter = {
   entityIcon: entityIconRouter,
   private: privateRouter,
   organization: organizationRouter,
+  myOrganization: myOrganizationRouter,
   plugins: pluginsRouter,
   cron: cronRouter,
   sessionHistory: sessionHistoryRouter,

@@ -1,12 +1,10 @@
 import { defaultStatements, roles } from "@nonete/auth/permissions"
 import { z } from "zod"
 
+import { organizationSlug } from "#shared/organization"
 import { searchLimit, searchQuery } from "#shared/search"
 
-const slug = z
-  .string()
-  .min(1)
-  .regex(/^[a-z0-9-]+$/, "Solo minúsculas, números y guiones")
+const slug = organizationSlug()
 
 // Built-in role or the name of a custom role created for the organization
 // (validated against that organization's custom roles in the handler).
