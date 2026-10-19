@@ -1,6 +1,6 @@
 # Data tables
 
-Every resource list is a data table on TanStack Table v9 (`@tanstack/react-table`): the `/admin` pages (API keys, users, organizations, teams, plugins, sessions), and the organization detail and team member sheets. `EntityList` stays as the template's non-tabular list and has no production consumer.
+Every resource list is a data table on TanStack Table v9 (`@tanstack/react-table`): the `/admin` pages (API keys, users), `/me/organizations` and its organization sheet (members, invitations). `EntityList` stays as the template's non-tabular list and has no production consumer.
 
 ## Pieces
 
@@ -47,7 +47,7 @@ Every resource list is a data table on TanStack Table v9 (`@tanstack/react-table
 - Column filters (`filters`) sit above the compact rows. An admin list passes `mobileFilters` to move them, below `md` (`useIsMobile`), into the bottom `ListActionBar` and its `FilterSheet`, with an "Ordenar" button beside "Filtros" (a bottom sheet listing the sortable columns and the two directions) instead of the compact `SortControls` above the rows, with the page's own filters as `fields` (which the page then leaves out of its inline filters) and `onClear`; a list filtered through `ResourceFilters` instead drops `filters` on phones so it gets one bar, not two.
 - The columns menu shows only when some column is `defaultHidden` (sessions' technical fields); resizing and reordering stay available from the headers.
 - The rows of both layouts and the `footer` (the infinite-scroll sentinel) live in one scroll box (`overflow-auto`, both axes), as tall as its rows and shrinking to the space left (then scrolling) when they don't fit, so the header's sticky cells stay at its top; the columns menu, compact sort and compact filters sit above it and don't scroll. A page gives `DataTableView` a bounded flex parent (`flex min-h-0 flex-1 flex-col`, never its own `overflow-y-auto` wrapper); `ResourceOverview`'s column already is one, so its result renderer returns the table directly, without another wrapper, and passes `scrollRef` to `useInfiniteScroll` as the sentinel's root. Where the window scrolls (a table under `Detail.astro`) the box is bounded with `scrollClassName="max-h-[70dvh]"`. In a sheet the box grows with its rows and the sheet scrolls.
-- Table ids name the table kind, never an entity (`admin-organization-members` for every organization).
+- Table ids name the table kind, never an entity (`profile-organization-members` for every organization).
 
 ## Library docs and skills
 
