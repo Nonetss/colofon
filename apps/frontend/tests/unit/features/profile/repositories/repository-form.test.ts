@@ -3,6 +3,8 @@ import { skipToken } from "@tanstack/react-query"
 import {
   createInput,
   ownBranchesSource,
+  sameOrganizations,
+  sharedOrganizationIds,
   updateInput,
 } from "@/features/profile/repositories/model/repository-form"
 import type { OwnRepository } from "@/features/profile/repositories/model/types"
@@ -22,6 +24,7 @@ const stored: OwnRepository = {
   lastSyncError: null,
   createdAt: AT,
   updatedAt: AT,
+  organizations: [],
 }
 
 describe("createInput", () => {
@@ -155,5 +158,27 @@ describe("the saved login", () => {
     expect(ownBranchesSource(true, null, "https://git.example.com/x")).toEqual({
       url: "https://git.example.com/x",
     })
+  })
+})
+
+describe("sharing", () => {
+  test("a new repository is shared with no one; a stored one with its organizations", () => {
+    expect(sharedOrganizationIds(null)).toEqual([])
+    expect(
+      sharedOrganizationIds({
+        ...stored,
+        organizations: [
+          { id: "org-casa", name: "Casa", slug: "casa" },
+          { id: "org-equipo", name: "Equipo", slug: "equipo" },
+        ],
+      })
+    ).toEqual(["org-casa", "org-equipo"])
+  })
+
+  test("the same organizations in another order are no change", () => {
+    expect(sameOrganizations(["a", "b"], ["b", "a"])).toBe(true)
+    expect(sameOrganizations([], [])).toBe(true)
+    expect(sameOrganizations(["a"], ["a", "b"])).toBe(false)
+    expect(sameOrganizations(["a", "b"], ["a", "c"])).toBe(false)
   })
 })

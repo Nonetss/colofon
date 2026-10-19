@@ -17,6 +17,13 @@ import { getIcon } from "@/lib/icon-registry"
 import { cn } from "@/lib/utils"
 
 const FolderGit = getIcon("entities", "contentRepository")
+
+function sharingOf(repository: OwnRepository): string {
+  if (repository.organizations.length === 0) return "Solo tú"
+  return repository.organizations
+    .map((organization) => organization.name)
+    .join(", ")
+}
 const Refresh = getIcon("actions", "refresh")
 
 interface OwnRepositoryCardProps {
@@ -89,6 +96,9 @@ export function OwnRepositoryCard({
             </Text>
           </MetadataCell>
           <ContentPathCell path={repository.path} />
+          <MetadataCell as="dl" label="Compartido con">
+            <Text className="block truncate">{sharingOf(repository)}</Text>
+          </MetadataCell>
           <RepositorySyncStatus
             repository={repository}
             className="@md:col-span-2"

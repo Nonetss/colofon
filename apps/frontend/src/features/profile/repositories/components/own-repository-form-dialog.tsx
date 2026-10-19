@@ -11,15 +11,20 @@ import {
   useGitCredentials,
   useRepositoryAccess,
 } from "@/features/content-repositories/manage"
+import { SharingField } from "@/features/profile/repositories/components/sharing-field"
 import {
   useOwnRepositoryBranches,
   useOwnRepositoryCreate,
   useOwnRepositoryFolders,
+  useOwnRepositoryShare,
   useOwnRepositoryUpdate,
 } from "@/features/profile/repositories/hooks/use-own-repositories"
 import {
   createInput,
+  type OwnRepositoryFormValues,
   ownBranchesSource,
+  sameOrganizations,
+  sharedOrganizationIds,
   updateInput,
 } from "@/features/profile/repositories/model/repository-form"
 import type { OwnRepository } from "@/features/profile/repositories/model/types"
@@ -49,6 +54,7 @@ export function OwnRepositoryFormDialog({
 }: OwnRepositoryFormDialogProps) {
   const createRepository = useOwnRepositoryCreate()
   const updateRepository = useOwnRepositoryUpdate()
+  const shareRepository = useOwnRepositoryShare()
   const isEditing = repository !== null
 
   const [name, setName] = useState("")
@@ -60,6 +66,7 @@ export function OwnRepositoryFormDialog({
   // An edited repository's ref, or one the user picked, is never replaced by
   // the remote's default branch.
   const [refChosen, setRefChosen] = useState(false)
+  const [organizationIds, setOrganizationIds] = useState<string[]>([])
 
   useEffect(() => {
     if (!open) return
@@ -70,6 +77,7 @@ export function OwnRepositoryFormDialog({
     setRef(repository?.ref ?? "main")
     setContentPath(repository?.path ?? "")
     setRefChosen(repository !== null)
+    setOrganizationIds(sharedOrganizationIds(repository))
   }, [open, repository])
 
   const credentials = useGitCredentials()
@@ -102,7 +110,10 @@ export function OwnRepositoryFormDialog({
     setRef(value)
   }
 
-  const isPending = createRepository.isPending || updateRepository.isPending
+  const isPending =
+    createRepository.isPending ||
+    updateRepository.isPending ||
+    shareRepository.isPending
 
   const handleOpenChange = (next: boolean) => {
     if (isPending) return
@@ -112,6 +123,12 @@ export function OwnRepositoryFormDialog({
   const handleNameChange = (value: string) => {
     setName(value)
     if (!isEditing && !slugTouched) setSlug(slugify(value))
+  }
+
+  const saveRepository = (values: OwnRepositoryFormValues) => {
+    if (repository !== null)
+      return updateRepository.mutateAsync(updateInput(repository, values))
+    return createRepository.mutateAsync(createInput(slug, values))
   }
 
   const handleSubmit = async (e: SyntheticEvent<HTMLFormElement>) => {
@@ -124,12 +141,16 @@ export function OwnRepositoryFormDialog({
       path: contentPath.trim(),
       credentialId: prepared.credentialId,
     }
-    if (repository !== null) {
-      await updateRepository.mutateAsync(updateInput(repository, values))
-    } else {
-      await createRepository.mutateAsync(createInput(slug, values))
+    const saved = await saveRepository(values)
+    if (
+      !sameOrganizations(sharedOrganizationIds(repository), organizationIds)
+    ) {
+      await shareRepository.mutateAsync({
+        slug: saved.slug,
+        organizationIds,
+      })
     }
-    handleOpenChange(false)
+    onOpenChange(false)
   }
 
   return (
@@ -140,7 +161,7 @@ export function OwnRepositoryFormDialog({
       description={
         isEditing
           ? `El slug "${repository.slug}" no cambia: es la dirección de sus páginas.`
-          : "Solo tú verás sus páginas. La plataforma lo descarga y lo sincroniza cada cinco minutos."
+          : "Solo tú y las organizaciones con las que lo compartas veréis sus páginas. La plataforma lo descarga y lo sincroniza cada cinco minutos."
       }
       onSubmit={handleSubmit}
       isPending={isPending}
@@ -210,6 +231,7 @@ export function OwnRepositoryFormDialog({
         onChange={setContentPath}
         folders={folders}
       />
+      <SharingField value={organizationIds} onChange={setOrganizationIds} />
     </FormDialog>
   )
 }

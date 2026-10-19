@@ -15,3 +15,7 @@ export type CreateOwnRepositoryInput = Parameters<
 export type UpdateOwnRepositoryInput = Parameters<
   ContentClient["updateMyRepository"]
 >[0]
+
+export type ShareOwnRepositoryInput = Parameters<
+  ContentClient["shareMyRepository"]
+>[0]

@@ -12,7 +12,10 @@ export interface RepositorySelectProps {
   onChange: (value: string) => void
 }
 
-/** "Todos" plus every repository by name, searchable, at the top of the sidebar. */
+/**
+ * "Todos" plus every repository by name, searchable, at the top of the
+ * sidebar; one shared with the user names the organization it comes from.
+ */
 export function RepositorySelect({
   repositories,
   scope,
@@ -21,6 +24,7 @@ export function RepositorySelect({
   const options = repositories.map((repository) => ({
     value: repository.slug,
     label: repository.name,
+    detail: repository.sharedBy ?? undefined,
   }))
   const value = scopeValue(scope)
   return (

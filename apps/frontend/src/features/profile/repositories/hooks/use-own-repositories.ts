@@ -5,8 +5,10 @@ import type {
   CreateOwnRepositoryInput,
   OwnRepositories,
   OwnRepository,
+  ShareOwnRepositoryInput,
   UpdateOwnRepositoryInput,
 } from "@/features/profile/repositories/model/types"
+import { useOrpcMutation } from "@/hooks/use-orpc-mutation"
 import { useResourceMutation } from "@/hooks/use-resource-mutation"
 import { orpc } from "@/lib/orpc"
 
@@ -16,6 +18,20 @@ const extraInvalidate = [orpc.v1.docs.nav.queryKey()]
 
 export const useOwnRepositoriesList = () =>
   useQuery(orpc.v1.content.listMyRepositories.queryOptions())
+
+/** The organizations the user belongs to, to share a repository with. */
+export const useShareableOrganizations = () =>
+  useQuery(orpc.v1.myOrganization.list.queryOptions())
+
+// Saved right after the repository itself, whose toast already speaks for
+// the form; only a failure is reported.
+export const useOwnRepositoryShare = () =>
+  useOrpcMutation({
+    mutationFn: (input: ShareOwnRepositoryInput) =>
+      orpc.v1.content.shareMyRepository.call(input),
+    error: "No se pudo cambiar con quién compartes el repositorio",
+    invalidate: [listKey, ...extraInvalidate],
+  })
 
 /** The folders that hold a site, read once `input` exists. */
 export const useOwnRepositoryFolders = (

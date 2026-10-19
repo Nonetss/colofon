@@ -24,6 +24,8 @@ export interface ComboboxOption {
   value: string
   label: string
   keywords?: string
+  /** A secondary note after the label in the list; also searched. */
+  detail?: string
 }
 
 interface SearchableComboboxProps {
@@ -103,7 +105,7 @@ export function SearchableCombobox({
               {options.map((option) => (
                 <CommandItem
                   key={option.value}
-                  value={`${option.label} ${option.keywords ?? ""} ${option.value}`}
+                  value={`${option.label} ${option.keywords ?? ""} ${option.detail ?? ""} ${option.value}`}
                   onSelect={() => {
                     onChange(option.value)
                     setOpen(false)
@@ -115,7 +117,12 @@ export function SearchableCombobox({
                       value === option.value && "opacity-100"
                     )}
                   />
-                  {option.label}
+                  <span className="truncate">{option.label}</span>
+                  {option.detail && (
+                    <span className="ml-auto truncate text-muted-foreground text-xs">
+                      {option.detail}
+                    </span>
+                  )}
                 </CommandItem>
               ))}
             </CommandGroup>

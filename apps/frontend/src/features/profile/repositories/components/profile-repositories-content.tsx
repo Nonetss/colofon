@@ -88,7 +88,8 @@ export function ProfileRepositoriesContent() {
             tone="muted"
             className="border-y py-3 leading-relaxed"
           >
-            Solo tú ves estos repositorios: en el lector, en la búsqueda y en tu
+            Solo tú ves estos repositorios, y los miembros de las organizaciones
+            con las que compartas cada uno: en el lector, en la búsqueda y en la
             IA a través del MCP. Se descargan por https y se sincronizan cada
             cinco minutos.
           </Text>
@@ -111,7 +112,7 @@ export function ProfileRepositoriesContent() {
           icon: <FolderGit className="size-6" />,
           title: "Aún no has añadido ninguno",
           description:
-            "Conecta un repositorio git con tus apuntes o tu documentación y solo tú podrás leerlo aquí.",
+            "Conecta un repositorio git con tus apuntes o tu documentación. Solo tú lo leerás aquí, hasta que lo compartas con una organización.",
           action: (
             <Button onClick={editDialog.openCreate}>Añadir repositorio</Button>
           ),
