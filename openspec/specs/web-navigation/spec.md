@@ -578,6 +578,10 @@ profile section (`/me`) SHALL use it, with these pages:
   member-since date, with the actions to edit the name and change the password;
 - `/me/api-keys` — the user's API keys (`api-key-management`);
 - `/me/secrets` — the user's secrets (`secret-management`);
+- `/me/repositories` — the user's repositories and their sharing
+  (`user-content-repositories`, `repository-sharing`);
+- `/me/organizations` — the user's organizations and the invitations sent to
+  them (`organization-membership`);
 - `/me/skills` — "Skills para tu IA", the text the user pastes into an AI to
   install the site's skills.
 
@@ -590,7 +594,7 @@ the sidebar SHALL NOT be edited for it.
 
 - **WHEN** a signed-in user opens `/me`
 - **THEN** the page SHALL show a sidebar with the rows for the account, API
-  keys, secrets and skills pages, each with its registry icon and label
+  keys, secrets, repositories, organizations and skills pages, each with its registry icon and label
 
 #### Scenario: Moving between profile pages
 

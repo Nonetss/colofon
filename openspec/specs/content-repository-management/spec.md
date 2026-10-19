@@ -52,7 +52,7 @@ The backend SHALL expose, under the `v1.content` procedures and only to users wi
 
 Create and edit SHALL refuse a request that sends both a `url` and asks for a hosted repository; create SHALL also refuse one that sends neither. Editing a hosted repository with a `url` SHALL make it external. Every repository in a response SHALL say whether it is hosted and, for a hosted one, carry its push URL, `<platform origin>/git/<slug>.git`; an external one SHALL carry no push URL.
 
-These procedures SHALL act only on the platform's repositories: a repository that belongs to a user SHALL answer `NOT_FOUND` to them, and the slug of one SHALL count as taken on create. A request without a session SHALL answer `UNAUTHORIZED` and one from a non-admin `FORBIDDEN`, except syncing a repository, which any signed-in user may do for the repositories they can read (every platform repository and their own). Creating a repository with a slug already in use SHALL answer `CONFLICT` and store nothing. Editing, deleting or syncing an unknown or unreadable repository SHALL answer `NOT_FOUND`. A sync that fails SHALL answer `BAD_GATEWAY` with the git error, without credentials, and SHALL store that failure as the repository's last sync.
+These procedures SHALL act only on the platform's repositories: a repository that belongs to a user SHALL answer `NOT_FOUND` to them, and the slug of one SHALL count as taken on create. A request without a session SHALL answer `UNAUTHORIZED` and one from a non-admin `FORBIDDEN`, except syncing a repository, which any signed-in user may do for the repositories they can read (every platform repository, their own and those shared with an organization they belong to, `repository-sharing`). Creating a repository with a slug already in use SHALL answer `CONFLICT` and store nothing. Editing, deleting or syncing an unknown or unreadable repository SHALL answer `NOT_FOUND`. A sync that fails SHALL answer `BAD_GATEWAY` with the git error, without credentials, and SHALL store that failure as the repository's last sync.
 
 #### Scenario: Duplicate slug
 
@@ -78,6 +78,11 @@ These procedures SHALL act only on the platform's repositories: a repository tha
 
 - **WHEN** an admin creates a repository sending a URL and asking for a hosted one
 - **THEN** the backend SHALL answer `BAD_REQUEST` and store nothing
+
+#### Scenario: Syncing a shared repository
+
+- **WHEN** `luis`, a member of `equipo-docs`, syncs `apuntes`, which `ana` shares with `equipo-docs`
+- **THEN** the sync SHALL run and answer with the commit checked out
 
 ### Requirement: Credentials never leave the backend
 

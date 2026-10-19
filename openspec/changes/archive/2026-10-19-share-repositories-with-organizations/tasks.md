@@ -1,7 +1,7 @@
 ## 1. Database (stop for the user)
 
 - [x] 1.1 Add `contentRepositoryShare` (design §1) to `packages/db/src/schema/content/content.ts` with its relations and exported types, and check whether `member` already has an index on `user_id`; verify `check-types` in `packages/db`
-- [ ] 1.2 Stop and ask the user to run `bun run db:generate` and apply the migration (propose the `member(user_id)` index if missing); do not continue with tasks that need the table at runtime until they confirm
+- [x] 1.2 Stop and ask the user to run `bun run db:generate` and apply the migration (propose the `member(user_id)` index if missing); do not continue with tasks that need the table at runtime until they confirm
 
 ## 2. Repository audience (packages/api)
 
