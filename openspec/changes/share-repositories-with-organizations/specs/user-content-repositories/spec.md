@@ -1,0 +1,83 @@
+## MODIFIED Requirements
+
+### Requirement: Repository ownership and visibility
+
+A content repository SHALL either belong to no user (a platform repository, as created by admins) or belong to exactly one user. A platform repository SHALL be readable by every signed-in user. A repository that belongs to a user SHALL be readable only by that user and by the members of the organizations it is shared with (`repository-sharing`): the reader, the documentation search, the skills, the `llms.txt` pages and the MCP tools SHALL neither list it nor serve any of its pages, files or skills to anyone else, admins included, and SHALL answer for it as for an unknown repository (`NOT_FOUND`). The periodic sync SHALL keep syncing every repository, whoever owns it. Deleting a user SHALL delete their repositories, their clones and their shares.
+
+#### Scenario: Private repository in the navigation
+
+- **WHEN** `ana` owns the repository `apuntes` and `luis` reads the navigation
+- **THEN** `apuntes` SHALL NOT be listed for `luis`, and it SHALL be listed for `ana` beside the platform repositories
+
+#### Scenario: Page of someone else's repository
+
+- **WHEN** `luis` reads a page of `apuntes`
+- **THEN** the backend SHALL answer `NOT_FOUND`
+
+#### Scenario: Admin does not read it either
+
+- **WHEN** an admin lists the repositories in the MCP or the reader
+- **THEN** `apuntes` SHALL NOT appear
+
+#### Scenario: Periodic sync
+
+- **WHEN** the five-minute job runs with the platform repository `casa` and `ana`'s `apuntes`
+- **THEN** both SHALL be synced
+
+#### Scenario: Shared with the reader's organization
+
+- **WHEN** `ana` shares `apuntes` with `equipo-docs` and `luis`, a member of `equipo-docs`, reads the navigation
+- **THEN** `apuntes` SHALL be listed for `luis`
+
+### Requirement: Owner-only management procedures
+
+The backend SHALL expose to every signed-in user procedures, under `v1.content`, to list, create, edit, delete and read the branches of their own repositories, and to sync them (the sync procedure of `content-repository-management`). They SHALL act only on repositories the caller owns: any other slug, a platform repository's included, SHALL answer `NOT_FOUND`. A user's repository SHALL be external with a `url`, `name` and `ref` (default `main`), validated like the admin's, and SHALL NOT be hosted. The `slug` SHALL follow the same rules as in `content-repository-management` and SHALL be unique across all repositories; a slug in use SHALL answer `CONFLICT`. Create and edit SHALL start a sync without waiting for it, credentials SHALL never leave the backend, and a failing sync SHALL answer `BAD_GATEWAY` with the git error, all as in `content-repository-management`. Each repository these procedures return SHALL carry the organizations it is shared with (id, name and slug), ordered by name. Requests without a session SHALL answer `UNAUTHORIZED`.
+
+#### Scenario: Creating a repository
+
+- **WHEN** `ana` creates the repository `apuntes` with the URL `https://github.com/ana/apuntes.git`
+- **THEN** it SHALL be stored as hers with the ref `main`, a sync SHALL start, and only she SHALL see it
+
+#### Scenario: Editing someone else's repository
+
+- **WHEN** `luis` edits `apuntes`
+- **THEN** the backend SHALL answer `NOT_FOUND` and change nothing
+
+#### Scenario: Editing a platform repository
+
+- **WHEN** a non-admin user edits the platform repository `casa` through the owner procedures
+- **THEN** the backend SHALL answer `NOT_FOUND`
+
+#### Scenario: Slug already used by another user
+
+- **WHEN** `luis` creates a repository with the slug `apuntes`, which is `ana`'s
+- **THEN** the backend SHALL answer `CONFLICT` and store nothing
+
+#### Scenario: Hosted not offered
+
+- **WHEN** a user asks for a hosted repository
+- **THEN** the request SHALL fail input validation
+
+#### Scenario: Listing a shared repository
+
+- **WHEN** `ana` lists her repositories and `apuntes` is shared with `equipo-docs`
+- **THEN** `apuntes` SHALL be returned with `equipo-docs` among its organizations
+
+### Requirement: Repositories screen in the profile
+
+The profile section SHALL provide a “Repositorios” page at `/me/repositories`, listed in the profile sidebar for every signed-in user, that shows the user's own repositories as cards (name, slug, URL without credentials, ref and last sync with its time and short commit or its full error, a sync button, the organizations it is shared with and a menu to edit or delete) and an empty state with a button to add one. Creating and editing SHALL use a form with name, slug (editable only on creation), URL, an empty URL on edit keeping the stored one, and a ref chosen from the remote's branches once they can be read, as in `content-repository-management`, and the organizations to share it with (`repository-sharing`); deleting SHALL ask for a confirmation. All copy SHALL be in Spanish. A request without a session SHALL be redirected to the login.
+
+#### Scenario: Empty state
+
+- **WHEN** a user without repositories opens `/me/repositories`
+- **THEN** the page SHALL explain that the repositories are only visible to them and to the organizations they share them with, and offer to add one
+
+#### Scenario: Failed sync shown
+
+- **WHEN** a user syncs a repository whose remote rejects the credentials
+- **THEN** the card SHALL show the failure with git's error, without the credentials
+
+#### Scenario: Reaching the new repository
+
+- **WHEN** a user adds `apuntes` and its first sync succeeds
+- **THEN** the reader's repository selector SHALL list `apuntes` for that user only, until they share it, and `/apuntes` SHALL open its home
