@@ -3,13 +3,14 @@ import {
   index,
   integer,
   pgTable,
+  primaryKey,
   text,
   timestamp,
   uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core"
 
-import { user } from "#schema/auth"
+import { organization, user } from "#schema/auth"
 
 /**
  * A user's credentials for one service, which the MCP's `request` tool sends
@@ -43,6 +44,29 @@ export const secret = pgTable(
   },
   (table) => [
     uniqueIndex("secret_userId_name_idx").on(table.userId, table.name),
+  ]
+)
+
+/**
+ * An organization a secret is shared with: its members' agents can use it,
+ * written `{{<organization slug>/<name>.<field>}}`, while its owner still
+ * belongs to that organization. Within one organization the names of the
+ * secrets shared with it are unique (checked by the API, not here).
+ */
+export const secretShare = pgTable(
+  "secret_share",
+  {
+    secretId: uuid("secret_id")
+      .notNull()
+      .references(() => secret.id, { onDelete: "cascade" }),
+    organizationId: text("organization_id")
+      .notNull()
+      .references(() => organization.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.secretId, table.organizationId] }),
+    index("secret_share_organization_id_idx").on(table.organizationId),
   ]
 )
 
@@ -85,5 +109,7 @@ export const secretUsage = pgTable(
 
 export type Secret = typeof secret.$inferSelect
 export type NewSecret = typeof secret.$inferInsert
+export type SecretShare = typeof secretShare.$inferSelect
+export type NewSecretShare = typeof secretShare.$inferInsert
 export type SecretUsage = typeof secretUsage.$inferSelect
 export type NewSecretUsage = typeof secretUsage.$inferInsert

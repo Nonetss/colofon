@@ -43,6 +43,7 @@ export const relations = defineRelations(schema, (r) => ({
     invitations: r.many.invitation(),
     roles: r.many.organizationRole(),
     repositoryShares: r.many.contentRepositoryShare(),
+    secretShares: r.many.secretShare(),
   },
   organizationRole: {
     organization: r.one.organization({
@@ -127,6 +128,23 @@ export const relations = defineRelations(schema, (r) => ({
     }),
     organization: r.one.organization({
       from: r.contentRepositoryShare.organizationId,
+      to: r.organization.id,
+    }),
+  },
+  secret: {
+    owner: r.one.user({
+      from: r.secret.userId,
+      to: r.user.id,
+    }),
+    shares: r.many.secretShare(),
+  },
+  secretShare: {
+    secret: r.one.secret({
+      from: r.secretShare.secretId,
+      to: r.secret.id,
+    }),
+    organization: r.one.organization({
+      from: r.secretShare.organizationId,
       to: r.organization.id,
     }),
   },
