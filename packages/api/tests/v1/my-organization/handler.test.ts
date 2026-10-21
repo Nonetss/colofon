@@ -330,16 +330,16 @@ describe("myOrganization.leave", () => {
   test("an owner leaves when another owner stays", async () => {
     fakeDb.queue("query.member.findFirst", ownOwner)
     fakeDb.queue("query.member.findMany", [ownOwner, otherOwner])
-    fakeDb.queue("delete", undefined, undefined)
+    fakeDb.queue("delete", undefined, undefined, undefined)
 
     await myOrganizationHandler.leave({ context, input: { id: ORG_ID } })
 
-    expect(fakeDb.calls("delete")).toHaveLength(2)
+    expect(fakeDb.calls("delete")).toHaveLength(3)
   })
 
-  test("a member leaves, and their shares with it end in the same transaction", async () => {
+  test("a member leaves, and their repository and secret shares with it end in the same transaction", async () => {
     fakeDb.queue("query.member.findFirst", ownMember)
-    fakeDb.queue("delete", undefined, undefined)
+    fakeDb.queue("delete", undefined, undefined, undefined)
 
     expect(
       await myOrganizationHandler.leave({ context, input: { id: ORG_ID } })
@@ -347,6 +347,7 @@ describe("myOrganization.leave", () => {
     expect(fakeDb.calls().map((each) => each.op)).toEqual([
       "query.member.findFirst",
       "transaction",
+      "delete",
       "delete",
       "delete",
     ])
@@ -535,9 +536,9 @@ describe("myOrganization.removeMember", () => {
     noWrites()
   })
 
-  test("an admin removes a member and their shares with the organization", async () => {
+  test("an admin removes a member and their repository and secret shares with the organization", async () => {
     fakeDb.queue("query.member.findFirst", otherMember, ownAdmin)
-    fakeDb.queue("delete", undefined, undefined)
+    fakeDb.queue("delete", undefined, undefined, undefined)
 
     await myOrganizationHandler.removeMember({
       context,
@@ -545,7 +546,7 @@ describe("myOrganization.removeMember", () => {
     })
 
     expect(fakeDb.calls("transaction")).toHaveLength(1)
-    expect(fakeDb.calls("delete")).toHaveLength(2)
+    expect(fakeDb.calls("delete")).toHaveLength(3)
   })
 })
 

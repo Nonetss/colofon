@@ -17,7 +17,7 @@ export const secretRouter = {
       openapi({
         summary: "List the caller's secrets",
         description:
-          "Returns the caller's secrets in name order with their field names, origins and flags, never their values. Accepts an API key, so the MCP can show an agent which secrets exist. Without SECRETS_ENCRYPTION_KEY it answers enabled: false and no secrets; the other secret procedures are then SERVICE_UNAVAILABLE.",
+          "Returns the caller's secrets in name order with their field names, origins, flags and the organizations each is shared with, and the secrets shared with the caller, never their values. Accepts an API key, so the MCP can show an agent which secrets exist. Without SECRETS_ENCRYPTION_KEY it answers enabled: false and no secrets; the other secret procedures are then SERVICE_UNAVAILABLE.",
         tags,
         method: "GET",
       })
@@ -68,12 +68,26 @@ export const secretRouter = {
     .output(secretOutput.delete)
     .handler(({ context, input }) => secretHandler.delete({ context, input })),
 
+  share: sessionProcedure
+    .meta(
+      openapi({
+        summary: "Share a secret with organizations",
+        description:
+          "Replaces the organizations a secret of the caller's is shared with; their members' agents can then use it in the MCP request tool, never seeing its values. Every organization must be one the caller belongs to (NOT_FOUND otherwise). CONFLICT when another secret with that name is already shared with one of them. Only from a browser session.",
+        tags,
+        method: "PUT",
+      })
+    )
+    .input(secretInput.share)
+    .output(secretOutput.share)
+    .handler(({ context, input }) => secretHandler.share({ context, input })),
+
   usage: sessionProcedure
     .meta(
       openapi({
-        summary: "List the caller's secret usage",
+        summary: "List the usage of the caller's secrets",
         description:
-          "Returns the calls of the MCP request tool that used the caller's secrets, newest first, optionally only those of one secret. Never holds headers, bodies, query strings or values. Only from a browser session.",
+          "Returns the caller's calls of the MCP request tool and anyone's calls with a secret the caller owns, with who made each, newest first, optionally only those of one secret. Never holds headers, bodies, query strings or values. Only from a browser session.",
         tags,
         method: "GET",
       })

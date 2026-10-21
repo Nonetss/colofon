@@ -7,6 +7,8 @@ import {
   type Member,
   member,
   organization,
+  secret,
+  secretShare,
 } from "@nonete/db/schema"
 import { and, eq, inArray } from "drizzle-orm"
 import type { z } from "zod"
@@ -121,9 +123,21 @@ function sharesOfOwnerIn(organizationId: string, userId: string) {
   )
 }
 
+/** The shares of `userId`'s secrets with `organizationId`. */
+function secretSharesOfOwnerIn(organizationId: string, userId: string) {
+  return and(
+    eq(secretShare.organizationId, organizationId),
+    inArray(
+      secretShare.secretId,
+      db.select({ id: secret.id }).from(secret).where(eq(secret.userId, userId))
+    )
+  )
+}
+
 /**
  * Ends `target`'s membership along with the shares of their repositories
- * with that organization, which its members would no longer read anyway.
+ * and secrets with that organization, which its members would no longer
+ * read or use anyway.
  */
 async function removeMembership(target: Member) {
   await db.transaction(async (tx) => {
@@ -131,6 +145,9 @@ async function removeMembership(target: Member) {
     await tx
       .delete(contentRepositoryShare)
       .where(sharesOfOwnerIn(target.organizationId, target.userId))
+    await tx
+      .delete(secretShare)
+      .where(secretSharesOfOwnerIn(target.organizationId, target.userId))
   })
 }
 

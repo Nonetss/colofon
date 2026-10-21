@@ -4,9 +4,11 @@ import {
   type Secret,
   type SecretUsage,
   secret,
+  secretShare,
   secretUsage,
+  user,
 } from "@nonete/db/schema"
-import { and, arrayContains, asc, eq, lt } from "drizzle-orm"
+import { and, arrayContains, eq, lt, or, sql } from "drizzle-orm"
 import type { z } from "zod"
 import type { Context } from "#context"
 import { errors } from "#errors"
@@ -19,6 +21,11 @@ import {
 import { toIso, toIsoOrNull } from "#shared/dates"
 import { assertFound } from "#shared/not-found"
 import {
+  organizationsOf,
+  ownersOrganizations,
+  type SharedOrganization,
+} from "#shared/organization-shares"
+import {
   decodeKeysetCursor,
   encodeKeysetCursor,
   paginate,
@@ -26,12 +33,19 @@ import {
 import { requireUserId } from "#shared/session"
 import type { secretInput } from "#v1/secret/input"
 import type { secretOutput } from "#v1/secret/output"
+import {
+  assertSharedNameFree,
+  type SharedSecret,
+  sharedSecretsOf,
+} from "#v1/secret/sharing"
 
-// The caller's own secrets: every query filters by owner, so another user's
-// secret reads as not found. Values go in encrypted and never come out; the
-// MCP's `request` tool (`request/`) is the only reader of them.
+// The caller's own secrets: every write filters by owner, so another user's
+// secret reads as not found, and a member of an organization a secret is
+// shared with only lists it (`sharing.ts`). Values go in encrypted and never
+// come out; the MCP's `request` tool (`request/`) is the only reader of them.
 
 type SecretOutput = z.infer<typeof secretOutput.secret>
+type SharedSecretOutput = z.infer<typeof secretOutput.list>["shared"][number]
 type UsageEntry = z.infer<typeof secretOutput.usage>["entries"][number]
 
 /** How long the usage log keeps an entry. */
@@ -55,7 +69,8 @@ function assertSecretsEnabled(): void {
   })
 }
 
-function toSecret(row: Secret): SecretOutput {
+/** What both lists show of a secret: never a value. */
+function secretFields(row: Secret) {
   const values = decryptValues(row.ciphertext, {
     secretId: row.id,
     userId: row.userId,
@@ -70,18 +85,43 @@ function toSecret(row: Secret): SecretOutput {
     allowInUrl: row.allowInUrl,
     allowInBody: row.allowInBody,
     unreadable: values === null,
+  }
+}
+
+function toSecret(
+  row: Secret,
+  organizations: SharedOrganization[]
+): SecretOutput {
+  return {
+    ...secretFields(row),
+    organizations,
     lastUsedAt: toIsoOrNull(row.lastUsedAt),
     createdAt: toIso(row.createdAt),
     updatedAt: toIso(row.updatedAt),
   }
 }
 
-function toUsageEntry(row: SecretUsage): UsageEntry {
+function toSharedSecret(shared: SharedSecret): SharedSecretOutput {
+  return {
+    ...secretFields(shared.secret),
+    organization: shared.organization,
+    ownerName: shared.ownerName,
+    prefix: `${shared.organization.slug}/`,
+  }
+}
+
+type UsageRow = {
+  usage: SecretUsage
+  caller: { id: string; name: string } | null
+}
+
+function toUsageEntry({ usage: row, caller }: UsageRow): UsageEntry {
   if (!isOutcome(row.outcome)) {
     throw new Error(`Unknown secret usage outcome: ${row.outcome}`)
   }
   return {
     id: row.id,
+    user: caller,
     apiKeyId: row.apiKeyId,
     secretNames: row.secretNames,
     method: row.method,
@@ -94,11 +134,12 @@ function toUsageEntry(row: SecretUsage): UsageEntry {
   }
 }
 
-async function findOwned(userId: string, id: string): Promise<Secret> {
-  const [row] = await db
-    .select()
-    .from(secret)
-    .where(and(eq(secret.id, id), eq(secret.userId, userId)))
+/** One of `userId`'s secrets, with the organizations it is shared with. */
+async function findOwned(userId: string, id: string) {
+  const row = await db.query.secret.findFirst({
+    where: { id, userId },
+    with: { shares: { with: { organization: true } } },
+  })
   return assertFound(row, NOT_FOUND)
 }
 
@@ -165,13 +206,20 @@ function insertedRow(row: Secret | undefined): Secret {
 export const secretHandler = {
   async list({ context }: { context: Context }) {
     const userId = requireUserId(context)
-    if (!secretsEnabled()) return { enabled: false, secrets: [] }
-    const rows = await db
-      .select()
-      .from(secret)
-      .where(eq(secret.userId, userId))
-      .orderBy(asc(secret.name))
-    return { enabled: true, secrets: rows.map(toSecret) }
+    if (!secretsEnabled()) return { enabled: false, secrets: [], shared: [] }
+    const [rows, shared] = await Promise.all([
+      db.query.secret.findMany({
+        where: { userId },
+        with: { shares: { with: { organization: true } } },
+        orderBy: { name: "asc" },
+      }),
+      sharedSecretsOf(userId),
+    ])
+    return {
+      enabled: true,
+      secrets: rows.map((row) => toSecret(row, organizationsOf(row.shares))),
+      shared: shared.map(toSharedSecret),
+    }
   },
 
   async create({
@@ -204,7 +252,7 @@ export const secretHandler = {
         allowInBody: input.allowInBody,
       })
       .returning()
-    return toSecret(insertedRow(row))
+    return toSecret(insertedRow(row), [])
   },
 
   async update({
@@ -217,8 +265,14 @@ export const secretHandler = {
     assertSecretsEnabled()
     const userId = requireUserId(context)
     const current = await findOwned(userId, input.id)
+    const organizations = organizationsOf(current.shares)
     if (input.name !== undefined && input.name !== current.name) {
       await assertNameFree(userId, input.name, current.id)
+      await assertSharedNameFree(
+        input.name,
+        organizations.map((each) => each.id),
+        current.id
+      )
     }
 
     const replaced = replacedFields(input.fields, current)
@@ -240,7 +294,7 @@ export const secretHandler = {
       })
       .where(and(eq(secret.id, current.id), eq(secret.userId, userId)))
       .returning()
-    return toSecret(insertedRow(row))
+    return toSecret(insertedRow(row), organizations)
   },
 
   async delete({
@@ -260,6 +314,34 @@ export const secretHandler = {
     return { id: deleted.id, success: true }
   },
 
+  async share({
+    context,
+    input,
+  }: {
+    context: Context
+    input: z.infer<typeof secretInput.share>
+  }) {
+    assertSecretsEnabled()
+    const userId = requireUserId(context)
+    const current = await findOwned(userId, input.id)
+    const wanted = [...new Set(input.organizationIds)]
+    const memberships = await ownersOrganizations(userId, wanted)
+    if (memberships.length !== wanted.length)
+      throw errors.NOT_FOUND({ message: "Organización no encontrada" })
+    await assertSharedNameFree(current.name, wanted, current.id)
+    await db.transaction(async (tx) => {
+      await tx.delete(secretShare).where(eq(secretShare.secretId, current.id))
+      if (wanted.length === 0) return
+      await tx.insert(secretShare).values(
+        wanted.map((organizationId) => ({
+          secretId: current.id,
+          organizationId,
+        }))
+      )
+    })
+    return toSecret(current, organizationsOf(memberships))
+  },
+
   async usage({
     context,
     input,
@@ -270,12 +352,29 @@ export const secretHandler = {
     assertSecretsEnabled()
     const userId = requireUserId(context)
     const cursor = decodeKeysetCursor(input.cursor)
-    const filters = [eq(secretUsage.userId, userId)]
+    // The caller's own calls, and anyone's calls with a secret they own.
+    const owned = db
+      .select({ id: secret.id })
+      .from(secret)
+      .where(eq(secret.userId, userId))
+    const filters = [
+      or(
+        eq(secretUsage.userId, userId),
+        sql`${secretUsage.secretIds} && array(${owned})`
+      ),
+    ]
     if (input.secretId !== undefined) {
       filters.push(arrayContains(secretUsage.secretIds, [input.secretId]))
     }
     const rows = await withKeysetPagination(
-      db.select().from(secretUsage).$dynamic(),
+      db
+        .select({
+          usage: secretUsage,
+          caller: { id: user.id, name: user.name },
+        })
+        .from(secretUsage)
+        .leftJoin(user, eq(user.id, secretUsage.userId))
+        .$dynamic(),
       {
         orderColumns: [secretUsage.createdAt, secretUsage.id],
         cursor,
@@ -305,8 +404,8 @@ export const secretHandler = {
 
 function nextUsageCursor(
   hasMore: boolean,
-  lastRow: SecretUsage | undefined
+  lastRow: UsageRow | undefined
 ): string | null {
   if (!hasMore || !lastRow) return null
-  return encodeKeysetCursor(lastRow.createdAt, lastRow.id)
+  return encodeKeysetCursor(lastRow.usage.createdAt, lastRow.usage.id)
 }

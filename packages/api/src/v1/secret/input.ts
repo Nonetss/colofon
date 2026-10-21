@@ -114,8 +114,21 @@ export const secretInput = {
     allowInBody: flags.allowInBody.optional(),
   }),
   delete: z.object({ id }),
+  share: z.object({
+    id,
+    organizationIds: z
+      .array(z.string().min(1))
+      .max(100)
+      .describe(
+        "Every organization to share it with, replacing the current ones; empty makes it private"
+      ),
+  }),
   usage: z.object({
-    secretId: id.optional().describe("Only the calls that used this secret"),
+    secretId: id
+      .optional()
+      .describe(
+        "Only the calls that used this secret, one of the caller's or shared with them"
+      ),
     limit: paginationLimit(20, 100),
     cursor: paginationCursor(),
   }),

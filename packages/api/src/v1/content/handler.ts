@@ -32,6 +32,11 @@ import type { Context } from "#context"
 import { errors } from "#errors"
 import { toIso, toIsoOrNull } from "#shared/dates"
 import { assertFound } from "#shared/not-found"
+import {
+  organizationsOf,
+  ownersOrganizations,
+  type SharedOrganization,
+} from "#shared/organization-shares"
 import { requireUserId } from "#shared/session"
 import {
   ensureHostedRepo,
@@ -109,24 +114,6 @@ function toRepository(row: ContentRepository): ContentRepositoryOutput {
     createdAt: toIso(row.createdAt),
     updatedAt: toIso(row.updatedAt),
   }
-}
-
-type SharedOrganization = OwnRepositoryOutput["organizations"][number]
-
-/** The organizations of `shares`, by name; a dangling one is skipped. */
-function organizationsOf(
-  shares: { organization: SharedOrganization | null }[]
-): SharedOrganization[] {
-  const organizations: SharedOrganization[] = []
-  for (const share of shares) {
-    if (share.organization === null) continue
-    organizations.push({
-      id: share.organization.id,
-      name: share.organization.name,
-      slug: share.organization.slug,
-    })
-  }
-  return organizations.toSorted((a, b) => a.name.localeCompare(b.name, "es"))
 }
 
 function toOwnRepository(
@@ -226,24 +213,6 @@ export async function sharedRepositoriesOf(
 export function findRow(slug: string, audience: RepositoryAudience) {
   return db.query.contentRepository.findFirst({
     where: { slug, ...audienceFilter(audience) },
-  })
-}
-
-/**
- * The organizations among `ids` that `userId` is a member of, once each, as
- * shares to list.
- */
-async function ownersOrganizations(userId: string, ids: string[]) {
-  if (ids.length === 0) return []
-  const memberships = await db.query.member.findMany({
-    where: { userId, organizationId: { in: ids } },
-    with: { organization: true },
-  })
-  const seen = new Set<string>()
-  return memberships.filter((membership) => {
-    if (seen.has(membership.organizationId)) return false
-    seen.add(membership.organizationId)
-    return true
   })
 }
 
