@@ -62,13 +62,6 @@ export function sharedOrganizationIds(
   return repository.organizations.map((organization) => organization.id)
 }
 
-/** Whether two picks of organizations hold the same ones, in any order. */
-export function sameOrganizations(a: string[], b: string[]): boolean {
-  if (a.length !== b.length) return false
-  const kept = new Set(a)
-  return b.every((id) => kept.has(id))
-}
-
 /** What `listMyBranches` reads: a typed URL or one of the user's own. */
 export type OwnBranchesSource =
   | { url: string; credentialId?: string }

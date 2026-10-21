@@ -4,4 +4,7 @@ export {
   useSecretDelete,
   useSecretsList,
 } from "@/features/secrets/manage/hooks/use-secrets"
-export type { SecretListItem } from "@/features/secrets/manage/model/types"
+export type {
+  SecretListItem,
+  SharedSecretItem,
+} from "@/features/secrets/manage/model/types"

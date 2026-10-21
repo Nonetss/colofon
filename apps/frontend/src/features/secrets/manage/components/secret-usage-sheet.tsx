@@ -33,6 +33,11 @@ function timing(entry: SecretUsageEntry): string {
   return `${when} · ${formatDurationMs(entry.durationMs)}`
 }
 
+function callerLabel(entry: SecretUsageEntry): string {
+  if (entry.user === null) return "Usuario eliminado"
+  return `Por ${entry.user.name}`
+}
+
 function originLabel(entry: SecretUsageEntry): string {
   if (entry.apiKeyId === null) return "Sesión web"
   return "API key"
@@ -51,6 +56,9 @@ function UsageRow({ entry }: { entry: SecretUsageEntry }) {
         </Text>
         <Text variant="meta-sm" tone="muted">
           {timing(entry)}
+        </Text>
+        <Text variant="meta-sm" tone="muted">
+          {callerLabel(entry)}
         </Text>
         <Text variant="meta-sm" tone="muted">
           {originLabel(entry)}
@@ -130,7 +138,8 @@ export function SecretUsageSheet({
           <SheetTitle>Uso de {secret?.name}</SheetTitle>
           <SheetDescription>
             Las peticiones de los agentes con este secreto en los últimos 90
-            días. Sin cabeceras, cuerpos ni valores.
+            días, también las de los miembros de las organizaciones con las que
+            lo compartes. Sin cabeceras, cuerpos ni valores.
           </SheetDescription>
         </SheetHeader>
         <div className="flex min-h-0 flex-1 flex-col px-4 pb-4">

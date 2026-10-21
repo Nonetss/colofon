@@ -6,9 +6,14 @@ import { SectionHeading } from "@/components/shared/layout/section-heading"
 import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
+import {
+  SharingField,
+  sameOrganizations,
+} from "@/features/profile/organizations"
 import { SecretFieldList } from "@/features/secrets/manage/components/secret-field-list"
 import {
   useSecretCreate,
+  useSecretShare,
   useSecretUpdate,
 } from "@/features/secrets/manage/hooks/use-secrets"
 import {
@@ -17,6 +22,7 @@ import {
   type SecretFormValues,
   secretFormFrom,
   secretFormProblems,
+  sharedOrganizationIds,
   updateInputOf,
 } from "@/features/secrets/manage/model/secret-form"
 import type { SecretListItem } from "@/features/secrets/manage/model/types"
@@ -129,12 +135,19 @@ export function SecretFormDialog({
 }) {
   const createSecret = useSecretCreate()
   const updateSecret = useSecretUpdate()
+  const shareSecret = useSecretShare()
   const initial = secret === null ? undefined : secretFormFrom(secret)
   const form = useDialogForm(open, emptySecretForm(), initial)
   const needsEveryValue = secret?.unreadable === true
-  const pending = createSecret.isPending || updateSecret.isPending
+  const pending =
+    createSecret.isPending || updateSecret.isPending || shareSecret.isPending
   const copy = dialogCopy(secret)
   const { values, errors } = form
+
+  const saveSecret = () => {
+    if (secret === null) return createSecret.mutateAsync(createInputOf(values))
+    return updateSecret.mutateAsync(updateInputOf(secret.id, values))
+  }
 
   const handleSubmit = async (event: SyntheticEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -147,10 +160,17 @@ export function SecretFormDialog({
     if (problems.fields !== undefined) form.setError("fields", problems.fields)
     if (Object.keys(problems).length > 0) return
     try {
-      if (secret === null) {
-        await createSecret.mutateAsync(createInputOf(values))
-      } else {
-        await updateSecret.mutateAsync(updateInputOf(secret.id, values))
+      const saved = await saveSecret()
+      if (
+        !sameOrganizations(
+          sharedOrganizationIds(secret),
+          values.organizationIds
+        )
+      ) {
+        await shareSecret.mutateAsync({
+          id: saved.id,
+          organizationIds: values.organizationIds,
+        })
       }
       onOpenChange(false)
     } catch {
@@ -249,6 +269,15 @@ export function SecretFormDialog({
             problem={errors.fields}
           />
         </div>
+
+        <FormSection title="Compartir">
+          <SharingField
+            value={values.organizationIds}
+            onChange={(next) => form.set("organizationIds", next)}
+            hint="Los agentes de sus miembros pueden usarlo con sus mismos orígenes y permisos, sin ver sus valores, mientras sigas en la organización. Solo tú lo editas y ves todo su uso."
+            emptyText="No perteneces a ninguna organización, así que solo tus agentes lo usan."
+          />
+        </FormSection>
       </div>
     </FormDialog>
   )

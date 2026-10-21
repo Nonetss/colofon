@@ -6,9 +6,13 @@ export type SecretList = Awaited<ReturnType<SecretClient["list"]>>
 
 export type SecretListItem = SecretList["secrets"][number]
 
+export type SharedSecretItem = SecretList["shared"][number]
+
 export type SecretCreateInput = Parameters<SecretClient["create"]>[0]
 
 export type SecretUpdateInput = Parameters<SecretClient["update"]>[0]
+
+export type SecretShareInput = Parameters<SecretClient["share"]>[0]
 
 export type SecretUsageEntry = Awaited<
   ReturnType<SecretClient["usage"]>

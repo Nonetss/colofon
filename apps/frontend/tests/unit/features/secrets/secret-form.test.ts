@@ -7,6 +7,7 @@ import {
   type SecretFormValues,
   secretFormFrom,
   secretFormProblems,
+  sharedOrganizationIds,
   updateInputOf,
 } from "@/features/secrets/manage/model/secret-form"
 import type { SecretListItem } from "@/features/secrets/manage/model/types"
@@ -21,6 +22,10 @@ const komodo: SecretListItem = {
   allowInUrl: false,
   allowInBody: false,
   unreadable: false,
+  organizations: [
+    { id: "org-casa", name: "Casa", slug: "casa" },
+    { id: "org-equipo", name: "Equipo docs", slug: "equipo-docs" },
+  ],
   lastUsedAt: null,
   createdAt: "2026-01-01T00:00:00.000Z",
   updatedAt: "2026-01-01T00:00:00.000Z",
@@ -48,6 +53,30 @@ describe("secretFormFrom", () => {
     ])
     expect(form.origins).toBe("https://komodo.casa.lan\nhttp://10.0.0.5:9120")
     expect(form.description).toBe("Komodo de casa")
+  })
+})
+
+describe("sharing", () => {
+  test("an existing secret's form starts with its organizations", () => {
+    expect(secretFormFrom(komodo).organizationIds).toEqual([
+      "org-casa",
+      "org-equipo",
+    ])
+  })
+
+  test("a new secret is shared with none", () => {
+    expect(emptySecretForm().organizationIds).toEqual([])
+    expect(sharedOrganizationIds(null)).toEqual([])
+  })
+
+  test("the organizations never go in the create or update request", () => {
+    const form = { ...secretFormFrom(komodo), organizationIds: ["org-x"] }
+    expect(Object.keys(updateInputOf(komodo.id, form))).not.toContain(
+      "organizationIds"
+    )
+    expect(Object.keys(createInputOf(filled()))).not.toContain(
+      "organizationIds"
+    )
   })
 })
 

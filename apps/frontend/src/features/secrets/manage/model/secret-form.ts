@@ -27,6 +27,8 @@ export interface SecretFormValues {
   allowInUrl: boolean
   allowInBody: boolean
   fields: SecretFieldDraft[]
+  /** The organizations it is shared with; saved apart, by `share`. */
+  organizationIds: string[]
 }
 
 /** The most fields a secret holds, as the API allows. */
@@ -57,7 +59,14 @@ export function emptySecretForm(): SecretFormValues {
     allowInUrl: false,
     allowInBody: false,
     fields: [newFieldDraft()],
+    organizationIds: [],
   }
+}
+
+/** The ids of the organizations a secret is shared with; none for a new one. */
+export function sharedOrganizationIds(secret: SecretListItem | null): string[] {
+  if (secret === null) return []
+  return secret.organizations.map((organization) => organization.id)
 }
 
 /** The form of an existing secret: its stored fields, values left empty. */
@@ -75,6 +84,7 @@ export function secretFormFrom(secret: SecretListItem): SecretFormValues {
       value: "",
       stored: true,
     })),
+    organizationIds: sharedOrganizationIds(secret),
   }
 }
 

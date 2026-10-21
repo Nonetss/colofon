@@ -19,10 +19,6 @@ const extraInvalidate = [orpc.v1.docs.nav.queryKey()]
 export const useOwnRepositoriesList = () =>
   useQuery(orpc.v1.content.listMyRepositories.queryOptions())
 
-/** The organizations the user belongs to, to share a repository with. */
-export const useShareableOrganizations = () =>
-  useQuery(orpc.v1.myOrganization.list.queryOptions())
-
 // Saved right after the repository itself, whose toast already speaks for
 // the form; only a failure is reported.
 export const useOwnRepositoryShare = () =>

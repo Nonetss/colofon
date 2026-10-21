@@ -3,13 +3,17 @@ import { Text } from "@/components/shared/brand/typography"
 import { CheckboxRow } from "@/components/shared/form/checkbox-row"
 import { FormField } from "@/components/shared/form/field-label"
 import { AppLink } from "@/components/ui/app-link"
-import { useShareableOrganizations } from "@/features/profile/repositories/hooks/use-own-repositories"
+import { useMyOrganizations } from "@/features/profile/organizations/hooks/use-my-organizations"
 import { appSurfaces } from "@/lib/app-surfaces"
 
 interface SharingFieldProps {
   /** The ids of the organizations picked. */
   value: string[]
   onChange: (organizationIds: string[]) => void
+  /** What sharing gives the members, under the label. */
+  hint: string
+  /** What stays true without organizations, before the link to create one. */
+  emptyText: string
 }
 
 function toggled(ids: string[], id: string, checked: boolean): string[] {
@@ -17,9 +21,17 @@ function toggled(ids: string[], id: string, checked: boolean): string[] {
   return ids.filter((each) => each !== id)
 }
 
-/** The organizations a repository is shared with, among the user's own. */
-export function SharingField({ value, onChange }: SharingFieldProps) {
-  const organizations = useShareableOrganizations()
+/**
+ * The organizations something of the user's (a repository, a secret) is
+ * shared with, among their own.
+ */
+export function SharingField({
+  value,
+  onChange,
+  hint,
+  emptyText,
+}: SharingFieldProps) {
+  const organizations = useMyOrganizations()
   const organizationsPath = appSurfaces["profile-organizations"].path
 
   if (organizations.isPending) {
@@ -44,7 +56,7 @@ export function SharingField({ value, onChange }: SharingFieldProps) {
     return (
       <FormField label="Compartir con">
         <Text as="p" variant="meta" tone="muted">
-          No perteneces a ninguna organización, así que solo tú lo lees.{" "}
+          {emptyText}{" "}
           <AppLink href={organizationsPath} className={inlineLinkClass}>
             Crea una o acepta una invitación
           </AppLink>{" "}
@@ -55,10 +67,7 @@ export function SharingField({ value, onChange }: SharingFieldProps) {
   }
 
   return (
-    <FormField
-      label="Compartir con"
-      hint="Sus miembros lo leen como tú, mientras sigas en la organización. Solo tú lo editas."
-    >
+    <FormField label="Compartir con" hint={hint}>
       <ul aria-label="Organizaciones con las que compartirlo" className="-mx-2">
         {organizations.data.map((organization) => (
           <CheckboxRow

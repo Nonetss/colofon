@@ -1,6 +1,7 @@
 import { skipToken, useInfiniteQuery, useQuery } from "@tanstack/react-query"
 import type {
   SecretCreateInput,
+  SecretShareInput,
   SecretUpdateInput,
 } from "@/features/secrets/manage/model/types"
 import { useOrpcMutation } from "@/hooks/use-orpc-mutation"
@@ -29,6 +30,16 @@ export function useSecretUpdate() {
     mutationFn: (input: SecretUpdateInput) => orpc.v1.secret.update.call(input),
     success: "Secreto guardado",
     error: "No se pudo guardar el secreto",
+    invalidate: [secretsKey],
+  })
+}
+
+// Saved right after the secret itself, whose toast already speaks for the
+// form; only a failure is reported.
+export function useSecretShare() {
+  return useOrpcMutation({
+    mutationFn: (input: SecretShareInput) => orpc.v1.secret.share.call(input),
+    error: "No se pudo cambiar con quién compartes el secreto",
     invalidate: [secretsKey],
   })
 }

@@ -10,11 +10,13 @@ import { useOrpcMutation } from "@/hooks/use-orpc-mutation"
 import { orpc } from "@/lib/orpc"
 
 // A membership change also changes which shared repositories the reader
-// lists, and the organizations the repository form offers.
+// lists, the organizations the repository and secret forms offer, and the
+// secrets shared with the user.
 const invalidate = [
   orpc.v1.myOrganization.key(),
   orpc.v1.docs.nav.key(),
   orpc.v1.content.listMyRepositories.key(),
+  orpc.v1.secret.list.key(),
 ]
 
 export const useMyOrganizations = () =>

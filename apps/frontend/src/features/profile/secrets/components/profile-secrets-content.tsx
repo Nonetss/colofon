@@ -2,6 +2,7 @@ import { Text } from "@/components/shared/brand/typography"
 import { StatusTag } from "@/components/shared/data-display/status-dot"
 import { Hint } from "@/components/shared/feedback/hint"
 import { PageHero } from "@/components/shared/layout/page-hero"
+import { SectionHeading } from "@/components/shared/layout/section-heading"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -13,7 +14,13 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
+import { SecretFieldNames } from "@/features/profile/secrets/components/secret-field-names"
 import { SecretOrigins } from "@/features/profile/secrets/components/secret-origins"
+import { SharedSecretCard } from "@/features/profile/secrets/components/shared-secret-card"
+import {
+  allowedLabels,
+  sharingLabel,
+} from "@/features/profile/secrets/model/secret-labels"
 import {
   SecretFormDialog,
   type SecretListItem,
@@ -57,15 +64,6 @@ function listNotice(
   return null
 }
 
-/** The flags the secret has turned on, as their short Spanish names. */
-function allowedLabels(secret: SecretListItem): string[] {
-  const labels: string[] = []
-  if (secret.allowWrite) labels.push("Escritura")
-  if (secret.allowInUrl) labels.push("En URL")
-  if (secret.allowInBody) labels.push("En body")
-  return labels
-}
-
 function lastUseLabel(secret: SecretListItem): string {
   if (secret.lastUsedAt === null) return "Sin usar"
   return `Usado el ${formatDate(secret.lastUsedAt)}`
@@ -79,6 +77,7 @@ function lastUseLabel(secret: SecretListItem): string {
 export function ProfileSecretsContent() {
   const { data, isPending, isError } = useSecretsList()
   const secrets = data?.secrets ?? []
+  const shared = data?.shared ?? []
   const enabled = data?.enabled === true
   const deleteSecret = useSecretDelete()
   const notice = listNotice(isPending, isError, enabled, secrets.length)
@@ -173,26 +172,18 @@ export function ProfileSecretsContent() {
                   </CardHeader>
 
                   <CardContent className="flex flex-1 flex-col gap-3 px-4">
-                    <div className="flex flex-col gap-1">
-                      <Text variant="label" tone="muted">
-                        Campos
-                      </Text>
-                      <ul className="flex flex-wrap gap-1.5">
-                        {secret.fields.map((field) => (
-                          <li
-                            key={field}
-                            className="rounded-sm border bg-muted/40 px-1.5 py-0.5"
-                          >
-                            <Text variant="data">{field}</Text>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
+                    <SecretFieldNames fields={secret.fields} />
                     <div className="flex flex-col gap-1">
                       <Text variant="label" tone="muted">
                         Orígenes
                       </Text>
                       <SecretOrigins origins={secret.origins} />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <Text variant="label" tone="muted">
+                        Compartido con
+                      </Text>
+                      <Text variant="compact">{sharingLabel(secret)}</Text>
                     </div>
                   </CardContent>
 
@@ -216,6 +207,31 @@ export function ProfileSecretsContent() {
             ))}
           </ul>
         </div>
+      )}
+
+      {enabled && shared.length > 0 && (
+        <section className="flex flex-col gap-3">
+          <div className="flex flex-col gap-1">
+            <SectionHeading as="h2" title="Compartidos contigo" />
+            <Text as="p" variant="compact" tone="muted">
+              Secretos de otros miembros de tus organizaciones. Tus agentes los
+              usan con el prefijo de la organización; solo su propietario los
+              edita.
+            </Text>
+          </div>
+          <div className="@container">
+            <ul className="grid gap-3 @2xl:grid-cols-2 @3xl:grid-cols-3">
+              {shared.map((secret) => (
+                <li
+                  key={`${secret.organization.id}-${secret.id}`}
+                  className="flex"
+                >
+                  <SharedSecretCard secret={secret} />
+                </li>
+              ))}
+            </ul>
+          </div>
+        </section>
       )}
 
       <SecretFormDialog

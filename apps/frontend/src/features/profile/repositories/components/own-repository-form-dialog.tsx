@@ -11,7 +11,10 @@ import {
   useGitCredentials,
   useRepositoryAccess,
 } from "@/features/content-repositories/manage"
-import { SharingField } from "@/features/profile/repositories/components/sharing-field"
+import {
+  SharingField,
+  sameOrganizations,
+} from "@/features/profile/organizations"
 import {
   useOwnRepositoryBranches,
   useOwnRepositoryCreate,
@@ -23,7 +26,6 @@ import {
   createInput,
   type OwnRepositoryFormValues,
   ownBranchesSource,
-  sameOrganizations,
   sharedOrganizationIds,
   updateInput,
 } from "@/features/profile/repositories/model/repository-form"
@@ -231,7 +233,12 @@ export function OwnRepositoryFormDialog({
         onChange={setContentPath}
         folders={folders}
       />
-      <SharingField value={organizationIds} onChange={setOrganizationIds} />
+      <SharingField
+        value={organizationIds}
+        onChange={setOrganizationIds}
+        hint="Sus miembros lo leen como tú, mientras sigas en la organización. Solo tú lo editas."
+        emptyText="No perteneces a ninguna organización, así que solo tú lo lees."
+      />
     </FormDialog>
   )
 }
