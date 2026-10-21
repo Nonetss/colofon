@@ -57,7 +57,13 @@ export function CheckboxRow({
         className
       )}
     >
+      {/* A native button takes the id, so the label points at the visible
+          checkbox. Pointing at Base UI's hidden input, which sits fixed at the
+          top of the nearest transformed ancestor (a dialog), made the browser
+          scroll there when a click on the label focused it. */}
       <Checkbox
+        nativeButton
+        render={<button type="button" />}
         id={id}
         checked={checked}
         disabled={disabled}

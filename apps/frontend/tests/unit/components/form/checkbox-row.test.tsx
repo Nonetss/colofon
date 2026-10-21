@@ -49,6 +49,33 @@ describe("CheckboxRow", () => {
     expect(onCheckedChange).toHaveBeenCalledWith(true)
   })
 
+  test("the label points at the visible checkbox, not the hidden input", () => {
+    // Base UI's hidden input sits fixed at the top of the nearest transformed
+    // ancestor (a dialog): a label pointing at it scrolled the dialog back to
+    // the top when clicked.
+    const onCheckedChange = mock((_: boolean) => {})
+    render(
+      <ul>
+        <CheckboxRow
+          id="row"
+          label="Equipo docs"
+          checked={false}
+          onCheckedChange={onCheckedChange}
+        />
+      </ul>
+    )
+
+    const checkbox = screen.getByRole("checkbox", { name: "Equipo docs" })
+    const label = screen.getByText("Equipo docs").closest("label")
+    expect(checkbox.tagName).toBe("BUTTON")
+    expect(checkbox.id).toBe("row")
+    expect(label?.htmlFor).toBe("row")
+
+    fireEvent.click(screen.getByText("Equipo docs"))
+    expect(onCheckedChange).toHaveBeenCalledTimes(1)
+    expect(onCheckedChange).toHaveBeenCalledWith(true)
+  })
+
   test("a disabled row ignores clicks and shows its note", () => {
     const onCheckedChange = mock((_: boolean) => {})
     render(
