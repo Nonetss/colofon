@@ -42,7 +42,7 @@ The system SHALL allow an admin to list every organization in the system with it
 #### Scenario: Deleting an organization
 
 - **WHEN** an admin deletes an organization
-- **THEN** the system SHALL remove the organization along with its members, teams, invitations and the shares of repositories with it
+- **THEN** the system SHALL remove the organization along with its members, teams, invitations and the shares of repositories and secrets with it
 
 ### Requirement: Organization membership management
 
