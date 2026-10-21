@@ -45,7 +45,7 @@ const skills: SkillsClient = {
 const requested: unknown[] = []
 
 const secrets: SecretsAccess = {
-  list: async () => ({ enabled: true, secrets: [] }),
+  list: async () => ({ enabled: true, secrets: [], shared: [] }),
   request: async (input) => {
     requested.push(input)
     return {

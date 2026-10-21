@@ -1,12 +1,13 @@
 import { db } from "@nonete/db"
 import { type Secret, secret, secretUsage } from "@nonete/db/schema"
-import { and, eq, inArray } from "drizzle-orm"
+import { eq, inArray } from "drizzle-orm"
 import { decryptValues, type SecretValues } from "#lib/cipher"
 import { createMasker } from "#v1/secret/request/mask"
 import {
   loggedUrl,
   planRequest,
   type RequestInput,
+  type UsableSecret,
 } from "#v1/secret/request/plan"
 import {
   DEFAULT_SEND_OPTIONS,
@@ -14,8 +15,10 @@ import {
   type SendOptions,
   send,
 } from "#v1/secret/request/send"
+import { sharedAddress, sharedSecretsOf } from "#v1/secret/sharing"
 
-// The MCP `request` tool's pipeline: load the caller's secrets, check and
+// The MCP `request` tool's pipeline: load the secrets the caller may use
+// (their own and those shared with them through an organization), check and
 // plan the request, decrypt only the secrets it uses, send it, mask every
 // value used in the response, and record the call. Values exist decrypted
 // only inside this function.
@@ -37,7 +40,7 @@ export type RequestResult =
 
 type UsageRecord = {
   caller: RequestCaller
-  secrets: Secret[]
+  secrets: UsableSecret[]
   secretNames: string[]
   input: RequestInput
   outcome: "sent" | "refused" | "failed"
@@ -47,10 +50,12 @@ type UsageRecord = {
 }
 
 async function recordUsage(record: UsageRecord): Promise<void> {
+  // A secret shared through two organizations is still one secret.
+  const secretIds = [...new Set(record.secrets.map((each) => each.secret.id))]
   await db.insert(secretUsage).values({
     userId: record.caller.userId,
     apiKeyId: record.caller.apiKeyId,
-    secretIds: record.secrets.map((row) => row.id),
+    secretIds,
     secretNames: record.secretNames,
     method: record.input.method,
     url: loggedUrl(record.input.url),
@@ -59,19 +64,25 @@ async function recordUsage(record: UsageRecord): Promise<void> {
     detail: record.detail,
     durationMs: record.durationMs,
   })
-  if (record.outcome === "refused" || record.secrets.length === 0) return
+  if (record.outcome === "refused" || secretIds.length === 0) return
+  // By id alone: a member's call is a use of the owner's secret too.
   await db
     .update(secret)
     .set({ lastUsedAt: new Date() })
-    .where(
-      and(
-        eq(secret.userId, record.caller.userId),
-        inArray(
-          secret.id,
-          record.secrets.map((row) => row.id)
-        )
-      )
-    )
+    .where(inArray(secret.id, secretIds))
+}
+
+/** The caller's own secrets by name, then those shared with them. */
+async function usableSecretsOf(userId: string): Promise<UsableSecret[]> {
+  const own = await db.select().from(secret).where(eq(secret.userId, userId))
+  const shared = await sharedSecretsOf(userId)
+  return [
+    ...own.map((row) => ({ address: row.name, secret: row })),
+    ...shared.map((each) => ({
+      address: sharedAddress(each.organization.slug, each.secret.name),
+      secret: each.secret,
+    })),
+  ]
 }
 
 function decryptOf(row: Secret): SecretValues | null {
@@ -89,16 +100,13 @@ export async function executeRequest(
   input: RequestInput,
   options: SendOptions = DEFAULT_SEND_OPTIONS
 ): Promise<RequestResult> {
-  const secrets = await db
-    .select()
-    .from(secret)
-    .where(eq(secret.userId, caller.userId))
+  const secrets = await usableSecretsOf(caller.userId)
 
   // Each secret is decrypted once, and only if the request uses it.
   const decrypted = new Map<string, SecretValues | null>()
-  const valuesOf = (row: Secret): SecretValues | null => {
-    if (!decrypted.has(row.name)) decrypted.set(row.name, decryptOf(row))
-    return decrypted.get(row.name) ?? null
+  const valuesOf = ({ secret: row }: UsableSecret): SecretValues | null => {
+    if (!decrypted.has(row.id)) decrypted.set(row.id, decryptOf(row))
+    return decrypted.get(row.id) ?? null
   }
 
   const planned = planRequest(input, secrets, valuesOf)
@@ -106,7 +114,7 @@ export async function executeRequest(
     const { reason, secretNames } = planned.refusal
     await recordUsage({
       caller,
-      secrets: secrets.filter((row) => secretNames.includes(row.name)),
+      secrets: secrets.filter((each) => secretNames.includes(each.address)),
       secretNames,
       input,
       outcome: "refused",
@@ -119,15 +127,15 @@ export async function executeRequest(
 
   const { plan } = planned
   const values = new Map<string, SecretValues>()
-  for (const row of plan.secrets) {
-    const rowValues = valuesOf(row)
-    if (rowValues !== null) values.set(row.name, rowValues)
+  for (const usable of plan.secrets) {
+    const usableValues = valuesOf(usable)
+    if (usableValues !== null) values.set(usable.address, usableValues)
   }
   const rendered = plan.render(values)
 
-  const fieldValues = plan.secrets.flatMap((row) =>
-    Object.entries(values.get(row.name) ?? {}).map(([field, text]) => ({
-      label: `${row.name}.${field}`,
+  const fieldValues = plan.secrets.flatMap(({ address }) =>
+    Object.entries(values.get(address) ?? {}).map(([field, text]) => ({
+      label: `${address}.${field}`,
       text,
     }))
   )
@@ -136,7 +144,7 @@ export async function executeRequest(
   const started = performance.now()
   const sent = await send(rendered.request, options)
   const durationMs = Math.round(performance.now() - started)
-  const secretNames = plan.secrets.map((row) => row.name)
+  const secretNames = plan.secrets.map((usable) => usable.address)
 
   if (!sent.ok) {
     const message = mask(sent.failure)

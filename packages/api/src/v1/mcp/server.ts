@@ -65,7 +65,7 @@ const INSTRUCTIONS = [
 ]
 
 const SECRETS_INSTRUCTIONS =
-  "`secrets` lists the user's secrets by name (never their values) and `request` calls a service's HTTP API with them: write the request as the documentation describes that API, with placeholders such as {{<secret>.<field>}} that the platform fills in and masks in the response."
+  "`secrets` lists the user's secrets by name (never their values), with those other users share with them through an organization, and `request` calls a service's HTTP API with them: write the request as the documentation describes that API, with placeholders such as {{<secret>.<field>}}, or {{<organization>/<secret>.<field>}} for a shared one, that the platform fills in and masks in the response."
 
 /** The instructions, mentioning the secrets tools only when they are served. */
 function instructions(withSecrets: boolean): string {
@@ -255,7 +255,7 @@ function registerSecretTools(server: McpServer, scope: McpScope): void {
     {
       title: "Secrets",
       description:
-        "List the user's secrets: each one's name, description, field placeholders ({{<secret>.<field>}}), the origins it may be sent to, whether it allows write methods and where its placeholders may go. Never their values. Call it before request.",
+        "List the user's secrets, then those other users share with them through an organization: each one's name, description, field placeholders ({{<secret>.<field>}}, or {{<organization>/<secret>.<field>}} for a shared one), the origins it may be sent to, whether it allows write methods and where its placeholders may go. Never their values. Call it before request.",
       outputSchema: secretsOutput,
       annotations,
     },
@@ -268,7 +268,7 @@ function registerSecretTools(server: McpServer, scope: McpScope): void {
       title: "HTTP request with secrets",
       description: [
         "Send one HTTP request to a service with the user's secrets, without seeing them. Write the request as the service's documentation describes it, putting placeholders where the credentials go; the platform fills them in, sends the request and returns the status, headers and body.",
-        "Placeholders: {{<secret>.<field>}} is the value; {{basic(<secret>.<user>, <secret>.<password>)}} is the Base64 of user:password for an Authorization: Basic header; {{base64(<secret>.<field>)}} and {{urlencode(<secret>.<field>)}} encode one value. Any other {{...}} is sent as written.",
+        "Placeholders: {{<secret>.<field>}} is the value, where <secret> is the name of one of the user's secrets or <organization>/<name> for one shared with them, as secrets lists it; {{basic(<secret>.<user>, <secret>.<password>)}} is the Base64 of user:password for an Authorization: Basic header; {{base64(<secret>.<field>)}} and {{urlencode(<secret>.<field>)}} encode one value. Any other {{...}} is sent as written.",
         "Rules: the request must use at least one secret; the URL's origin must be one every secret used allows; placeholders go in header values always, and in the URL or body only if the secret allows it; POST, PUT, PATCH and DELETE need secrets that allow writing. A refused request sends nothing and the error says why.",
         "Redirects are not followed (a 3xx comes back with its location). The request times out after 30 s. Every value used is masked in the response as [secret:<secret>.<field>] (values shorter than 4 characters are not masked). Text bodies are cut at 1 MB; other bodies are described by type and size.",
       ].join(" "),

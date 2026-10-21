@@ -31,7 +31,9 @@ export class PlaceholderError extends Error {}
 
 const FUNCTIONS = ["basic", "base64", "urlencode"] as const
 
-const NAME = "[a-z0-9][a-z0-9-]*"
+// A secret's address: its name, or `<organization slug>/<name>` for one
+// shared with the caller.
+const NAME = "(?:[a-z0-9-]+/)?[a-z0-9][a-z0-9-]*"
 const FIELD = "[a-z][a-z0-9_]*"
 const REF = `(${NAME})\\.(${FIELD})`
 const REF_PATTERN = new RegExp(`^\\s*${REF}\\s*$`)

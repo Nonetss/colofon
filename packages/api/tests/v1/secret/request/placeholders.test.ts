@@ -7,9 +7,13 @@ import {
   renderTemplate,
 } from "#v1/secret/request/placeholders"
 
-const isSecretName = (name: string) => name === "komodo" || name === "npm"
+const isSecretName = (name: string) =>
+  ["komodo", "npm", "equipo-docs"].includes(name)
 const values: Record<string, string> = {
   "komodo.key": "k3y-value",
+  "equipo-docs/komodo.key": "shared-k3y",
+  "equipo-docs/npm.username": "bob",
+  "equipo-docs/npm.password": "s3cret",
   "npm.username": "alice",
   "npm.password": "p@ss word",
 }
@@ -26,6 +30,36 @@ function render(text: string): string {
 }
 
 describe("parseTemplate", () => {
+  test("a shared secret's ref carries its organization prefix", () => {
+    expect(render("Bearer {{equipo-docs/komodo.key}}")).toBe(
+      "Bearer shared-k3y"
+    )
+    const [placeholder] = placeholdersOf(
+      parseTemplate("{{equipo-docs/komodo.key}}", "header", isSecretName)
+    )
+    expect(placeholder?.expression).toEqual({
+      kind: "ref",
+      ref: { secret: "equipo-docs/komodo", field: "key" },
+    })
+  })
+
+  test("functions take prefixed refs", () => {
+    expect(
+      render(
+        "Basic {{basic(equipo-docs/npm.username, equipo-docs/npm.password)}}"
+      )
+    ).toBe(`Basic ${Buffer.from("bob:s3cret").toString("base64")}`)
+    expect(render("{{base64(equipo-docs/komodo.key)}}")).toBe(
+      Buffer.from("shared-k3y").toString("base64")
+    )
+  })
+
+  test("a prefixed placeholder without a field is malformed, not literal", () => {
+    expect(() =>
+      parseTemplate("{{equipo-docs/komodo}}", "header", isSecretName)
+    ).toThrow(PlaceholderError)
+  })
+
   test("substitutes a ref, with or without spaces in the braces", () => {
     expect(render("Bearer {{komodo.key}}")).toBe("Bearer k3y-value")
     expect(render("{{ komodo.key }}")).toBe("k3y-value")

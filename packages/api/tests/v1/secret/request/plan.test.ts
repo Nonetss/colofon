@@ -6,6 +6,7 @@ import {
   type PlanResult,
   planRequest,
   type RequestInput,
+  type UsableSecret,
 } from "#v1/secret/request/plan"
 
 const komodo = secretRow({
@@ -26,20 +27,45 @@ const wildcard = secretRow({
   origins: ["https://*.example.com"],
 })
 
+// Shared by `ana` with `equipo-docs`: same name as the caller's own.
+const sharedKomodo = secretRow({
+  id: "00000000-0000-4000-8000-000000000004",
+  userId: "ana",
+  name: "komodo",
+  fieldNames: ["key", "secret"],
+  origins: ["https://komodo.equipo.lan"],
+})
+
 const VALUES: Record<string, SecretValues> = {
   komodo: { key: "komodo-key-value", secret: "komodo-secret-value" },
   pangolin: { token: "pangolin-token" },
   cloud: { token: "cloud-token" },
+  "equipo-docs/komodo": { key: "ana-key-value", secret: "ana-secret-value" },
 }
 
-function valuesOf(row: SecretRow): SecretValues | null {
-  return VALUES[row.name] ?? null
+function own(row: SecretRow): UsableSecret {
+  return { address: row.name, secret: row }
 }
+
+function shared(slug: string, row: SecretRow): UsableSecret {
+  return { address: `${slug}/${row.name}`, secret: row }
+}
+
+function valuesOf(usable: UsableSecret): SecretValues | null {
+  return VALUES[usable.address] ?? null
+}
+
+const SECRETS = [
+  own(komodo),
+  own(pangolin),
+  own(wildcard),
+  shared("equipo-docs", sharedKomodo),
+]
 
 function plan(
   input: RequestInput,
-  secrets: SecretRow[] = [komodo, pangolin, wildcard],
-  values: (row: SecretRow) => SecretValues | null = valuesOf
+  secrets: UsableSecret[] = SECRETS,
+  values: (usable: UsableSecret) => SecretValues | null = valuesOf
 ): PlanResult {
   return planRequest(input, secrets, values)
 }
@@ -52,9 +78,9 @@ function refusal(result: PlanResult): string {
 function rendered(result: PlanResult) {
   if (!result.ok) throw new Error(`refused: ${result.refusal.reason}`)
   const values = new Map<string, SecretValues>()
-  for (const row of result.plan.secrets) {
-    const rowValues = valuesOf(row)
-    if (rowValues !== null) values.set(row.name, rowValues)
+  for (const usable of result.plan.secrets) {
+    const usableValues = valuesOf(usable)
+    if (usableValues !== null) values.set(usable.address, usableValues)
   }
   return result.plan.render(values)
 }
@@ -152,7 +178,7 @@ describe("planRequest", () => {
           headers: komodoHeaders,
           body: { type: "DeployStack" },
         },
-        [writable]
+        [own(writable)]
       ).ok
     ).toBe(true)
   })
@@ -165,10 +191,10 @@ describe("planRequest", () => {
     }
     const writable = { ...komodo, allowWrite: true }
 
-    expect(refusal(plan(input, [writable]))).toContain(
+    expect(refusal(plan(input, [own(writable)]))).toContain(
       "can't be used in the body"
     )
-    expect(plan(input, [{ ...writable, allowInBody: true }]).ok).toBe(true)
+    expect(plan(input, [own({ ...writable, allowInBody: true })]).ok).toBe(true)
   })
 
   test("refuses a placeholder in the URL unless the secret allows it", () => {
@@ -179,7 +205,7 @@ describe("planRequest", () => {
 
     expect(refusal(plan(input))).toContain("can't be used in the URL")
     expect(
-      rendered(plan(input, [{ ...komodo, allowInUrl: true }])).request.url
+      rendered(plan(input, [own({ ...komodo, allowInUrl: true })])).request.url
     ).toBe("https://komodo.casa.lan/read?token=komodo-key-value")
   })
 
@@ -224,7 +250,7 @@ describe("planRequest", () => {
           url: "https://komodo.casa.lan",
           headers: komodoHeaders,
         },
-        [komodo],
+        [own(komodo)],
         () => null
       )
     )
@@ -285,7 +311,7 @@ describe("planRequest", () => {
             note: "{{ $labels.instance }}",
           },
         },
-        [writable]
+        [own(writable)]
       )
     )
 
@@ -309,6 +335,121 @@ describe("planRequest", () => {
     expect(placeholders).toEqual([
       { label: "komodo.key", text: "komodo-key-value" },
       { label: "komodo.secret", text: "komodo-secret-value" },
+    ])
+  })
+})
+
+describe("planRequest with shared secrets", () => {
+  test("an own secret and a shared one with the same name stay apart", () => {
+    const { request } = rendered(
+      plan({
+        method: "GET",
+        url: "https://komodo.equipo.lan/read",
+        headers: { "X-Api-Key": "{{equipo-docs/komodo.key}}" },
+      })
+    )
+    expect(request.headers.get("x-api-key")).toBe("ana-key-value")
+
+    const ownRequest = rendered(
+      plan({
+        method: "GET",
+        url: "https://komodo.casa.lan/read",
+        headers: { "X-Api-Key": "{{komodo.key}}" },
+      })
+    ).request
+    expect(ownRequest.headers.get("x-api-key")).toBe("komodo-key-value")
+  })
+
+  test("the plan lists the shared secret by its address", () => {
+    const result = plan({
+      method: "GET",
+      url: "https://komodo.equipo.lan/read",
+      headers: { "X-Api-Key": "{{equipo-docs/komodo.key}}" },
+    })
+    if (!result.ok) throw new Error(result.refusal.reason)
+    expect(result.plan.secrets.map((each) => each.address)).toEqual([
+      "equipo-docs/komodo",
+    ])
+  })
+
+  test("a shared secret keeps its own rules, named by its address", () => {
+    expect(
+      refusal(
+        plan({
+          method: "POST",
+          url: "https://komodo.equipo.lan/write",
+          headers: { "X-Api-Key": "{{equipo-docs/komodo.key}}" },
+        })
+      )
+    ).toContain('Secret "equipo-docs/komodo" only allows reading methods')
+  })
+
+  test("a prefix the secret doesn't come through is refused, naming both", () => {
+    const message = refusal(
+      plan({
+        method: "GET",
+        url: "https://komodo.equipo.lan/read",
+        headers: { "X-Api-Key": "{{casa/komodo.key}}" },
+      })
+    )
+    expect(message).toContain('No secret "komodo"')
+    expect(message).toContain('through "casa"')
+  })
+
+  test("a malformed prefixed placeholder is refused, quoted", () => {
+    expect(
+      refusal(
+        plan({
+          method: "GET",
+          url: "https://komodo.equipo.lan/read",
+          headers: { "X-Api-Key": "{{equipo-docs/komodo}}" },
+        })
+      )
+    ).toContain("{{equipo-docs/komodo}}")
+  })
+
+  test("an unreadable shared secret is refused saying only its owner can fix it", () => {
+    expect(
+      refusal(
+        plan(
+          {
+            method: "GET",
+            url: "https://komodo.equipo.lan/read",
+            headers: { "X-Api-Key": "{{equipo-docs/komodo.key}}" },
+          },
+          SECRETS,
+          () => null
+        )
+      )
+    ).toContain("only its owner can save its values again")
+  })
+
+  test("an address two shared secrets answer to is refused as ambiguous", () => {
+    const other = secretRow({ ...sharedKomodo, id: "x", userId: "marta" })
+    expect(
+      refusal(
+        plan(
+          {
+            method: "GET",
+            url: "https://komodo.equipo.lan/read",
+            headers: { "X-Api-Key": "{{equipo-docs/komodo.key}}" },
+          },
+          [shared("equipo-docs", sharedKomodo), shared("equipo-docs", other)]
+        )
+      )
+    ).toContain('Two secrets are shared with you as "equipo-docs/komodo"')
+  })
+
+  test("masks a shared value under its address", () => {
+    const { placeholders } = rendered(
+      plan({
+        method: "GET",
+        url: "https://komodo.equipo.lan/read",
+        headers: { "X-Api-Key": "{{equipo-docs/komodo.key}}" },
+      })
+    )
+    expect(placeholders).toEqual([
+      { label: "equipo-docs/komodo.key", text: "ana-key-value" },
     ])
   })
 })

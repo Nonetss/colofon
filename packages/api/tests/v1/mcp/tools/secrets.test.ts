@@ -11,7 +11,9 @@ import type { RequestInput } from "#v1/secret/request/plan"
 
 const origin = "https://docs.example.org"
 
-type Listed = Awaited<ReturnType<SecretsAccess["list"]>>["secrets"][number]
+type SecretsList = Awaited<ReturnType<SecretsAccess["list"]>>
+type Listed = SecretsList["secrets"][number]
+type Shared = SecretsList["shared"][number]
 
 const komodo: Listed = {
   id: "00000000-0000-4000-8000-000000000001",
@@ -23,17 +25,34 @@ const komodo: Listed = {
   allowInUrl: false,
   allowInBody: false,
   unreadable: false,
+  organizations: [],
   lastUsedAt: null,
   createdAt: "2026-01-01T00:00:00.000Z",
   updatedAt: "2026-01-01T00:00:00.000Z",
 }
 
+const sharedKomodo: Shared = {
+  id: "00000000-0000-4000-8000-0000000000b1",
+  name: "komodo",
+  description: null,
+  fields: ["key", "secret"],
+  origins: ["https://komodo.equipo.lan"],
+  allowWrite: false,
+  allowInUrl: false,
+  allowInBody: false,
+  unreadable: false,
+  organization: { id: "org-equipo", name: "Equipo docs", slug: "equipo-docs" },
+  ownerName: "Ana",
+  prefix: "equipo-docs/",
+}
+
 function access(
   listed: Listed[],
-  result: RequestResult = { ok: false, message: "unused" }
+  result: RequestResult = { ok: false, message: "unused" },
+  shared: Shared[] = []
 ): SecretsAccess {
   return {
-    list: async () => ({ enabled: true, secrets: listed }),
+    list: async () => ({ enabled: true, secrets: listed, shared }),
     request: async () => result,
   }
 }
@@ -85,6 +104,51 @@ describe("secretsTool", () => {
 
     expect(text(result)).toContain("Unusable")
     expect(text(result)).toContain("reading methods only")
+  })
+
+  test("lists a shared secret after the own ones, with its prefixed placeholders and where it comes from", async () => {
+    const result = await secretsTool({
+      secrets: access([komodo], undefined, [sharedKomodo]),
+      origin,
+    })
+
+    const body = text(result)
+    expect(body.indexOf("## komodo")).toBeLessThan(
+      body.indexOf("## equipo-docs/komodo")
+    )
+    expect(body).toContain(
+      "Shared with you by Ana through the organization Equipo docs"
+    )
+    expect(body).toContain(
+      "{{equipo-docs/komodo.key}}, {{equipo-docs/komodo.secret}}"
+    )
+    expect(result.structuredContent).toMatchObject({
+      secrets: [
+        {
+          name: "komodo",
+          placeholders: ["{{komodo.key}}", "{{komodo.secret}}"],
+        },
+        {
+          name: "komodo",
+          placeholders: [
+            "{{equipo-docs/komodo.key}}",
+            "{{equipo-docs/komodo.secret}}",
+          ],
+          organization: { name: "Equipo docs", slug: "equipo-docs" },
+          ownerName: "Ana",
+        },
+      ],
+    })
+  })
+
+  test("with only shared secrets, lists them instead of the empty text", async () => {
+    const result = await secretsTool({
+      secrets: access([], undefined, [sharedKomodo]),
+      origin,
+    })
+
+    expect(text(result)).toContain("## equipo-docs/komodo")
+    expect(text(result)).not.toContain("You have no secrets")
   })
 
   test("without secrets, says where to create them", async () => {

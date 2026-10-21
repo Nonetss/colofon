@@ -17,6 +17,11 @@ import {
 // shape, its placeholders, and each secret's rules (owner, origins, where its
 // placeholders may sit, write methods). A plan that passes knows which
 // secrets it uses and renders the outgoing request from their values.
+// Secrets are known by their address: the caller's own by name, a secret
+// shared with them as `<organization slug>/<name>`.
+
+/** A secret the caller may use, under the address placeholders write. */
+export type UsableSecret = { address: string; secret: Secret }
 
 export const REQUEST_METHODS = [
   "GET",
@@ -79,8 +84,8 @@ export type RenderedPlaceholder = {
 
 export type RequestPlan = {
   origin: string
-  /** The secrets the placeholders name, each once, in order of use. */
-  secrets: Secret[]
+  /** The secrets the placeholders name, each once. */
+  secrets: UsableSecret[]
   render: (values: Map<string, SecretValues>) => {
     request: RenderedRequest
     placeholders: RenderedPlaceholder[]
@@ -90,7 +95,7 @@ export type RequestPlan = {
 /** Why a request was refused before sending, never holding a value. */
 export type PlanRefusal = {
   reason: string
-  /** The secret names the request wrote, known or not. */
+  /** The secret addresses the request wrote, known or not. */
   secretNames: string[]
 }
 
@@ -265,7 +270,7 @@ function placeholdersOfRequest(parsed: ParsedRequest): Placeholder[] {
   return templates.flatMap(placeholdersOf)
 }
 
-/** Each secret name the placeholders write, once, in order. */
+/** Each secret address the placeholders write, once, in order. */
 function namesOf(placeholders: Placeholder[]): string[] {
   const names = placeholders.flatMap((placeholder) =>
     refsOf(placeholder.expression).map((ref) => ref.secret)
@@ -290,71 +295,119 @@ const LOCATION_RULES = {
   { allowed: (secret: Secret) => boolean; where: string; flag: string }
 >
 
+/** Why no secret answers to `address`. */
+function unknownSecret(address: string): string {
+  const slash = address.indexOf("/")
+  if (slash === -1) {
+    return `You have no secret named "${address}". Call secrets to list yours.`
+  }
+  const organization = address.slice(0, slash)
+  const name = address.slice(slash + 1)
+  return `No secret "${name}" is shared with you through "${organization}". Call secrets to list the ones you can use.`
+}
+
+/** The caller's secrets by address; an address two of them share is `null`. */
+function byAddress(secrets: UsableSecret[]): Map<string, UsableSecret | null> {
+  const map = new Map<string, UsableSecret | null>()
+  for (const usable of secrets) {
+    if (map.has(usable.address)) {
+      map.set(usable.address, null)
+      continue
+    }
+    map.set(usable.address, usable)
+  }
+  return map
+}
+
 /**
  * Why `secrets` (the caller's) can't serve `placeholders` on a request to
  * `origin` with `method`, or `null` when they can.
  */
 function ruleViolation(
   placeholders: Placeholder[],
-  byName: Map<string, Secret>,
-  values: (secret: Secret) => SecretValues | null,
+  secrets: Map<string, UsableSecret | null>,
+  values: (usable: UsableSecret) => SecretValues | null,
   origin: string,
   method: RequestMethod
 ): string | null {
   for (const placeholder of placeholders) {
     for (const ref of refsOf(placeholder.expression)) {
-      const secret = byName.get(ref.secret)
-      if (secret === undefined) {
-        return `You have no secret named "${ref.secret}". Call secrets to list yours.`
+      const usable = secrets.get(ref.secret)
+      if (usable === undefined) return unknownSecret(ref.secret)
+      if (usable === null) {
+        return `Two secrets are shared with you as "${ref.secret}"; ask their owners to rename one.`
       }
-      if (!secret.fieldNames.includes(ref.field)) {
-        return `Secret "${secret.name}" has no field "${ref.field}"; its fields are ${secret.fieldNames.join(", ")}.`
+      const { fieldNames } = usable.secret
+      if (!fieldNames.includes(ref.field)) {
+        return `Secret "${usable.address}" has no field "${ref.field}"; its fields are ${fieldNames.join(", ")}.`
       }
     }
   }
 
-  const used = namesOf(placeholders).map((name) => byName.get(name))
-  for (const secret of used) {
-    if (secret === undefined) continue
-    if (values(secret) === null) {
-      return `Secret "${secret.name}" can't be decrypted (the server's encryption key changed); its owner must save its values again on /me/secrets.`
+  const used = namesOf(placeholders).flatMap((address) => {
+    const usable = secrets.get(address)
+    if (usable === undefined || usable === null) return []
+    return [usable]
+  })
+  for (const usable of used) {
+    const { address, secret } = usable
+    if (values(usable) === null) {
+      return `Secret "${address}" can't be decrypted (the server's encryption key changed); only its owner can save its values again on /me/secrets.`
     }
     if (!secret.origins.some((allowed) => originAllowed(origin, allowed))) {
-      return `Secret "${secret.name}" can only be sent to ${secret.origins.join(", ")}; this request goes to ${origin}.`
+      return `Secret "${address}" can only be sent to ${secret.origins.join(", ")}; this request goes to ${origin}.`
     }
   }
 
   for (const placeholder of placeholders) {
     const rule = LOCATION_RULES[placeholder.location]
     for (const ref of refsOf(placeholder.expression)) {
-      const secret = byName.get(ref.secret)
-      if (secret === undefined || rule.allowed(secret)) continue
-      return `Secret "${secret.name}" can't be used in ${rule.where}; its owner can turn on "${rule.flag}" for it on /me/secrets.`
+      const usable = secrets.get(ref.secret)
+      if (usable === undefined || usable === null) continue
+      if (rule.allowed(usable.secret)) continue
+      return `Secret "${usable.address}" can't be used in ${rule.where}; its owner can turn on "${rule.flag}" for it on /me/secrets.`
     }
   }
 
   if (!isReadMethod(method)) {
-    for (const secret of used) {
-      if (secret === undefined || secret.allowWrite) continue
-      return `Secret "${secret.name}" only allows reading methods (GET, HEAD, OPTIONS); its owner can turn on "allow write" for it on /me/secrets to use it with ${method}.`
+    for (const usable of used) {
+      if (usable.secret.allowWrite) continue
+      return `Secret "${usable.address}" only allows reading methods (GET, HEAD, OPTIONS); its owner can turn on "allow write" for it on /me/secrets to use it with ${method}.`
     }
   }
   return null
 }
 
 /**
- * Checks `input` against the caller's `secrets` and plans the request, or
- * says why it is refused. `values` decrypts a secret, `null` when it can't.
+ * Whether `name` starts a placeholder of the caller's: one of their
+ * addresses, or the slug of an organization a secret comes through.
+ */
+function namesASecret(
+  secrets: Map<string, UsableSecret | null>
+): (name: string) => boolean {
+  const names = new Set<string>()
+  for (const address of secrets.keys()) {
+    names.add(address)
+    const slash = address.indexOf("/")
+    if (slash !== -1) names.add(address.slice(0, slash))
+  }
+  return (name) => names.has(name)
+}
+
+/**
+ * Checks `input` against the `secrets` the caller may use and plans the
+ * request, or says why it is refused. `values` decrypts a secret, `null`
+ * when it can't.
  */
 export function planRequest(
   input: RequestInput,
-  secrets: Secret[],
-  values: (secret: Secret) => SecretValues | null
+  secrets: UsableSecret[],
+  values: (usable: UsableSecret) => SecretValues | null
 ): PlanResult {
-  const byName = new Map(secrets.map((secret) => [secret.name, secret]))
+  const known = byAddress(secrets)
   let parsed: ParsedRequest
   try {
-    parsed = parseRequest(input, (name) => byName.has(name))
+    parsed = parseRequest(input, namesASecret(known))
   } catch (error) {
     if (
       error instanceof RequestShapeError ||
@@ -380,7 +433,7 @@ export function planRequest(
 
   const violation = ruleViolation(
     placeholders,
-    byName,
+    known,
     values,
     parsed.origin,
     input.method
@@ -389,7 +442,7 @@ export function planRequest(
     return { ok: false, refusal: { reason: violation, secretNames } }
   }
 
-  const used = secrets.filter((secret) => secretNames.includes(secret.name))
+  const used = secrets.filter((usable) => secretNames.includes(usable.address))
   return {
     ok: true,
     plan: {

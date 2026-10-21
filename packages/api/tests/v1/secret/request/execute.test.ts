@@ -48,8 +48,57 @@ beforeEach(() => {
 })
 
 describe("executeRequest", () => {
+  test("a member's request uses the owner's value, is logged under the member and bumps the owner's last use", async () => {
+    const anaSecretId = "00000000-0000-4000-8000-0000000000b1"
+    const anaKomodo = secretRow({
+      id: anaSecretId,
+      userId: "ana",
+      ciphertext: encryptValues(
+        { key: "ana-key-value", secret: "ana-secret-value" },
+        { secretId: anaSecretId, userId: "ana" }
+      ),
+    })
+    fakeDb.queue("select", [])
+    fakeDb.queue("select", [
+      {
+        secret: anaKomodo,
+        organization: {
+          id: "org-equipo",
+          name: "Equipo docs",
+          slug: "equipo-docs",
+        },
+        ownerName: "Ana",
+      },
+    ])
+    fakeDb.queue("insert", undefined)
+    fakeDb.queue("update", undefined)
+
+    const result = await executeRequest(
+      caller,
+      {
+        method: "GET",
+        url: "https://komodo.casa.lan/read",
+        headers: { "X-Api-Key": "{{equipo-docs/komodo.key}}" },
+      },
+      options(echoHeaders)
+    )
+
+    if (!result.ok) throw new Error(result.message)
+    const text = JSON.stringify(result.response)
+    expect(text).not.toContain("ana-key-value")
+    expect(text).toContain("[secret:equipo-docs/komodo.key]")
+    expect(usageValues(fakeDb.calls("insert")[0])).toMatchObject({
+      userId: "user-id",
+      secretIds: [anaSecretId],
+      secretNames: ["equipo-docs/komodo"],
+      outcome: "sent",
+    })
+    expect(fakeDb.calls("update")).toHaveLength(1)
+  })
+
   test("sends the values and masks them where the response echoes them", async () => {
     fakeDb.queue("select", [komodo()])
+    fakeDb.queue("select", [])
     fakeDb.queue("insert", undefined)
     fakeDb.queue("update", undefined)
     const urls: string[] = []
@@ -72,6 +121,7 @@ describe("executeRequest", () => {
 
   test("records the call without the query and bumps the secret's last use", async () => {
     fakeDb.queue("select", [komodo()])
+    fakeDb.queue("select", [])
     fakeDb.queue("insert", undefined)
     fakeDb.queue("update", undefined)
 
@@ -96,6 +146,7 @@ describe("executeRequest", () => {
 
   test("a refused request sends nothing, is recorded as refused and bumps nothing", async () => {
     fakeDb.queue("select", [komodo()])
+    fakeDb.queue("select", [])
     fakeDb.queue("insert", undefined)
     let fetched = false
     const fetch: FetchLike = async () => {
@@ -121,6 +172,7 @@ describe("executeRequest", () => {
 
   test("a failure is masked, in the result and in the log", async () => {
     fakeDb.queue("select", [komodo()])
+    fakeDb.queue("select", [])
     fakeDb.queue("insert", undefined)
     fakeDb.queue("update", undefined)
     const fetch: FetchLike = async (url) => {
@@ -143,6 +195,7 @@ describe("executeRequest", () => {
 
   test("refuses a secret of the caller's that can't be decrypted", async () => {
     fakeDb.queue("select", [komodo({ ciphertext: "AAAA" })])
+    fakeDb.queue("select", [])
     fakeDb.queue("insert", undefined)
 
     const result = await executeRequest(caller, komodoGet, options(echoHeaders))

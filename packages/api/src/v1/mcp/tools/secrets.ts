@@ -62,16 +62,64 @@ export const secretsOutput = z.object({
       allowInUrl: z.boolean(),
       allowInBody: z.boolean(),
       unreadable: z.boolean(),
+      organization: z
+        .object({ name: z.string(), slug: z.string() })
+        .optional()
+        .describe(
+          "For a secret shared with the user: the organization it comes through"
+        ),
+      ownerName: z
+        .string()
+        .optional()
+        .describe("For a secret shared with the user: who owns it"),
     })
   ),
 })
 
-type ListedSecret = Awaited<
-  ReturnType<SecretsAccess["list"]>
->["secrets"][number]
+type SecretsList = Awaited<ReturnType<SecretsAccess["list"]>>
+type OwnSecret = SecretsList["secrets"][number]
+type SharedSecret = SecretsList["shared"][number]
+
+/** A secret as the tool shows it, own or shared, with its address. */
+type ListedSecret = Pick<
+  OwnSecret,
+  | "name"
+  | "description"
+  | "fields"
+  | "origins"
+  | "allowWrite"
+  | "allowInUrl"
+  | "allowInBody"
+  | "unreadable"
+> & {
+  /** What its placeholders start with: the name, or `<slug>/<name>`. */
+  address: string
+  sharedBy: {
+    organization: { name: string; slug: string }
+    ownerName: string
+  } | null
+}
+
+function fromOwn(secret: OwnSecret): ListedSecret {
+  return { ...secret, address: secret.name, sharedBy: null }
+}
+
+function fromShared(secret: SharedSecret): ListedSecret {
+  return {
+    ...secret,
+    address: `${secret.prefix}${secret.name}`,
+    sharedBy: {
+      organization: {
+        name: secret.organization.name,
+        slug: secret.organization.slug,
+      },
+      ownerName: secret.ownerName,
+    },
+  }
+}
 
 function placeholdersOf(secret: ListedSecret): string[] {
-  return secret.fields.map((field) => `{{${secret.name}.${field}}}`)
+  return secret.fields.map((field) => `{{${secret.address}.${field}}}`)
 }
 
 function placesOf(secret: ListedSecret): string {
@@ -85,7 +133,14 @@ function secretBlock(secret: ListedSecret): string[] {
   const methods = secret.allowWrite
     ? "every method"
     : "reading methods only (GET, HEAD, OPTIONS)"
-  const lines = [`## ${secret.name}`, ""]
+  const lines = [`## ${secret.address}`, ""]
+  if (secret.sharedBy !== null) {
+    const { organization, ownerName } = secret.sharedBy
+    lines.push(
+      `Shared with you by ${ownerName} through the organization ${organization.name} (${organization.slug}).`,
+      ""
+    )
+  }
   if (secret.description !== null) lines.push(secret.description, "")
   lines.push(
     `- Placeholders: ${placeholdersOf(secret).join(", ")}`,
@@ -95,19 +150,14 @@ function secretBlock(secret: ListedSecret): string[] {
   )
   if (secret.unreadable) {
     lines.push(
-      "- Unusable: its values can't be decrypted; its owner must save them again on /me/secrets"
+      "- Unusable: its values can't be decrypted; only its owner can save them again on /me/secrets"
     )
   }
   return lines
 }
 
-/** `secrets`: the caller's secrets, by name, never their values. */
-export async function secretsTool({
-  secrets,
-  origin,
-}: SecretToolScope): Promise<CallToolResult> {
-  const { secrets: listed } = await secrets.list()
-  const structured = listed.map((secret) => ({
+function structuredOf(secret: ListedSecret) {
+  const listed = {
     name: secret.name,
     description: secret.description,
     fields: secret.fields,
@@ -117,7 +167,22 @@ export async function secretsTool({
     allowInUrl: secret.allowInUrl,
     allowInBody: secret.allowInBody,
     unreadable: secret.unreadable,
-  }))
+  }
+  if (secret.sharedBy === null) return listed
+  return { ...listed, ...secret.sharedBy }
+}
+
+/**
+ * `secrets`: the caller's own secrets by name, then those shared with them
+ * by organization and name, never their values.
+ */
+export async function secretsTool({
+  secrets,
+  origin,
+}: SecretToolScope): Promise<CallToolResult> {
+  const { secrets: own, shared } = await secrets.list()
+  const listed = [...own.map(fromOwn), ...shared.map(fromShared)]
+  const structured = listed.map(structuredOf)
   if (listed.length === 0) {
     return {
       ...textResult(
