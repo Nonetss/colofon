@@ -1,4 +1,4 @@
-import { type SyntheticEvent, useState } from "react"
+import { type SyntheticEvent, useEffect, useState } from "react"
 import { authClient } from "@/lib/auth-client"
 import { navigate } from "@/lib/navigate"
 
@@ -9,6 +9,17 @@ export function useSignIn() {
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
   const [oidcLoading, setOidcLoading] = useState(false)
+
+  // A successful SSO start leaves the page for the issuer with the button
+  // still loading; coming back with the browser's back button restores this
+  // page from the back/forward cache in that state, so reset it.
+  useEffect(() => {
+    function onPageShow(event: PageTransitionEvent) {
+      if (event.persisted) setOidcLoading(false)
+    }
+    window.addEventListener("pageshow", onPageShow)
+    return () => window.removeEventListener("pageshow", onPageShow)
+  }, [])
 
   async function signInWithOidc() {
     setError("")
