@@ -1,5 +1,9 @@
-import { beforeEach, describe, expect, mock, test } from "bun:test"
-import type { RemoteCheck } from "@nonete/content"
+import { afterAll, beforeEach, describe, expect, mock, test } from "bun:test"
+import { existsSync } from "node:fs"
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises"
+import { tmpdir } from "node:os"
+import path from "node:path"
+import { ensureBareRepo, hostedFolder, type RemoteCheck } from "@nonete/content"
 import {
   contentRepositoryRow,
   memberRow,
@@ -7,7 +11,7 @@ import {
   stepArgs,
 } from "@nonete/db/testing"
 import { call } from "@orpc/server"
-import { userAudience } from "#tests/fixtures/content"
+import { git, userAudience } from "#tests/fixtures/content"
 import {
   adminContext,
   anonymousContext,
@@ -143,7 +147,7 @@ describe("access to the owner procedures", () => {
 })
 
 describe("content.listMyRepositories", () => {
-  test("lists the caller's repositories without credentials or hosting fields", async () => {
+  test("lists the caller's repositories without credentials or a catalog URL", async () => {
     fakeDb.queue("query.contentRepository.findMany", [owned])
 
     const repositories = await handler.listMyRepositories({
@@ -157,7 +161,7 @@ describe("content.listMyRepositories", () => {
     })
     expect(repositories).toHaveLength(1)
     expect(repositories[0]?.url).toBe("https://***@git.example/ana/apuntes.git")
-    expect(repositories[0]).not.toHaveProperty("pushUrl")
+    expect(repositories[0]).toMatchObject({ hosted: false, pushUrl: null })
     expect(repositories[0]).not.toHaveProperty("catalogUrl")
   })
 })
@@ -511,10 +515,20 @@ describe("user repository input", () => {
     ).toBe(false)
   })
 
-  test("hosting is not an input", () => {
-    const parsed = contentInput.createMyRepository.parse({
-      ...base,
-      url: "https://github.com/ana/x.git",
+  test("a repository is created with either a URL or hosted, never both or neither", () => {
+    const parse = (source: { url?: string; hosted?: true }) =>
+      contentInput.createMyRepository.safeParse({ ...base, ...source }).success
+    const url = "https://github.com/ana/x.git"
+
+    expect(parse({ url })).toBe(true)
+    expect(parse({ hosted: true })).toBe(true)
+    expect(parse({ url, hosted: true })).toBe(false)
+    expect(parse({})).toBe(false)
+  })
+
+  test("an edit can't make a repository hosted", () => {
+    const parsed = contentInput.updateMyRepository.parse({
+      slug: "apuntes",
       hosted: true,
     })
     expect(parsed).not.toHaveProperty("hosted")
@@ -661,5 +675,173 @@ describe("content.shareMyRepository", () => {
       { id: "org-casa", name: "Casa", slug: "casa" },
       { id: "org-equipo", name: "Equipo docs", slug: "acme" },
     ])
+  })
+})
+
+describe("a user's hosted repository", () => {
+  const HOSTED_ROOT = path.join(
+    tmpdir(),
+    `api-own-hosted-${crypto.randomUUID()}`
+  )
+  const notas = {
+    ...contentRepositoryRow({
+      slug: "notas",
+      name: "Notas",
+      url: "/git/notas.git",
+      ownerId: "user-id",
+    }),
+    shares: [],
+  }
+  let hostedHandler = createContentHandler(reader, {
+    hostedRoot: HOSTED_ROOT,
+    checkRemote: allowed,
+  })
+
+  /** Pushes one commit on each of `branches` to the bare repository of notas. */
+  async function pushBranches(branches: string[]) {
+    const bare = hostedFolder(HOSTED_ROOT, notas.id)
+    await ensureBareRepo(bare, "main")
+    const work = await mkdtemp(path.join(tmpdir(), "api-own-hosted-work-"))
+    try {
+      await git(work, ["init", "--quiet", "--initial-branch=main"])
+      await writeFile(path.join(work, "doc.config.yaml"), "nombre: Notas\n")
+      await git(work, ["add", "--all"])
+      await git(work, ["commit", "--quiet", "-m", "content"])
+      for (const branch of branches) {
+        await git(work, ["push", "--quiet", bare, `main:${branch}`])
+      }
+    } finally {
+      await rm(work, { recursive: true, force: true })
+    }
+  }
+
+  beforeEach(async () => {
+    await rm(HOSTED_ROOT, { recursive: true, force: true })
+    await mkdir(HOSTED_ROOT)
+    hostedHandler = createContentHandler(reader, {
+      hostedRoot: HOSTED_ROOT,
+      checkRemote: allowed,
+    })
+  })
+
+  afterAll(() => rm(HOSTED_ROOT, { recursive: true, force: true }))
+
+  test("is stored as the caller's with its marker, an empty bare repository and no sync", async () => {
+    fakeDb.queue("query.contentRepository.findFirst", undefined)
+    fakeDb.queue("insert", [notas])
+
+    const created = await hostedHandler.createMyRepository({
+      context: userContext(),
+      input: {
+        slug: "notas",
+        name: "Notas",
+        hosted: true,
+        ref: "main",
+        path: "",
+      },
+    })
+
+    const [insert] = fakeDb.calls("insert")
+    if (!insert) throw new Error("no insert recorded")
+    expect(stepArgs(insert, "values")[0]).toEqual({
+      slug: "notas",
+      name: "Notas",
+      url: "/git/notas.git",
+      ref: "main",
+      contentPath: "",
+      ownerId: "user-id",
+    })
+    expect(
+      existsSync(path.join(hostedFolder(HOSTED_ROOT, notas.id), "HEAD"))
+    ).toBe(true)
+    expect(reader.syncInBackground).not.toHaveBeenCalled()
+    expect(created).toMatchObject({
+      hosted: true,
+      pushUrl: `${testEnv.CORS_ORIGIN}/git/notas.git`,
+    })
+  })
+
+  test.each([
+    ["a URL", { url: "https://github.com/ana/notas.git" }],
+    ["a credential", { credentialId: "00000000-0000-4000-8000-0000000000c1" }],
+    ["no credential", { credentialId: null }],
+  ])(
+    "an edit with %s is BAD_REQUEST and nothing is written",
+    async (_, edit) => {
+      fakeDb.queue("query.contentRepository.findFirst", notas)
+
+      await expectErrorCode(
+        hostedHandler.updateMyRepository({
+          context: userContext(),
+          input: { slug: "notas", ...edit },
+        }),
+        "BAD_REQUEST"
+      )
+      expect(fakeDb.calls("update")).toEqual([])
+    }
+  )
+
+  test("a new name is saved and it stays hosted", async () => {
+    fakeDb.queue("query.contentRepository.findFirst", notas)
+    fakeDb.queue("update", [{ ...notas, name: "Mis notas" }])
+
+    const saved = await hostedHandler.updateMyRepository({
+      context: userContext(),
+      input: { slug: "notas", name: "Mis notas" },
+    })
+
+    expect(saved).toMatchObject({ name: "Mis notas", hosted: true })
+  })
+
+  test("its branches are read from its bare repository, with no remote to vet", async () => {
+    await pushBranches(["main", "borrador"])
+    fakeDb.queue("query.contentRepository.findFirst", notas)
+
+    const result = await hostedHandler.listMyBranches({
+      context: userContext(),
+      input: { slug: "notas" },
+    })
+
+    expect(result.branches.toSorted()).toEqual(["borrador", "main"])
+    expect(allowed).not.toHaveBeenCalled()
+  })
+
+  test("with nothing pushed it has no branches", async () => {
+    await ensureBareRepo(hostedFolder(HOSTED_ROOT, notas.id), "main")
+    fakeDb.queue("query.contentRepository.findFirst", notas)
+
+    const result = await hostedHandler.listMyBranches({
+      context: userContext(),
+      input: { slug: "notas" },
+    })
+
+    expect(result.branches).toEqual([])
+  })
+
+  test("its content folders are read from its bare repository", async () => {
+    await pushBranches(["main"])
+    fakeDb.queue("query.contentRepository.findFirst", notas)
+
+    const result = await hostedHandler.listMyContentFolders({
+      context: userContext(),
+      input: { slug: "notas", ref: "main" },
+    })
+
+    expect(result.folders).toEqual([""])
+    expect(allowed).not.toHaveBeenCalled()
+  })
+
+  test("deleting it removes its bare repository", async () => {
+    await pushBranches(["main"])
+    fakeDb.queue("query.contentRepository.findFirst", notas)
+    fakeDb.queue("delete", [])
+
+    await hostedHandler.deleteMyRepository({
+      context: userContext(),
+      input: { slug: "notas" },
+    })
+
+    expect(reader.remove).toHaveBeenCalledWith(notas)
+    expect(existsSync(hostedFolder(HOSTED_ROOT, notas.id))).toBe(false)
   })
 })

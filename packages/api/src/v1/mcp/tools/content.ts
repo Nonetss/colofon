@@ -35,23 +35,29 @@ export const syncInput = z.object({
   repository: contentInput.syncRepository.shape.slug,
 })
 
-const createInput = contentInput.createMyRepository
+// The tool adds external repositories only: it takes the create fields but
+// a required URL instead of `hosted`.
+const createFields = contentInput.createMyRepository.shape
 
-export const addRepositoryInput = createInput
-  .omit({ credentialId: true })
-  .extend({
-    url: createInput.shape.url.describe(
+export const addRepositoryInput = z.object({
+  slug: createFields.slug,
+  name: createFields.name,
+  url: createFields.url
+    .unwrap()
+    .describe(
       "HTTPS URL of the git repository, without credentials (https://host/owner/repo.git); a private one clones with a saved credential"
     ),
-    credential: z
-      .string()
-      .trim()
-      .min(1)
-      .optional()
-      .describe(
-        "Username of one of the user's saved git credentials for the URL's host, as my_repositories lists them; omit it for a public repository"
-      ),
-  })
+  credential: z
+    .string()
+    .trim()
+    .min(1)
+    .optional()
+    .describe(
+      "Username of one of the user's saved git credentials for the URL's host, as my_repositories lists them; omit it for a public repository"
+    ),
+  ref: createFields.ref,
+  path: createFields.path,
+})
 
 const listedCredential = z.object({
   host: z.string(),

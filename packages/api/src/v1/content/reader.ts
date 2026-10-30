@@ -18,6 +18,7 @@ import {
   type SyncResult,
 } from "@nonete/content"
 import type { Logger } from "pino"
+import { isHosted } from "#v1/content/hosting"
 import { checkUserRemoteWithTrusted } from "#v1/content/trusted-hosts"
 
 // Reads the content repositories' declarations for the content feature. Each
@@ -64,6 +65,17 @@ export async function audienceOfUser(
 ): Promise<RepositoryAudience> {
   if (user === null) return "platform"
   return { userId: user.id, shared: await repositories.sharedWith(user.id) }
+}
+
+/**
+ * Whether `repository` is a user's external one, whose remote is vetted and
+ * reached over https only. A hosted one reads the platform's own bare
+ * repository.
+ */
+function hasRemoteToVet(
+  repository: Pick<StoredRepository, "ownerId" | "slug" | "url">
+): boolean {
+  return repository.ownerId !== null && !isHosted(repository)
 }
 
 /** Whether `repository` is within `audience`. */
@@ -377,7 +389,7 @@ export function createContentReader(
   async function runSync(repository: StoredRepository): Promise<SyncResult> {
     const accessible = await accessibleOrError(repository)
     if (!accessible.ok) return accessible
-    if (repository.ownerId !== null) {
+    if (hasRemoteToVet(repository)) {
       const checked = await checkRemote(accessible.repository.url)
       if (!checked.ok) return { ok: false, error: checked.error }
     }
@@ -427,7 +439,7 @@ export function createContentReader(
         url: resolveSource(repository),
         ref: repository.ref,
         root,
-        httpsOnly: repository.ownerId !== null,
+        httpsOnly: hasRemoteToVet(repository),
       }),
     }
     repoSyncs.set(root, created)

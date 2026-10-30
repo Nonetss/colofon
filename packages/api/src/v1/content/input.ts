@@ -223,14 +223,17 @@ export const contentInput = {
       ),
   }),
   readFile: z.object({ slug: repository, branch, path: filePath }),
-  createMyRepository: z.object({
-    slug: newRepository,
-    name,
-    url: userUrl,
-    credentialId: credentialId.optional(),
-    ref: ref.default("main"),
-    path: contentPath.default(""),
-  }),
+  createMyRepository: z
+    .object({
+      slug: newRepository,
+      name,
+      url: userUrl.optional(),
+      credentialId: credentialId.optional(),
+      hosted: hosted.optional(),
+      ref: ref.default("main"),
+      path: contentPath.default(""),
+    })
+    .refine(oneSource(false), { message: "Send either url or hosted" }),
   updateMyRepository: z.object({
     slug: repository.describe("Slug of the repository to edit; never changes"),
     name: name.optional(),

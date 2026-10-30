@@ -41,6 +41,8 @@ const apuntes: OwnRepositoryOutput = {
   name: "Apuntes",
   url: "https://git.example.com/org/docs",
   credentialId: CREDENTIAL_ID,
+  hosted: false,
+  pushUrl: null,
   ref: "main",
   path: "docs",
   lastSyncedAt: null,

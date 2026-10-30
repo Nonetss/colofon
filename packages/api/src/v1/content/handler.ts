@@ -126,6 +126,8 @@ function toOwnRepository(
     name: row.name,
     url: publicUrl(row.url),
     credentialId: row.credentialId,
+    hosted: isHosted(row),
+    pushUrl: pushUrlOf(row),
     ref: row.ref,
     path: row.contentPath,
     lastSyncedAt: toIsoOrNull(row.lastSyncedAt),
@@ -326,9 +328,11 @@ function editedCredential(
 }
 
 /** The `url` a new repository stores: the one sent, or the hosted marker. */
-function createdUrlOf(
-  input: z.infer<typeof contentInput.createRepository>
-): string {
+function createdUrlOf(input: {
+  slug: string
+  url?: string
+  hosted?: true
+}): string {
   if (input.hosted === true) return hostedMarkerOf(input.slug)
   if (input.url !== undefined) return input.url
   throw errors.BAD_REQUEST({ message: "Send either url or hosted" })
@@ -419,13 +423,22 @@ export function createContentHandler(
     return gitSourceOf(row, hostedRoot)
   }
 
-  /** The URL `listMyBranches` reads: the one sent, or an owned repository's. */
-  async function ownBranchesUrlOf(
+  /**
+   * What the owner's branch and folder listings read: the URL sent, an owned
+   * external repository's URL, or an owned hosted one's bare repository,
+   * which has no remote to vet.
+   */
+  async function ownSourceOf(
     userId: string,
-    input: z.infer<typeof contentInput.listMyBranches>
-  ): Promise<string> {
+    input: { url?: string; credentialId?: string; slug?: string }
+  ): Promise<{ source: string; hosted: boolean }> {
     if (input.url !== undefined) {
-      return urlWithChosenCredential(userId, input.url, input.credentialId)
+      const source = await urlWithChosenCredential(
+        userId,
+        input.url,
+        input.credentialId
+      )
+      return { source, hosted: false }
     }
     if (input.slug === undefined) {
       throw errors.BAD_REQUEST({ message: "Send either url or slug" })
@@ -434,7 +447,27 @@ export function createContentHandler(
       await findOwned(input.slug, userId),
       NOT_FOUND_MESSAGE
     )
-    return (await accessibleRow(row)).url
+    if (isHosted(row)) {
+      return { source: gitSourceOf(row, hostedRoot), hosted: true }
+    }
+    return { source: (await accessibleRow(row)).url, hosted: false }
+  }
+
+  /** Refuses a remote of the owner's listings that is not allowed. */
+  async function assertAllowedRemote(url: string) {
+    const checked = await checkRemote(url)
+    if (!checked.ok) {
+      throw errors.BAD_REQUEST({ message: "Esa dirección no está permitida" })
+    }
+  }
+
+  /** Deletes the bare repository of `row` when it is hosted. */
+  async function removeHostedFolder(row: ContentRepository) {
+    if (!isHosted(row)) return
+    await rm(hostedFolder(hostedRoot, row.id), {
+      recursive: true,
+      force: true,
+    })
   }
 
   async function schemasOf(slug: string) {
@@ -633,14 +666,15 @@ export function createContentHandler(
       context: Context
       input: z.infer<typeof contentInput.listMyContentFolders>
     }): Promise<z.infer<typeof contentOutput.listContentFolders>> {
-      const url = await ownBranchesUrlOf(requireUserId(context), input)
-      const checked = await checkRemote(url)
-      if (!checked.ok) {
-        throw errors.BAD_REQUEST({ message: "Esa dirección no está permitida" })
-      }
-      const result = await listContentFolders(url, {
+      const { source, hosted } = await ownSourceOf(
+        requireUserId(context),
+        input
+      )
+      if (!hosted) await assertAllowedRemote(source)
+      const result = await listContentFolders(source, {
         ref: input.ref,
-        httpsOnly: true,
+        httpsOnly: !hosted,
+        bare: hosted,
       })
       if (!result.ok) throw errors.BAD_GATEWAY({ message: result.error })
       return { folders: result.folders }
@@ -696,12 +730,7 @@ export function createContentHandler(
       )
       await db.delete(contentRepository).where(eq(contentRepository.id, row.id))
       await reader.remove(row)
-      if (isHosted(row)) {
-        await rm(hostedFolder(hostedRoot, row.id), {
-          recursive: true,
-          force: true,
-        })
-      }
+      await removeHostedFolder(row)
       return { id: row.id, success: true }
     },
 
@@ -752,9 +781,10 @@ export function createContentHandler(
       const conflict = errors.CONFLICT({
         message: "Ya existe un repositorio con ese slug",
       })
+      const url = createdUrlOf(input)
       const credential = await createdCredential(
         ownerId,
-        input.url,
+        url,
         input.credentialId
       )
       if (await findRow(input.slug, "all")) throw conflict
@@ -764,7 +794,7 @@ export function createContentHandler(
         .values({
           slug: input.slug,
           name: input.name,
-          url: input.url,
+          url,
           ...credential,
           ref: input.ref,
           contentPath: input.path,
@@ -773,7 +803,12 @@ export function createContentHandler(
         .onConflictDoNothing({ target: contentRepository.slug })
         .returning()
       if (!row) throw conflict
-      reader.syncInBackground(row)
+      // Nothing has been pushed to a new hosted repository: no sync yet.
+      if (isHosted(row)) {
+        await ensureHostedRepo(row, hostedRoot)
+      } else {
+        reader.syncInBackground(row)
+      }
       return toOwnRepository(row, [])
     },
 
@@ -789,6 +824,15 @@ export function createContentHandler(
         await findOwned(input.slug, ownerId),
         NOT_FOUND_MESSAGE
       )
+      // A repository keeps the source it was created with.
+      if (
+        isHosted(row) &&
+        (input.url !== undefined || input.credentialId !== undefined)
+      ) {
+        throw errors.BAD_REQUEST({
+          message: "Un repositorio alojado no tiene URL ni credencial",
+        })
+      }
       const credential = await credentialPatch(ownerId, row, input)
       const patch = {
         ...(input.name !== undefined && { name: input.name }),
@@ -854,6 +898,7 @@ export function createContentHandler(
       )
       await db.delete(contentRepository).where(eq(contentRepository.id, row.id))
       await reader.remove(row)
+      await removeHostedFolder(row)
       return { id: row.id, success: true }
     },
 
@@ -864,12 +909,12 @@ export function createContentHandler(
       context: Context
       input: z.infer<typeof contentInput.listMyBranches>
     }): Promise<z.infer<typeof contentOutput.listBranches>> {
-      const url = await ownBranchesUrlOf(requireUserId(context), input)
-      const checked = await checkRemote(url)
-      if (!checked.ok) {
-        throw errors.BAD_REQUEST({ message: "Esa dirección no está permitida" })
-      }
-      const result = await listRemoteBranches(url, undefined, true)
+      const { source, hosted } = await ownSourceOf(
+        requireUserId(context),
+        input
+      )
+      if (!hosted) await assertAllowedRemote(source)
+      const result = await listRemoteBranches(source, undefined, !hosted)
       if (!result.ok) throw errors.BAD_GATEWAY({ message: result.error })
       return { branches: result.branches, defaultBranch: result.defaultBranch }
     },

@@ -247,7 +247,7 @@ export const contentRouter = {
       openapi({
         summary: "Add one of the caller's own repositories",
         description:
-          "Stores an external git repository private to the caller and starts its first sync without waiting for it. The URL must be a public https one. CONFLICT when the slug is taken by any repository.",
+          "Stores a git repository private to the caller: an external one, whose URL must be a public https one and whose first sync starts without waiting for it, or, with `hosted`, one the platform hosts at /git/<slug>.git, created empty. CONFLICT when the slug is taken by any repository.",
         tags,
         method: "POST",
         successStatus: 201,
@@ -264,7 +264,7 @@ export const contentRouter = {
       openapi({
         summary: "Edit one of the caller's own repositories",
         description:
-          "Changes the name, URL or ref of a repository the caller owns, keeping the fields not sent. A new URL or ref starts a sync. NOT_FOUND for any other repository.",
+          "Changes the name, URL or ref of a repository the caller owns, keeping the fields not sent. A new URL or ref starts a sync. A repository keeps the source it was created with: BAD_REQUEST for a URL or credential on a hosted one. NOT_FOUND for any other repository.",
         tags,
         method: "PATCH",
       })
@@ -280,7 +280,7 @@ export const contentRouter = {
       openapi({
         summary: "Delete one of the caller's own repositories",
         description:
-          "Deletes a repository the caller owns and its clone. NOT_FOUND for any other repository.",
+          "Deletes a repository the caller owns and its clone, and the bare repository of a hosted one. NOT_FOUND for any other repository.",
         tags,
         method: "DELETE",
       })
@@ -314,7 +314,7 @@ export const contentRouter = {
       openapi({
         summary: "List the branches of a user's git repository",
         description:
-          "Branches of the public https git repository at `url`, or of one of the caller's own repositories by `slug`, and the one its HEAD points at. QUERY rather than GET: the URL may carry a token. BAD_REQUEST for an address that is not allowed; BAD_GATEWAY with the git error, without credentials, when the remote can't be read.",
+          "Branches of the public https git repository at `url`, or of one of the caller's own repositories by `slug` (a hosted one is read from the platform), and the one its HEAD points at. QUERY rather than GET: the URL may carry a token. BAD_REQUEST for an address that is not allowed; BAD_GATEWAY with the git error, without credentials, when the remote can't be read.",
         tags,
         method: "QUERY",
       })

@@ -3,7 +3,7 @@ import { existsSync } from "node:fs"
 import { mkdtemp, rm } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import path from "node:path"
-import { hostedFolder } from "@nonete/content"
+import { hostedFolder, type RemoteCheck } from "@nonete/content"
 import {
   createContentRemote,
   memoryRepositoryStore,
@@ -22,6 +22,13 @@ const hosted = storedRepository({
   id: "repo-hosted",
   slug: "manual",
   url: "/git/manual.git",
+})
+// Hosted, private to ana and not shared.
+const notas = storedRepository({
+  id: "repo-notas",
+  slug: "notas",
+  url: "/git/notas.git",
+  ownerId: "ana",
 })
 const cleanups: (() => Promise<void>)[] = []
 
@@ -109,6 +116,32 @@ describe("syncing a hosted repository", () => {
       existsSync(path.join(cloneRoot, repository.id, "doc.config.yaml"))
     ).toBe(true)
   })
+
+  test("a user's hosted repository has no remote to vet", async () => {
+    const remote = await createContentRemote()
+    cleanups.push(remote.remove)
+    const bare = new URL(remote.url).pathname
+    const repository = { ...notas, id: path.basename(bare) }
+    const hostedRoot = path.dirname(bare)
+    const checkRemote = mock(
+      async (_url: string): Promise<RemoteCheck> => ({
+        ok: false,
+        error: "not allowed",
+      })
+    )
+    const reader = createContentReader({
+      cloneRoot: await tempFolder(),
+      repositories: memoryRepositoryStore([repository]),
+      resolveSource: (stored) => gitSourceOf(stored, hostedRoot),
+      logger: fakeLogger(),
+      checkRemote,
+    })
+
+    const result = await reader.sync(repository)
+
+    expect(result).toEqual({ ok: true, commit: expect.any(String) })
+    expect(checkRemote).not.toHaveBeenCalled()
+  })
 })
 
 describe("git endpoint", () => {
@@ -133,6 +166,21 @@ describe("git endpoint", () => {
     expect(
       existsSync(path.join(hostedFolder(hostedRoot, hosted.id), "HEAD"))
     ).toBe(true)
+  })
+
+  test("a user's private hosted repository is served and pushed to with no credentials", async () => {
+    const { reader, gitHttp } = await hosting([notas])
+
+    const advertised = await gitHttp(advertisement(notas.slug))
+    const pushed = await gitHttp(emptyPush(notas.slug))
+    await pushed.text()
+    for (let attempt = 0; attempt < 100; attempt++) {
+      if (reader.syncInBackground.mock.calls.length > 0) break
+      await Bun.sleep(10)
+    }
+
+    expect([advertised.status, pushed.status]).toEqual([200, 200])
+    expect(reader.syncInBackground.mock.calls).toEqual([[notas]])
   })
 
   test("a push starts a sync of that repository", async () => {

@@ -53,18 +53,13 @@ const repository = z.object({
 
 export type ContentRepositoryOutput = z.infer<typeof repository>
 
-// A user's repository: external and not in the editor's schema catalog.
-const ownRepository = repository
-  .omit({
-    hosted: true,
-    pushUrl: true,
-    catalogUrl: true,
-  })
-  .extend({
-    organizations: z
-      .array(z.object({ id: z.string(), name: z.string(), slug: z.string() }))
-      .describe("The organizations it is shared with, by name"),
-  })
+// A user's repository, external or hosted, and not in the editor's schema
+// catalog.
+const ownRepository = repository.omit({ catalogUrl: true }).extend({
+  organizations: z
+    .array(z.object({ id: z.string(), name: z.string(), slug: z.string() }))
+    .describe("The organizations it is shared with, by name"),
+})
 
 export type OwnRepositoryOutput = z.infer<typeof ownRepository>
 
