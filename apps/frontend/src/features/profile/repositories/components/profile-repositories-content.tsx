@@ -35,6 +35,13 @@ function pendingSlugOf(...mutations: SlugMutation[]): string | null {
   return null
 }
 
+function deleteDescription(repository: OwnRepository): string {
+  if (repository.hosted) {
+    return `Se borra "${repository.name}" de la plataforma con todo su historial git. Si no tienes una copia, se pierde.`
+  }
+  return `Se borra "${repository.name}" de la plataforma, con su clon. El repositorio git original no se toca.`
+}
+
 export function ProfileRepositoriesContent() {
   const list = useOwnRepositoriesList()
   const deleteRepository = useOwnRepositoryDelete()
@@ -43,8 +50,7 @@ export function ProfileRepositoriesContent() {
   const editDialog = useEditDialog<OwnRepository>()
   const deleteDialog = useTargetConfirmDialog<OwnRepository>({
     title: "Eliminar repositorio",
-    description: (repository) =>
-      `Se borra "${repository.name}" de la plataforma, con su clon. El repositorio git original no se toca.`,
+    description: deleteDescription,
     confirmLabel: "Eliminar",
     onConfirm: (repository) =>
       deleteRepository.mutateAsync({ slug: repository.slug }),

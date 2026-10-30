@@ -16,11 +16,32 @@ export type OwnRepositoryFormValues = {
   credentialId?: string | null
 }
 
-/** What a create sends. */
+/** Where a repository's content comes from; fixed once it is created. */
+export type OwnRepositorySource = "url" | "hosted"
+
+/** The source of `repository`; a new one starts as an external URL. */
+export function ownRepositorySourceOf(
+  repository: OwnRepository | null
+): OwnRepositorySource {
+  if (repository?.hosted === true) return "hosted"
+  return "url"
+}
+
+/** What a create sends: the URL and its login, or `hosted` instead. */
 export function createInput(
   slug: string,
+  source: OwnRepositorySource,
   values: OwnRepositoryFormValues
 ): CreateOwnRepositoryInput {
+  if (source === "hosted") {
+    return {
+      slug,
+      name: values.name,
+      hosted: true,
+      ref: values.ref,
+      path: values.path,
+    }
+  }
   return {
     slug,
     name: values.name,
@@ -78,7 +99,9 @@ function isHttpsUrl(value: string): boolean {
 /**
  * Where the form reads the branches from: the URL being typed once it is a
  * complete https URL; while editing with the URL left empty, the stored
- * repository (whose URL, token included, the client never sees).
+ * repository (whose URL, token included, the client never sees, or the
+ * platform's own copy of a hosted one). A new hosted repository has no URL
+ * and no branches until its first push, so nothing is read.
  */
 export function ownBranchesSource(
   open: boolean,

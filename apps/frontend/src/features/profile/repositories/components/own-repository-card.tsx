@@ -2,6 +2,7 @@ import { surfaceVariants } from "@/components/shared/brand/surface"
 import { Text } from "@/components/shared/brand/typography"
 import { MetadataCell } from "@/components/shared/data-display/metadata-cell"
 import { RowActions } from "@/components/shared/data-display/row-action-items"
+import { CopyableUrl } from "@/components/shared/form/copyable-url"
 import { Button } from "@/components/ui/button"
 import {
   ContentPathCell,
@@ -85,11 +86,21 @@ export function OwnRepositoryCard({
 
       <div className="@container border-t px-4 py-3">
         <dl className="grid gap-x-6 gap-y-3 @md:grid-cols-[minmax(0,1fr)_auto]">
-          <MetadataCell as="dl" label="Repositorio git">
-            <Text variant="data" className="block truncate">
-              {repository.url}
-            </Text>
-          </MetadataCell>
+          {repository.pushUrl === null && (
+            <MetadataCell as="dl" label="Repositorio git">
+              <Text variant="data" className="block truncate">
+                {repository.url}
+              </Text>
+            </MetadataCell>
+          )}
+          {repository.pushUrl !== null && (
+            <MetadataCell as="dl" label="Alojado en la plataforma">
+              <CopyableUrl
+                url={repository.pushUrl}
+                copyLabel={`Copiar la URL de git de ${repository.name}`}
+              />
+            </MetadataCell>
+          )}
           <MetadataCell as="dl" label="Rama">
             <Text variant="data" className="block truncate">
               {repository.ref}

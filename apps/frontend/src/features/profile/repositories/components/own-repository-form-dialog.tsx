@@ -2,6 +2,7 @@ import { type SyntheticEvent, useEffect, useState } from "react"
 import { textVariants } from "@/components/shared/brand/typography"
 import { FormField } from "@/components/shared/form/field-label"
 import { FormDialog } from "@/components/shared/form/form-dialog"
+import { SegmentedPicker } from "@/components/shared/form/segmented-picker"
 import { Input } from "@/components/ui/input"
 import {
   BranchRefField,
@@ -25,7 +26,9 @@ import {
 import {
   createInput,
   type OwnRepositoryFormValues,
+  type OwnRepositorySource,
   ownBranchesSource,
+  ownRepositorySourceOf,
   sharedOrganizationIds,
   updateInput,
 } from "@/features/profile/repositories/model/repository-form"
@@ -40,6 +43,38 @@ interface OwnRepositoryFormDialogProps {
   repository: OwnRepository | null
   open: boolean
   onOpenChange: (open: boolean) => void
+}
+
+const SOURCE_OPTIONS = [
+  { value: "url", label: "Repositorio externo" },
+  { value: "hosted", label: "Alojado en la plataforma" },
+] as const satisfies readonly { value: OwnRepositorySource; label: string }[]
+
+function sourceHint(source: OwnRepositorySource): string {
+  if (source === "url") {
+    return "La plataforma lo descarga de su URL y lo sincroniza cada cinco minutos."
+  }
+  return "La plataforma guarda el repositorio: súbelo con git push a la URL que verás en su tarjeta. Por ahora esa URL no pide credenciales: cualquiera que la conozca puede clonarlo y hacer push."
+}
+
+function refHint(
+  source: OwnRepositorySource,
+  branches: { isError: boolean; error: Error | null }
+): string {
+  if (source === "hosted") {
+    return "Rama que se publica: cada push a ella actualiza el contenido. Hasta el primer push, escríbela."
+  }
+  if (branches.isError) {
+    return `No se pudieron leer las ramas (${branches.error?.message ?? "error desconocido"}); escribe la rama, el tag o el commit.`
+  }
+  return "Rama, tag o commit que se descarga. Con la URL completa, se elige de una lista."
+}
+
+function dialogDescription(repository: OwnRepository | null): string {
+  if (repository !== null) {
+    return `El slug "${repository.slug}" no cambia: es la dirección de sus páginas.`
+  }
+  return "Solo tú y las organizaciones con las que lo compartas veréis sus páginas."
 }
 
 function urlHintOf(repository: OwnRepository | null): string {
@@ -62,6 +97,7 @@ export function OwnRepositoryFormDialog({
   const [name, setName] = useState("")
   const [slug, setSlug] = useState("")
   const [slugTouched, setSlugTouched] = useState(false)
+  const [source, setSource] = useState<OwnRepositorySource>("url")
   const [url, setUrl] = useState("")
   const [ref, setRef] = useState("main")
   const [contentPath, setContentPath] = useState("")
@@ -75,6 +111,7 @@ export function OwnRepositoryFormDialog({
     setName(repository?.name ?? "")
     setSlug(repository?.slug ?? "")
     setSlugTouched(false)
+    setSource(ownRepositorySourceOf(repository))
     setUrl("")
     setRef(repository?.ref ?? "main")
     setContentPath(repository?.path ?? "")
@@ -130,12 +167,19 @@ export function OwnRepositoryFormDialog({
   const saveRepository = (values: OwnRepositoryFormValues) => {
     if (repository !== null)
       return updateRepository.mutateAsync(updateInput(repository, values))
-    return createRepository.mutateAsync(createInput(slug, values))
+    return createRepository.mutateAsync(createInput(slug, source, values))
+  }
+
+  // A hosted repository has no URL and no login to prepare.
+  const preparedAccess = () => {
+    if (source === "hosted")
+      return Promise.resolve({ url: "", credentialId: undefined })
+    return access.prepare()
   }
 
   const handleSubmit = async (e: SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault()
-    const prepared = await access.prepare()
+    const prepared = await preparedAccess()
     const values = {
       name: name.trim(),
       url: prepared.url,
@@ -160,11 +204,7 @@ export function OwnRepositoryFormDialog({
       open={open}
       onOpenChange={handleOpenChange}
       title={isEditing ? "Editar repositorio" : "Añadir repositorio"}
-      description={
-        isEditing
-          ? `El slug "${repository.slug}" no cambia: es la dirección de sus páginas.`
-          : "Solo tú y las organizaciones con las que lo compartas veréis sus páginas. La plataforma lo descarga y lo sincroniza cada cinco minutos."
-      }
+      description={dialogDescription(repository)}
       onSubmit={handleSubmit}
       isPending={isPending}
       submitLabel={isEditing ? "Guardar" : "Añadir"}
@@ -199,34 +239,47 @@ export function OwnRepositoryFormDialog({
           />
         </FormField>
       )}
-      <FormField
-        label="URL del repositorio git"
-        htmlFor="own-repository-url"
-        hint={urlHintOf(repository)}
-      >
-        <Input
-          id="own-repository-url"
-          type="url"
-          required={!isEditing || access.needsUrl}
-          placeholder={repository?.url ?? "https://github.com/usuario/docs.git"}
-          className={textVariants({ role: "data" })}
-          autoComplete="off"
-          value={url}
-          onChange={(e) => setUrl(e.target.value)}
-        />
-      </FormField>
-      <CredentialField access={access} editing={isEditing} />
+      {!isEditing && (
+        <FormField label="Origen" hint={sourceHint(source)}>
+          <SegmentedPicker
+            label="Origen del repositorio"
+            options={SOURCE_OPTIONS}
+            value={source}
+            onChange={setSource}
+            columns={2}
+          />
+        </FormField>
+      )}
+      {source === "url" && (
+        <FormField
+          label="URL del repositorio git"
+          htmlFor="own-repository-url"
+          hint={urlHintOf(repository)}
+        >
+          <Input
+            id="own-repository-url"
+            type="url"
+            required={!isEditing || access.needsUrl}
+            placeholder={
+              repository?.url ?? "https://github.com/usuario/docs.git"
+            }
+            className={textVariants({ role: "data" })}
+            autoComplete="off"
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+          />
+        </FormField>
+      )}
+      {source === "url" && (
+        <CredentialField access={access} editing={isEditing} />
+      )}
       <BranchRefField
         branches={branches}
         value={ref}
         onChange={chooseRef}
         onSuggest={setRef}
         chosen={refChosen}
-        textHint={
-          branches.isError
-            ? `No se pudieron leer las ramas (${branches.error.message}); escribe la rama, el tag o el commit.`
-            : "Rama, tag o commit que se descarga. Con la URL completa, se elige de una lista."
-        }
+        textHint={refHint(source, branches)}
       />
       <ContentPathField
         value={contentPath}

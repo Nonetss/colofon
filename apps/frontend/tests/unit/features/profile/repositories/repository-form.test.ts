@@ -3,6 +3,7 @@ import { skipToken } from "@tanstack/react-query"
 import {
   createInput,
   ownBranchesSource,
+  ownRepositorySourceOf,
   sharedOrganizationIds,
   updateInput,
 } from "@/features/profile/repositories/model/repository-form"
@@ -16,6 +17,8 @@ const stored: OwnRepository = {
   name: "Apuntes",
   url: "https://***@github.com/ana/apuntes.git",
   credentialId: null,
+  hosted: false,
+  pushUrl: null,
   ref: "main",
   path: "",
   lastSyncedAt: null,
@@ -29,7 +32,7 @@ const stored: OwnRepository = {
 describe("createInput", () => {
   test("sends the slug with the form's fields", () => {
     expect(
-      createInput("apuntes", {
+      createInput("apuntes", "url", {
         name: "Apuntes",
         url: "https://github.com/ana/apuntes.git",
         ref: "main",
@@ -121,14 +124,14 @@ describe("the saved login", () => {
 
   test("a create sends the credential id when one is chosen", () => {
     expect(
-      createInput("apuntes", {
+      createInput("apuntes", "url", {
         ...values,
         url: "https://h/x",
         credentialId: "c1",
       })
     ).toMatchObject({ credentialId: "c1" })
     expect(
-      createInput("apuntes", {
+      createInput("apuntes", "url", {
         ...values,
         url: "https://h/x",
         credentialId: null,
@@ -172,5 +175,51 @@ describe("sharing", () => {
         ],
       })
     ).toEqual(["org-casa", "org-equipo"])
+  })
+})
+
+describe("a hosted repository", () => {
+  const notas: OwnRepository = {
+    ...stored,
+    slug: "notas",
+    name: "Notas",
+    url: "/git/notas.git",
+    hosted: true,
+    pushUrl: "https://docs.example.com/git/notas.git",
+  }
+  const values = { name: "Notas", url: "", ref: "main", path: "" }
+
+  test("its source is hosted; an external or new one's is a URL", () => {
+    expect(ownRepositorySourceOf(notas)).toBe("hosted")
+    expect(ownRepositorySourceOf(stored)).toBe("url")
+    expect(ownRepositorySourceOf(null)).toBe("url")
+  })
+
+  test("a create sends hosted instead of a URL or a login", () => {
+    expect(
+      createInput("notas", "hosted", {
+        ...values,
+        url: "https://h/x",
+        credentialId: "c1",
+      })
+    ).toEqual({
+      slug: "notas",
+      name: "Notas",
+      hosted: true,
+      ref: "main",
+      path: "",
+    })
+  })
+
+  test("an edit sends neither a URL nor a login", () => {
+    expect(updateInput(notas, { ...values, name: "Mis notas" })).toEqual({
+      slug: "notas",
+      name: "Mis notas",
+    })
+  })
+
+  test("a new one reads no branches; a stored one reads its own", () => {
+    expect(ownBranchesSource(true, null, "")).toBe(skipToken)
+    expect(ownBranchesSource(true, notas, "")).toEqual({ slug: "notas" })
   })
 })
