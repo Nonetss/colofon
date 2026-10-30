@@ -2,13 +2,13 @@ import { surfaceVariants } from "@/components/shared/brand/surface"
 import { Text } from "@/components/shared/brand/typography"
 import { MetadataCell } from "@/components/shared/data-display/metadata-cell"
 import { RowActions } from "@/components/shared/data-display/row-action-items"
+import { CopyableUrl } from "@/components/shared/form/copyable-url"
 import { Button } from "@/components/ui/button"
 import {
   type ContentRepositoryCardContext,
   contentRepositoryActions,
 } from "@/features/admin/content/definitions/content-repository-actions.definition"
 import type { ContentRepository } from "@/features/admin/content/model/types"
-import { CopyableUrl } from "@/features/admin/shared"
 import {
   ContentPathCell,
   RepositorySyncError,

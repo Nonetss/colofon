@@ -1,9 +1,9 @@
 import { surfaceVariants } from "@/components/shared/brand/surface"
 import { Text } from "@/components/shared/brand/typography"
+import { CopyableUrl } from "@/components/shared/form/copyable-url"
 import { AppLink } from "@/components/ui/app-link"
 import { Button } from "@/components/ui/button"
 import type { HostedRepository } from "@/features/admin/git/model/types"
-import { CopyableUrl } from "@/features/admin/shared"
 import { getIcon } from "@/lib/icon-registry"
 import { cn } from "@/lib/utils"
 
