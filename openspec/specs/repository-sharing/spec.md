@@ -32,7 +32,7 @@ The owner of a repository (`user-content-repositories`) SHALL set the organizati
 
 ### Requirement: What organization members can do
 
-Every member of an organization a repository is shared with SHALL read it as its owner does: it SHALL be listed in the reader's navigation, its pages, files, catalog and skills SHALL be served, it SHALL be found by the documentation search and appear in `llms.txt` and in the MCP's documentation tools, and the member SHALL sync it on demand. A member SHALL NOT edit, delete or list it among their own repositories (the owner procedures and the MCP's `my_repositories`), and it SHALL keep answering `NOT_FOUND` to the public editor schema endpoints. Users who are neither its owner nor a member of one of its organizations SHALL keep getting `NOT_FOUND`, admins included.
+Every member of an organization a repository is shared with SHALL read it as its owner does: it SHALL be listed in the reader's navigation, its pages, files, catalog and skills SHALL be served, it SHALL be found by the documentation search and appear in `llms.txt` and in the MCP's documentation tools, and the member SHALL sync it on demand. A member SHALL NOT edit or delete it, nor list it among their own repositories (the owner procedures and the MCP's `my_repositories`), with the one exception of its content folder (`Content folder of a shared repository`), and it SHALL keep answering `NOT_FOUND` to the public editor schema endpoints. Users who are neither its owner nor a member of one of its organizations SHALL keep getting `NOT_FOUND`, admins included.
 
 #### Scenario: A member reads a shared repository
 
@@ -53,6 +53,30 @@ Every member of an organization a repository is shared with SHALL read it as its
 
 - **WHEN** `luis` syncs `apuntes` from the reader or the MCP's `sync`
 - **THEN** the sync SHALL run as for its owner
+
+### Requirement: Content folder of a shared repository
+
+The backend SHALL let a member of an organization a repository is shared with change the folder of the git repository its content is read from (`path`), for the owner and every other member alike, and nothing else of it. The procedure SHALL answer only to a browser session: a request with an API key SHALL answer `FORBIDDEN`. The new folder SHALL be one the checked-out clone has: otherwise it SHALL answer `BAD_REQUEST` and change nothing. A repository the caller owns, a platform one, one not shared with them or an unknown one SHALL answer `NOT_FOUND`. The backend SHALL also list the folders of the shared repository that hold a `doc.config.yaml`, reading it with the owner's login, which SHALL never reach the member. The folder SHALL follow the same rules as the owner's.
+
+#### Scenario: A member changes the folder
+
+- **WHEN** `luis`, a member of `equipo-docs`, sets the folder of `apuntes` to `sitio`, which the clone has
+- **THEN** `apuntes` SHALL be read from `sitio` by `ana` and by every member
+
+#### Scenario: A folder the clone doesn't have
+
+- **WHEN** `luis` sets the folder of `apuntes` to `no-existe`
+- **THEN** the backend SHALL answer `BAD_REQUEST` and the folder SHALL stay as it was
+
+#### Scenario: An API key
+
+- **WHEN** a request with an API key sets the folder of `apuntes`
+- **THEN** the backend SHALL answer `FORBIDDEN`
+
+#### Scenario: Not shared with the caller
+
+- **WHEN** `pablo`, who is not in `equipo-docs`, sets the folder of `apuntes`
+- **THEN** the backend SHALL answer `NOT_FOUND`
 
 ### Requirement: When a share ends
 
@@ -91,3 +115,22 @@ On `/me/repositories`, each repository card SHALL show the organizations it is s
 
 - **WHEN** `luis` opens the reader's repository selector and `apuntes` is shared with him through `equipo-docs`
 - **THEN** `apuntes` SHALL be listed with `equipo-docs` as its origin
+
+### Requirement: Shared repositories in the profile
+
+The backend SHALL list, to every signed-in user, the repositories other users shared with them, ordered by name, each with the name of the organization it comes from (the first by name when several share it), its ref and folder, its last sync and whether it is hosted, and with neither URL, login nor git URL, which are the owner's. A repository the caller owns SHALL NOT be listed. `/me/repositories` SHALL show them, under the user's own repositories, as read-only cards in a section “Compartidos contigo” that is not shown when there are none. Each card SHALL offer a sync and a way to change the content folder, chosen from the folders of the repository once they can be read and typed otherwise, that warns the change is seen by everyone. All copy SHALL be in Spanish.
+
+#### Scenario: Listing
+
+- **WHEN** `luis` opens `/me/repositories` and `apuntes` is shared with him through `equipo-docs`
+- **THEN** the section “Compartidos contigo” SHALL show `apuntes` with `equipo-docs`, without its URL, and without edit or delete actions
+
+#### Scenario: Nothing shared
+
+- **WHEN** nothing is shared with a user
+- **THEN** the page SHALL NOT show the section
+
+#### Scenario: Changing the folder
+
+- **WHEN** `luis` picks another folder in the card of `apuntes` and saves
+- **THEN** the card SHALL show the new folder and the reader SHALL read `apuntes` from it
