@@ -261,6 +261,18 @@ export const contentInput = {
         message: "Send either url or slug",
       }
     ),
+  listSharedContentFolders: z.object({
+    slug: repository.describe("A repository shared with the caller"),
+    ref: ref
+      .optional()
+      .describe(
+        "Branch, tag or commit to read; the repository's own ref when left out"
+      ),
+  }),
+  updateSharedRepositoryPath: z.object({
+    slug: repository.describe("A repository shared with the caller"),
+    path: contentPath,
+  }),
   deleteMyRepository: z.object({ slug: repository }),
   shareMyRepository: z.object({
     slug: repository.describe("Slug of one of the caller's repositories"),

@@ -63,6 +63,20 @@ const ownRepository = repository.omit({ catalogUrl: true }).extend({
 
 export type OwnRepositoryOutput = z.infer<typeof ownRepository>
 
+// A repository another user owns and shared with the caller: no URL, login or
+// git URL, which are the owner's.
+const sharedRepository = repository
+  .omit({ url: true, credentialId: true, pushUrl: true, catalogUrl: true })
+  .extend({
+    organization: z
+      .string()
+      .describe(
+        "Name of the organization it comes from; the first by name when several share it"
+      ),
+  })
+
+export type SharedRepositoryOutput = z.infer<typeof sharedRepository>
+
 const folderEntry = z.object({
   name: z.string(),
   path: z.string().describe("Path from the repository root"),
@@ -98,6 +112,8 @@ export const contentOutput = {
   createMyRepository: ownRepository,
   updateMyRepository: ownRepository,
   shareMyRepository: ownRepository,
+  listSharedRepositories: z.array(sharedRepository),
+  updateSharedRepositoryPath: sharedRepository,
   deleteMyRepository: z.object({ id: z.uuid(), success: z.boolean() }),
   createRepository: repository,
   updateRepository: repository,

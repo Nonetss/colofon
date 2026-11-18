@@ -341,6 +341,57 @@ export const contentRouter = {
       contentHandler.listMyContentFolders({ context, input })
     ),
 
+  listSharedRepositories: protectedProcedure
+    .meta(
+      openapi({
+        summary: "List the repositories shared with the caller",
+        description:
+          "The repositories other users own and shared with an organization the caller and the owner both belong to, ordered by name, each with the organization it comes from. They carry neither URL nor credentials: those are the owner's.",
+        tags,
+        method: "GET",
+      })
+    )
+    .output(contentOutput.listSharedRepositories)
+    .handler(({ context }) =>
+      contentHandler.listSharedRepositories({ context })
+    ),
+
+  listSharedContentFolders: protectedProcedure
+    .meta(
+      openapi({
+        summary:
+          "List the content folders of a repository shared with the caller",
+        description:
+          "Like listMyContentFolders, for a repository shared with the caller, read at its stored URL with the owner's login, which the caller never sees. NOT_FOUND for any other repository; BAD_GATEWAY with the git error, without credentials, when the remote or the ref can't be read.",
+        tags,
+        method: "QUERY",
+      })
+    )
+    .input(contentInput.listSharedContentFolders)
+    .output(contentOutput.listContentFolders)
+    .handler(({ context, input }) =>
+      contentHandler.listSharedContentFolders({ context, input })
+    ),
+
+  // Only from a browser session: the folder is the owner's site and every
+  // member's, which an agent holding an API key must not move on its own.
+  updateSharedRepositoryPath: sessionProcedure
+    .meta(
+      openapi({
+        summary:
+          "Change the content folder of a repository shared with the caller",
+        description:
+          "Sets the folder of the git repository the content is read from, for the owner and every member alike. It is the only thing a member edits of a shared repository. BAD_REQUEST for a folder the checked-out clone doesn't have; NOT_FOUND for any other repository. Only from a browser session.",
+        tags,
+        method: "PATCH",
+      })
+    )
+    .input(contentInput.updateSharedRepositoryPath)
+    .output(contentOutput.updateSharedRepositoryPath)
+    .handler(({ context, input }) =>
+      contentHandler.updateSharedRepositoryPath({ context, input })
+    ),
+
   syncRepository: protectedProcedure
     .meta(
       openapi({

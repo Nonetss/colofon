@@ -49,6 +49,7 @@ import type {
   ContentRepositoryOutput,
   contentOutput,
   OwnRepositoryOutput,
+  SharedRepositoryOutput,
 } from "#v1/content/output"
 import {
   audienceOfUser,
@@ -139,6 +140,26 @@ function toOwnRepository(
   }
 }
 
+function toSharedRepository(
+  row: ContentRepository,
+  organization: string
+): SharedRepositoryOutput {
+  return {
+    id: row.id,
+    slug: row.slug,
+    name: row.name,
+    hosted: isHosted(row),
+    ref: row.ref,
+    path: row.contentPath,
+    lastSyncedAt: toIsoOrNull(row.lastSyncedAt),
+    lastCommit: row.lastCommit,
+    lastSyncError: row.lastSyncError,
+    createdAt: toIso(row.createdAt),
+    updatedAt: toIso(row.updatedAt),
+    organization,
+  }
+}
+
 /** The relational `where` that keeps the rows within `audience`. */
 export function audienceFilter(audience: RepositoryAudience) {
   if (audience === "all") return {}
@@ -216,6 +237,23 @@ export function findRow(slug: string, audience: RepositoryAudience) {
   return db.query.contentRepository.findFirst({
     where: { slug, ...audienceFilter(audience) },
   })
+}
+
+/**
+ * The repository `slug` when another user owns it and shared it with
+ * `userId`, with the name of the organization it comes from. The owner's own
+ * repositories, the platform's and the ones not shared with them are none.
+ */
+async function findShared(slug: string, userId: string) {
+  const shared = await sharedRepositoriesOf(userId)
+  if (shared.size === 0) return undefined
+  const row = await db.query.contentRepository.findFirst({
+    where: { slug, id: { in: [...shared.keys()] } },
+  })
+  if (row === undefined || row.ownerId === userId) return undefined
+  const organization = shared.get(row.id)
+  if (organization === undefined) return undefined
+  return { row, organization }
 }
 
 /** One of `userId`'s repositories, with the organizations it is shared with. */
@@ -447,6 +485,16 @@ export function createContentHandler(
       await findOwned(input.slug, userId),
       NOT_FOUND_MESSAGE
     )
+    return storedSourceOf(row)
+  }
+
+  /**
+   * What a stored repository is read from: its URL with the credential it
+   * uses, or its bare repository when hosted, which has no remote to vet.
+   */
+  async function storedSourceOf(
+    row: ContentRepository
+  ): Promise<{ source: string; hosted: boolean }> {
     if (isHosted(row)) {
       return { source: gitSourceOf(row, hostedRoot), hosted: true }
     }
@@ -678,6 +726,85 @@ export function createContentHandler(
       })
       if (!result.ok) throw errors.BAD_GATEWAY({ message: result.error })
       return { folders: result.folders }
+    },
+
+    async listSharedRepositories({
+      context,
+    }: {
+      context: Context
+    }): Promise<z.infer<typeof contentOutput.listSharedRepositories>> {
+      const userId = requireUserId(context)
+      const shared = await sharedRepositoriesOf(userId)
+      if (shared.size === 0) return []
+      const rows = await db.query.contentRepository.findMany({
+        where: { id: { in: [...shared.keys()] } },
+        orderBy: { name: "asc" },
+      })
+      const repositories: SharedRepositoryOutput[] = []
+      for (const row of rows) {
+        const organization = shared.get(row.id)
+        if (organization === undefined || row.ownerId === userId) continue
+        repositories.push(toSharedRepository(row, organization))
+      }
+      return repositories
+    },
+
+    async listSharedContentFolders({
+      context,
+      input,
+    }: {
+      context: Context
+      input: z.infer<typeof contentInput.listSharedContentFolders>
+    }): Promise<z.infer<typeof contentOutput.listContentFolders>> {
+      const { row } = assertFound(
+        await findShared(input.slug, requireUserId(context)),
+        NOT_FOUND_MESSAGE
+      )
+      const { source, hosted } = await storedSourceOf(row)
+      if (!hosted) await assertAllowedRemote(source)
+      const result = await listContentFolders(source, {
+        ref: input.ref ?? row.ref,
+        httpsOnly: !hosted,
+        bare: hosted,
+      })
+      if (!result.ok) throw errors.BAD_GATEWAY({ message: result.error })
+      return { folders: result.folders }
+    },
+
+    async updateSharedRepositoryPath({
+      context,
+      input,
+    }: {
+      context: Context
+      input: z.infer<typeof contentInput.updateSharedRepositoryPath>
+    }): Promise<z.infer<typeof contentOutput.updateSharedRepositoryPath>> {
+      const { row, organization } = assertFound(
+        await findShared(input.slug, requireUserId(context)),
+        NOT_FOUND_MESSAGE
+      )
+      if (input.path === row.contentPath) {
+        return toSharedRepository(row, organization)
+      }
+      // The folder is the owner's site and every member's: only one the clone
+      // has can replace the current one.
+      const root = await reader.contentRoot({
+        ...row,
+        contentPath: input.path,
+      })
+      if (root === undefined) {
+        throw errors.BAD_REQUEST({
+          message: "Esa carpeta no existe en el repositorio",
+        })
+      }
+      const [updated] = await db
+        .update(contentRepository)
+        .set({ contentPath: input.path })
+        .where(eq(contentRepository.id, row.id))
+        .returning()
+      return toSharedRepository(
+        assertFound(updated, NOT_FOUND_MESSAGE),
+        organization
+      )
     },
 
     async readFolder({
