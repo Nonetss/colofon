@@ -65,7 +65,7 @@ The web SHALL serve, to signed-in users only (a session cookie, or an enabled AP
 - `/<slug>`: the home of the repository `slug`, rendered from its `docs/index.mdx`, or the list of its top-level sections when it has none;
 - `/<slug>/<page path>`: that page; a section's path SHALL show its `index.mdx`, or the list of its pages when it has none.
 
-An unknown repository or page SHALL render the not-found page with status 404. Every reader route SHALL render the page content on the server, so the text, headings and links are in the HTML response.
+An unknown page of a repository that exists SHALL render the not-found page with status 404. A first path segment shaped like a repository slug (lowercase letters and digits joined by hyphens) that is not a repository the user can read, because it was deleted or is no longer shared with them, SHALL redirect to `/` instead, where every repository is listed, and clear the remembered scope when it was that repository; any other unknown address SHALL render the not-found page. Every reader route SHALL render the page content on the server, so the text, headings and links are in the HTML response.
 
 #### Scenario: Opening a page
 
@@ -80,6 +80,16 @@ An unknown repository or page SHALL render the not-found page with status 404. E
 #### Scenario: Unknown page
 
 - **WHEN** a signed-in user opens `/casa/no-existe`
+- **THEN** the not-found page SHALL render with status 404
+
+#### Scenario: Repository that no longer exists
+
+- **WHEN** a signed-in user whose remembered scope is `unifi` opens `/unifi` after deleting that repository
+- **THEN** they SHALL be redirected to `/`, which SHALL show the "Todos" home, and the remembered scope SHALL no longer be `unifi`
+
+#### Scenario: Unknown address that is not a slug
+
+- **WHEN** a signed-in user opens `/favicon.ico`, which no route serves
 - **THEN** the not-found page SHALL render with status 404
 
 #### Scenario: Signed-out visitor
