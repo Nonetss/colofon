@@ -28,6 +28,20 @@ export function resolveScope(
   return { kind: "all" }
 }
 
+const SLUG_SHAPE = /^[a-z0-9]+(-[a-z0-9]+)*$/
+
+/**
+ * Whether `segment`, the first one of a path that answered "not found", was
+ * a repository that no longer exists (deleted, or no longer shared) and not
+ * some other address: it has the shape of a slug and is not one of `slugs`.
+ */
+export function isGoneRepository(
+  segment: string,
+  slugs: readonly string[]
+): boolean {
+  return SLUG_SHAPE.test(segment) && !slugs.includes(segment)
+}
+
 /** The scope after opening a page of `slug`: "Todos" stays "Todos". */
 export function scopeAfterVisit(current: DocsScope, slug: string): DocsScope {
   if (current.kind === "all") return current

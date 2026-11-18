@@ -12,6 +12,7 @@ export {
   type DocsRepository,
   type DocsScope,
   inScope,
+  isGoneRepository,
   isMissing,
   pagesMeta,
   readScopeCookie,

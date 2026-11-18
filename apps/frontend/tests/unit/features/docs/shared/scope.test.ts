@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test"
 import {
   inScope,
+  isGoneRepository,
   readScopeCookie,
   resolveScope,
   scopeAfterVisit,
@@ -92,5 +93,23 @@ describe("scope cookie", () => {
   test("no scope cookie reads as undefined", () => {
     expect(readScopeCookie("a=1")).toBeUndefined()
     expect(readScopeCookie("")).toBeUndefined()
+  })
+})
+
+describe("isGoneRepository", () => {
+  test("a slug that names no repository is a gone one", () => {
+    expect(isGoneRepository("unifi", SLUGS)).toBe(true)
+    expect(isGoneRepository("mi-repo-2", SLUGS)).toBe(true)
+  })
+
+  test("an existing repository is not", () => {
+    expect(isGoneRepository("casa", SLUGS)).toBe(false)
+  })
+
+  test("what is not shaped like a slug is some other address", () => {
+    expect(isGoneRepository("favicon.ico", SLUGS)).toBe(false)
+    expect(isGoneRepository("Casa", SLUGS)).toBe(false)
+    expect(isGoneRepository("", SLUGS)).toBe(false)
+    expect(isGoneRepository(".well-known", SLUGS)).toBe(false)
   })
 })

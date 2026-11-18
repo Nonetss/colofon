@@ -18,6 +18,7 @@ export {
   DOCS_SCOPE_COOKIE,
   type DocsScope,
   inScope,
+  isGoneRepository,
   readScopeCookie,
   resolveScope,
   SCOPE_COOKIE_MAX_AGE,
