@@ -6,6 +6,7 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 import { GitCredentialsSection } from "@/features/profile/repositories/components/git-credentials-section"
 import { OwnRepositoryCard } from "@/features/profile/repositories/components/own-repository-card"
 import { OwnRepositoryFormDialog } from "@/features/profile/repositories/components/own-repository-form-dialog"
+import { SharedRepositoriesSection } from "@/features/profile/repositories/components/shared-repositories-section"
 import type { OwnRepositoryCardContext } from "@/features/profile/repositories/definitions/own-repository-actions.definition"
 import {
   useOwnRepositoriesList,
@@ -147,6 +148,8 @@ export function ProfileRepositoriesContent() {
           </div>
         )}
       </ResourceOverview>
+
+      <SharedRepositoriesSection />
 
       <GitCredentialsSection />
 

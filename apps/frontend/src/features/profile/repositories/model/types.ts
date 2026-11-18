@@ -19,3 +19,13 @@ export type UpdateOwnRepositoryInput = Parameters<
 export type ShareOwnRepositoryInput = Parameters<
   ContentClient["shareMyRepository"]
 >[0]
+
+export type SharedRepositories = Awaited<
+  ReturnType<ContentClient["listSharedRepositories"]>
+>
+
+export type SharedRepository = SharedRepositories[number]
+
+export type UpdateSharedRepositoryPathInput = Parameters<
+  ContentClient["updateSharedRepositoryPath"]
+>[0]
